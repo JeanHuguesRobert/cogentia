@@ -85,7 +85,17 @@ Conserver dès l'origine les invariants propices à cette extension : identifian
 | Stockage des événements/continuations COP | SQLite ; PostgreSQL ; autre backend de journal | Rejouabilité, causalité, statut des mandats et idempotence conservés |
 | Navigateur télécommandé | Brave hébergé ; Chromium hébergé ; autre adaptateur gouverné | Session reconnectable, secrets traités sans export illicite, capacité de reprise testée |
 | Recherche/embeddings | API ; fournisseur gratuit vérifié ; moteur local ; recherche lexicale | Réindexation reproductible, compatibilité des dimensions/modèles ou reconstruction annoncée |
-| Exécution/hébergement | VPS individuel ; installation locale ; hébergeur géré ; confédération de VPS | Sauvegarde, restauration, autonomie d'administration et migration à froid |
+| Exécution/hébergement | VPS individuel ; installation locale ; hébergeur géré ; fonctions serverless + services persistants ; confédération de VPS | Sauvegarde, restauration, autonomie d'administration et migration à froid |
+
+### Déploiement serverless : alternative et retour d'expérience
+
+**Le serverless est une implémentation possible du catalogue, non la prochaine étape obligatoire.** Une partie de Cogentia a déjà été hébergée via Netlify. Le Principal s'en est éloigné pour deux raisons distinctes : (1) une incertitude sur la suffisance des quotas de l'offre gratuite ; (2) des frictions ressenties dans les cycles courts de développement, déploiement, inspection et correction. Cette expérience est un **retour situé**, pas une démonstration que le serverless serait intrinsèquement plus coûteux ou moins agile.
+
+Le choix actuel d'un **VPS Oracle Cloud Free Tier**, souscrit par le Principal et présenté commercialement comme une offre de type « Always Free », facilite l'expérimentation sur un hôte persistant. **Ne pas convertir « Always Free » en garantie éternelle** : disponibilité des ressources, quotas, conditions de maintien et changements d'offre relèvent du fournisseur et doivent être vérifiés lors d'un déploiement externe.
+
+**Décomposition à préserver :** interfaces web statiques, webhooks et traitements événementiels courts peuvent convenir à une infrastructure serverless ; en revanche, le navigateur hébergé avec sessions actives, la continuité CPS, certains workers, les journaux durables et les sauvegardes requièrent des mécanismes persistants explicites. Une fonction éphémère ne remplace pas à elle seule un navigateur en mémoire ni un ordonnanceur fiable. Un futur packaging peut donc être **hybride** (serverless pour les surfaces et événements, nœud persistant pour le navigateur et les continuations), ou utiliser des services managés équivalents, à tester.
+
+Le catalogue devra évaluer chaque implantation sur **coût complet et risque de dépassement des free tiers, disponibilité, limites des exécutions, latence, reprise après interruption, ergonomie de développement itératif, observabilité et sortie vérifiable**. Ne pas optimiser le seul coût de l'hébergement au prix du temps de développement ou d'une dépendance capturante. Le choix VPS de novembre 2026 est pragmatique et réversible, pas une doctrine anti-serverless.
 
 **Contrat de substitution, indépendant de la technologie :** chaque entrée de catalogue devrait déclarer son rôle, ses capacités réelles, ses formats, ses versions, les dépendances externes, les frontières d'autorité et de confidentialité, ses procédures d'export/import et de migration, ainsi que les écarts ou pertes connus. Une alternative affichée dans le catalogue est une **candidate**, non une compatibilité garantie ; distinguer *conçue*, *implémentée*, *testée* et *mise en production*.
 
