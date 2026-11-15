@@ -161,3 +161,21 @@ initiated by the live controlling agent using existing governed tools.
 A future worker must check parent acceptance, authorization, available
 budget and stable composer before issuing any next step. The standing
 browser authority does not require per-turn approval.
+
+### Final live browser stability projection
+
+The initial DOM selector for data-message-author-role returned zero in the
+actual hosted ChatGPT application even though browser text contained two
+completed assistant replies. FBF: the browser observer now falls back to
+the visible ChatGPT transcript markers and checks the actual composer and
+generation status. Under the existing signed browser.chatgpt.turn mandate,
+the live tab returned:
+
+- stable_composer: true
+- transcript_assistant_count: 2
+- transcript_answer: READY cop:event:c2529909-f42a-4d6f-8fd4-dad64e6fa124
+- generating: false
+- composer_chars: 1 (whitespace only)
+
+This supplies a concrete stable-state signal for subsequent CPS dispatch;
+it does NOT itself run an unattended scheduling service.
