@@ -433,6 +433,13 @@ export function createHostCapabilityRouter(options = {}) {
             authorization_id: ctx.authorization?.authorization_id,
           }) }
         : ctx.providerInstance || await resolveProvider(providerName);
+      if (missionAuthority?.beforeDispatch) {
+        const current = await missionAuthority.beforeDispatch();
+        if (current !== true) {
+          throw Object.assign(new Error("standing_authority_revoked_or_changed_before_dispatch"),
+            {error_class:"standing_authority_revoked_or_changed_before_dispatch"});
+        }
+      }
       providerAttempted = true;
       const result = await invokeCapability(
         capability,
