@@ -78,6 +78,7 @@ import { relatePacket } from "./lib/packet-relate.js";
 import { cpsWorkControl, parseIssueRef } from "./lib/cps-work-control.js";
 import { packetRelateJudgmentRequest } from "./lib/packet-relate-judgment.js";
 import { deriveContinuationReturn } from "./lib/continuation-return.js";
+import { currentPacketClaim } from "./lib/continuation-packet-claim.js";
 import { projectContinuationPlacement } from "./lib/continuation-placement.js";
 import { runMonteCarloAudit, SleepCycleReviewQueue, REVIEW_DECISIONS } from "./lib/corpus-sleep-cycle/index.js";
 import {
@@ -6006,6 +6007,13 @@ function sanitizeContinuationForView(continuation, view) {
   };
 }
 
+function assertNoClaimedContinuationTerminalBypass(ctx, id) {
+  // Even an expired claim epoch remains governed by the witnessed terminal
+  // protocol. Do not permit legacy CLI/HTTP to overwrite it out of band.
+  if (currentPacketClaim(ctx.registryRoot, id))
+    throw new Error("cop_v1_claim_requires_guarded_terminal");
+}
+
 function daemonHttpContinuationResolve(ctx, body = {}) {
   const id = String(body.id || body.continuation_id || "").trim();
   if (!id) return [400, { ok: false, error: "missing_id" }];
@@ -6022,6 +6030,11 @@ function daemonHttpContinuationResolve(ctx, body = {}) {
       id,
       status: continuation.status,
     }];
+  }
+  try {
+    assertNoClaimedContinuationTerminalBypass(ctx, id);
+  } catch (error) {
+    return [409, {ok:false,error:"cop_v1_claim_requires_guarded_terminal",id}];
   }
   const payload = body.payload && typeof body.payload === "object" ? body.payload : {};
   const decision = String(body.decision || payload.decision || payload.chosen_alternative || payload.status || "").trim();
@@ -6839,6 +6852,7 @@ function cmdContinuationResolve(ctx, id) {
   if (!id) throw new Error("Usage: continuation resolve <id> [result.json] --decision <text> --reason <text>");
   const continuation = loadContinuation(ctx, id);
   if (continuation.status !== "active") throw new Error(`Continuation ${id} is not active (status=${continuation.status}).`);
+  assertNoClaimedContinuationTerminalBypass(ctx, id);
   const payload = readContinuationPayload();
   if (payload.continuation_id && payload.continuation_id !== id) {
     throw new Error(`continuation_id mismatch: got ${payload.continuation_id}, expected ${id}`);
@@ -6868,6 +6882,7 @@ function cmdContinuationResolve(ctx, id) {
 }
 
 function cancelContinuationRecord(ctx, continuation, reason) {
+  assertNoClaimedContinuationTerminalBypass(ctx, continuation.id);
   const now = new Date().toISOString();
   continuation.status = "cancelled";
   continuation.updated_at = now;
