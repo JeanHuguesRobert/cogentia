@@ -114,6 +114,16 @@ Operium CI plus packet-consumer jobs passed on commit 155f804, as did all target
 
 The earlier PRs acorsica/gouvernance #1/#3 and Inox #38 were closed only after comparison demonstrating their documentary substance already on main; their content owner issues remain open. The branches themselves and the 10 October recovery archive were not deleted. In the targeted Operium and Cogentia checkouts, pre-existing concurrent WIP has not been staged or altered.
 
+## FBF in the automatic dependency-review batch (Survey)
+
+The thirteen Dependabot branch references in the initial survey were all confirmed to represent **open, unmerged PRs** at the time of this review. Their owners are Inox (3), StructEnv (2), Serra (2), and Survey (6). None was auto-merged merely because it is reachable or has no Git conflict.
+
+Survey's main Prettier Check was already red before the six Dependabot PRs were updated. The exact pinned formatter version 3.7.4 reproduced four formatting-only discrepancies in README.md, index.html, packages/cop-core/src/types.ts and packages/cop-core/tsconfig.json. Corrected **only these four paths** on Survey/main commit c48344f; the complete formatter glob now passed locally and GitHub Actions main run 43702758998 completed successfully.
+
+The six open Survey Dependabot branches (#6, #7, #8, #9, #11, #12) were then refreshed against the fixed main through GitHub's scoped update-branch action, without merging dependencies into main. All six subsequently reported two successful Prettier checks and MERGEABLE Git status. Their Netlify Preview contexts nevertheless failed (or were still running at an intermediate checkpoint), independently of formatter conformance; for example Survey #8 recorded three failing Netlify rules checks plus a failed deploy-preview, while CodeQL and Prettier succeeded. The private Netlify build cause is **not established from GitHub context status alone**; do not claim the dependencies are release-ready. This distinction is the new FBF deployment/review blocker.
+
+GitHub's default-branch push notification for Survey reported 185 Dependabot vulnerability alerts (3 critical, 96 high, 72 moderate, 14 low) at that point. These are alert counts, **not** exploitability assessments; they justify prioritizing dependency/security review but do not override Netlify/deployment gates. Branches in Inox, StructEnv and Serra were not changed by this Survey-specific repair.
+
 ## Restes à trancher
 
 1. Operium : les branches de provisionnement multi-utilisateur du navigateur et de validation distante contiennent plusieurs scripts absents de main. Un ancien outil d'authentification ou de commande distante ne doit pas être déployé par simple fusion. Propriétaire : Operium #25, suivi transversal Cogentia #309.
