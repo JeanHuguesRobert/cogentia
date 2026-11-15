@@ -323,3 +323,25 @@ direct MCP result path is meaningfully different from DOM output scraping,
 but it does not settle what the provider permits in its consumer interface.
 The local code and deterministic three-step CPS loop remain available for
 verification while live autonomous browser dispatch remains disabled.
+
+
+## OpenClaw precedent — source-verified, 15 November 2026
+
+The Principal identifies OpenAI's public support for OpenClaw as relevant to
+the *Fair Usage* defense of accessible personal AI agents. The February 2026
+Steinberger recruitment and foundation support, followed by OpenAI's
+[12 November 2026 technical account](https://developers.openai.com/blog/securing-persistent-agents-like-openclaw-at-openai)
+of over 500 internal persistent agents, provide substantial evidence of
+OpenAI's **pro-agent, persistent-agent, guardrail-based strategy**. Technical
+parallels with CPS: trusted control plane, separate agent identity, sandbox,
+automatic review, observability. The [OpenClaw Codex OAuth integration](https://docs.openclaw.ai/providers/openai)
+also supports subscription-based agent workflows external to the Codex CLI.
+
+These facts **do not establish** that unattended navigation and submission
+through the ChatGPT consumer website is authorized. The operative terms
+remain distinct, and the ability to enforce those terms is a discretion,
+not an obligation to sanction every arguable violation. That discretion
+is not a prospective consent to browser automation. Retain the hosted-browser
+design target and the measurable COP safeguards; maintain the separate
+provider-permission gate for autonomous live use. See [Fair Usage doctrine
+§7](../research/integration/conversational_agents_fair_usage_cop_2026-11-13.md#7-précédent-openclaw--soutien-industriel-politique-dagentification-et-discrétion-dapplication-15112026).
