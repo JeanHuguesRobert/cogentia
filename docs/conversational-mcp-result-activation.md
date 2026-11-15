@@ -597,3 +597,35 @@ John completion paths: ordinary, signed canonical read and signed
 canonical form. The child can therefore leave its own durable parent
 status receipt rather than silently losing the mandate at a specialized
 early return. The root user mandate is not extended by this refactor.
+
+### Live proof — 15 November 2026
+
+Actual authenticated Cogentia Private calls, without exporting any token:
+
+- First turn jhn-continuity-20261115-live-01 finished as completed,
+  parent remained open, receipt cop:event:f7d68010-f5e9-4f9b-b874-273513e3d023.
+  Identical replay returned the same receipt with duplicate:true.
+- First two-step exercise: parent jhn-auto-hop-parent-20261115-01
+  automatically invoked canonical read child jhn-auto-hop-child-20261115-01.
+  That child returned mandate_status:not_evaluated, identifying the
+  canonical-read early-return journaling bug.
+- FBF retest: parent jhn-auto-hop-parent-20261115-b, COP receipt
+  cop:event:e5145b7a-706e-4925-bdd7-7428481e1fd3, automatically
+  executed the separately budget-admitted child
+  jhn-auto-hop-child-20261115-b, receipt
+  cop:event:c6225612-5154-4c97-abc1-cbde291c2bab.
+  The child canonical execution settled 2 steps. Both turn statuses
+  were completed; both parent-mandate statuses remained open.
+  No extra user message was required to execute the second action.
+- Independent read of the production COP SQLite journal confirmed
+  the private pending projection selects the child as the latest open
+  turn for goal cogentia-330-auto-hop-20261115-b.
+- The new cogentia_john_mandate_pending MCP tool is private read-only;
+  it cannot authorize or execute a new action.
+
+Still missing: a host hook to intercept ChatGPT's own end-of-turn and
+reinvoke this assistant; this repository controls native Agent JHN only.
+Also the signed JHN root v2 currently authorizes only the two named
+browser read operations and MCP result submission, not arbitrary
+FractaRouting worker effects. General worker admission must separately
+verify the requested effect class and budget.
