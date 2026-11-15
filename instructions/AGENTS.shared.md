@@ -3,9 +3,9 @@ title: Cogentia Shared Agent Instructions
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 status: "working-paper — active operational mandate"
-version: 48
+version: 49
 date: 2026-10-02
-last_modified_at: "2026-11-10"
+last_modified_at: "2026-11-15"
 license: CC BY-SA 4.0
 language: en
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/instructions/AGENTS.shared.md
@@ -745,6 +745,21 @@ known Reality, with a linked schema-evolution trace. See
 prefilled value against the actual document and repository; a tool default is
 not evidence of authorship, language, affiliation, license, or origin.
 
+**Stable canonical filenames for evolving documents.** A living substantive document
+MUST use a descriptive, semantic, stable path that does **not** embed a
+publication date, revision number, version suffix (such as `-v2`), or
+transient status (such as `-final` or `-draft`) merely to mark the next
+iteration. Put the date, version, status and review history in canonical
+agile YAML frontmatter and immutable Git commits; revise the existing file
+in place under Optimistic Locking instead of creating successive named copies.
+A genuinely frozen filing, issued record, independently addressable edition,
+protocol format whose version is part of its identity, or incompatible
+parallel variant MAY use a dated/versioned filename when that distinction
+is substantively necessary. Never rename existing historical artifacts
+mechanically in the name of this default. This is the practical complement
+to [the Verified Handoff Principle](#verified-handoff-principle):
+stable canonical path → evolving content → immutable commit checkpoints.
+
 Before reporting an authored document ready, agents **MUST** run
 `node scripts/cogentia.js frontmatter verify <path> --strict-role` from
 Cogentia (or a repository-equivalent check) on each affected document,
@@ -1158,9 +1173,12 @@ stable canonical path
 → immutable commit checkpoints
 ```
 
-Routine sequential revisions SHOULD keep one canonical path. Versioned
-filenames and branches SHOULD be introduced only when they solve a concrete
-problem such as genuinely parallel or incompatible variants. For a review or
+Routine sequential revisions SHOULD keep one canonical path. The filename
+of an evolving document SHOULD NOT include a date, version or transient draft/final
+suffix merely to record its editing history; this belongs in agile frontmatter and
+Git commits. Versioned filenames and branches SHOULD be introduced only when
+they solve a concrete problem such as genuinely frozen historical records,
+protocol versions, or parallel/incompatible variants. For a review or
 other immutable handoff, the normal sequence is:
 
 ```text
