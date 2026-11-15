@@ -197,6 +197,7 @@ test('CPS source recipe carries real packet question and exact return binding, n
   assert.equal(built.prompt.includes(c.execution_binding_ref),true);
   assert.equal(built.prompt.includes(c.correlation.challenge),true);
   assert.equal(built.prompt.includes('cogentia_continuation_result_submit'),true);
+  assert.equal(built.prompt.includes('traitement d’un paquet cognitif sous mandat'),true);
   assert.equal(built.prompt.includes('packet_status'),true);
   assert.equal(built.prompt.length<=6000,true);
   assert.equal(buildAssignedChatgptCpsPrompt({...c,correlation:{challenge:''}}).ok,false);

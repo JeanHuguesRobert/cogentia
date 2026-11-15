@@ -35,7 +35,7 @@ export function buildAssignedChatgptCpsPrompt(c){
         next_action:'[identifiant bref uniquement si continue]',
         next_question:'[instruction précise de la prochaine étape, uniquement si continue]'}}};
   const prompt=[
-    '[COGENTIA JUDGMENT - NE PAS INTERAGIR] — conversation dédiée à un mandat cognitif.',
+    '[COGENTIA JUDGMENT - NE PAS INTERAGIR] — traitement d’un paquet cognitif sous mandat.',
     'Vous êtes le JudgmentHandler d’une continuation CPS attribuée par Cogentia.',
     'Tâche :',c.state.question,
     'À l’issue de votre travail, utilisez réellement le connecteur Cogentia et appelez',
