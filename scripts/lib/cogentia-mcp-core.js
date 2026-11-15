@@ -2369,11 +2369,19 @@ export function createMcpCore(env = process.env, extras = {}) {
         const settled = events.find((e) => e.type === "john.accounting.settled");
         const admitted = events.find((e) => e.type === "john.packet.admitted");
 
+        const continuity = jhnCaller && extras.mandateTurnContinuity
+          ? extras.mandateTurnContinuity.record({
+              request:req,events,actor:callOpts.auth.actor,
+              principal_ref:callOpts.auth.principal_ref,
+            }) : null;
         return {
-          ok: Boolean(completed),
+          ok: Boolean(completed) && continuity?.ok !== false,
           request_id: req.request_id,
           packet_id: admitted?.data?.packet_id || null,
           status: completed ? "completed" : "failed",
+          // Turn completion does not constitute parent mandate completion.
+          mandate_status: continuity?.mandate_status || "not_evaluated",
+          mandate_continuity: continuity,
           text: completed?.data?.result?.text || failedData.text || failedData.yield?.semantic_yield || "",
           yield: completed?.data?.result?.yield || failedData.yield || null,
           accounting: settled?.data || null,

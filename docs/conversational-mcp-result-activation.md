@@ -541,3 +541,24 @@ signature, broker, background task or LLM approval is introduced.
 This first integration demonstrates a structurally open parent after a
 genuinely resumed handler; it does **not** yet connect the complete
 multi-provider FractaRouting executor to the projected next action.
+
+## 22. 15 November 2026 — John conversational turn-end continuity journal
+
+The prior local MCP result proved resumed local handlers but did not cover the
+separate Agent JHN conversational surface. For an authenticated JHN caller
+that supplies `request.input.continuity` with an opaque `goal_ref` and bounded
+`acceptance` criterion IDs, the existing `cogentia_john_run` MCP action now
+records `cop.john-mandate-turn/v1` in the **same** canonical COP event journal.
+
+A `john.run.completed` event remains proof of one turn only. The independently
+projected `mandate_status` remains `open` without actual verified acceptance
+receipts. The result includes a persistent `mandate_continuity.receipt_ref` and
+`needs_continuation:true`. Retries are idempotent by John request ID. Neither
+prompt nor reply nor bearer credentials are copied into the journal.
+
+This is actual turn-end source instrumentation, not another prompt-level rule.
+It makes a noncompleted mandate discoverable after the request and server
+restart. Autonomous general Agent JHN dispatch still needs a governed worker
+which consumes these canonical topics and resumes remaining actions. The
+hosted ChatGPT conversation runtime itself is not controlled by this repo;
+claiming that this patch prevents ChatGPT UI turn stops would be inaccurate.
