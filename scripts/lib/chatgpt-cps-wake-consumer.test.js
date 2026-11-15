@@ -9,6 +9,7 @@ import {COPScheduler} from '../../../inseme/packages/cop-kernel/src/scheduler.js
 import {COPBus} from '../../../inseme/packages/cop-kernel/src/bus.js';
 import {recordChatgptReturnWake} from './chatgpt-cps-return-wake.js';
 import {consumeChatgptCpsWake,listChatgptCpsWakes} from './chatgpt-cps-wake-consumer.js';
+import {runChatgptCpsWakeBatch} from './chatgpt-cps-wake-batch.js';
 const HANDLER='handler:chatgpt-browser-result-observer';
 const BUDGET='budget:mandate:jhn:john-root';
 const commit=(store,e)=>assert.equal(store.append(e).ok,true);
@@ -68,13 +69,17 @@ test('3 causally chained returns re-enter existing COPScheduler, no duplicate af
    assert.deepEqual(listChatgptCpsWakes(store).map(x=>x.continuation_id),[ids[0]]);
    assert.equal((await consumeChatgptCpsWake({store,continuation_id:ids[0],scheduler:existingScheduler,admit:denied})).status,'not_admitted');
    assert.equal(seen.length,0);
-   for(const id of ids){
-     assert.deepEqual(listChatgptCpsWakes(store).filter(x=>x.status==='pending').map(x=>x.continuation_id),[id]);
-     const output=await consumeChatgptCpsWake({store,continuation_id:id,scheduler:existingScheduler,admit});
-     assert.equal(output.status,'handler_completed',JSON.stringify(output));
-     assert.equal(output.result?.status,id===ids[2]?'completed':'continue');
-     assert.equal((await consumeChatgptCpsWake({store,continuation_id:id,scheduler:existingScheduler,admit})).status,'already_processed');
-   }
+   // No controller must manually invoke each next continuation: one bounded
+   // Cogentia mandate driver consumes all three causally chained returns.
+   const drained=await runChatgptCpsWakeBatch({store,scheduler:existingScheduler,
+     admit,max_steps:4});
+   assert.equal(drained.status,'queue_drained',JSON.stringify(drained));
+   assert.equal(drained.steps_completed,3);
+   assert.equal(drained.autonomous_browser_worker,false);
+   assert.equal(drained.parent_mandate_completed,false);
+   for(const id of ids)
+     assert.equal((await consumeChatgptCpsWake({store,continuation_id:id,
+       scheduler:existingScheduler,admit})).status,'already_processed');
    assert.equal(seen.length,3);
    store.close();
    store=createSqliteCopEventStore(file);
@@ -117,5 +122,21 @@ test('simultaneous consumers are fenced by COP transaction',async()=>{
    assert.equal(results.filter(x=>x.status==='handler_completed').length,1);
    assert.equal(results.filter(x=>x.status==='needs_reconciliation'||x.status==='already_processed').length,1);
    assert.equal(invoked,1);
+ }finally{store.close()}
+});
+
+
+test('bounded batch stops on authorization denial instead of spinning',async()=>{
+ const store=createSqliteCopEventStore(':memory:');
+ try{
+   addReturned(store,'ctn_denied_01');
+   let invokes=0;
+   const result=await runChatgptCpsWakeBatch({store,scheduler:scheduler(()=>{
+     invokes++;return {status:'continue'};
+   }),admit:denied,max_steps:3});
+   assert.equal(result.status,'step_failed');
+   assert.equal(result.steps_completed,0);
+   assert.equal(result.pending_count,1);
+   assert.equal(invokes,0);
  }finally{store.close()}
 });

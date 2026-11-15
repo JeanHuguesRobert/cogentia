@@ -290,3 +290,23 @@ third-party terms. This source implementation stays testable without an
 unattended production activation that would require independent contractual
 clarification or a permitted official API alternative. Do not confuse this
 constraint with a limitation of COP's ability to schedule continuations.
+
+### Bounded continuation driver, without manual per-packet ticks
+
+`runChatgptCpsWakeBatch()` in `scripts/lib/chatgpt-cps-wake-batch.js`
+composes the durable consumer with the existing
+`runMandateToBoundary()` driver (Cogentia #285) and the same Inseme
+`COPScheduler`. Its bounded local execution observes a returned wake,
+performs one authorized parent-handler evaluation, re-inspects durable
+state, and advances to another return if one became available. There is
+**no separate per-packet human or agent-control call** in the three-step
+fixture test. The driver stops at its step ceiling, permission denial,
+ambiguous effect or empty queue. `queue_drained` **does not mean** the
+parent mandate is finished. It does not start a background service, invoke
+a consumer web browser or automatically send an additional ChatGPT prompt.
+
+The immediate next production integration remains the *authorized
+next-turn dispatcher* attached to a canonical Packet/Continuation under
+current provider terms, quota, independently verified mandate and budget.
+Its provider-neutral test can use a local fixture or a permitted API
+without pretending it was a browser test.
