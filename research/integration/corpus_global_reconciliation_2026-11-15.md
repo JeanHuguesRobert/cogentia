@@ -92,6 +92,26 @@ Les deux candidats les plus récents sont Paese Capace (push du 12 novembre 2026
 
 Un contrôle live par git ls-remote --heads a été effectué pour les 11 dépôts possédant les 26 références anciennes à commits non fusionnés : les 26 branches **existent toujours** sur GitHub et leur pointe correspond aux références locales utilisées pour le tableau, sans déplacement ni suppression détectés lors du contrôle. Elles ne sont donc pas de simples références locales obsolètes. Le statut de contenu utile reste cependant distinct.
 
+## Integrations verified during the follow-on review (15 November 2026)
+
+### Cogentia, capability-aware continuation routing (#306, #305)
+
+The current main already contains the canonical continuation-routing.js, continuation-packet-claim.js, continuation-cop-governed.js, continuation-cop-reconcile.js, and continuation-terminal-settlement.js. Five direct regression scripts passed on Fracta2: check-continuation-routing, check-continuation-packet-claim, check-continuation-cop-governed, check-continuation-cop-reconcile, and check-continuation-terminal-settlement. These are synthetic, not attestations of a production agent or mandate.
+
+An additional useful assertion from the old #306 e2e suite has been adapted to the current shared core (commit 1c69ab4c): proposed routing, accepted claim, refusal to mark treatment before canonical resolution, ready durable return slot, idempotent recording and delivery_confirmed=false until separately confirmed. The obsolete next-preview CLI and corresponding private daemon routes have **not** been restored: main now exposes a different read-only placement projection; old tests requiring the historical CLI/API returned failures. The duplicate audit-backfill dispatch arm was fixed, and CLI error help now includes placement (commit 1f41fd9a). **Status: core and regression convergence demonstrated; live governed worker/CLI/MCP/API exposure still requires a separate issue-level decision and E2E acceptance. PR #306 remains open.**
+
+### Operium, hosted browser/session policy (#48, #50) and remote validation (#74)
+
+- Commit ab6a54d: recovered the issue #49 kiosk/desktop *advisory* policy with explicit refusal of host-admin capacity. Unlike the historical lab implementation, no caller-provided principal-lab waiver, mesh label or future-idp name can authorize a desktop. This checker is intentionally **not wired** to Caddy, the launcher or the provisioner; true runtime enforcement still remains open.
+- Commits 28c7866 and 155f804: reimplemented the historical workspace listing interface without executing env files or revealing URLs, passwords or unknown fields. Synthetic privacy tests passed. A real read-only attempt against Fracta2 reported status=incomplete and unreadable_count=2: the config files' existing private permissions were **not bypassed**, and an incomplete inventory was not misrepresented as zero actual workspaces.
+- Commit ab6a54d: reused the existing Node CI supervisor rather than introducing the old Python supervisor from #74; added a bounded timeout option and synthetic pass/fail/timeout regression, with the existing receipt schema preserved. The original remote SSH Git-snapshot worker has **not** been deployed or imported as a trusted execution path; it still requires host/COP effect review.
+
+Operium CI plus packet-consumer jobs passed on commit 155f804, as did all targeted synthetic tests on Fracta2. These recoveries **do not** prove that a multi-user desktop can safely be opened through the current public browser gateway, or that Git snapshots may be executed remotely without distinct authorization. PRs #48, #50 and #74 remain open while those functional boundaries are evaluated.
+
+### Administrative debt and what remains genuinely unmerged
+
+The earlier PRs acorsica/gouvernance #1/#3 and Inox #38 were closed only after comparison demonstrating their documentary substance already on main; their content owner issues remain open. The branches themselves and the 10 October recovery archive were not deleted. In the targeted Operium and Cogentia checkouts, pre-existing concurrent WIP has not been staged or altered.
+
 ## Restes à trancher
 
 1. Operium : les branches de provisionnement multi-utilisateur du navigateur et de validation distante contiennent plusieurs scripts absents de main. Un ancien outil d'authentification ou de commande distante ne doit pas être déployé par simple fusion. Propriétaire : Operium #25, suivi transversal Cogentia #309.
