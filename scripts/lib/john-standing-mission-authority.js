@@ -41,8 +41,10 @@ function activeStandingOperation(scope, request) {
   // an invitation to execute an arbitrary shell. A provider registry binds
   // actual implementation to a short, reviewed set of targets.
   const technical=scope?.standing_technical_policy;
-  if (request.execution_mode!=="normal" || !technical ||
-      technical.version!==1) return false;
+  if (request.execution_mode!=="normal") return false;
+  if ((request.capability==="dns.record.ensure" ||
+       request.capability==="site.static.release") &&
+      (!technical || technical.version!==1)) return false;
   if (request.capability==="dns.record.ensure") {
     const d=technical.dns,e=request.effect;
     return request.provider==="cloudflare" &&
