@@ -59,3 +59,29 @@ An external CPS reconciler will still need to observe a returned
 result or the stable composer and decide whether to launch another
 turn. A running browser tab alone cannot prevent ChatGPT's host process
 from terminating its own turn.
+
+## ChatGPT browser results over MCP
+
+The previously deployed canonical MCP result host recognizes only the
+`local-fixture:mcp` channel. An independently authenticated JHN agent
+may submit under the already issued
+`cogentia.continuation.result.submit` capability, but a ChatGPT
+browser CPS continuation also needs the reviewed channel pair
+`chatgpt:browser`. The owner-only, idempotent deployment recipe is:
+
+```bash
+ssh fracta2 'cd /srv/cogentia/repos/cogentia && bash scripts/ops/enable-chatgpt-browser-result-channel.sh --apply'
+```
+
+It adds the pair to the existing MCP host's explicitly configured channel
+allowlist. **No new principal rights are granted by this environment flag**.
+An actual submission still requires signed root mandate scope, live
+funded reservation, current packet claim, correct execution-binding
+correlation and idempotence key; otherwise no receipt is issued.
+
+A browser conversation's ChatGPT model may use the existing
+`cogentia_continuation_result_submit` tool to return a correlated
+result if that connector is actually available in its session. If not,
+Agent JHN must observe the response through the governed browser read
+and record that observation separately, never fabricate a model-issued
+tool receipt. The browser reply alone is not proof of a COP return.
