@@ -1,7 +1,7 @@
 ---
 title: "FractaCognition — Prudence, Humility, Occam, Hanlon, Talleyrand, Bounded Assertion, Friends Before Competitors, and Locality"
 subtitle: "A cardinal discipline of prudence and humility, with heuristics for simplicity, attribution, explicit assumptions, bounded assertion, adjacent kinship, and minimum sufficient locality"
-description: "Consolidating note articulating FractaCognition definition, multiscale reflexive grammar, Prudence and Humility as a cardinal discipline, and complementary heuristics including Occam, Hanlon, Talleyrand, Bounded Assertion, Friends Before Competitors, Minimum Sufficient Locality, Metacognitive Initiative, and Bifocal Design for transferable capability.\"
+description: "Consolidating note articulating FractaCognition definition, multiscale reflexive grammar, Prudence and Humility, Occam, Hanlon, Talleyrand, Bounded Assertion, Friends Before Competitors, Minimum Sufficient Locality, Metacognitive Initiative, and Bifocal Design for reusable capability."
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-09-27"
