@@ -13,7 +13,7 @@ document_kind: "doctrinal-note"
 visibility: "public"
 lifecycle_state: "working"
 language: fr
-last_modified_at: "2026-11-07"
+last_modified_at: "2026-11-15"
 update_policy: UP-DEFAULT-REVIEWED
 provenance:
   origin_type: repository
@@ -124,6 +124,16 @@ La progression suit une logique de *promotion de capacités* : expérimentation 
 Le calendrier du 25 décembre constitue une **cible de première mise à disposition expérimentale**, non une permission d'ignorer les critères d'acceptation ni la promesse d'un jumeau mature. Il vaut mieux distribuer un compagnon limité, transparent et récupérable qu'un agent spectaculaire mais fragile ou incontrôlable.
 
 Cette stratégie concerne d’abord **IA pour chacun**, c’est-à-dire le déploiement progressif des CPDT à partir du prototype JHN. Elle bénéficie aussi aux **CCDT (IA pour tous)** lorsque les mêmes composants éprouvés peuvent servir des collectifs sous leur gouvernance propre. La mutualisation des outils et des infrastructures est un moyen transversal, non une définition des CCDT ; elle ne fusionne jamais les Corpus, mandats ou autorités des personnes et des collectifs.
+
+### Positionnement et distribution — décision du 15 novembre 2026
+
+**Formulation candidate : « Transformer votre agent conversationnel en un véritable double numérique augmenté de vous-même ».** Plutôt que remplacer l'agent conversationnel déjà utilisé par la personne, Cogentia ajoute une mémoire/corpus gouvernés, une continuité entre tours et sessions, des mandats et capacités d'action tracées. Le double reste une **représentation opérationnelle**, et non une personne ou une identité substitutive.
+
+**Ordre des plateformes envisagé :** ChatGPT d'abord, par la boucle Brave/Navigation Assistant et le connecteur MCP déjà démontrés sur le prototype JHN ; ensuite d'autres agents conversationnels populaires via adaptateurs ; si possible, une interopérabilité générique pour les agents compatibles MCP. La compatibilité MCP seule ne garantit ni accès aux outils, ni réception des résultats, ni relance possible : ces propriétés sont à vérifier chez chaque fournisseur. La démonstration JHN de deux tours successifs ne vaut pas encore preuve d'un ordonnanceur autonome permanent.
+
+**Premier packaging envisagé :** installation d'un nœud Cogentia/CPS sur un VPS adapté (fourni par l'utilisateur ou provisionné pour lui), comportant stockage du Corpus, identité et mandats, connecteurs et, si requis, navigateur hébergé. L'installation doit être reproductible, isolée entre Principaux, révocable, sauvegardable et exportable. Le dimensionnement matériel, le coût et le régime commercial restent à mesurer et à décider. Le VPS constitue une première offre d'hébergement, pas un prérequis permanent du concept.
+
+**Échéance inchangée : 25 décembre 2026.** Elle vise les premiers pilotes expérimentaux pour d'autres personnes ; pas un lancement grand public, ni une maturité universelle. La [fiche de livraison Noël 2026](../docs/first-personal-twin-offer-2026-12-25.md) précise le chemin critique et les critères de réception.
 
 **Critère pratique de succès du premier pilote :** une personne autre que le concepteur peut obtenir un jumeau distinct, lui confier une tâche bornée, recevoir un résultat et ses limites, interrompre ou révoquer son mandat et retrouver son travail après une interruption, sans intervention improvisée de l'équipe sur ses données personnelles.
 
