@@ -3,7 +3,7 @@ title: Cogentia Shared Agent Instructions
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 status: "working-paper — active operational mandate"
-version: 52
+version: 53
 date: 2026-10-02
 last_modified_at: "2026-11-15"
 license: CC BY-SA 4.0
@@ -89,6 +89,10 @@ When an external provider refuses an otherwise mandated action, **do not turn th
 Then explore the cheapest **legitimate, independently authorized** alternative that preserves the original outcome, Principal mandate, COP budget and audit trail: local execution, an existing governed capability, another connected provider or a durable continuation. Do not mask command content, evade a mandatory platform control, escalate privileges beyond the mandate, or emit third-party communications without act-specific authority. Apply Occam and Minimum Sufficient Locality: prefer proven available paths over new infrastructure and avoid repeated futile retries, demands for explanations or speculative litigation unless the Principal separately mandates them.
 
 **Operational metric:** verified ability to complete the original task with bounded attention and recoverability, not whether an intermediary conceded error. See [Institutional anti-capture](../research/institutional_procedural_anti_capture.md), [Locality](../research/locality_principle.md), and [Potentics](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/potentique_territoriale.md).
+
+## Long-lived Principal consent links (FBF, 2026-11-15)
+
+The Principal does not monitor ChatGPT continuously. **Canonical COP consent and ratification links have a 12-hour validity by default and maximum** (`CONSENT_LINK_TTL_MS=43_200_000`), not 5 or 10 minutes. All owner and application request entrypoints must use the same duration. Confirm actual `expires_at` before delivering a link; do not prematurely expire approvals or require repeated interactive supervision. Single-use consumption, authenticated Principal decision, supersession and mandate-revocation checks still apply.
 
 ## Principal attention, presumed authority, and continuation (Cogentia #285)
 

@@ -14,6 +14,8 @@ import {randomUUID} from 'node:crypto';
 import {amendMandate,isMandateActive} from '../../../inseme/packages/cop-core/src/governed-act.js';
 import {mandateProposalHash} from './cop-proposal-digest.js';
 import {createJhnSupabaseMandateApprovalService} from './jhn-supabase-mandate-approval-service.js';
+// Principal preference (2026-11-15): consent links stay open for 12 hours.
+export const CONSENT_LINK_TTL_MS=12*60*60*1000;
 const HASH=/^sha256:[a-f0-9]{64}$/;
 const ID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const deny=error=>Object.freeze({ok:false,error,grants_mandate_authority:false});
@@ -71,9 +73,9 @@ export function createJhnCanonicalConsentWorkflow({store,adminClient,authClient,
      * This is a REAL Principal ratification of a real present scope, not a
      * fixture: the recorded decision is advisory-only and cannot be applied
      * as a new COP MandateDeclaration. */
-    requestRatification({mandate_ref,ttl_ms=600000}={}) {
+    requestRatification({mandate_ref,ttl_ms=CONSENT_LINK_TTL_MS}={}) {
       if(!store?.append||!store?.listTopic||!store?.replay)return deny('canonical_store_required');
-      if(!Number.isSafeInteger(ttl_ms)||ttl_ms<1000||ttl_ms>600000)return deny('invalid_ttl');
+      if(!Number.isSafeInteger(ttl_ms)||ttl_ms<1000||ttl_ms>CONSENT_LINK_TTL_MS)return deny('invalid_ttl');
       if(typeof mandate_ref!=='string'||!/^mandate:jhn:[a-z0-9-]{2,80}$/.test(mandate_ref))
         return deny('invalid_mandate_ref');
       const events=store.replay().filter(e=>e.payload?.kind==='MandateDeclaration'&&
@@ -108,9 +110,9 @@ export function createJhnCanonicalConsentWorkflow({store,adminClient,authClient,
     authenticate:({session}={})=>approval.inspect({session}),
     /** The trusted issuer supplies this mandate only after resolving the
      * currently active canonical MandateDeclaration and its scope. */
-    request({mandate,ttl_ms=300000}={}) {
+    request({mandate,ttl_ms=CONSENT_LINK_TTL_MS}={}) {
       if(!store?.append||!store?.listTopic||!store?.replay)return deny('canonical_store_required');
-      if(!Number.isSafeInteger(ttl_ms)||ttl_ms<1000||ttl_ms>600000)return deny('invalid_ttl');
+      if(!Number.isSafeInteger(ttl_ms)||ttl_ms<1000||ttl_ms>CONSENT_LINK_TTL_MS)return deny('invalid_ttl');
       const proposal=validatedMandate(store,mandate);
       if(!proposal)return deny('mandate_proposal_invalid_or_inactive');
       const challenge_id=randomUUID(),payload_hash=mandateProposalHash(proposal);

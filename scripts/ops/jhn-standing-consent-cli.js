@@ -13,6 +13,7 @@ import {resolveMandate} from
   "../../../inseme/packages/cop-core/src/governed-act.js";
 import {createOfflineJohnIssuerVerifier} from "../lib/john-offline-issuer-verifier.js";
 import {sshFingerprint} from "../lib/john-sshsig-approval.js";
+import {CONSENT_LINK_TTL_MS} from '../lib/jhn-canonical-consent-workflow.js';
 import {createJhnCanonicalConsentWorkflow} from "../lib/jhn-canonical-consent-workflow.js";
 import {johnStandingMandatePlan} from "../lib/jhn-standing-mandate-plan.js";
 
@@ -62,7 +63,7 @@ export async function runStandingConsentCli({
     if(!plan.ok||plan.already_authorized_in_scope)return plan;
     if(args[0]==="--plan")return {...plan,challenge_created:false};
     const workflow=createJhnCanonicalConsentWorkflow({store});
-    const created=workflow.request({mandate:plan.mandate,ttl_ms:600000});
+    const created=workflow.request({mandate:plan.mandate,ttl_ms:CONSENT_LINK_TTL_MS});
     if(!created.ok)return fail(created.error||"standing_consent_request_failed");
     const check=workflow.inspect({challenge_id:created.challenge_id});
     if(!check.ok||check.status!=="pending"||

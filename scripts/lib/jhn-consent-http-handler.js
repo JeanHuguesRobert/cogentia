@@ -1,3 +1,4 @@
+import {CONSENT_LINK_TTL_MS} from "./jhn-canonical-consent-workflow.js";
 /**
  * Optional authenticated browser adapter for the canonical consent workflow.
  * Mount ONLY behind a trusted application HTTPS origin; the hosting server
@@ -81,7 +82,7 @@ export function createJhnConsentHttpHandler({workflow,origin,exactAgentMailAmend
       if(!plan.mandate)return denied(409,'repository_mandate_missing');
       // Only the trusted server computes this fixed proposal. No arbitrary
       // scope or mandate data may be supplied from the browser.
-      const created=workflow.request({mandate:plan.mandate,ttl_ms:600000});
+      const created=workflow.request({mandate:plan.mandate,ttl_ms:CONSENT_LINK_TTL_MS});
       if(!created.ok)return denied(409,created.error||'repository_request_failed');
       return reply(201,{ok:true,challenge_id:created.challenge_id,
         payload_hash:created.payload_hash,expires_at:created.expires_at,

@@ -2,13 +2,14 @@
 /**
  * Owner-only preparation of the smallest root COP scope extension for
  * intra-Twin JMAP messaging. No approval, no apply, no sending.
- * --plan is read-only; --request records a 10-minute review challenge in
+ * --plan is read-only; --request records a 12-hour review challenge in
  * the same canonical Inseme event log as the existing consent service.
  */
 import {realpathSync} from 'node:fs';
 import {openExistingJohnCopStore} from '../lib/john-cop-existing-store.js';
 import {resolveMandate} from '../../../inseme/packages/cop-core/src/governed-act.js';
 import {createSqliteCopEventStore} from '../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js';
+import {CONSENT_LINK_TTL_MS} from '../lib/jhn-canonical-consent-workflow.js';
 import {createJhnCanonicalConsentWorkflow} from '../lib/jhn-canonical-consent-workflow.js';
 const PATH='/var/lib/cogentia/cop/john-root-v1.sqlite';
 const REF='mandate:jhn:john-root';
@@ -46,7 +47,7 @@ export async function runAgentMailConsentCli({args=process.argv.slice(2),ownerSh
     const plan=agentMailMandatePlan(store);
     if(!plan.ok||plan.already_authorized_in_scope)return plan;
     const workflow=createJhnCanonicalConsentWorkflow({store});
-    const result=workflow.request({mandate:plan.mandate,ttl_ms:600000});
+    const result=workflow.request({mandate:plan.mandate,ttl_ms:CONSENT_LINK_TTL_MS});
     if(!result.ok)return fail(result.error);
     return {ok:true,kind:'cogentia.agent_mail_consent_request.v1',
       added_capabilities:plan.added_capabilities,

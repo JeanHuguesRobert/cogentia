@@ -10,6 +10,7 @@
 import {createServer} from 'node:http';
 import {realpathSync,statSync} from 'node:fs';
 import {createSqliteCopEventStore} from '../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js';
+import {CONSENT_LINK_TTL_MS} from '../lib/jhn-canonical-consent-workflow.js';
 import {createJhnCanonicalConsentWorkflow} from '../lib/jhn-canonical-consent-workflow.js';
 import {createJhnConsentHttpHandler} from '../lib/jhn-consent-http-handler.js';
 import {agentMailMandatePlan} from './jhn-agent-mail-consent-cli.js';
@@ -77,7 +78,7 @@ async function main(){
    requestExactChatgptTurnConsent:()=>{
      const plan=johnChatgptTurnMandatePlan({store});
      if(!plan.ok||!plan.requires_owner_consent)return plan;
-     const result=workflow.request({mandate:plan.mandate,ttl_ms:600000});
+     const result=workflow.request({mandate:plan.mandate,ttl_ms:CONSENT_LINK_TTL_MS});
      return result.ok?result:{ok:false,error:result.error};
    },
    requestExactContinuationConsent:()=>requestContinuationConsent(store),

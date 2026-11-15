@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createSqliteCopEventStore} from '../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js';
 import {recordMandateDeclaration,recordMandateControl} from '../../../inseme/packages/cop-core/src/governed-act.js';
 import {JHN_VAULT_INSTANCE_ID} from '../../../inseme/apps/platform/scripts/lib/vault-catalog.js';
-import {createJhnCanonicalConsentWorkflow} from './jhn-canonical-consent-workflow.js';
+import {createJhnCanonicalConsentWorkflow,CONSENT_LINK_TTL_MS} from './jhn-canonical-consent-workflow.js';
 const owner='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const authClient={auth:{getUser:async t=>({data:{user:t==='owner-session'?{id:owner,email_confirmed_at:'2026-11-09T09:00:00Z',is_anonymous:false}:{id:'smoke',email_confirmed_at:'2026-11-09T09:00:00Z'}}})}};
 const adminClient={from(t){assert.equal(t,'instances');return {select(){return {eq(){return {single:async()=>({data:{id:JHN_VAULT_INSTANCE_ID,canonical_slug:'jhn',status:'autonomous',principal_id:owner}})}}}}}}};
@@ -51,5 +51,34 @@ test('expired, replay, version-conflict and missing session fail closed',async()
   const denied=await w.apply({challenge_id:b.challenge_id,session:{accessToken:'owner-session'}});
   assert.equal(denied.error,'mandate_inactive');
   assert.equal(s.replay().filter(e=>e.payload?.kind==='MandateDeclaration').length,1);
+ }finally{s.close()}
+});
+
+
+test('Principal consent links default to 12h, reject longer windows, and remain single-use',async()=>{
+ const {s,w,state}=make();try{
+  assert.equal(CONSENT_LINK_TTL_MS,43_200_000);
+  const opened=+state.now;
+  const challenge=w.request({mandate});
+  assert.equal(challenge.ok,true,JSON.stringify(challenge));
+  assert.equal(Date.parse(challenge.expires_at)-opened,CONSENT_LINK_TTL_MS);
+  assert.equal(w.request({mandate,ttl_ms:CONSENT_LINK_TTL_MS+1}).error,'invalid_ttl');
+  state.now=new Date(opened+CONSENT_LINK_TTL_MS-1);
+  assert.equal(w.inspect({challenge_id:challenge.challenge_id}).status,'pending');
+  state.now=new Date(opened+CONSENT_LINK_TTL_MS);
+  assert.equal(w.inspect({challenge_id:challenge.challenge_id}).status,'expired');
+  assert.equal((await w.decide({challenge_id:challenge.challenge_id,
+    payload_hash:challenge.payload_hash,session:{accessToken:'owner-session'},
+    decision:'approve'})).error,'challenge_not_pending');
+ }finally{s.close()}
+});
+test('Principal ratification links use the same 12h expiration',()=>{
+ const {s,w,state}=make();try{
+  const opened=+state.now;
+  const r=w.requestRatification({mandate_ref:mandate.mandate_ref});
+  assert.equal(r.ok,true,JSON.stringify(r));
+  assert.equal(Date.parse(r.expires_at)-opened,CONSENT_LINK_TTL_MS);
+  state.now=new Date(opened+CONSENT_LINK_TTL_MS);
+  assert.equal(w.inspect({challenge_id:r.challenge_id}).status,'expired');
  }finally{s.close()}
 });

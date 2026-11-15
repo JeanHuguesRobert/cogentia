@@ -6,6 +6,7 @@
  */
 import {createSqliteCopEventStore} from '../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js';
 import {createSupabaseClient} from '../../../inseme/apps/platform/scripts/lib/config.js';
+import {CONSENT_LINK_TTL_MS} from '../lib/jhn-canonical-consent-workflow.js';
 import {createJhnCanonicalConsentWorkflow} from '../lib/jhn-canonical-consent-workflow.js';
 const PATH='/var/lib/cogentia/cop/john-root-v1.sqlite';
 const BASE='https://jhn.baronsmariani.org';
@@ -27,7 +28,7 @@ export async function runRatifyCli({args=process.argv.slice(2),cwdHost=true}={})
   createSupabaseClient(); // fail-closed if Supabase owner configuration missing
   store=createSqliteCopEventStore(PATH);
   const workflow=createJhnCanonicalConsentWorkflow({store});
-  const result=workflow.requestRatification({mandate_ref,ttl_ms:600000});
+  const result=workflow.requestRatification({mandate_ref,ttl_ms:CONSENT_LINK_TTL_MS});
   if(!result.ok)return error(result.error);
   const url=`${BASE}/cop/consent/${result.challenge_id}`;
   return {ok:true,kind:'cop.mandate-ratification.request.v1',

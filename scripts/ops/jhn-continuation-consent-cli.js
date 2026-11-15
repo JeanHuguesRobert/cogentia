@@ -7,6 +7,7 @@
  * through Supabase Auth and the canonical consent service.
  */
 import {readFileSync,realpathSync} from 'node:fs';
+import {CONSENT_LINK_TTL_MS} from '../lib/jhn-canonical-consent-workflow.js';
 import {openExistingJohnCopStore} from '../lib/john-cop-existing-store.js';
 import {createSqliteCopEventStore} from '../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js';
 import {resolveMandate} from '../../../inseme/packages/cop-core/src/governed-act.js';
@@ -41,7 +42,7 @@ export function continuationConsentPlan(store,{verifyIssuer=verifyCurrentIssuer}
   if(!verifyIssuer(store))return fail('canonical_issuer_unverified');
   return johnContinuationMandatePlan({store});
 }
-export async function requestContinuationConsent(store,{verifyIssuer=verifyCurrentIssuer,ttl_ms=600000,workflowFactory}={}) {
+export async function requestContinuationConsent(store,{verifyIssuer=verifyCurrentIssuer,ttl_ms=CONSENT_LINK_TTL_MS,workflowFactory}={}) {
   const plan=continuationConsentPlan(store,{verifyIssuer});
   if(!plan.ok||plan.already_authorized_in_scope)return plan;
   if(!plan.requires_owner_consent||!plan.mandate)return fail('consent_plan_unavailable');
