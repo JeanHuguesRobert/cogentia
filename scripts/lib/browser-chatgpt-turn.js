@@ -9,6 +9,16 @@ const BROWSER='fracta2-hosted';
 const GATEWAY='ws://127.0.0.1:8776/assistant';
 const deny=code=>{throw Object.assign(new Error(code),{code});};
 const textLimit=(s,n)=>typeof s==='string'?s.slice(0,n):'';
+/** Retry only after ChatGPT itself reports a failed send and the EXACT
+ * previously submitted continuation is still in the composer. A successful
+ * click alone is not proof of an accepted model turn. */
+export function canRecoverChatgptFailedDraft(observed={}){
+ return observed.send_failure_visible===true&&
+   observed.draft_bound_to_requested_continuation===true&&
+   observed.composer_present===true&&
+   observed.composer_blank===false&&
+   observed.generating===false;
+}
 export function validateChatgptTurnRequest(input={}){
  if(!input||typeof input!=='object'||!['submit','observe','send_draft','ensure_tab'].includes(input.action))
    return {ok:false,error:'chatgpt_action_invalid'};
@@ -30,6 +40,9 @@ export function validateChatgptTurnRequest(input={}){
    return {ok:false,error:'chatgpt_draft_binding_invalid'};
  if(input.action==='observe'&&input.prompt!==undefined)
    return {ok:false,error:'chatgpt_unexpected_prompt'};
+ if(input.action==='observe'&&input.expected_continuation_id!==undefined&&
+    !/^ctn_chatgpt_browser_[a-f0-9]{32}$/.test(input.expected_continuation_id))
+   return {ok:false,error:'chatgpt_observe_binding_invalid'};
  return {ok:true};
 }
 export function isChatgptTabUrl(url){
@@ -53,6 +66,7 @@ const submitCode=`(() => {
   send.click();return {ok:true,click_dispatched:true};
 })()`;
 const observeCode=`(() => {
+  const expectedContinuationId=null;
   if(location.origin!=="https://chatgpt.com")return {ok:false,error:"origin_changed"};
   const assistant=[...document.querySelectorAll('[data-message-author-role="assistant"]')];
   const last=assistant.at(-1);
@@ -72,6 +86,9 @@ const observeCode=`(() => {
   const input=!!document.querySelector("#prompt-textarea,[contenteditable=true][role=textbox]");
   const composer=document.querySelector("#prompt-textarea,[contenteditable=true][role=textbox]");
   const form=composer?.closest("form");
+  const sendFailureVisible=/Could not send this ChatGPT message/i.test(responseText);
+  const draftBound=typeof expectedContinuationId==="string"&&
+    !!expectedContinuationId&&(composer?.innerText||"").includes(expectedContinuationId);
   const buttons=[...(form?.querySelectorAll("button")||[])].slice(-20).map(b=>({
     testid:b.getAttribute("data-testid")||"",
     label:b.getAttribute("aria-label")||"",
@@ -83,6 +100,8 @@ const observeCode=`(() => {
   return {ok:true,assistant_count:assistant.length,
     composer_chars:(composer?.innerText||"").length,
     composer_blank:(composer?.innerText||"").trim().length===0,
+    send_failure_visible:sendFailureVisible,
+    draft_bound_to_requested_continuation:draftBound,
     composer_buttons:buttons,
     response_selector_counts:responseSelectorCounts,
     response_complete_text:responseText.includes('Response complete'),
@@ -171,7 +190,11 @@ export function createChatgptTurnCapability({gateway=GATEWAY,browserId=BROWSER,t
            browser_instance_id:browserId,tabId:input.tab_id,
            expectedUrl:tab.url,code}));
          if(input.action==='observe'){
-           const observed=await rpc(observeCode);
+           const code=input.expected_continuation_id
+             ?observeCode.replace('const expectedContinuationId=null;',
+                'const expectedContinuationId='+JSON.stringify(input.expected_continuation_id)+';')
+             :observeCode;
+           const observed=await rpc(code);
            if(!observed.ok)deny(observed.error||'chatgpt_observation_unconfirmed');
            return {...meta,action:'observe',...observed};
          }

@@ -551,3 +551,55 @@ failed continuation. Its reserved COP step was released (active reserved
 steps 1→0), its PacketClaim released (`CLAIM_RELEASED`) and
 `cop.continuation-abandonment/v1` was appended with the exact error reason.
 A later run MUST use a new continuation ID; do not replay this one.
+
+### Reality Test: three ChatGPT browser turns VERIFIED with one bounded recovery — 15 November 2026
+
+**Evidence from the owner-run process** (started 10:30:01 UTC):
+
+| Continuation | MCP `returned` | COPScheduler `handler_completed` | Budget settled |
+| --- | --- | --- | --- |
+| `ctn_chatgpt_browser_3182660f513a4908a596b453a3968c11` | yes | yes (10:30:18) | yes |
+| `ctn_chatgpt_browser_812be6de270841dea8afcbfd217987e3` | yes | yes (10:30:29) | yes |
+| `ctn_chatgpt_browser_22891c5d59d046fa860ca1e0ca192ff7` | yes (10:36:51) | yes (10:36:51) | yes |
+
+The foreground owner command initially reported:
+`completed_turns=2`, `needs_reconciliation`, third stage `return_ambiguous`.
+Read-only, John-governed browser inspection then found that ChatGPT itself
+had displayed **“Could not send this ChatGPT message”** and retained the
+exact third-continuation prompt in its editor. No canonical result had
+arrived. The existing `browser.chatgpt.turn` **`send_draft`** operation was
+therefore invoked *exactly once*, bound to that same continuation ID,
+without reinserting the text or creating a new packet. The browser click
+was acknowledged, then the model delivered the real MCP result and the
+canonical COPScheduler evaluated it. A final browser observation found
+**three assistant replies**, a blank stable composer and no generation.
+
+The COP ledger was independently re-read for all three IDs and showed:
+`returned=true`, `scheduler-wake=true`, `handler_completed=true`,
+`ExecutionBudgetSettlement=true` for each, no outstanding reserved COP
+steps, and `store.auditCommitments().ok=true`. This verification was also
+persisted directly in the append-only COP topic
+`packet:jhn:browser-cps-three-turn-reality` with idempotency key
+`cps:reality:2026-11-15:three-chatgpt-browser-returns-with-bound-recovery`
+and causal references to all nine returned, handler and settlement receipts.
+
+**Precise scope of success:** three **real** browser-based ChatGPT turns,
+all correlated and resumed. The first two proceeded without intervention.
+The third required one explicit browser-draft recovery **after** the owner
+foreground pilot had exhausted its return wait. Thus this experiment
+proves real inter-turn CPS continuity and effective recovery; it does
+**not yet** prove three completely unattended, error-free turns, nor an
+indefinitely resident autonomous Judgment loop. The parent mandate remains
+open. No API-model substitution occurred.
+
+**Fix Bugs First follow-up:** `browser-chatgpt-turn.js` now exposes two
+non-content browser observations when a continuation ID is explicitly
+supplied: `send_failure_visible` and
+`draft_bound_to_requested_continuation`. The guarded foreground runner
+can perform at most **one** `send_draft` for the SAME existing continuation
+if and only if the page explicitly displays the failed-send indication,
+that exact ID remains in a nonempty composer, no generation is underway,
+and no canonical returned result exists. No blind retry after a confirmed
+click and no silent new continuation. This self-recovery code is tested
+at the source level; it was **not** part of the already-completed live
+third-turn recovery, which was invoked separately under John authority.

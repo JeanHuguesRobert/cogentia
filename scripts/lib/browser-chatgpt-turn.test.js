@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createChatgptTurnCapability,validateChatgptTurnRequest,isChatgptTabUrl}
+import {createChatgptTurnCapability,validateChatgptTurnRequest,isChatgptTabUrl,canRecoverChatgptFailedDraft}
  from './browser-chatgpt-turn.js';
 
 const tab={id:42,url:'https://chatgpt.com/',title:'ChatGPT'};
@@ -202,4 +202,35 @@ test('submit does not retry a non-transient error or a confirmed click',async()=
  await assert.rejects(createChatgptTurnCapability({sessionFactory:async()=>remote})
    .execute({action:'submit',tab_id:42,prompt:'Never repeat'}),/origin_changed/);
  assert.equal(submits,1);
+});
+
+
+test('bound-draft recovery requires explicit failed-send UI and exact continuation binding',()=>{
+ const id='ctn_chatgpt_browser_'+'a'.repeat(32);
+ assert.equal(validateChatgptTurnRequest({action:'observe',tab_id:42,
+   expected_continuation_id:id}).ok,true);
+ assert.equal(validateChatgptTurnRequest({action:'observe',tab_id:42,
+   expected_continuation_id:'ctn_fake'}).ok,false);
+ const failure={send_failure_visible:true,draft_bound_to_requested_continuation:true,
+   composer_present:true,composer_blank:false,generating:false};
+ assert.equal(canRecoverChatgptFailedDraft(failure),true);
+ for(const field of ['send_failure_visible','draft_bound_to_requested_continuation',
+   'composer_present']){
+   assert.equal(canRecoverChatgptFailedDraft({...failure,[field]:false}),false);
+ }
+ assert.equal(canRecoverChatgptFailedDraft({...failure,composer_blank:true}),false);
+ assert.equal(canRecoverChatgptFailedDraft({...failure,generating:true}),false);
+ assert.equal(canRecoverChatgptFailedDraft({}),false);
+});
+
+test('bound observation uses exact literal continuation ID without new browser insertion',async()=>{
+ const calls=[],id='ctn_chatgpt_browser_'+'b'.repeat(32);
+ const cap=createChatgptTurnCapability({sessionFactory:async()=>mockSession(calls)});
+ const result=await cap.execute({action:'observe',tab_id:42,
+   expected_continuation_id:id});
+ assert.equal(result.action,'observe');
+ const evals=calls.filter(x=>x[0]==='page.evaluate');
+ assert.equal(evals.length,1);
+ assert.equal(evals[0][1].code.includes(JSON.stringify(id)),true);
+ assert.equal(calls.some(x=>x[0]==='page.insertText'),false);
 });

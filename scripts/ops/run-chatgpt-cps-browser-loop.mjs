@@ -10,6 +10,7 @@ import {createSqliteCopEventStore} from '../../../inseme/packages/cop-core/src/s
 import {createEventSourcedExecutionBudgetLedger} from '../../../inseme/packages/cop-core/src/execution-budget.js';
 import {evaluateMandate,resolveMandate} from '../../../inseme/packages/cop-core/src/governed-act.js';
 import {runChatgptCpsBrowserLoop} from '../lib/chatgpt-cps-browser-loop.js';
+import {canRecoverChatgptFailedDraft} from '../lib/browser-chatgpt-turn.js';
 const DB='/var/lib/cogentia/cop/john-root-v1.sqlite';
 const MANDATE='mandate:jhn:john-root';
 const LOCAL_MCP='http://127.0.0.1:8791/mcp';
@@ -143,6 +144,7 @@ if(argv.length===1&&argv[0]==='--status'){
        },
        observeReturn:async({prepared})=>{
          const topic='continuation:'+prepared.continuation_id;
+         let recoveryAttempted=false;
          for(let wait=0;wait<65;wait++){
            const e=store.listTopic(topic);
            const returned=e.find(x=>x.payload?.profile==='cop.continuation-result/v1'&&
@@ -154,6 +156,35 @@ if(argv.length===1&&argv[0]==='--status'){
              return {ok:true,continuation_id:prepared.continuation_id,
                returned_receipt_ref:returned.idempotency_key,
                handler_receipt_ref:evaluated.idempotency_key};
+           }
+           // A confirmed browser-side failure is different from an
+           // ambiguous click. Recover only the SAME bound, unsent draft,
+           // once, and only if the canonical MCP return is still absent.
+           if(!recoveryAttempted && wait>=3 && wait%3===0){
+             let observation=null;
+             try{observation=await john('observe',{
+               action:'observe',tab_id:tabId,
+               expected_continuation_id:prepared.continuation_id});}
+             catch{/* observability failure is not authority to retry */}
+             if(observation?.ok===true&&
+                canRecoverChatgptFailedDraft(observation.observation)){
+               recoveryAttempted=true; // Fence even on transport ambiguity.
+               if(!store.listTopic(topic).some(x=>
+                    x.payload?.profile==='cop.continuation-result/v1'&&
+                    x.payload.phase==='returned')){
+                 let recovered=null;
+                 try{recovered=await john('send_draft',{
+                   action:'send_draft',tab_id:tabId,
+                   expected_continuation_id:prepared.continuation_id});}
+                 catch{/* never replay after an ambiguous second click */}
+                 output('bound_draft_recovery',{
+                   continuation_id:prepared.continuation_id,
+                   outcome:recovered?.ok===true&&recovered.observation?.submitted===true
+                     ?'click_dispatched_awaiting_mcp_return':'needs_reconciliation',
+                   recovery_attempts:1,
+                 });
+               }
+             }
            }
            await sleep(1500);
          }
