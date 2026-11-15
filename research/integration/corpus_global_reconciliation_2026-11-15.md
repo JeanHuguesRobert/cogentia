@@ -17,7 +17,7 @@ Objet : retrouver les contributions utiles qui subsistent hors des branches cano
 
 - ThinkPad C:/tweesic : **37 dépôts actifs**, aucun stash ni modification non committée lors de l'inventaire ; quatre branches secondaires. Leur comparaison à master/main doit être vérifiée par objet Git, car des nombres issus d'une comparaison inversée ont déjà été observés.
 - Fracta2 /srv/cogentia/repos : environ 21 checkouts canoniques, liens symboliques compris, avec références locales de branches distantes examinées.
-- Fracta2 /home/ubuntu/travel/recovered-20261010 : **21 anciens checkouts détachés** (environ 897 Mo), snapshot sauvegardé le 10 octobre et vérifié par RESTORE-VERIFIED.json et ORIGINS-VERIFIED.json. Sa présence atteste une récupération, pas la convergence de ses travaux. Ne pas effacer l'archive avant la clôture.
+- Fracta2 /home/ubuntu/travel/recovered-20261010 : cohorte historique initialement annoncée comme **21 checkouts détachés** (environ 897 Mo), récupérée du 10 octobre et vérifiée par RESTORE-VERIFIED.json et ORIGINS-VERIFIED.json. **État du 15 novembre** : Survey, Inseme et Suicide Corse ont chacun été remplacés par une archive compacte vérifiée (suffixe .archive) ; leurs anciens chemins de checkout ne sont donc plus présents. Les autres copies restent conservées et ne sont pas déclarées convergées.
 - Dix références stash historiques dans ce snapshot : 3 Operium et 1 Inseme portant les mêmes OID que les stashes déjà traités, plus 6 Survey limités à la projection générée research/corpus-status.md. Ce ne sont pas dix développements nouveaux.
 
 Les données privées des journaux d'interactions et du registre privé ne sont pas reproduites dans ce rapport public.
@@ -161,3 +161,22 @@ Remaining parallel workload in this audit: Cogentia #306 live governed worker ad
 Une branche ou une archive n'est soldée qu'avec une disposition explicite : contenu utile intégré, identique confirmé, supplanté avec référence, preuve privée conservée, ou suppression décidée après contrôle. Les tâches non résolues ne justifient pas de remettre en cause le nettoyage des stashes et worktrees actifs.
 
 Paquet propriétaire transversal : https://github.com/JeanHuguesRobert/cogentia/issues/309
+
+
+## 15 novembre 2026 — Archivage différentiel sans perte, Fracta2 (#309)
+
+Le patrimoine Git historique est conservé **sans maintenir des copies complètes indéfiniment**. Trois anciens checkouts ont été remplacés après comparaison des commits et refs, des fichiers suivis, untracked et ignored, des stashes et des dépendances actives. Les manifests, empreintes, bundles et preuves primaires restent sur Fracta2, dans des répertoires privés ; ils ne sont pas publiés dans ce dépôt.
+
+| Ancien checkout | Disposition et preuves préservées | Remplacement | Octets libérés |
+| --- | --- | --- | ---: |
+| Survey | Ancien HEAD ancêtre de main ; six stashes de projection générée et un dirty ; OID et références conservés ; import réel des stashes et contrôle des blobs | survey.archive (128 Ko) | 372 520 430 |
+| Suicide Corse | Ancien HEAD et six références ancêtres de main ; unique projection générée non suivie, conservée byte-exacte ; aucune donnée Git orpheline | suicide-corse.archive (72 Ko) | 28 965 703 |
+| Inseme | Ancien HEAD ancêtre de main ; stash source sur huit chemins, projection modifiée, document non suivi ; **650 commits orphelins et 4 977 objets absents du Git canonique** préservés dans le bundle ; restitution réelle testée | inseme.archive (223 Mo) | 166 034 767 |
+
+**Réduction nette : 567 520 900 octets (≈ 541 Mio).** Chaque ancienne copie a été retirée seulement après vérification de son remplacement, et non doublée par une nouvelle sauvegarde permanente. Les principaux checkouts, sites et branches main sont demeurés inchangés. Les temporaires de vérification ont été supprimés.
+
+Les bundles différentiels Survey et Inseme sont **dépendants de commits historiques de leurs main actuels**. Le contrôle git bundle verify, l'ascendance des prérequis et un import effectif dans un dépôt bare temporaire ont réussi. **Une future réécriture destructive de l'histoire canonique nécessiterait de rendre ces archives autonomes avant suppression des prérequis.** Les 650 commits Inseme sont conservés mais **pas déclarés réconciliés sémantiquement**. Les autres archives historiques, dont Barons Mariani, FractaVolta, Inox et les archives privées, restent protégées jusqu'à classification.
+
+Le moteur wip merge publié sur Cogentia main par 633e9618 produit désormais un rapport horodaté à partir de deux inventaires. Six tests WIP passent ; le test réel ThinkPad / Fracta2 montre le même HEAD Cogentia mais des références distantes mises en cache différemment et des scripts Python locaux sur Fracta2. Ni l'absence dans un cache ni l'identité du HEAD n'autorisent une suppression.
+
+Suite : #310 doit classifier les contributions historiques non fusionnées, dont les 650 commits Inseme ; #311 peut ensuite produire des plans conditionnés par SHA avec reçus. Pas de reset, purge Git, branche distante supprimée ni suppression en masse de données orphelines.
