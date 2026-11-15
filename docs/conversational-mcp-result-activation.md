@@ -458,3 +458,41 @@ sudo systemctl restart mcp-cogentia.service
 Next: a *valid* local fixture continuation, claim, reserved budget,
 authenticated MCP result, durable receipt and CPS subscriber wake,
 without expanding the allowlist to a third-party provider.
+
+## 19. 15 November 2026 — first *actual* live local-channel COP result receipt
+
+Following the Principal's repeated criticism of avoidable abstention, a
+bounded Reality Test was executed immediately, rather than deferring
+another already feasible step. Canonical operator command:
+
+```sh
+node scripts/ops/reality-test-mcp-local-result.mjs --live-local-fixture
+```
+
+The test creates **one** clearly marked local fixture continuation in the
+existing Fracta2 COP SQLite store, makes a **one-step** reservation under
+the already signed JHN v2 mandate and already funded budget, claims its
+packet, and sends `cogentia_continuation_result_submit` to the **running
+production HTTP MCP** under the pre-existing JHN transport identity.
+It checks a durable first receipt and exact duplicate replay with only
+one MCP observation; applies the canonical Inseme result recognizer,
+persists `returned` and settles that one reserved step. It does not
+sign/amend authority or contact any browser, consumer account or external
+provider. The credential is read inside the local trusted executor and
+never printed or written to a file. The fixture must be invoked
+explicitly with `--live-local-fixture` and may consume **one** existing
+COP budget step per run.
+
+**Observed successful live event:**
+- continuation:
+  `ctn_local_mcp_reality_cd319cd8b948418c8911a9e2c5ba918b`
+- durable receipt:
+  `cop:event:0b925d9a-d0bb-43c7-90a2-ae9b9e439df4`
+- `idempotent_retry=true`; `phase=returned`;
+  `budget_settled=true`.
+
+This constitutes a real **live MCP ingress → COP journal →
+recognition/return → accounting** Reality Test. It is still **not**
+evidence of an autonomous CPS subscription and redispatch after
+`returned`; the explicitly invoked local test performed recognition.
+That separate wiring is the remaining functional part of #330.
