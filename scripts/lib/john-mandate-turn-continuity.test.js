@@ -23,6 +23,12 @@ test("real canonical journal never equates a completed turn with completed manda
     assert.equal(replay.ok,true);
     assert.equal(replay.duplicate,true);
     assert.equal(replay.receipt_ref,first.receipt_ref);
+    assert.equal(replay.needs_continuation,true);
+    const pending=bridge.pending({goal_ref:"cogentia-330"});
+    assert.equal(pending.ok,true);
+    assert.equal(pending.pending.length,1);
+    assert.equal(pending.pending[0].needs_continuation,true);
+    assert.equal(bridge.pending({}).pending.length,1);
     const records=store.listTopic("john-mandate:cogentia-330");
     assert.equal(records.length,1);
     assert.equal(records[0].payload.turn_status,"completed");
@@ -42,6 +48,9 @@ test("untrusted actor, malformed context, and reused conflicting request refuse 
     assert.equal(bridge.record(called).ok,true);
     assert.equal(bridge.record({...called,request:{...base,input:{...base.input,
       continuity:{...base.input.continuity,goal_ref:"different-goal"}}}}).reason,
+      "request_idempotency_conflict");
+    assert.equal(bridge.record({...called,request:{...base,input:{...base.input,
+      continuity:{...base.input.continuity,acceptance:["altered"]}}}}).reason,
       "request_idempotency_conflict");
   }finally{store.close();}
 });

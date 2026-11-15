@@ -562,3 +562,26 @@ restart. Autonomous general Agent JHN dispatch still needs a governed worker
 which consumes these canonical topics and resumes remaining actions. The
 hosted ChatGPT conversation runtime itself is not controlled by this repo;
 claiming that this patch prevents ChatGPT UI turn stops would be inaccurate.
+
+## 23. Bounded automatic second John step through the existing governed read path
+
+The production cogentia_john_run path accepts an optional
+request.input.continuity.next_request for an explicitly described second
+John request. After journaled first-turn completion, it may execute the
+second request without another user turn. It reuses the SAME JHN transport
+identity and invokes the existing governed John MCP execution path.
+
+Every child request independently passes the current canonical mandate,
+budget/claim and effect rules. The additional structural check permits ONLY
+browser.navigation.instances and browser.hosted.inspect read-only calls,
+the same principal/mandate/budget/goal, no internal/external effects,
+one tool call, at most four steps, and at most 15 seconds. At most two
+automatic additional hops can be launched. The response exposes
+continuity_advance with the child's canonical accounting if available.
+
+A successful second Step still never completes the parent mandate solely
+because it ended. It remains open until acceptance is verified from durable
+independent evidence. The current JHN root v2 mandate authorizes the two
+named browser read capabilities and MCP result ingress, not arbitrary
+FractaRouting worker execution. This feature does not control the ChatGPT
+host runtime's own turn termination.

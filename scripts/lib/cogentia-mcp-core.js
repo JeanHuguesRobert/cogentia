@@ -18,6 +18,7 @@ import { compareMandateAttenuation } from "./mandate-attenuation.js";
 import { assessProportionateRisk } from "./proportionate-risk.js";
 import {normalizeJohnReadArguments} from "./john-read-argument-gate.js";
 import { runJohnRequest } from "./john-run.js";
+import {admissibleJohnContinuationReadHop} from "./john-continuity-next-read.js";
 import { createAgentJhnWorkspaceCapabilities } from "./agent-jhn-workspace.js";
 import { createHostedBrowserCapabilities } from "./hosted-browser-capabilities.js";
 import { auditCapabilitySymmetry } from "./symmetry-audit.js";
@@ -105,6 +106,7 @@ export const PRIVATE_READ_TOOLS = new Set([
   "cogentia_memory_capture",
   "cogentia_config_hygiene_audit",
   "cogentia_cop_consent_review",
+  "cogentia_john_mandate_pending",
   "cogentia_vault_list",
   "cogentia_vault_describe",
   "operium_calendar_list",
@@ -782,6 +784,18 @@ export const TOOLS = [
       type: "object",
       properties: {},
       additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_john_mandate_pending",
+    description: "Read pending parent-mandate continuations from the durable JHN COP journal. JHN private read only; does not execute or grant effects.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        goal_ref: {type:"string",minLength:1},
+        limit: {type:"integer",minimum:1,maximum:50},
+      },
+      additionalProperties:false,
     },
   },
   {
@@ -2125,6 +2139,15 @@ export function createMcpCore(env = process.env, extras = {}) {
         // The real five-phase runner is CLI-only for now. Never silently
         // substitute emit-static, which has different observable effects.
         throw Object.assign(new Error("weekly_consolidation_mcp_not_implemented: run the governed CLI workflow or connect a real scheduled job"), { error_class: "not_implemented" });
+      case "cogentia_john_mandate_pending": {
+        if (!isResolvedCallerAuth(callOpts.auth) || callOpts.auth.auth!=="jhn" ||
+            callOpts.auth.principal_ref!=="principal:jhn")
+          return {ok:false,reason:"jhn_actor_required"};
+        const journal=extras.mandateTurnContinuity;
+        if (!journal || typeof journal.pending!=="function")
+          return {ok:false,reason:"canonical_journal_unavailable"};
+        return journal.pending({goal_ref:args.goal_ref||null,limit:args.limit||25});
+      }
       case "cogentia_john_run": {
         let req = args.request;
         if(args.read_arguments!==undefined && req && typeof req==='object')
@@ -2374,14 +2397,45 @@ export function createMcpCore(env = process.env, extras = {}) {
               request:req,events,actor:callOpts.auth.actor,
               principal_ref:callOpts.auth.principal_ref,
             }) : null;
+        const nextRequest=req.input?.continuity?.next_request;
+        let continuityAdvance=null;
+        if (nextRequest && jhnCaller && completed && continuity?.ok) {
+          const depth=callOpts.continuityDepth || 0;
+          const admitted=admissibleJohnContinuationReadHop(req,nextRequest,depth);
+          if (!admitted.ok) {
+            continuityAdvance={ok:false,reason:admitted.reason};
+          } else {
+            // Reuse the real, independently governed John read tool: no
+            // copied credential, bypassed COP budget, or model-asserted grant.
+            try {
+              const result=await callTool("cogentia_john_run",
+                {request:nextRequest},
+                {...callOpts,continuityDepth:depth+1});
+              continuityAdvance={
+                ok:result?.ok===true,request_id:result?.request_id||null,
+                capability:nextRequest.capability,
+                turn_status:result?.status||null,
+                mandate_status:result?.mandate_status||"not_evaluated",
+                receipt_ref:result?.mandate_continuity?.receipt_ref||null,
+                canonical_accounting:result?.canonical_accounting||null,
+                failure:result?.failure?.code||null,
+              };
+            } catch (error) {
+              continuityAdvance={ok:false,reason:"governed_next_read_failed",
+                failure_code:error?.error_class||error?.code||null};
+            }
+          }
+        }
         return {
           ok: Boolean(completed) && continuity?.ok !== false,
           request_id: req.request_id,
           packet_id: admitted?.data?.packet_id || null,
-          status: completed ? "completed" : "failed",
+          status: continuity?.ok === false ? "continuity_journal_failed"
+            : completed ? "completed" : "failed",
           // Turn completion does not constitute parent mandate completion.
           mandate_status: continuity?.mandate_status || "not_evaluated",
           mandate_continuity: continuity,
+          ...(continuityAdvance?{continuity_advance:continuityAdvance}:{}),
           text: completed?.data?.result?.text || failedData.text || failedData.yield?.semantic_yield || "",
           yield: completed?.data?.result?.yield || failedData.yield || null,
           accounting: settled?.data || null,
