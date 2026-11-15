@@ -154,6 +154,53 @@ test("canonical revocation prevents the next action under the same standing mand
     assert.equal(f.ledger().snapshot().reserved.max_steps,0);
   }finally{f.store.close();}
 });
+test("revocation between reservation and dispatch invalidates the standing authorization",async()=>{
+  const f=fixture();
+  try{
+    const granted=await resolveHostMissionAuthority(f.resolver,request());
+    assert.equal(granted.canonical_cop,true);
+    assert.equal(await granted.beforeDispatch(),true);
+    const revoked=recordMandateControl(f.store,{
+      principal_ref:"principal:jhn",mandate_ref:REF,action:"revoke",
+      reason:"revoked before provider call"});
+    assert.equal(revoked.ok,true);
+    assert.equal(await granted.beforeDispatch(),false);
+    assert.equal((await granted.finalize({attempted:false})).budget_action,"release");
+    assert.equal(f.ledger().snapshot().reserved.max_steps,0);
+    assert.equal(f.ledger().snapshot().settled.max_steps,0);
+  }finally{f.store.close();}
+});
+test("host router prevents TOCTOU invocation and releases reservation automatically",async()=>{
+  const {createHostCapabilityRouter}=await import("./host-capability-router.js");
+  const f=fixture();
+  let invocations=0;
+  const router=createHostCapabilityRouter({
+    cacheKey:"standing-revocation-race",providerName:"unix-process",
+    missionAuthorityResolver:async input=>{
+      const grant=await f.resolver(input);
+      if(grant.allowed)recordMandateControl(f.store,{
+        principal_ref:"principal:jhn",mandate_ref:REF,action:"revoke",
+        reason:"fixture race after reservation"});
+      return grant;
+    },
+    providerFactory:async()=>({start:async()=>{},
+      invoke:async()=>{invocations++;return {ok:true,stdout:"unexpected"};}}),
+  });
+  const caller=auth();
+  const ctx={actor:caller.actor,principal:caller.principal_ref,
+    mandate:caller.mandate_ref,trustedCallerAuth:caller,
+    auth:{lockers:{private:{write:true}}},
+    target:"node:fracta2",provider:"unix-process"};
+  try{
+    await assert.rejects(()=>router.invoke("host.process.run",
+      {command:"hostname"},ctx),
+      error=>error.error_class==="standing_authority_revoked_or_changed_before_dispatch");
+    assert.equal(invocations,0);
+    assert.equal(f.ledger().snapshot().reserved.max_steps,0);
+    assert.equal(f.ledger().snapshot().settled.max_steps,0);
+  }finally{await router.stop();f.store.close();}
+});
+
 test("router preserves branded caller and accounts a successful provider effect exactly once",async()=>{
   const {createHostCapabilityRouter}=await import("./host-capability-router.js");
   const f=fixture();
