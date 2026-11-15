@@ -14,6 +14,14 @@ export async function resolveHostMissionAuthority(resolver, request) {
     return null;
   }
   if (!Array.isArray(verdict.allowed_operations) || !verdict.allowed_operations.includes(request.capability)) return null;
+  // Canonical standing authority reserves a budget on admission and binds the
+  // exact payload. Its completion callback must survive into the router:
+  // without it, a "mission" silently loses reservation settlement.
+  if (typeof verdict.finalize === "function" &&
+      (verdict.principal !== request.principal ||
+       verdict.payload_hash !== request.payload_hash ||
+       verdict.mandate_version == null))
+    return null;
   // Super authority is an explicit mission scope, never inferred from ordinary
   // host.process.run access. Scripts are unrestricted *within* that authority.
   if (request.execution_mode === 'super' &&
@@ -28,5 +36,9 @@ export async function resolveHostMissionAuthority(resolver, request) {
     mandate: verdict.mandate,
     actor: verdict.actor,
     origin: 'verified_mission',
+    ...(typeof verdict.finalize === 'function'
+      ? {finalize:verdict.finalize,canonical_cop:true,
+        mandate_version:verdict.mandate_version,
+        reservation_id:verdict.authority_id} : {}),
   });
 }
