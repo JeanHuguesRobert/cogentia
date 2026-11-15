@@ -37,6 +37,38 @@ const DEFAULT_TARGETS = Object.freeze({
 const denied = (reason) => ({ allowed:false, verified:false, reason });
 
 function activeStandingOperation(scope, request) {
+  // Technical operations have their own signed semantic policy. They are NOT
+  // an invitation to execute an arbitrary shell. A provider registry binds
+  // actual implementation to a short, reviewed set of targets.
+  const technical=scope?.standing_technical_policy;
+  if (request.execution_mode!=="normal" || !technical ||
+      technical.version!==1) return false;
+  if (request.capability==="dns.record.ensure") {
+    const d=technical.dns,e=request.effect;
+    return request.provider==="cloudflare" &&
+      request.target==="zone:baronsmariani.org" &&
+      e?.zone==="baronsmariani.org" &&
+      e?.name==="museum.baronsmariani.org" &&
+      e?.content==="fracta.fractavolta.com" &&
+      e?.type==="CNAME" && e?.proxied===false &&
+      d?.capability==="dns.record.ensure" &&
+      d?.write_mode==="create_only" &&
+      d?.require_nonconflicting_name===true &&
+      Array.isArray(d?.zones) && d.zones.includes(e.zone) &&
+      Array.isArray(d?.allowed_types) && d.allowed_types.includes(e.type);
+  }
+  if (request.capability==="site.static.release") {
+    const p=technical.site,e=request.effect;
+    return request.provider==="operium-static" &&
+      request.target==="host:museum.baronsmariani.org" &&
+      e?.host==="museum.baronsmariani.org" &&
+      e?.repository==="JeanHuguesRobert/barons-Mariani" &&
+      e?.revision==="f7f8ef131b5fc81d5a68e11cb404e886ad865861" &&
+      p?.capability==="site.static.release" &&
+      p?.source_visibility==="already_public" &&
+      p?.require_pinned_revision===true &&
+      p?.require_rollback===true;
+  }
   const operations = scope?.standing_operations;
   if (!Array.isArray(operations)) return false;
   if (request.capability !== "host.process.run" ||
