@@ -358,37 +358,18 @@ test("signed ChatGPT browser result is recognized and settles the real reserved 
    assert.equal(wakes[0].payload.phase,"pending_scheduler_review");
    assert.equal(wakes[0].payload.dispatch_permitted,false);
    assert.equal(wakes[0].payload.requires_next_step_authority,true);
-   const resumeEvidence=[];
-   const trustedVerifier=createOfflineJohnIssuerVerifier({
-     trustedPublicKeyPem:pem,now:()=>NOW});
-   const localScheduler=new COPScheduler(new COPBus({name:"mcp-return-to-cps"}),{
-     handlerResolver:async ref=>ref==="handler:chatgpt-browser-result-observer"
-       ? {execute:async ({payload})=>{
-           resumeEvidence.push(payload.yield?.answer);
-           return {status:"continue",next_action:"child_packet_pending_admission"};
-         }}:null,
+   const completed=store.listTopic('continuation:ctn_browser_test')
+     .filter(e=>e.payload?.profile==='cop.continuation-dispatch/v1'&&
+       e.payload.phase==='handler_completed');
+   assert.equal(completed.length,1,
+     'the MCP return must itself trigger the governed parent evaluator');
+   assert.equal(completed[0].payload.next_turn_dispatched,false);
+   const secondAttempt=await consumeChatgptCpsWake({
+     store,continuation_id:'ctn_browser_test',
+     scheduler:new COPScheduler(new COPBus({name:'replay'})),
+     admit:async()=>({granted:false}),
    });
-   const localAdmission=async ({continuation})=>{
-     const preflight=assessJohnCopAuthority({
-       store,auth,mandate_ref:MANDATE,version_pin:"v1",
-       capability:RESULT_RETURN_CAPABILITY,ledger,
-       verifyIssuer:trustedVerifier,
-       transport_mandate_label:"mandate:chatgpt-corpus-coding",
-     });
-     return {granted:preflight.preflight_ok===true,
-       authorization_ref:preflight.preflight_ok
-         ?"signed-mandate:"+MANDATE+":v1":null,
-       handler_ref:continuation.resumeTo};
-   };
-   const awakened=await consumeChatgptCpsWake({
-     store,continuation_id:"ctn_browser_test",
-     scheduler:localScheduler,admit:localAdmission,
-   });
-   assert.equal(awakened.status,"handler_completed",JSON.stringify(awakened));
-   assert.deepEqual(resumeEvidence,["ok"]);
-   assert.equal(store.listTopic("continuation:ctn_browser_test")
-     .filter(e=>e.payload?.profile==="cop.continuation-dispatch/v1"&&
-       e.payload.phase==="handler_completed").length,1);
+   assert.equal(secondAttempt.status,'already_processed');
    const duplicate=await core.callTool(TOOL,args,{auth});
    assert.equal(duplicate.ok,true);
    assert.equal(duplicate.duplicate,true);

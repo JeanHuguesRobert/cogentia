@@ -19,6 +19,7 @@ import { resolveMandate } from "../../../inseme/packages/cop-core/src/governed-a
 import { isResolvedCallerAuth } from "./cogentia-mcp-auth.js";
 import { projectMandateProgress } from "./mandate-completion-projection.js";
 import { recordChatgptReturnWake } from "./chatgpt-cps-return-wake.js";
+import { createChatgptCpsReturnEvaluator } from "./chatgpt-cps-return-evaluator.js";
 import { resumeContinuationFromReturnedEvent } from
   "../../../inseme/packages/cop-kernel/src/continuation.js";
 
@@ -111,8 +112,18 @@ export function createCanonicalMcpJudgmentResultHost({
           const wake=recordChatgptReturnWake({store,continuation:{...continuation,
             continuation_id:id},returned,budget_id});
           if(!wake.ok)throw new Error(wake.error||"chatgpt_scheduler_wake_failed");
+          // Evaluation is local and safe to perform after the MCP return
+          // has been durably recorded. No new browser/API turn is launched.
+          const evaluate=createChatgptCpsReturnEvaluator({
+            store,auth,mandate_ref,budget_id,
+            transport_mandate_label,verifyIssuer,
+          });
+          const evaluation=await evaluate(id);
+          // If the evaluator cannot proceed, leave the durable wake for
+          // reconciliation rather than disguising an evaluation as success.
           return {status:"returned",autonomous_handler:false,
-            scheduler_wake_receipt:wake.receipt_ref};
+            scheduler_wake_receipt:wake.receipt_ref,
+            local_cps_evaluation:evaluation.status};
         }
         // Dispatch only the trusted, no-external-effects local fixture handler.
         // Production agents need a separately configured governed resolver.

@@ -345,3 +345,48 @@ is not a prospective consent to browser automation. Retain the hosted-browser
 design target and the measurable COP safeguards; maintain the separate
 provider-permission gate for autonomous live use. See [Fair Usage doctrine
 §7](../research/integration/conversational_agents_fair_usage_cop_2026-11-13.md#7-précédent-openclaw--soutien-industriel-politique-dagentification-et-discrétion-dapplication-15112026).
+
+## Automatic local CPS parent evaluation on MCP return — 15 November 2026
+
+The canonical `createCanonicalMcpJudgmentResultHost` now calls
+`createChatgptCpsReturnEvaluator()` **after** a correlated ChatGPT-browser
+result has been durably returned, its COP budget settled and its idempotent
+scheduler wake recorded. The evaluator rechecks the independently signed
+John root, the authenticated actor, current mandate version and funded COP
+ledger. It then resumes `handler:chatgpt-browser-result-observer` through
+the existing **Inseme COPScheduler** and durably records a
+`cop.continuation-dispatch/v1` / `handler_completed` receipt.
+
+The parent evaluator projects acceptance from canonical packet state; a
+model's assertion of completion supplies no verified evidence. It never
+sends another message, never claims that the parent mandate is complete,
+and leaves `next_turn_dispatched=false`. Duplicate MCP results still settle
+one original budget unit and generate no second evaluation effect. A
+failure to admit the evaluator retains a durable wake for later
+reconciliation rather than silently inventing a next-step authorization.
+
+**Runtime distinction:** the code is in the canonical MCP host, not a
+second worker. It becomes active only when `mcp-cogentia.service` loads its
+updated source. Source tests with a signed fixture demonstrate the MCP
+receipt -> COPScheduler -> durable handler receipt transition. This is
+*not yet* the autonomous decision to create and dispatch a subsequent
+ChatGPT browser continuation, which also requires an approved parent
+workflow, a distinct bounded child reservation and a stable browser state.
+
+### Reality Test after prior service reload — third-turn attempt
+
+The real JHN v3 mandate and browser inspection succeeded: the hosted
+ChatGPT tab `94450542` presented its two previously confirmed replies and
+a stable blank composer. A third browser continuation
+`ctn_chatgpt_browser_2892f946a8e44935aa55b1790d3608d4` was prepared
+with an original reserved step and a 15-minute PacketClaim. Two governed
+submission attempts both returned the generic `chatgpt_turn_failed` code;
+the subsequent tab observation still showed **two assistant replies**.
+Therefore the third submission and MCP result return are **not proven**.
+The source defect that hid the underlying non-sensitive error code was
+corrected, along with a bounded retry of transient *pre-click* Send-button
+readiness. Never retry after a confirmed click. The new source needs a
+service reload before this fix can be tested in the running MCP process.
+The incomplete third packet must be reconciled and its unused budget
+reservation released when abandoned; it must not be counted as a returned
+Judgment result.
