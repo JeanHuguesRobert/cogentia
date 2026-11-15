@@ -10,8 +10,14 @@ const GATEWAY='ws://127.0.0.1:8776/assistant';
 const deny=code=>{throw Object.assign(new Error(code),{code});};
 const textLimit=(s,n)=>typeof s==='string'?s.slice(0,n):'';
 export function validateChatgptTurnRequest(input={}){
- if(!input||typeof input!=='object'||!['submit','observe','send_draft'].includes(input.action))
+ if(!input||typeof input!=='object'||!['submit','observe','send_draft','ensure_tab'].includes(input.action))
    return {ok:false,error:'chatgpt_action_invalid'};
+ if(input.action==='ensure_tab'){
+   if(input.tab_id!==undefined||input.prompt!==undefined||
+      input.expected_continuation_id!==undefined)
+     return {ok:false,error:'chatgpt_ensure_tab_unexpected_arguments'};
+   return {ok:true};
+ }
  if(!Number.isSafeInteger(input.tab_id)||input.tab_id<1)
    return {ok:false,error:'chatgpt_target_tab_invalid'};
  if(input.action==='submit' &&
@@ -76,6 +82,7 @@ const observeCode=`(() => {
   }));
   return {ok:true,assistant_count:assistant.length,
     composer_chars:(composer?.innerText||"").length,
+    composer_blank:(composer?.innerText||"").trim().length===0,
     composer_buttons:buttons,
     response_selector_counts:responseSelectorCounts,
     response_complete_text:responseText.includes('Response complete'),
@@ -93,17 +100,67 @@ function value(result){return result?.value||{};}
 export function createChatgptTurnCapability({gateway=GATEWAY,browserId=BROWSER,timeoutMs=12000,sessionFactory=createGatewaySession}={}){
  return {name:'browser.chatgpt.turn',kind:'tool',risk:'internal_recoverable',
    resultVisibility:'reasoner',costUnits:1,
-   description:'Submit one prompt to Principal-owned ChatGPT Brave tab or observe its answer, under pre-admitted COP authority.',
+   description:'Find or create an available ChatGPT tab, submit one prompt, or observe the response under signed COP authority.',
    inputSchema:{type:'object',properties:{
-     action:{type:'string',enum:['submit','observe']},
+     action:{type:'string',enum:['ensure_tab','submit','observe','send_draft']},
      tab_id:{type:'integer',minimum:1},
      prompt:{type:'string',maxLength:6000},
-   },required:['action','tab_id'],additionalProperties:false},
+     expected_continuation_id:{type:'string'},
+   },required:['action'],additionalProperties:false},
    async execute(input={}){
      const v=validateChatgptTurnRequest(input);
      if(!v.ok)deny(v.error);
      const session=await sessionFactory(gateway,{timeoutMs});
      try{
+       if(input.action==='ensure_tab'){
+         const listed=await session.call('tabs.list',{browser_instance_id:browserId});
+         if(!Array.isArray(listed?.tabs))deny('chatgpt_tabs_list_unavailable');
+         // Tabs owned by the Principal are considered reusable only if
+         // their actual editor is empty and the response is not generating.
+         // Never overwrite an existing draft or interrupt a running turn.
+         for(const candidate of listed.tabs){
+           if(!Number.isSafeInteger(candidate.id)||candidate.id<1||
+              !isChatgptTabUrl(candidate.url))continue;
+           try{
+             const reusable=await session.withTabLease(
+               browserId,candidate.id,async owner=>{
+                 const fresh=await owner.call('tabs.list',{browser_instance_id:browserId});
+                 const same=fresh.tabs?.find(x=>x.id===candidate.id);
+                 if(!same||same.url!==candidate.url)return false;
+                 const result=await owner.call('page.evaluate',{
+                   browser_instance_id:browserId,tabId:candidate.id,
+                   expectedUrl:candidate.url,code:observeCode,
+                 });
+                 const observation=value(result);
+                 return observation.ok===true&&observation.composer_present===true&&
+                   observation.generating===false&&
+                   (observation.composer_chars===0||
+                    (observation.composer_chars<=2&&observation.composer_blank===true));
+               },12000
+             );
+             if(reusable)return {browser_instance_id:browserId,tab_id:candidate.id,
+               origin:ORIGIN,action:'ensure_tab',created:false,reused:true,
+               url:candidate.url};
+           }catch{
+             // A stale tab or temporarily inaccessible document cannot
+             // be treated as reusable. Continue searching other tabs.
+           }
+         }
+         // The extension already supports tabs.create. Keep the target
+         // literal: no caller-controlled URL, generic tab creation or focus.
+         const created=await session.call('tabs.create',{
+           browser_instance_id:browserId,url:ORIGIN+'/',active:false,
+         });
+         const id=created?.tab?.id;
+         if(!Number.isSafeInteger(id)||id<1)deny('chatgpt_tab_creation_unconfirmed');
+         const fresh=await session.call('tabs.list',{browser_instance_id:browserId});
+         const actual=fresh?.tabs?.find(x=>x.id===id);
+         if(!actual||!isChatgptTabUrl(actual.url))
+           deny('chatgpt_created_tab_not_verified');
+         return {browser_instance_id:browserId,tab_id:id,
+           origin:ORIGIN,action:'ensure_tab',created:true,reused:false,
+           url:actual.url};
+       }
        return await session.withTabLease(browserId,input.tab_id,async owner=>{
          const tabs=await owner.call('tabs.list',{browser_instance_id:browserId});
          const tab=tabs.tabs?.find(x=>x.id===input.tab_id);

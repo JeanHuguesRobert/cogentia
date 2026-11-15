@@ -179,3 +179,27 @@ the live tab returned:
 
 This supplies a concrete stable-state signal for subsequent CPS dispatch;
 it does NOT itself run an unattended scheduling service.
+
+## Automatic ChatGPT tab recovery / creation (2026-11-15)
+
+An agent may use the **already signed** browser.chatgpt.turn capability
+with `input.arguments={"action":"ensure_tab"}`; no tab ID is needed. The
+operation belongs to the signed `submit_prompt` preparation within the
+existing fixed `https://chatgpt.com/` policy. It has no general browser-open
+permission or caller-supplied URL.
+
+The implementation lists tabs of the specific `fracta2-hosted` instance,
+then checks each matching ChatGPT document under an explicit tab lease. A
+reusable tab must have an accessible, blank composer and no active generation.
+If found it returns `{created:false,reused:true,tab_id}`; it never overwrites
+an existing draft or interrupts an unfinished answer. If none qualifies, it
+uses Navigation Assistant's existing generic `tabs.create` protocol with the
+literal URL `https://chatgpt.com/` and `active:false`, then verifies the new
+tab by a fresh list. It returns `{created:true,reused:false,tab_id}`.
+
+The next `submit`/`observe` operation carries that returned `tab_id` and
+runs under a **separate ordinary John request and COP budget admission**.
+A created tab does not imply a ChatGPT message has been sent. If the newly
+created page fails exact-origin verification, the action fails rather than
+marking the tab ready. No extension protocol or browser installation change
+is required; `tabs.create` already exists in the installed extension.
