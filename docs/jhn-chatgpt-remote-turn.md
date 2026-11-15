@@ -884,8 +884,8 @@ configured and enabled its pre-existing scheduler job.
 
 The implementation is tested with two queued results, a persisted SQLite
 close/reopen, duplicate replay, independently rejected issuer, revoked
-mandate, unrelated budget, disabled-by-default ONA integration and missing
-issuer path. Test signers are explicit fixtures, not proof of production
+mandate, unrelated budget, disabled-by-default ONA integration, real Operium `runScheduledJob`
+dynamic import and missing issuer path. Test signers are explicit fixtures, not proof of production
 authorization. The running ONA service was **not** reconfigured or restarted;
 new code on main is source-ready, not evidence of resident execution.
 This recovery slice ONLY processes settled result wakes. It does not inspect

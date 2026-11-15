@@ -15,3 +15,15 @@ test('opt-in requires existing independently pinned trusted public issuer key',a
     COGENTIA_JHN_ISSUER_AUTHORIZED_KEYS:'/no-such-issuer-test-file',
   }})).error,'canonical_store_or_issuer_unavailable');
 });
+
+test('actual Operium Node Agent script job imports the existing adapter without a browser action',async()=>{
+  const {runScheduledJob}=await import('../../../operium/lib/node-agent/job-runner.js');
+  const {fileURLToPath}=await import('node:url');
+  const source=fileURLToPath(new URL('./ona-chatgpt-cps-reconcile.mjs',import.meta.url));
+  const r=await runScheduledJob({job_id:'test:cps-local-replay',kind:'script',
+    config:{script:source,cwd:'cogentia'}},
+    {config:{env:{},hostname:'fracta2',jobTimeoutMs:5000},env:{}});
+  assert.equal(r.ok,true,JSON.stringify(r));
+  assert.equal(r.skipped,'not_enabled');
+  assert.equal(r.external_effects,0);
+});
