@@ -112,7 +112,7 @@ has **Cogential** (not Cogentia). Always check current tool availability before
 claiming that it can be used; capability recall is not an access grant.
 
 The plugin is backed by the experimental one-tool Node MCP provider
-[`scripts/experimental/jhn-shell-mcp.mjs`](https://github.com/JeanHuguesRobert/cogentia/blob/experiment/minimal-jhn-shell-mcp-20261029/scripts/experimental/jhn-shell-mcp.mjs),
+[`scripts/experimental/jhn-shell-mcp.mjs`](https://github.com/JeanHuguesRobert/cogentia/blob/main/scripts/experimental/jhn-shell-mcp.mjs),
 running as Unix user `ubuntu` on `fracta2` at `127.0.0.1:8798/mcp`, reached
 via OpenAI `tunnel-client` outbound Secure MCP Tunnel (profile
 `jhn-fracta2-shell`). No public incoming port is necessary. This is **not**
