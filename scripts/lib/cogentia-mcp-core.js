@@ -2207,6 +2207,38 @@ export function createMcpCore(env = process.env, extras = {}) {
           if (!binding.bound) throw new Error(binding.error || "john_transport_identity_unavailable");
           req = binding.request;
         }
+        // Shared completion boundary for ALL John execution modes, including
+        // the canonical signed read/form paths which return early below.
+        const journalTurn = events => jhnCaller && extras.mandateTurnContinuity
+          ? extras.mandateTurnContinuity.record({
+              request:req,events,actor:callOpts.auth.actor,
+              principal_ref:callOpts.auth.principal_ref,
+            }) : null;
+        const advanceTurn = async (events,continuity) => {
+          const nextRequest=req.input?.continuity?.next_request;
+          if (!nextRequest || !jhnCaller || !continuity?.ok ||
+              !events.some(e=>e.type==="john.run.completed")) return null;
+          const depth=callOpts.continuityDepth || 0;
+          const admitted=admissibleJohnContinuationReadHop(req,nextRequest,depth);
+          if (!admitted.ok) return {ok:false,reason:admitted.reason};
+          try {
+            // Same canonical John gates, transport identity and budget ledger.
+            const result=await callTool("cogentia_john_run",
+              {request:nextRequest},{...callOpts,continuityDepth:depth+1});
+            return {
+              ok:result?.ok===true,request_id:result?.request_id||null,
+              capability:nextRequest.capability,
+              turn_status:result?.status||null,
+              mandate_status:result?.mandate_status||"not_evaluated",
+              receipt_ref:result?.mandate_continuity?.receipt_ref||null,
+              canonical_accounting:result?.canonical_accounting||null,
+              failure:result?.failure?.code||null,
+            };
+          } catch (error) {
+            return {ok:false,reason:"governed_next_read_failed",
+              failure_code:error?.error_class||error?.code||null};
+          }
+        };
         const trustedJhn = jhnCaller && callOpts.auth.allowMutate === true;
         const browserEnabled = !/^(0|false|no)$/i.test(String(env.COGENTIA_JHN_HOSTED_BROWSER_ENABLED || "1"));
         const allBrowserCapabilities = jhnCaller && browserEnabled
@@ -2305,7 +2337,14 @@ export function createMcpCore(env = process.env, extras = {}) {
             const e=result.events,completed=e.find(x=>x.type==="john.run.completed");
             const settled=e.find(x=>x.type==="john.accounting.settled");
             const admitted=e.find(x=>x.type==="john.packet.admitted");
-            return {ok:true,status:"completed",request_id:req.request_id,
+            const continuity=journalTurn(e);
+            const continuityAdvance=await advanceTurn(e,continuity);
+            return {ok:continuity?.ok!==false,
+              status:continuity?.ok===false?"continuity_journal_failed":"completed",
+              mandate_status:continuity?.mandate_status||"not_evaluated",
+              mandate_continuity:continuity,
+              ...(continuityAdvance?{continuity_advance:continuityAdvance}:{}),
+              request_id:req.request_id,
               packet_id:admitted?.data?.packet_id||null,
               text:completed?.data?.result?.text||"",
               yield:completed?.data?.result?.yield||null,
@@ -2351,7 +2390,14 @@ export function createMcpCore(env = process.env, extras = {}) {
             const completed=e.find(x=>x.type==="john.run.completed");
             const settled=e.find(x=>x.type==="john.accounting.settled");
             const admitted=e.find(x=>x.type==="john.packet.admitted");
-            return {ok:true,status:"completed",request_id:req.request_id,
+            const continuity=journalTurn(e);
+            const continuityAdvance=await advanceTurn(e,continuity);
+            return {ok:continuity?.ok!==false,
+              status:continuity?.ok===false?"continuity_journal_failed":"completed",
+              mandate_status:continuity?.mandate_status||"not_evaluated",
+              mandate_continuity:continuity,
+              ...(continuityAdvance?{continuity_advance:continuityAdvance}:{}),
+              request_id:req.request_id,
               packet_id:admitted?.data?.packet_id||null,
               text:completed?.data?.result?.text||"",
               yield:completed?.data?.result?.yield||null,
@@ -2392,40 +2438,8 @@ export function createMcpCore(env = process.env, extras = {}) {
         const settled = events.find((e) => e.type === "john.accounting.settled");
         const admitted = events.find((e) => e.type === "john.packet.admitted");
 
-        const continuity = jhnCaller && extras.mandateTurnContinuity
-          ? extras.mandateTurnContinuity.record({
-              request:req,events,actor:callOpts.auth.actor,
-              principal_ref:callOpts.auth.principal_ref,
-            }) : null;
-        const nextRequest=req.input?.continuity?.next_request;
-        let continuityAdvance=null;
-        if (nextRequest && jhnCaller && completed && continuity?.ok) {
-          const depth=callOpts.continuityDepth || 0;
-          const admitted=admissibleJohnContinuationReadHop(req,nextRequest,depth);
-          if (!admitted.ok) {
-            continuityAdvance={ok:false,reason:admitted.reason};
-          } else {
-            // Reuse the real, independently governed John read tool: no
-            // copied credential, bypassed COP budget, or model-asserted grant.
-            try {
-              const result=await callTool("cogentia_john_run",
-                {request:nextRequest},
-                {...callOpts,continuityDepth:depth+1});
-              continuityAdvance={
-                ok:result?.ok===true,request_id:result?.request_id||null,
-                capability:nextRequest.capability,
-                turn_status:result?.status||null,
-                mandate_status:result?.mandate_status||"not_evaluated",
-                receipt_ref:result?.mandate_continuity?.receipt_ref||null,
-                canonical_accounting:result?.canonical_accounting||null,
-                failure:result?.failure?.code||null,
-              };
-            } catch (error) {
-              continuityAdvance={ok:false,reason:"governed_next_read_failed",
-                failure_code:error?.error_class||error?.code||null};
-            }
-          }
-        }
+        const continuity=journalTurn(events);
+        const continuityAdvance=await advanceTurn(events,continuity);
         return {
           ok: Boolean(completed) && continuity?.ok !== false,
           request_id: req.request_id,

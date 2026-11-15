@@ -585,3 +585,15 @@ independent evidence. The current JHN root v2 mandate authorizes the two
 named browser read capabilities and MCP result ingress, not arbitrary
 FractaRouting worker execution. This feature does not control the ChatGPT
 host runtime's own turn termination.
+
+### FBF — canonical read return path journal parity
+
+The first real two-step test returned canonical accounting for the second
+browser-read action, but showed its mandate status as not_evaluated.
+Cause: the independently authorized canonical-read branch returned
+before the generic John continuity journal code. A **shared**
+journalTurn/advanceTurn completion boundary now covers all three native
+John completion paths: ordinary, signed canonical read and signed
+canonical form. The child can therefore leave its own durable parent
+status receipt rather than silently losing the mandate at a specialized
+early return. The root user mandate is not extended by this refactor.
