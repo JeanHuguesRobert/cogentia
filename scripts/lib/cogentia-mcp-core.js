@@ -1374,6 +1374,9 @@ export function createMcpCore(env = process.env, extras = {}) {
 
     return router.invoke(capability, args, {
       auth: hostAuth,
+      // This exact object carries the in-process WeakSet identity attestation.
+      // The derived hostAuth (spread above) does not.
+      trustedCallerAuth: auth,
       actor,
       principal,
       mandate,
