@@ -49,6 +49,7 @@ try {
       expected_generation:coordinator.inspect(packetRef).generation},
     expected_result:{schema:'cogentia.step_result/v1'},
     provider:'local-fixture',channel:'mcp',
+    resumeTo:'handler:local-result-evaluator',
   });
   assert.equal(store.append(declaration).ok,true);
   // Read token from the already-running MCP process without output or logs.
@@ -76,6 +77,8 @@ try {
   const first=await send();
   assert.equal(first.ok,true,JSON.stringify(first));
   assert.equal(first.duplicate,false);
+  assert.equal(first.continuation_status,'resumed',JSON.stringify(first));
+  assert.equal(first.autonomous_handler,true);
   const again=await send();
   assert.equal(again.ok,true,JSON.stringify(again));
   assert.equal(again.duplicate,true);
@@ -87,14 +90,21 @@ try {
     [id]:{continuation_id:id,correlation:{challenge},expected_result:{schema:'cogentia.step_result/v1'},lifecycle:'suspended'}
   }});
   assert.equal(recognized.progression,'returned',JSON.stringify(recognized));
-  assert.equal(store.appendBatch(recognized.proposed_events).ok,true);
+  assert.equal(recognized.proposed_events.length,0,
+    'production ingress must already have recognized and returned the result');
   const returned=store.listTopic('continuation:'+id).filter(x=>x.payload?.profile==='cop.continuation-result/v1'&&x.payload.phase==='returned');
   assert.equal(returned.length,1);
+  const woke=store.listTopic('continuation:'+id).filter(
+    e=>e.payload?.profile==='cop.continuation-resumption/v1');
+  assert.equal(woke.length,1,'automatic MCP to kernel handler wake must be durable');
+  assert.equal(woke[0].payload.phase,'resumed');
+  assert.equal(woke[0].payload.execution?.next_action,'continue');
+  assert.equal(woke[0].payload.parent_mandate_status,'open');
   const settled=ledger.settle({reservation_id:reservationId,
     idempotency_key:'local-fixture:'+id+':settlement',
     usage:{max_steps:1},expected_version:ledger.snapshot().version});
   assert.equal(settled.ok,true,JSON.stringify(settled));
   console.log(JSON.stringify({ok:true,continuation_id:id,receipt_ref:first.receipt_ref,
-    idempotent_retry:true,phase:'returned',budget_settled:true,
-    autonomous_cps_wake_proven:false}));
+    idempotent_retry:true,phase:'resumed',budget_settled:true,
+    autonomous_cps_wake_proven:true,parent_mandate_status:'open'}));
 } finally {store.close();}

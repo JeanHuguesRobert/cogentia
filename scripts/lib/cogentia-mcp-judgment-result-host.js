@@ -8,7 +8,7 @@
  */
 import { createEventSourcedExecutionBudgetLedger } from
   "../../../inseme/packages/cop-core/src/execution-budget.js";
-import { continuationContextFromRecords } from
+import { continuationContextFromRecords, observeContinuationResult } from
   "../../../inseme/packages/cop-core/src/continuation-result.js";
 import { createSqliteMcpResultReceiptStore } from
   "../../../inseme/packages/cop-core/src/sqlite-mcp-result-receipt-store.js";
@@ -17,6 +17,8 @@ import { projectPacketCoordination, validateCurrentPacketClaim } from
 import { assessJohnCopAuthority } from "./john-cop-authority-preflight.js";
 import { resolveMandate } from "../../../inseme/packages/cop-core/src/governed-act.js";
 import { isResolvedCallerAuth } from "./cogentia-mcp-auth.js";
+import { resumeContinuationFromReturnedEvent } from
+  "../../../inseme/packages/cop-kernel/src/continuation.js";
 
 export const RESULT_RETURN_CAPABILITY = "cogentia.continuation.result.submit";
 
@@ -45,7 +47,7 @@ function hasActiveBudgetReservation(store, budgetId, reservationId) {
  */
 export function createCanonicalMcpJudgmentResultHost({
   store, mandate_ref, budget_id, transport_mandate_label,
-  verifyIssuer, channelPermission,
+  verifyIssuer, channelPermission, autoProcess = false,
 } = {}) {
   if (!store || store.kind !== "sqlite" ||
       typeof store.listTopic !== "function" ||
@@ -58,6 +60,74 @@ export function createCanonicalMcpJudgmentResultHost({
   return async function resultHost({ auth } = {}) {
     return {
       store: receiptStore,
+      async afterReceipt(submission) {
+        if (!autoProcess) return null;
+        const id = submission?.continuation_id;
+        if (!id) return null;
+        const topic = "continuation:" + id;
+        let records = store.listTopic(topic);
+        const declaration = records.find(e => e.payload?.profile === "cop/continuation");
+        const continuation = declaration?.payload?.continuation;
+        // Only the canonical journal, not MCP arguments, may supply the
+        // observation, channel or executable continuation descriptor.
+        const observation = records.find(e => e.payload?.surface === "mcp" &&
+          e.payload?.candidate_result?.continuation_id === id &&
+          e.payload?.submission_idempotency_key === submission.idempotency_key);
+        if (!continuation || !observation) return { status: "processing_pending" };
+        const context = continuationContextFromRecords(
+          records.filter(e => e.payload?.profile === "cop/continuation"),
+          records.filter(e => e.payload?.profile === "cop.continuation-result/v1"),
+        );
+        const recognized = observeContinuationResult(observation, context);
+        if (recognized.proposed_events.length) {
+          const appended = store.appendBatch(recognized.proposed_events);
+          if (!appended.ok) throw new Error(appended.error || "recognition_commit_failed");
+        }
+        records = store.listTopic(topic);
+        const returned = records.find(e => e.payload?.profile ===
+          "cop.continuation-result/v1" && e.payload.phase === "returned");
+        if (!returned) return { status: "processing_pending" };
+        // Dispatch only the trusted, no-external-effects local fixture handler.
+        // Production agents need a separately configured governed resolver.
+        if (continuation.provider !== "local-fixture" ||
+            continuation.channel !== "mcp" ||
+            continuation.resumeTo !== "handler:local-result-evaluator")
+          return { status: "returned", autonomous_handler: false };
+        const resumeKey = "continuation:" + id + ":local-resumed";
+        if (!store.eventByIdempotency(resumeKey)) {
+          const wake = await resumeContinuationFromReturnedEvent({
+            continuation: { ...continuation, continuationId: id },
+            returnedEvent: returned,
+            handlerResolver: async (name) => name === "handler:local-result-evaluator"
+              ? async ({ payload }) => ({
+                  accepted: payload?.candidateResult?.status === "answered",
+                  next_action: "continue",
+                  mandate_completed: false,
+                }) : null,
+          });
+          // Handler output is a Step result, not authority to close its parent.
+          const recorded = store.append({
+            topic_id: topic,
+            event_type: "cop.event/v1",
+            actor_id: "cop:local-result-resumption",
+            subject_ref: "continuation:" + id,
+            visibility: "restricted",
+            epistemic_status: "observed",
+            idempotency_key: resumeKey,
+            causal_refs: [returned.idempotency_key],
+            payload: {
+              profile: "cop.continuation-resumption/v1",
+              phase: "resumed",
+              continuation_id: id,
+              handler: continuation.resumeTo,
+              execution: wake.execution?.result || null,
+              parent_mandate_status: "open",
+            },
+          });
+          if (!recorded.ok) throw new Error(recorded.error || "resumption_commit_failed");
+        }
+        return { status: "resumed", autonomous_handler: true };
+      },
       async admit(submission) {
         const continuationId = submission?.continuation_id;
         if (typeof continuationId !== "string" || !continuationId)

@@ -59,6 +59,7 @@ export function createMcpJudgmentResultRuntime(env = process.env) {
       budget_id: "budget:mandate:jhn:john-root",
       transport_mandate_label: "mandate:chatgpt-corpus-coding",
       verifyIssuer,
+      autoProcess: true,
       channelPermission: ({ provider, channel }) =>
         allowedChannels.has(String(provider || "") + ":" + String(channel || "")),
     });

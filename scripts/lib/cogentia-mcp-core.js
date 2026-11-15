@@ -2079,7 +2079,17 @@ export function createMcpCore(env = process.env, extras = {}) {
         const { commitMcpContinuationResult } = await import(
           "../../../inseme/packages/cop-core/src/mcp-continuation-result-commit.js"
         );
-        return commitMcpContinuationResult(args, host);
+        const receipt = await commitMcpContinuationResult(args, host);
+        if (!receipt.ok || typeof host.afterReceipt !== "function") return receipt;
+        try {
+          const progress = await host.afterReceipt(args);
+          return progress ? { ...receipt, continuation_status: progress.status,
+            autonomous_handler: progress.autonomous_handler === true } : receipt;
+        } catch {
+          // The durable receipt is valid even when its asynchronous cognitive
+          // processing needs retry. A duplicate submission retries recovery.
+          return { ...receipt, continuation_status: "processing_pending" };
+        }
       }
       case "cogentia_continuation_resolve":
         requireString(args.id, "id");

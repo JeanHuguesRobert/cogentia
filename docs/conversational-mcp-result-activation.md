@@ -496,3 +496,32 @@ recognition/return → accounting** Reality Test. It is still **not**
 evidence of an autonomous CPS subscription and redispatch after
 `returned`; the explicitly invoked local test performed recognition.
 That separate wiring is the remaining functional part of #330.
+
+## 20. 15 November 2026 — automatic local MCP receipt → COP return → handler resumption
+
+The production MCP runtime now opts in to `autoProcess` on its canonical
+result host. After a valid durable receipt the same MCP `tools/call`
+automatically folds the existing Inseme #113 recognizer into the canonical
+COP log, producing the `observed/correlated/accepted/returned` chain.
+The authenticated caller cannot specify or bypass its authority and claim.
+
+For the single existing approved `local-fixture:mcp` channel, a declared
+`resumeTo:handler:local-result-evaluator` additionally routes the
+journaled `returned` event into the Inseme CPS
+`resumeContinuationFromReturnedEvent()` kernel function. The local,
+non-effectful handler assesses the answer and emits a durable
+`cop.continuation-resumption/v1` event with
+`parent_mandate_status:open` and `next_action:continue`. This is **not**
+a declaration that the parent mandate is complete; a production worker
+dispatch to its next independently governed capability is distinct.
+
+Other channels and handler names do not acquire new execution rights.
+A valid receipt remains durable even if later recognition/wake fails;
+a re-submission with the same idempotency key can retry post-commit
+processing. The caller receives `processing_pending` instead of a
+fabricated completion.
+
+The opt-in production Reality Test script asserts that the MCP server,
+rather than the script, has independently recorded both the `returned`
+and `resumed` events before the script inspects the journal. It uses one
+canonical COP budget step and leaves parent mandate status open.
