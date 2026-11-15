@@ -891,3 +891,32 @@ new code on main is source-ready, not evidence of resident execution.
 This recovery slice ONLY processes settled result wakes. It does not inspect
 ChatGPT output or submit an additional prompt, so it cannot be mistaken for
 completion of the separate *fully autonomous browser Judgment loop*.
+
+## Live ONA resident return-recovery and independent acceptance boundary — 15 November 2026
+
+The Principal restarted `operium-node-agent.service` through their pre-existing
+SSH/sudo owner channel at 17:42 UTC. The actual resident service now loads
+`cps:chatgpt-return-reconcile` as **fourth ONA job**, at 60-second intervals.
+Its first live scheduled run at 17:42:42 UTC returned `last_ok=true`,
+`last_error=null`; repeat executions were observed. This proves **resident
+replay of already committed, settled returns**, not unattended selection or
+dispatch of any new ChatGPT prompt. The source of authority and scheduler
+remains the original COP/Inseme journal plus Operium ONA; no new daemon was
+created. The generic ONA node-status `ok` was temporarily false because of
+an unsuccessful startup self-probe, even while its direct `/health` returned
+HTTP 200 and the CPS job was succeeding; keep these signals distinct.
+
+FBF: `chatgpt-cps-return-evaluator.js` now treats even
+`continuation.state.verified_evidence[].verified=true` and
+`continuation.state.next_actions[].admissible=true` as *untrusted claims*.
+An independently supplied receipt verifier must confirm the exact acceptance
+criterion AND receipt (with an issuer reference) before the evaluator credits
+it. A separately supplied action authority must return a matching action ID
+and authorization reference before the evaluator emits a **candidate** next
+action; that is still not a dispatched child. Without those trusted verifier
+adapters the scheduler fails closed and leaves the parent open. This is an
+explicit wiring requirement for general-worker dispatch and independent
+parent-mission closure, **not** a claim that either is deployed. Five regression
+tests cover hostile claims, mismatched proofs, verifier failures, allowed
+candidate projection, and the separation of acceptance evaluation from the
+final mandate-closure receipt.
