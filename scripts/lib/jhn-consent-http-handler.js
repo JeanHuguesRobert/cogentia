@@ -26,7 +26,8 @@ function matchesExactMandatePlan(presented,expected) {
 
 export function createJhnConsentHttpHandler({workflow,origin,exactAgentMailAmendmentPlan,
   exactContinuationAmendmentPlan,requestExactContinuationConsent,
-  exactRepositoryAmendmentPlan}={}) {
+  exactRepositoryAmendmentPlan,exactChatgptTurnAmendmentPlan,
+  requestExactChatgptTurnConsent}={}) {
   if(!workflow||typeof workflow.inspect!=='function'||typeof workflow.decide!=='function'||typeof workflow.authenticate!=='function')
     throw Error('canonical_consent_workflow_required');
   if(typeof origin!=='string'||!/^https:\/\/[^/]+$/.test(origin))
@@ -37,9 +38,10 @@ export function createJhnConsentHttpHandler({workflow,origin,exactAgentMailAmend
     if(url.origin!==origin)return denied(403,'wrong_origin');
     const isContinuationRequest=url.pathname==='/api/cop/principal-consent/continuation-request';
     const isRepositoryRequest=url.pathname==='/api/cop/principal-consent/repository-request';
+    const isChatgptRequest=url.pathname==='/api/cop/principal-consent/chatgpt-turn-request';
     const match=/^\/api\/cop\/principal-consent\/([a-f0-9-]{36})$/.exec(url.pathname);
-    if(!isContinuationRequest&&!isRepositoryRequest&&(!match||!ID.test(match[1])))return denied(404,'consent_route_not_found');
-    if((isContinuationRequest||isRepositoryRequest)&&request.method!=='POST')return denied(405,'method_not_allowed');
+    if(!isContinuationRequest&&!isRepositoryRequest&&!isChatgptRequest&&(!match||!ID.test(match[1])))return denied(404,'consent_route_not_found');
+    if((isContinuationRequest||isRepositoryRequest||isChatgptRequest)&&request.method!=='POST')return denied(405,'method_not_allowed');
     if(request.method==='POST'&&request.headers.get('origin')!==origin)
       return denied(403,'cross_origin_decision_forbidden');
     const token=request.headers.get('authorization')?.match(/^Bearer\s+([^\s]+)$/i)?.[1];
@@ -85,6 +87,22 @@ export function createJhnConsentHttpHandler({workflow,origin,exactAgentMailAmend
         payload_hash:created.payload_hash,expires_at:created.expires_at,
         url:'/cop/consent/'+created.challenge_id,grants_mandate_authority:false});
     }
+    if(isChatgptRequest){
+      if(typeof exactChatgptTurnAmendmentPlan!=='function'||
+         typeof requestExactChatgptTurnConsent!=='function')
+        return denied(403,'chatgpt_turn_request_not_enabled');
+      const body=await request.text().catch(()=>null);
+      if(body!=='{}')return denied(400,'request_body_must_be_empty_object');
+      const plan=exactChatgptTurnAmendmentPlan();
+      if(!plan?.ok)return denied(409,plan?.error||'chatgpt_plan_unavailable');
+      if(plan.already_authorized_in_scope)return reply(200,{ok:true,already_authorized_in_scope:true});
+      if(!plan.requires_owner_consent)return denied(409,'chatgpt_plan_not_pending');
+      const created=await requestExactChatgptTurnConsent();
+      if(!created?.ok)return denied(409,created?.error||'chatgpt_request_failed');
+      return reply(201,{ok:true,challenge_id:created.challenge_id,
+        payload_hash:created.payload_hash,expires_at:created.expires_at,
+        url:'/cop/consent/'+created.challenge_id,grants_mandate_authority:false});
+    }
     const challenge_id=match[1];
     if(request.method==='GET'){
       const check=workflow.inspect({challenge_id});
@@ -107,6 +125,8 @@ export function createJhnConsentHttpHandler({workflow,origin,exactAgentMailAmend
        matchesExactMandatePlan(presented,exactAgentMailAmendmentPlan()))||
       (typeof exactContinuationAmendmentPlan==='function'&&
        matchesExactMandatePlan(presented,exactContinuationAmendmentPlan()))||
+      (typeof exactChatgptTurnAmendmentPlan==='function'&&
+       matchesExactMandatePlan(presented,exactChatgptTurnAmendmentPlan()))||
       (typeof exactRepositoryAmendmentPlan==='function'&&
        exactRepositoryAmendmentPlan()?.ready_for_issuance===true&&
        matchesExactMandatePlan(presented,exactRepositoryAmendmentPlan()))

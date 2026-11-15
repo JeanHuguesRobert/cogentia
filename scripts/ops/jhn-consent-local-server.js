@@ -15,6 +15,7 @@ import {createJhnConsentHttpHandler} from '../lib/jhn-consent-http-handler.js';
 import {agentMailMandatePlan} from './jhn-agent-mail-consent-cli.js';
 import {johnContinuationMandatePlan} from '../lib/jhn-continuation-mandate-plan.js';
 import {johnRepositoryMandatePlan} from '../lib/jhn-repository-mandate-plan.js';
+import {johnChatgptTurnMandatePlan} from '../lib/jhn-chatgpt-turn-mandate-plan.js';
 import {requestContinuationConsent} from './jhn-continuation-consent-cli.js';
 import {createSupabaseClient} from '../../../inseme/apps/platform/scripts/lib/config.js';
 
@@ -31,8 +32,10 @@ function makeOptions(env) {
    enableAgentMailApply:env.COGENTIA_JHN_CONSENT_ENABLE_AGENT_MAIL_APPLY==='1'};
 }
 
-export function createLocalConsentServer({workflow,origin,enableDecision=false,exactAgentMailAmendmentPlan,exactContinuationAmendmentPlan,requestExactContinuationConsent,exactRepositoryAmendmentPlan}={}) {
- const api=createJhnConsentHttpHandler({workflow,origin,exactAgentMailAmendmentPlan,exactContinuationAmendmentPlan,requestExactContinuationConsent,exactRepositoryAmendmentPlan});
+export function createLocalConsentServer({workflow,origin,enableDecision=false,exactAgentMailAmendmentPlan,exactContinuationAmendmentPlan,requestExactContinuationConsent,exactRepositoryAmendmentPlan,
+  exactChatgptTurnAmendmentPlan,requestExactChatgptTurnConsent}={}) {
+ const api=createJhnConsentHttpHandler({workflow,origin,exactAgentMailAmendmentPlan,exactContinuationAmendmentPlan,requestExactContinuationConsent,exactRepositoryAmendmentPlan,
+    exactChatgptTurnAmendmentPlan,requestExactChatgptTurnConsent});
  const expectedHost=new URL(origin).host;
  return createServer(async(req,res)=>{
    const response=(status,body)=>{res.writeHead(status,{'content-type':'application/json','cache-control':'no-store','x-content-type-options':'nosniff'});res.end(JSON.stringify(body));};
@@ -66,6 +69,13 @@ async function main(){
  const server=createLocalConsentServer({...opts,workflow,
    exactContinuationAmendmentPlan:()=>johnContinuationMandatePlan({store}),
    exactRepositoryAmendmentPlan:()=>johnRepositoryMandatePlan({store}),
+   exactChatgptTurnAmendmentPlan:()=>johnChatgptTurnMandatePlan({store}),
+   requestExactChatgptTurnConsent:()=>{
+     const plan=johnChatgptTurnMandatePlan({store});
+     if(!plan.ok||!plan.requires_owner_consent)return plan;
+     const result=workflow.request({mandate:plan.mandate,ttl_ms:600000});
+     return result.ok?result:{ok:false,error:result.error};
+   },
    requestExactContinuationConsent:()=>requestContinuationConsent(store),
    ...(opts.enableAgentMailApply?{exactAgentMailAmendmentPlan:()=>agentMailMandatePlan(store)}:{})
  });

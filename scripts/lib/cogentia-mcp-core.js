@@ -1,6 +1,8 @@
 import {listRegisteredMcpAppTools,callRegisteredMcpAppTool} from "./cogentia-mcp-app-registry.js";
 import {executeJohnCanonicalForm} from "./john-cop-form-execution.js";
 import {executeJohnCanonicalRead} from "./john-cop-read-execution.js";
+import {executeJohnCanonicalChatgptTurn} from "./john-cop-chatgpt-turn-execution.js";
+import {createChatgptTurnCapability} from "./browser-chatgpt-turn.js";
 import {openExistingJohnCopStore} from "./john-cop-existing-store.js";
 import {createSqliteCopEventStore} from "../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js";
 import {bindJohnTransportClaims} from "./john-transport-binding.js";
@@ -2316,6 +2318,54 @@ export function createMcpCore(env = process.env, extras = {}) {
         if(req.capability==="browser.form.fill" && requestedCapabilities.length===1
             && requestedCapabilities[0]==="browser.form.fill")
           req.handler.allowed_capabilities=["browser.form.fill"];
+        // Standing, consent-issued, ChatGPT-origin-only browser turn.
+        // The generic John handler cannot run this effect without the
+        // independent canonical scope, issuer, budget and outcome checks.
+        if(req.capability==="browser.chatgpt.turn"){
+          if(!jhnCaller)return {ok:false,status:"failed",failure:{code:"authenticated_jhn_caller_required"}};
+          const path=String(env.COGENTIA_JHN_CANONICAL_STORE_PATH||"");
+          const existing=openExistingJohnCopStore(path);
+          if(!existing.ok)return {ok:false,status:"failed",failure:{code:existing.error}};
+          existing.close();
+          const canonicalStore=createSqliteCopEventStore(path);
+          try{
+            const capability=createChatgptTurnCapability({
+              gateway:env.COGENTIA_HOSTED_BROWSER_GATEWAY||undefined,
+            });
+            const result=await executeJohnCanonicalChatgptTurn({
+              store:canonicalStore,
+              authorizedKeysPath:String(env.COGENTIA_JHN_ISSUER_AUTHORIZED_KEYS||""),
+              auth:callOpts.auth,request:req,
+              run:()=>runJohnRequest(req,{env,capabilities:[capability],
+                allowedCapabilities:[capability.name],maxInternalEffects:1,
+                requiredEvents:false,
+                reasoner:{nextStep:async state=>{
+                  const observed=state.observations.find(x=>
+                    x.type==="capability_result"&&x.capability===capability.name);
+                  if(observed)return observed.ok
+                    ? {kind:"answer",answer:JSON.stringify(observed.value??{})}
+                    : {kind:"stop",reason:"chatgpt_browser_action_failed"};
+                  return {kind:"capability_call",capability:capability.name,
+                    input:req.input.arguments};
+                }},
+              }),
+            });
+            if(!result.ok)return {ok:false,status:"failed",
+              failure:{code:result.error},executed:result.executed===true};
+            const e=result.events,completed=e.find(x=>x.type==="john.run.completed");
+            const settled=e.find(x=>x.type==="john.accounting.settled");
+            const continuity=journalTurn(e);
+            return {ok:continuity?.ok!==false,status:"completed",
+              mandate_status:continuity?.mandate_status||"not_evaluated",
+              mandate_continuity:continuity,
+              request_id:req.request_id,
+              text:completed?.data?.result?.text||"",
+              accounting:settled?.data||null,
+              canonical_accounting:{mandate_ref:result.canonical_mandate_ref,
+                settled_steps:result.settled_steps},
+              events_count:e.length,events:e};
+          }finally{canonicalStore.close()}
+        }
         // #291/#299: opt-in only after a distinct human-signed form mandate.
         if(req.capability === "browser.form.fill") {
           if(env.COGENTIA_JHN_CANONICAL_FORM_ENABLED!=="1"||!jhnCaller||!formCapability)
