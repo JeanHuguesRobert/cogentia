@@ -27,7 +27,7 @@ function matchesExactMandatePlan(presented,expected) {
 export function createJhnConsentHttpHandler({workflow,origin,exactAgentMailAmendmentPlan,
   exactContinuationAmendmentPlan,requestExactContinuationConsent,
   exactRepositoryAmendmentPlan,exactChatgptTurnAmendmentPlan,
-  requestExactChatgptTurnConsent}={}) {
+  requestExactChatgptTurnConsent,exactStandingAmendmentPlan}={}) {
   if(!workflow||typeof workflow.inspect!=='function'||typeof workflow.decide!=='function'||typeof workflow.authenticate!=='function')
     throw Error('canonical_consent_workflow_required');
   if(typeof origin!=='string'||!/^https:\/\/[^/]+$/.test(origin))
@@ -129,7 +129,10 @@ export function createJhnConsentHttpHandler({workflow,origin,exactAgentMailAmend
        matchesExactMandatePlan(presented,exactChatgptTurnAmendmentPlan()))||
       (typeof exactRepositoryAmendmentPlan==='function'&&
        exactRepositoryAmendmentPlan()?.ready_for_issuance===true&&
-       matchesExactMandatePlan(presented,exactRepositoryAmendmentPlan()))
+       matchesExactMandatePlan(presented,exactRepositoryAmendmentPlan()))||
+      (typeof exactStandingAmendmentPlan==='function'&&
+       exactStandingAmendmentPlan()?.ready_for_issuance===true&&
+       matchesExactMandatePlan(presented,exactStandingAmendmentPlan()))
     );
     const result=await workflow.decide({challenge_id,payload_hash:data.payload_hash,
       decision:data.decision,session});
