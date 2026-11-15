@@ -6,7 +6,7 @@ import path from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { registerResolver, releaseClaim } from "./lib/resolver-registry.js";
-import { nextContinuation, rerouteContinuation, inspectRouting } from "./lib/continuation-routing.js";
+import { nextContinuation, rerouteContinuation, inspectRouting, recordRoutingOutcome } from "./lib/continuation-routing.js";
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), "inseme-111-"));
 try {
@@ -31,6 +31,24 @@ try {
   assert.equal(nextContinuation(root,[c],profile,{admissible:yes}).status,"available");
   assert.equal(nextContinuation(root,[c],profile,{claim:true,admissible:yes}).status,"claimed");
   assert.equal(nextContinuation(root,[c],profile,{claim:true,admissible:yes}).continuation,null);
+  // Historical PR #306 carried an end-to-end outcome test whose old CLI
+  // no longer exists. Preserve its contract at the current shared-core layer.
+  const accepted=recordRoutingOutcome(root,c,{resolverId:"judge-b",phase:"accepted"});
+  assert.equal(accepted.status,"accepted");
+  assert.equal(accepted.event.delivery_confirmed,false);
+  assert.equal(recordRoutingOutcome(root,c,{resolverId:"judge-b",phase:"accepted"}).status,"already_recorded");
+  assert.equal(recordRoutingOutcome(root,c,{resolverId:"judge-b",phase:"treated"}).status,"resolution_not_observed");
+  const resolved={...c,status:"resolved",
+    resolution:{return_state:{result_ref:c.return_contract.result_ref,
+      result_available:true,delivered:false}}};
+  const treated=recordRoutingOutcome(root,resolved,{resolverId:"judge-b",phase:"treated"});
+  assert.equal(treated.status,"treated");
+  assert.equal(treated.event.receipt_ref,c.return_contract.result_ref);
+  assert.equal(treated.event.delivery_confirmed,false,
+    "ready durable return slot must never be reported as delivered");
+  assert.equal(recordRoutingOutcome(root,resolved,{resolverId:"judge-b",phase:"treated"}).status,"already_recorded");
+  assert.deepEqual(inspectRouting(root,c.id).filter(x=>["proposed","accepted","treated"].includes(x.status)).map(x=>x.status),
+    ["proposed","accepted","treated"]);
   releaseClaim(root,c.id);
   assert.equal(nextContinuation(root,[c],profile,{claim:true,admissible:yes}).status,"claimed");
   releaseClaim(root,c.id);
