@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import {continuationRepository} from "./continuation-sqlite-repository.mjs";
 import path from "node:path";
 
 import {
@@ -108,32 +109,19 @@ export async function syncInteractionTracesCore(options = {}) {
     }
   }
 
-  // 2. Read .cogentia/continuations/*.json
-  if (fs.existsSync(continuationsDir)) {
-    try {
-      const files = fs.readdirSync(continuationsDir).filter(f => f.endsWith(".json"));
-      for (const file of files) {
-        const filePath = path.join(continuationsDir, file);
-        try {
-          const raw = fs.readFileSync(filePath, "utf8");
-          const data = JSON.parse(raw);
-          packets.push({
-            id: data.id || path.basename(file, ".json"),
-            kind: data.kind || "continuation",
-            title: data.title || data.question || file,
-            status: data.status || "alive",
-            question: data.question || "",
-            subject: data.subject || "",
-            file: `.cogentia/continuations/${file}`,
-            modified: new Date().toISOString(),
-          });
-        } catch {
-          // Ignore parse errors
-        }
-      }
-    } catch {
-      // Ignore read errors
-    }
+  // 2. Use the host-local SQLite operational continuation store.
+  const store=continuationRepository(root);
+  for (const data of store.list()) {
+    packets.push({
+      id:data.id||data.continuation_id,
+      kind:data.kind||"continuation",
+      title:data.title||data.question||data.id,
+      status:data.status||"alive",
+      question:data.question||"",
+      subject:data.subject||"",
+      file:`sqlite:${store.path}#${data.id}`,
+      modified:data.updated_at||data.updatedAt||data.created_at||new Date().toISOString(),
+    });
   }
 
   return {
