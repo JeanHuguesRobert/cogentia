@@ -38,6 +38,13 @@ export function createPrimitiveContinuationStore(path){
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(continuation_id,revision)
   );
+  CREATE TABLE IF NOT EXISTS primitive_sources(
+    continuation_id TEXT NOT NULL REFERENCES primitive_continuations(id),
+    source_ref TEXT NOT NULL, source_hash TEXT NOT NULL,
+    payload_json TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY(continuation_id,source_ref)
+  );
   CREATE TABLE IF NOT EXISTS primitive_slots(
     continuation_id TEXT NOT NULL REFERENCES primitive_continuations(id),
     slot TEXT NOT NULL, input_hash TEXT NOT NULL, result_json TEXT NOT NULL,
@@ -54,6 +61,9 @@ export function createPrimitiveContinuationStore(path){
   const slotInsert=db.prepare('INSERT OR IGNORE INTO primitive_slots(continuation_id,slot,input_hash,result_json) VALUES(?,?,?,?)');
   const slotsFor=db.prepare('SELECT slot,input_hash,result_json FROM primitive_slots WHERE continuation_id=? ORDER BY slot');
   const eventsFor=db.prepare('SELECT * FROM primitive_transitions WHERE continuation_id=? ORDER BY revision');
+  const sourcesFor=db.prepare('SELECT source_ref,source_hash,payload_json FROM primitive_sources WHERE continuation_id=? ORDER BY source_ref');
+  const sourceGet=db.prepare('SELECT source_hash,payload_json FROM primitive_sources WHERE continuation_id=? AND source_ref=?');
+  const sourceInsert=db.prepare('INSERT OR IGNORE INTO primitive_sources(continuation_id,source_ref,source_hash,payload_json) VALUES(?,?,?,?)');
   const unpack=row=>row?{...row,body:parse(row.body_json)}:null;
   const get=id=>unpack(select.get(id));
   const transaction=fn=>{
@@ -119,6 +129,21 @@ export function createPrimitiveContinuationStore(path){
       return {ok:true,existing:false,result};
     });
   }
+  function attachSource(id,sourceRef,sourceHash,payload){
+    if(!validId(id)||!validString(sourceRef)||!validString(sourceHash))throw Error('invalid_source_reference');
+    return transaction(()=>{
+      if(!select.get(id))return {ok:false,code:'not_found'};
+      const previous=sourceGet.get(id,sourceRef);
+      if(previous)return previous.source_hash===sourceHash&&previous.payload_json===json(payload)
+        ?{ok:true,existing:true}:{ok:false,code:'source_version_conflict'};
+      sourceInsert.run(id,sourceRef,sourceHash,json(payload));
+      return {ok:true,existing:false};
+    });
+  }
+  function sources(id){
+    return sourcesFor.all(id).map(s=>({source_ref:s.source_ref,source_hash:s.source_hash,
+      payload:parse(s.payload_json)}));
+  }
   function snapshot(id){
     const row=get(id);
     if(!row)return null;
@@ -126,7 +151,8 @@ export function createPrimitiveContinuationStore(path){
       continuation:{id:row.id,kind:row.kind,scope:row.scope,
         idempotency_key:row.idempotency_key,request_hash:row.request_hash,
         status:row.status,revision:row.revision,body:row.body,origin_ref:row.origin_ref},
-      slots:slotsFor.all(id).map(s=>({slot:s.slot,input_hash:s.input_hash,result:parse(s.result_json)}))};
+      slots:slotsFor.all(id).map(s=>({slot:s.slot,input_hash:s.input_hash,result:parse(s.result_json)})),
+      sources:sources(id)};
     return {...content,sha256:hash(content)};
   }
   function importSnapshot(envelope,{scope=null}={}){
@@ -135,7 +161,8 @@ export function createPrimitiveContinuationStore(path){
     if(hash(content)!==sha256)throw Error('snapshot_checksum_mismatch');
     const c=content.continuation;
     if(!validId(c?.id)||!Number.isSafeInteger(c.revision)||c.revision<0||
-       ![c.kind,c.scope,c.status].every(validString)||!Array.isArray(content.slots))
+       ![c.kind,c.scope,c.status].every(validString)||!Array.isArray(content.slots)||
+       !Array.isArray(content.sources))
       throw Error('invalid_snapshot_continuation');
     const targetScope=scope||c.scope;
     if(!validString(targetScope))throw Error('invalid_snapshot_scope');
@@ -152,6 +179,10 @@ export function createPrimitiveContinuationStore(path){
       if(created.changes!==1)return {ok:false,code:'snapshot_conflict'};
       if(c.revision!==0)db.prepare('UPDATE primitive_continuations SET revision=? WHERE id=?').run(c.revision,c.id);
       event.run(c.id,c.revision,'import',null,c.status,json({source_sha256:sha256}));
+      for(const s of content.sources){
+        if(!validString(s.source_ref)||!validString(s.source_hash))throw Error('invalid_snapshot_source');
+        sourceInsert.run(c.id,s.source_ref,s.source_hash,json(s.payload));
+      }
       for(const s of content.slots){
         if(!validString(s.slot)||!validString(s.input_hash))throw Error('invalid_snapshot_slot');
         slotInsert.run(c.id,s.slot,s.input_hash,json(s.result));
@@ -171,7 +202,7 @@ export function createPrimitiveContinuationStore(path){
     });
   }
   return {path:filename,get,getByKey:key=>unpack(byKey.get(key)),create,compareAndSwap,
-    claim,remember,snapshot,importSnapshot,recoverInterrupted,
+    claim,remember,snapshot,importSnapshot,recoverInterrupted,attachSource,sources,
     events:id=>eventsFor.all(id).map(r=>({...r,detail:parse(r.detail_json)})),
     list({status=null,kind=null,limit=200}={}){
       const rows=db.prepare('SELECT * FROM primitive_continuations WHERE (? IS NULL OR status=?) AND (? IS NULL OR kind=?) ORDER BY created_at,id LIMIT ?')
