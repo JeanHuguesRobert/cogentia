@@ -6,6 +6,7 @@ import {tmpdir} from 'node:os';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {createSqliteCopEventStore} from '../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js';
+import {changePacketTemperature} from '../../../inseme/packages/cop-core/src/packet-temperature.js';
 import {createContinuationSqliteRepository} from './continuation-sqlite-repository.mjs';
 import {inspectAutoPublicLegacyJudgment,autoAssignPublicLegacyJudgment}
   from './legacy-public-judgment-auto-assign.js';
@@ -146,5 +147,34 @@ test('production default preparer is bound; without real signed mandate fails cl
   assert.equal(f.store.replay().filter(e=>e.payload?.profile===
     'cogentia.legacy-public-auto-assignment/v1').length,1);
   assert.equal(f.store.replay().filter(e=>e.payload?.profile==='cop/continuation').length,0);
+ }finally{f.close()}
+});
+
+
+test('simultaneous ONA tick candidates race to one durable selection intent',async()=>{
+ const f=fixture();try{
+  const admit=async()=>{await Promise.resolve();return f.admit()};
+  const results=await Promise.all([f.run({admit}),f.run({admit})]);
+  assert.equal(results.filter(x=>x.assigned===1).length,1,JSON.stringify(results));
+  assert.equal(results.filter(x=>x.assigned===0).length,1);
+  assert.equal(f.store.replay().filter(x=>
+    x.payload?.profile==='cogentia.legacy-public-auto-assignment/v1').length,1);
+  assert.equal(f.store.auditCommitments().ok,true);
+ }finally{f.close()}
+});
+
+test('a parked parent is excluded from autonomous assignment, without being resumed',async()=>{
+ const f=fixture();try{
+  assert.equal(changePacketTemperature(f.store,{
+    packet_ref:'continuation:ctn_auto_alpha_1',temperature:'parked',
+    transition_id:'park-alpha-before-automatic-selection'}).ok,true);
+  const preview=inspectAutoPublicLegacyJudgment({store:f.store,
+    localRecords:f.records,sourceRoot:f.root});
+  assert.equal(preview.status,'candidate_ready');
+  assert.equal(preview.legacy_id,'ctn_auto_beta_2');
+  const r=await f.run();
+  assert.equal(r.legacy_id,'ctn_auto_beta_2');
+  assert.equal(f.store.eventByIdempotency('public-legacy-auto-assignment:v1:ctn_auto_alpha_1'),null);
+  assert.equal(f.store.auditCommitments().ok,true);
  }finally{f.close()}
 });
