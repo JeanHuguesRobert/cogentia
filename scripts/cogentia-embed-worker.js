@@ -19,6 +19,7 @@
  */
 
 import fs from "fs";
+import {continuationRepository} from './lib/continuation-sqlite-repository.mjs';
 import path from "path";
 import { fileURLToPath } from "url";
 import { spawn } from "child_process";
@@ -32,7 +33,10 @@ const REGISTRY_ROOT = REGISTRY_PATH
   ? (fs.existsSync(REGISTRY_PATH) && fs.statSync(REGISTRY_PATH).isDirectory() ? REGISTRY_PATH : path.dirname(REGISTRY_PATH))
   : COGENTIA_DIR;
 const COGENTIA_STATE_DIR = process.env.COGENTIA_STATE_DIR || path.join(REGISTRY_ROOT, ".cogentia");
-const CONTINUATIONS_DIR = process.env.CONTINUATIONS_DIR || path.join(COGENTIA_STATE_DIR, "continuations");
+const CONTINUATION_ROOT=process.env.CONTINUATIONS_DIR
+  ? path.dirname(path.dirname(path.resolve(process.env.CONTINUATIONS_DIR))) : REGISTRY_ROOT;
+const continuationStore=continuationRepository(CONTINUATION_ROOT);
+const CONTINUATIONS_DIR=continuationStore.path;
 const MAGISTRAL_URL = process.env.MAGISTRAL_URL || "http://127.0.0.1:8880";
 
 // Configuration (default values, can be overridden by env)
@@ -47,64 +51,9 @@ const DEFAULT_EMBEDDING_POLICY = process.env.MAGISTRAL_EMBEDDING_POLICY || "magi
  * then use CLI only as fallback.
  */
 async function listContinuations() {
-  const continuations = [];
-  const processedIds = new Set();
-
-  // Read directly from directory (preferred - contains full context)
-  if (fs.existsSync(CONTINUATIONS_DIR)) {
-    const files = fs.readdirSync(CONTINUATIONS_DIR).filter((f) => f.endsWith(".json"));
-    for (const file of files) {
-      const id = file.replace(".json", "");
-      const cont = readContinuation(id);
-      if (cont && cont.status !== "resolved" && cont.status !== "completed") {
-        continuations.push(cont);
-        processedIds.add(id);
-      }
-    }
-  }
-
-  // Try CLI as fallback for any continuations not found in directory
-  try {
-    const result = await execCogentia(["continuation", "list", "--json"]);
-    const data = JSON.parse(result);
-    const cliContinuations = data.continuations || [];
-
-    for (const cont of cliContinuations) {
-      const id = cont.id || cont.continuation_id;
-      if (!processedIds.has(id)) {
-        // Try to read the full file for this continuation
-        const fullCont = readContinuation(id);
-        if (fullCont) {
-          continuations.push(fullCont);
-        } else {
-          // Use CLI data as fallback
-          continuations.push(cont);
-        }
-      }
-    }
-  } catch (error) {
-    console.error("[Worker] CLI fallback failed (using directory data only):", error.message);
-  }
-
-  return continuations;
+  return continuationStore.list().filter(c=>c.status!=='resolved'&&c.status!=='completed');
 }
-
-/**
- * Read a continuation file directly
- */
-function readContinuation(id) {
-  const continuationPath = path.join(CONTINUATIONS_DIR, `${id}.json`);
-  if (!fs.existsSync(continuationPath)) {
-    return null;
-  }
-  try {
-    const content = fs.readFileSync(continuationPath, "utf-8");
-    return JSON.parse(content);
-  } catch (error) {
-    console.error(`[Worker] Failed to read continuation ${id}:`, error.message);
-    return null;
-  }
-}
+function readContinuation(id) { return continuationStore.load(id); }
 
 /**
  * Filter continuations for embeddings
