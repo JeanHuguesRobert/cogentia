@@ -83,9 +83,15 @@ export function createAiRouterClient(options = {}) {
     models: () => request("/v1/models"),
     chatCompletions: payload => request("/v1/chat/completions", {
       method: "POST", body: payload,
-      headers: typeof payload?._cogentia_call_chain === "string" &&
-        /^[a-zA-Z0-9_,.:/-]{1,256}$/.test(payload._cogentia_call_chain)
-          ? { "X-Cogentia-Call-Chain": payload._cogentia_call_chain } : {},
+      headers: (() => {
+        const chain = payload?._continuation_call_chain || payload?._cogentia_call_chain;
+        if (typeof chain !== "string" || !/^[a-zA-Z0-9_,.:/-]{1,256}$/.test(chain))return {};
+        return {
+          "X-Continuation-Call-Chain": chain,
+          ...(payload?._cogentia_call_chain === chain
+            ? { "X-Cogentia-Call-Chain": chain } : {}),
+        };
+      })(),
     }),
     embeddings: payload => request("/v1/embeddings", { method: "POST", body: payload }),
   };
