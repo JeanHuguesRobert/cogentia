@@ -7,7 +7,7 @@ import {createChatgptOpenAiCpsHttpServer} from '../lib/chatgpt-openai-cps-http.m
 
 const key=process.env.COGENTIA_BROWSER_CHAT_PROVIDER_KEY||process.env.COGENTIA_API_KEY||'';
 if(key.length<16)throw Error('COGENTIA_BROWSER_CHAT_PROVIDER_KEY or COGENTIA_API_KEY required');
-const port=Number(process.env.COGENTIA_BROWSER_CHAT_PORT||8798);
+const port=Number(process.env.COGENTIA_BROWSER_CHAT_PORT||8898);
 if(!Number.isInteger(port)||port<1024||port>65535)throw Error('invalid_provider_port');
 const db=process.env.COGENTIA_COP_STORE||'/var/lib/cogentia/cop/john-root-v1.sqlite';
 const store=createSqliteCopEventStore(db);
