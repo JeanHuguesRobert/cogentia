@@ -270,3 +270,53 @@ not bulk promotion of hundreds of private or ambiguous documents. Broader
 promotion depends on evidence of task relevance, provider correctness,
 privacy, mandate and budget per candidate. The provider permissions are
 independent of having a browser connector technically reachable.
+
+### Production: automatically reconcile an accepted public CPS judgment
+
+The **already-existing ONA CPS tick** can complete the *local* half of the
+legacy judgment workflow, without any new provider turn or scheduler. Enable
+this separately with the private runtime flag
+`COGENTIA_CPS_PUBLIC_LEGACY_SETTLEMENT_ENABLED=1` (off by default).
+
+`runResidentPublicLegacyJudgmentSettlement` examines only COP declarations
+explicitly created with `assignment_ref=legacy:ctn_...` and a previously
+recorded, accepted and completed result from the signed browser worker. It
+checks that the file remains byte-for-byte identical to the published
+`origin/main` version, that the answer obeys the continuation's original
+schema, the parent join is completed, and the parent temperature is active.
+Only then can the **existing** Cogentia `continuation resolve` CLI write the
+host-local SQLite state with optimistic concurrency. Each ONA cycle settles
+at most **one** such previously accepted continuation. Missing/ambiguous
+results and stale documents remain pending/reviewable, not reexecuted.
+
+A successful local CAS is followed by an idempotent canonical COP event
+`cogentia.legacy-continuation-settlement/v1` with phase
+`local_resolution_confirmed`, causally referring to the original returned
+result. Because the local and COP SQLite stores are distinct, a process
+failure between them is resolved by replay: an already resolved continuation
+is **not** written twice, and a missing COP receipt can be recovered without
+rerunning the JudgmentHandler. A stale or independently resolved local work
+item is not overwritten. No model output by itself can close a user mandate.
+
+The first actual pilot on 2026-11-16 was the published public
+`cogentia/test/README.md` (`ctn_5d825a54`). The signed v5 JudgmentHandler
+returned `{"decision":"index","reason":...}`, the local existing CLI
+recorded `resolved`, the canonical COP parent recorded
+`local_resolution_confirmed` and a retry returned `already_resolved` with
+one causal receipt. The active host-local count fell from **392 to 391**.
+
+Read-only settlement preview or manual reconciliation of an explicitly
+selected public task:
+
+```bash
+node scripts/ops/settle-public-legacy-judgment.mjs --id=ctn_...
+node scripts/ops/settle-public-legacy-judgment.mjs --id=ctn_... --apply
+```
+
+Do not generalize this to private Barons Mariani records or semantic-search
+requests without the distinct confidentiality and embedding-provider
+contracts. Existing sqlite-vec acceleration was separately rebuilt from
+11,524 stored 1,536-dimensional embeddings at **zero API spend**. The vector
+cache is now healthy, but it does not magically supply query embeddings for
+117 historical semantic-search continuations or increase corpus embedding
+coverage beyond 11,524 of 41,286 chunks.

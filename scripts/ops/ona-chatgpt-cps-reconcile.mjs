@@ -14,6 +14,8 @@ import {listAssignedChatgptCpsContinuations,runAssignedChatgptCpsBatch} from '..
 import {listChatgptCpsNextSteps,runChatgptCpsNextStepBatch} from '../lib/chatgpt-cps-next-step.js';
 import {createCpsDefaultAssignedWorker,createCpsDefaultNextWorker} from '../lib/chatgpt-cps-default-worker.js';
 import {inspectHostProductionWorkFrontier} from '../lib/production-work-frontier.js';
+import {runResidentPublicLegacyJudgmentSettlement}
+  from '../lib/legacy-public-judgment-resident.js';
 
 const DB='/var/lib/cogentia/cop/john-root-v1.sqlite';
 const FP='SHA256:lG9BC3fIjurrBccYLO1w7VQpmc9ZMr8MvM1o3zJ6L3c';
@@ -56,7 +58,22 @@ export async function runScheduledHeartbeat({env=process.env,assignedWorker=null
     // second dispatcher: the specialized CPS queue keeps sole ownership of
     // its existing browser/MCP continuations and generic pull stays fenced
     // until concrete handler and mandate/budget adapters are configured.
-    if(env.COGENTIA_COP_WORK_FRONTIER_ENABLED==='0')return result;
+    // Explicit opt-in for automated LOCAL CAS of a previously accepted,
+    // PUBLIC CPS document-role judgment. This never creates new assignments,
+    // sends an LLM request or changes mandates. The existing CPS worker owns
+    // all external provider calls and their budget/permission receipts.
+    let resultWithLegacy=result;
+    if(env.COGENTIA_CPS_PUBLIC_LEGACY_SETTLEMENT_ENABLED==='1'){
+      try{
+        const legacy=await runResidentPublicLegacyJudgmentSettlement({store,
+          max_steps:1});
+        resultWithLegacy={...result,public_legacy_settlement:legacy};
+      }catch{
+        resultWithLegacy={...result,public_legacy_settlement:{ok:false,
+          status:'local_settlement_reconciliation_required'}};
+      }
+    }
+    if(env.COGENTIA_COP_WORK_FRONTIER_ENABLED==='0')return resultWithLegacy;
     try{
       const frontier=inspectHostProductionWorkFrontier({store,
         registryRoot:env.COGENTIA_WORK_FRONTIER_REGISTRY_ROOT||
@@ -68,12 +85,15 @@ export async function runScheduledHeartbeat({env=process.env,assignedWorker=null
           `cps_pending=${frontier.cop.specialized_cps_ready}; `+
           `reconciliation=${frontier.cop.needs_reconciliation}`
         :`COP frontier observer: ${frontier.status}`;
-      return {...result,work_frontier:frontier,
-        detail:result.detail?result.detail+'; '+metrics:metrics};
+      const legacy=resultWithLegacy.public_legacy_settlement;
+      const detail=metrics+(legacy?'; legacy_settled='+legacy.settled+
+        '; legacy_review='+legacy.needs_review:'');
+      return {...resultWithLegacy,work_frontier:frontier,
+        detail:result.detail?result.detail+'; '+detail:detail};
     }catch{
       // Observability must not invalidate valid CPS effect receipts.  The
       // failure is explicit and cannot be mistaken for an empty queue.
-      return {...result,work_frontier:{ok:false,status:'frontier_projection_failed',
+      return {...resultWithLegacy,work_frontier:{ok:false,status:'frontier_projection_failed',
         external_effects:0}};
     }
   });
