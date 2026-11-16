@@ -8,6 +8,7 @@
 
 import { exec } from "node:child_process";
 import fs from "node:fs";
+import {continuationRepository} from "../continuation-sqlite-repository.mjs";
 import path from "node:path";
 import { createHash, randomBytes } from "node:crypto";
 import { DEFAULT_EMERGENCY_EMAIL, DEFAULT_EMERGENCY_PHONE } from "./constants.js";
@@ -78,15 +79,11 @@ export function notifyHumanAttention(options = {}) {
     pcNotified = false;
   }
 
-  // 2. Emit Durable Continuation Packet into .cogentia/continuations/
+  // 2. Emit a durable attention continuation into host-local SQLite
   let continuationId = null;
   try {
-    const continuationsDir = path.join(process.cwd(), ".cogentia", "continuations");
-    if (!fs.existsSync(continuationsDir)) {
-      fs.mkdirSync(continuationsDir, { recursive: true });
-    }
+    const continuationStore=continuationRepository(process.cwd());
     const cId = `ctn_${randomBytes(4).toString("hex")}`;
-    const ctnPath = path.join(continuationsDir, `${cId}.json`);
     const ctnData = {
       id: cId,
       kind: "human_attention_request",
@@ -98,7 +95,7 @@ export function notifyHumanAttention(options = {}) {
       emergency_contacts: getEmergencyContacts(),
       expected_continuation: "human_review",
     };
-    fs.writeFileSync(ctnPath, JSON.stringify(ctnData, null, 2), "utf8");
+    continuationStore.save(ctnData);
     continuationId = cId;
   } catch {
     continuationId = null;
