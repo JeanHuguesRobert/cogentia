@@ -67,7 +67,7 @@ the same **internal upstream** secret that Magistral loads under the
 cd /srv/cogentia/repos/cogentia
 COGENTIA_COP_STORE=/var/lib/cogentia/cop/john-root-v1.sqlite \
   node scripts/ops/serve-chatgpt-openai-cps-provider.mjs
-# listens only on 127.0.0.1:8798 (also requires a secret in its environment)
+# listens only on 127.0.0.1:8898 (also requires a secret in its environment)
 \`\`\`
 
 The runtime reads \`COGENTIA_BROWSER_CHAT_PROVIDER_KEY\`, falling back to
