@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync,rmSync} from 'node:fs';
+import {mkdtempSync,rmSync,mkdirSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createPrimitiveContinuationStore} from './lib/primitive-continuations.mjs';
+import {migrateJsonContinuations} from './ops/migrate-json-continuations-sqlite.mjs';
 
 const withStores=async fn=>{
   const dir=mkdtempSync(join(tmpdir(),'primitive-continuations-'));
@@ -73,4 +74,31 @@ test('independent work in distinct scopes advances concurrently and reconciles b
   assert.equal(db.compareAndSwap('work:A',latest.revision,{body:{value:['A','B']},verb:'reconcile'}).ok,true);
   assert.equal(db.get('work:A').body.value.length,2);
   assert.equal(db.events('work:A').at(-1).verb,'reconcile');
+}));
+
+test('JSON migration is dry-run-first, idempotent and preserves legacy semantics',()=>withStores(async (_db,dir)=>{
+  const source=join(dir,'legacy');
+  mkdirSync(source);
+  const raw={id:'ctn_legacy_case',kind:'human_attention_request',status:'alive',
+    message:{prompt:'draft'},history:[{event:'created'}]};
+  writeFileSync(join(source,'ctn_legacy_case.json'),JSON.stringify(raw));
+  const target=join(dir,'migration.sqlite');
+  const check=migrateJsonContinuations({source,dbPath:target,apply:false});
+  assert.equal(check.candidates,1);
+  assert.equal(check.imported,0);
+  const first=migrateJsonContinuations({source,dbPath:target,apply:true});
+  assert.equal(first.imported,1);
+  const repeat=migrateJsonContinuations({source,dbPath:target,apply:true});
+  assert.equal(repeat.already_imported,1);
+  const destination=createPrimitiveContinuationStore(target);
+  try{
+    const row=destination.get(raw.id);
+    assert.equal(row.status,'alive');
+    assert.equal(row.kind,'human_attention_request');
+    assert.deepEqual(row.body.original,raw);
+    assert.equal(destination.events(raw.id).length,1);
+  }finally{destination.close()}
+  writeFileSync(join(source,'ctn_legacy_case.json'),JSON.stringify({...raw,message:'mutated'}));
+  const conflict=migrateJsonContinuations({source,dbPath:target,apply:true});
+  assert.equal(conflict.conflicts.length,1);
 }));
