@@ -46,7 +46,7 @@ This note records a candidate architecture and research hypothesis. It is not ye
 
 ## 1. Core proposition
 
-A suspended continuation is a **Packet**.
+A suspended, transportable continuation is **representable as a Packet**. This is a semantic model, not a requirement to materialize every RAM-local suspension, callback or Side-style slot into a durable packet, COP event or network message.
 
 ```text
 Continuation ⊆ Packet
@@ -415,7 +415,50 @@ process recovery ≠ computation recovery
 computation recovery = durable Packet + durable relevant state + trace
 ```
 
+### 10.1 Primitive continuation and governed continuation (2026-11-16)
+
+A **primitive continuation** is the resumable execution mechanism: local
+suspension, memoized results, replay, checkpoint, restart and optional
+migration. The **governed continuation** composes that mechanism with COP
+control of cognitive work and consequential effects. COP is *not* the
+primitive execution runtime, the generic scheduler, or a prerequisite to
+every process/worker/host handoff. Conversely, migrating a continuation
+never transports additional mandate or authority implicitly.
+
+Execution domains include one RAM space, a process/worker family, a host,
+a Fractanet and federation. These are *placement/cost domains*, not a rigid
+OSI-like protocol ladder. A continuation's logical identity, current
+state residence, current handler, cached results and governing authority
+can differ. Use RAM or IPC inside a locality, local durable state (for
+example SQLite) at real recovery boundaries, and verifiable references
+or transferred snapshots only when changing locality. Side-style
+memoization and replay often avoid transporting the entire call stack.
+
+### 10.2 Optimistic work and reconciliation (2026-11-16)
+
+Do not require a global exclusive claim for independent computations.
+Multiple handlers MAY advance optimistically from the same causal
+baseline. Each proposed mutation retains the observed version,
+dependencies, causal parent and enough provenance to detect a conflict.
+At the commit boundary, compare-and-set or an equivalent conditional
+update identifies incompatible writes. Reconcile at the smallest
+sufficient locality: merge commuting results, selectively replay
+invalidated portions using memoized outputs, or preserve competing
+alternatives pending an actual judgment.
+
+**Optimistic concurrency control is not equivalent to eventual
+consistency.** A convergence claim requires delivery of relevant
+updates plus a merge/reconciliation policy, and may be impossible where
+contradictory judgments legitimately remain unresolved. A local SQLite
+transaction protects its own store; it is not a distributed lock or a
+guarantee of convergence. Single-commit safeguards remain necessary
+for non-idempotent external effects. The ordinary data-plane
+reconciliation mechanism must operate without COP; governed effects
+add COP checks at their actual authority boundary.
+
 ## 11. Governance is part of the machine
+
+**Scope:** this section describes the *governed* profile of the machine. The primitive continuation substrate above operates without an implicit COP mandate.
 
 A branch that is technically executable is not necessarily legitimate.
 
