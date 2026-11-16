@@ -69,8 +69,12 @@ if(idFlag.length!==1||tabFlag.length!==1||argv.length!==(apply?3:2)||
           const env=loadEnvFiles(['/srv/cogentia/secrets/ona.env',
             '/srv/cogentia/secrets/cps-john.env'],process.env);
           const invoke=createGovernedJohnBrowserAction({token:env.COGENTIA_MCP_JHN_TOKEN});
+          // The first attempt's John budget was settled but the browser
+          // script failed to parse. Its effect was independently verified
+          // absent. Use a distinct canonical John request ID; never replay
+          // the already-accounted original request.
           const result=await invoke('clear_owned_draft',id,{action:'clear_owned_draft',
-            tab_id:tab,expected_continuation_id:id,expected_prompt:prompt.prompt});
+            tab_id:tab,expected_continuation_id:id,expected_prompt:prompt.prompt},1);
           if(!result.ok||result.observation?.cleared!==true){
             console.log(JSON.stringify({ok:false,status:'governed_clear_needs_reconciliation',
               diagnostic_code:result.error||'john_clear_receipt_missing',

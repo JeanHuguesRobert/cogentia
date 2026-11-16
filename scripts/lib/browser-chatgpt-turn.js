@@ -157,7 +157,7 @@ const observeCode=`(() => {
 // CANONICAL COP declaration by an already governed caller. Browser-side
 // exact normalized equality prevents erasing any different user draft.
 // No message is sent, no page navigated, and no prior COP trace changed.
-const clearOwnedDraftCode=`(() => {
+const clearOwnedDraftCode=String.raw`(() => {
   const expectedContinuationId=null;
   const expectedPrompt=null;
   if(location.origin!=="https://chatgpt.com"||location.pathname!=="/")

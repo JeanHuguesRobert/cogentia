@@ -642,3 +642,23 @@ browser turn (with its independent budget) and appends a distinct causal
 Its idempotency key prevents repeating the effect after restart. This is a
 browser-draft cleanup only; no COP source, returned Judgment answer, local
 continuation or immutable edition is deleted or revised.
+
+#### FBF: validated browser code, not merely a mocked acknowledgment
+
+The first governed cleanup of a previously completed CPS prompt returned
+`john_cop_receipt_missing`. A separate read-only inspection confirmed the
+entire 5,348-character draft was still present. The John budget reservation
+and settlement were nevertheless recorded; these are **accounting**, not a
+verified successful editor mutation. The actual `page.evaluate` source had
+been constructed using an interpolated JavaScript template containing
+`\r`/`\n` regular expressions; the runtime-generated source failed to
+compile (`SyntaxError: Invalid regular expression`).
+
+The static browser recipe now uses `String.raw` for those literal backslashes,
+and the capability regression test runs `node:vm.Script` against the **actual
+substituted page script**, not just its mock callback result. Because the
+original John request ID was already accounted, the bounded CLI cleanup uses
+a **new, deterministic `--recovery-1` John request ID**; no replay of the
+previous accounting entry. A fresh exact-match read check remains mandatory
+before any new editor change, and the canonical COP owned-draft receipt is
+written only after the browser returns `cleared:true`.

@@ -1,4 +1,5 @@
 import test from 'node:test';
+import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {createChatgptTurnCapability,validateChatgptTurnRequest,isChatgptTabUrl,canRecoverChatgptFailedDraft,JUDGMENT_TAB_MARKER}
  from './browser-chatgpt-turn.js';
@@ -423,6 +424,8 @@ test('clear_owned_draft can only remove a canonical, ID-bound draft from an unma
     assert.ok(args.code.includes(JSON.stringify(expected)));
     assert.ok(args.code.includes('draft_mismatch'));
     assert.ok(args.code.includes('execCommand("delete"'));
+    assert.doesNotThrow(()=>new vm.Script(args.code),
+      'the ACTUAL browser code must compile after all prompt substitutions');
     assert.equal(args.code.includes('send.click()'),false);
     return {value:{ok:true,cleared:true,originally_matched:true,
       original_char_count:expected.length}};
