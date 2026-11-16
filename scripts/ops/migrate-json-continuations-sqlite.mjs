@@ -17,7 +17,7 @@ export function migrateJsonContinuations({source,dbPath,apply=false}={}){
   const names=readdirSync(root).filter(f=>f.endsWith('.json')).sort();
   const report={schema:'primitive-continuation-json-migration/v1',
     source:root,database:resolve(dbPath),apply,scanned:names.length,
-    imported:0,already_imported:0,conflicts:[],invalid:[],candidates:0,
+    imported:0,already_imported:0,variants:0,source_versions:0,conflicts:[],invalid:[],candidates:0,
     by_status:{},by_kind:{}};
   const store=apply?createPrimitiveContinuationStore(dbPath):null;
   try{
@@ -43,7 +43,18 @@ export function migrateJsonContinuations({source,dbPath,apply=false}={}){
         if(put.ok){
           if(put.existing)report.already_imported++;
           else report.imported++;
-        }else report.conflicts.push({file:name,id:doc.id,code:put.code});
+        }else if(put.code==='continuation_identity_conflict'&&put.current?.id===doc.id){
+          // Same logical continuation can have distinct, legitimate JSON
+          // historical incarnations. Preserve them as source versions,
+          // never fabricate a second logical continuation ID.
+          report.variants++;
+        }else{
+          report.conflicts.push({file:name,id:doc.id,code:put.code});
+          continue;
+        }
+        const sourcePut=store.attachSource(doc.id,'legacy-json:'+name,digest(bytes),doc);
+        if(sourcePut.ok)report.source_versions++;
+        else report.conflicts.push({file:name,id:doc.id,code:sourcePut.code});
       }catch(e){report.invalid.push({file:name,error:e.message});}
     }
   }finally{store?.close()}
