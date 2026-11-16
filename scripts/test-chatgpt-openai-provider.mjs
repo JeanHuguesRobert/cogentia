@@ -7,6 +7,7 @@ import {createChatgptLocalStore} from './lib/chatgpt-openai-local-store.mjs';
 import {createChatgptOpenAiBridge,normalizeOpenAiRequest} from './lib/chatgpt-openai-bridge.mjs';
 import {createChatgptBrowserTurnRunner} from './lib/chatgpt-openai-browser-runner.mjs';
 import {createChatgptOpenAiHttpServer} from './lib/chatgpt-openai-http.mjs';
+import {createAiRouterClient} from './lib/ai-router-client.js';
 
 const key='local-test-provider-secret-long-enough';
 const input=text=>({model:'chatgpt-browser',messages:[{role:'user',content:text}]});
@@ -126,3 +127,24 @@ test('HTTP bearer, local status and buffered SSE',()=>withStore(async(store)=>{
     assert.equal(localId.ok,false);
   }finally{await new Promise(r=>server.close(r));}
 }));
+
+
+test('Cogentia router preserves local continuation and propagates invocation lineage',async()=>{
+  let observedHeader=null;
+  const client=createAiRouterClient({
+    baseUrl:'http://127.0.0.1:8880',apiKey:'fixture',
+    fetchImpl:async(_url,opts)=>{
+      observedHeader=opts.headers['X-Cogentia-Call-Chain'];
+      return new Response(JSON.stringify({error:{
+        code:'local_continuation_required',message:'nested browser call blocked',
+        continuation:{id:'local_1234567890abcdef1234567890abcdef',status:'deferred',
+          locality:'fracta2',reason:'recursive_call'}}}),{
+          status:409,headers:{'content-type':'application/json'}});
+    }});
+  const result=await client.chatCompletions({...input('nested'),
+    _cogentia_call_chain:'chatgpt-browser,cogentia-mcp'});
+  assert.equal(observedHeader,'chatgpt-browser,cogentia-mcp');
+  assert.equal(result.ok,false);
+  assert.equal(result.error,'continuation_required');
+  assert.equal(result.continuation.id,'local_1234567890abcdef1234567890abcdef');
+});
