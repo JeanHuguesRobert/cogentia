@@ -4,16 +4,20 @@
  * No COP reinterpretation: preserve legacy status, kind and complete payload.
  */
 import {readdirSync,readFileSync,statSync} from 'node:fs';
-import {join,resolve} from 'node:path';
+import {join,resolve,dirname,basename} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {hostname} from 'node:os';
 import {createHash} from 'node:crypto';
 import {createPrimitiveContinuationStore} from '../lib/primitive-continuations.mjs';
+import {continuationDatabasePath} from '../lib/continuation-sqlite-repository.mjs';
 
 const digest=s=>createHash('sha256').update(s).digest('hex');
 export function migrateJsonContinuations({source,dbPath,apply=false}={}){
-  if(!source||!dbPath)throw Error('source_and_sqlite_db_required');
+  if(!source)throw Error('source_required');
   const root=resolve(source);
+  if(basename(root)!=='continuations'||basename(dirname(root))!=='.cogentia')
+    throw Error('source_must_be_a_cogentia_continuations_directory');
+  dbPath=dbPath||continuationDatabasePath(dirname(dirname(root)));
   const names=readdirSync(root).filter(f=>f.endsWith('.json')).sort();
   const report={schema:'primitive-continuation-json-migration/v1',
     source:root,database:resolve(dbPath),apply,scanned:names.length,
@@ -71,8 +75,8 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).hr
   const apply=args.includes('--apply');
   const source=opt('--source');
   const dbPath=opt('--db');
-  if(!source||!dbPath){
-    console.error('Usage: node migrate-json-continuations-sqlite.mjs --source DIR --db PATH [--apply]');
+  if(!source){
+    console.error('Usage: node migrate-json-continuations-sqlite.mjs --source ROOT/.cogentia/continuations [--db PATH] [--apply]');
     process.exitCode=2;
   }else{
     const report=migrateJsonContinuations({source,dbPath,apply});
