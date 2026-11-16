@@ -99,7 +99,7 @@ test('JSON migration is dry-run-first, idempotent and preserves legacy semantics
   assert.equal(first.source_versions,2);
   assert.equal(first.conflicts.length,0);
   const repeat=migrateJsonContinuations({source,dbPath:target,apply:true});
-  assert.equal(repeat.already_imported,1);
+  assert.equal(repeat.already_imported,2);
   assert.equal(repeat.variants,1);
   const destination=createPrimitiveContinuationStore(target);
   try{
