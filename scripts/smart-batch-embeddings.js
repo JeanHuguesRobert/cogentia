@@ -7,6 +7,7 @@
  */
 
 import fs from "fs";
+import {continuationRepository} from './lib/continuation-sqlite-repository.mjs';
 import path from "path";
 import { execSync } from "child_process";
 import { randomBytes } from "crypto";
@@ -20,7 +21,10 @@ const REGISTRY_ROOT = REGISTRY_PATH
   ? (fs.existsSync(REGISTRY_PATH) && fs.statSync(REGISTRY_PATH).isDirectory() ? REGISTRY_PATH : path.dirname(REGISTRY_PATH))
   : COGENTIA_DIR;
 const COGENTIA_STATE_DIR = process.env.COGENTIA_STATE_DIR || path.join(REGISTRY_ROOT, ".cogentia");
-const CONTINUATIONS_DIR = process.env.CONTINUATIONS_DIR || path.join(COGENTIA_STATE_DIR, "continuations");
+const CONTINUATION_ROOT=process.env.CONTINUATIONS_DIR
+  ? path.dirname(path.dirname(path.resolve(process.env.CONTINUATIONS_DIR))) : REGISTRY_ROOT;
+const continuationStore=continuationRepository(CONTINUATION_ROOT);
+const CONTINUATIONS_DIR=continuationStore.path;
 const BATCH_SIZE = 10; // chunks per batch (very conservative for long chunks)
 const TARGET_REPO = process.env.COGENTIA_EMBEDDINGS_REPO || "all";
 
@@ -42,27 +46,8 @@ function exec(cmd) {
 /**
  * Read a continuation file directly
  */
-function readContinuation(id) {
-  const continuationPath = path.join(CONTINUATIONS_DIR, `${id}.json`);
-  if (!fs.existsSync(continuationPath)) {
-    return null;
-  }
-  try {
-    const content = fs.readFileSync(continuationPath, "utf-8");
-    return JSON.parse(content);
-  } catch (error) {
-    console.error(`Failed to read continuation ${id}:`, error.message);
-    return null;
-  }
-}
-
-/**
- * Write a continuation file
- */
-function writeContinuation(continuation) {
-  const continuationPath = path.join(CONTINUATIONS_DIR, `${continuation.id}.json`);
-  fs.writeFileSync(continuationPath, JSON.stringify(continuation, null, 2));
-}
+function readContinuation(id) { return continuationStore.load(id); }
+function writeContinuation(continuation) { return continuationStore.save(continuation); }
 
 /**
  * Split a large continuation into smaller batches
@@ -127,12 +112,11 @@ async function main() {
   console.log(`Batch size: ${BATCH_SIZE} chunks\n`);
 
   // Check for large continuations
-  const files = fs.readdirSync(CONTINUATIONS_DIR).filter(f => f.endsWith(".json"));
+  const continuations = continuationStore.list();
   const largeContinuations = [];
 
-  for (const file of files) {
-    const id = file.replace(".json", "");
-    const ctn = readContinuation(id);
+  for (const ctn of continuations) {
+    const id = ctn.id;
     if (!ctn || ctn.status !== "active") continue;
     if (ctn.kind !== "embeddings-index") continue;
 
