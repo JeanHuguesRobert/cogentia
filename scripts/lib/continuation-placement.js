@@ -1,10 +1,11 @@
+import {projectPacketTemperature} from '../../../inseme/packages/cop-core/src/packet-temperature.js';
 /** Locality-first, read-only meeting projection. NOT a claim or scheduler authority.
  * A handler declaration is evidence to investigate, never proof of mandate or reachability.
  */
 export const PLACEMENT_PROTOCOL='cogentia.continuation_placement.v1';
 const string=x=>typeof x==='string'?x.trim():'';
 const unique=xs=>[...new Set(xs.map(string).filter(Boolean))];
-export function projectContinuationPlacement({continuations=[],handlers=[],homeNode='',now='2026-11-09T00:00:00.000Z'}={}){
+export function projectContinuationPlacement({continuations=[],handlers=[],homeNode='',now='2026-11-09T00:00:00.000Z',temperatureStore=null}={}){
   const time=Date.parse(now);
   if(!Number.isFinite(time))throw new Error('Invalid projection time');
   const entries=[];
@@ -17,10 +18,23 @@ export function projectContinuationPlacement({continuations=[],handlers=[],homeN
     const age=Math.max(0,Math.floor((time-Date.parse(c.created_at||now))/1000))||0;
     const waitUntil=Date.parse(c.conditions?.resumeAfter||c.resume_after||'');
     const waiting=Number.isFinite(waitUntil)&&waitUntil>time;
+    // Placement is advisory. Consume the existing canonical temperature
+    // projection, never manufacture a second queue or a stored READY flag.
+    // Namespaced issue refs are not COP packet refs; their continuation
+    // identity can still carry a durable scheduling barrier.
+    const temperatureRef=/^(packet|continuation):/.test(packetRef)?packetRef:`continuation:${id}`;
+    const continuationRef=`continuation:${id}`;
+    const projections=temperatureStore?[...new Set([temperatureRef,continuationRef])]
+      .map(packet_ref=>projectPacketTemperature(temperatureStore,{packet_ref})):[];
+    const invalid=projections.find(x=>!x.ok);
+    if(invalid)throw new Error('invalid_temperature_projection:'+invalid.status);
+    const blocked=projections.find(x=>!x.runnable);
+    const warmth=blocked||projections[0]||null;
+    const cold=Boolean(blocked);
     const matches=handlers.filter(h=>h&&string(h.id||h.resolver_id)&&h.available===true&&required.every(cap=>h.capabilities?.includes(cap)))
       .map(h=>({handler_id:string(h.id||h.resolver_id),node:string(h.node||h.home_node||h.locality),match_basis:'declared_capabilities_only',capability_confidence:['verified','observed','declared'].includes(h.capability_confidence)?h.capability_confidence:'declared',locality:locality&&string(h.node||h.home_node||h.locality)===locality?'same_home':locality?'remote_or_unknown':'unplaced',mandate_verified:false,claim_acquired:false}));
     matches.sort((a,b)=>(a.locality==='same_home'?0:1)-(b.locality==='same_home'?0:1)||a.handler_id.localeCompare(b.handler_id));
-    entries.push({continuation_id:id,packet_ref:packetRef,packet_projection:packetRef.startsWith('continuation:')?'minimal_from_continuation':'derived_from_lineage',home_node:locality||null,required_capabilities:required,priority:Number(c.priority)||0,wait_age_seconds:age,runnable_candidate:!waiting&&matches.length>0,blocked_reason:waiting?'waiting_until_due':matches.length?'':'no_declared_available_capable_handler',handler_candidates:matches,selected_handler:null,claim_acquired:false,effect_authorized:false,return_ref:c.return_contract?.result_ref||`continuation:${id}/resolution`});
+    entries.push({continuation_id:id,packet_ref:packetRef,packet_projection:packetRef.startsWith('continuation:')?'minimal_from_continuation':'derived_from_lineage',home_node:locality||null,required_capabilities:required,priority:Number(c.priority)||0,wait_age_seconds:age,temperature:warmth?.effective_temperature||null,temperature_ref:temperatureRef,runnable_candidate:!waiting&&!cold&&matches.length>0,blocked_reason:cold?(warmth.deleted?'deleted':'temperature:'+warmth.effective_temperature):waiting?'waiting_until_due':matches.length?'':'no_declared_available_capable_handler',handler_candidates:matches,selected_handler:null,claim_acquired:false,effect_authorized:false,return_ref:c.return_contract?.result_ref||`continuation:${id}/resolution`});
   }
   // A monotone age-first policy is fair only among continuously eligible work and with finite completion/service capacity.
   entries.sort((a,b)=>(b.runnable_candidate?1:0)-(a.runnable_candidate?1:0)||b.wait_age_seconds-a.wait_age_seconds||b.priority-a.priority||a.continuation_id.localeCompare(b.continuation_id));

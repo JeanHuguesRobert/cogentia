@@ -14,7 +14,7 @@ console.log("  ✓ Unit 1 passed: createSchedulerRunContext defaults");
 
 // Unit 2: runFractaCycle mock execution
 const mockHooks = {
-  converge: async () => ({ docs: 10, chunks: 50, edges: 20 }),
+  converge: async () => ({ docs: 10, chunks: 50, edges: 20, fixed_point_reached: true }),
   checkMutations: async () => ({ total_scanned: 10, passed: 10, warnings: 0, blocked: 0 }),
   syncIssues: async () => ({ synced: 5 }),
   maintainContinuations: async () => ({ aliveCount: 0 }),
@@ -29,6 +29,27 @@ assert.equal(result.stages.every(s => s.status === SCHEDULER_STAGE_STATUS.SUCCES
 assert.equal(result.metrics.docsCount, 10);
 assert.equal(result.metrics.chunksCount, 50);
 console.log("  ✓ Unit 2 passed: runFractaCycle stage execution and metrics");
+
+// Unit 3: optional COP work-pull is the existing cycle's bounded stage.
+// It is never a second scheduler and never executes during a dry run.
+let pullCalls=0;
+const withPull=await runFractaCycle(createSchedulerRunContext({}, {mode:"quick"}),{
+  pullContinuations:async ({max_steps})=>{
+    pullCalls++;assert.equal(max_steps,3);
+    return {ok:true,work_executed:2,parent_resumptions:1};
+  },
+});
+assert.equal(pullCalls,1);
+assert.equal(withPull.metrics.workPullExecuted,2);
+assert.equal(withPull.metrics.parentResumptions,1);
+assert.equal(withPull.stages.find(s=>s.name==="cop_continuation_work_pull").status,
+  SCHEDULER_STAGE_STATUS.SUCCESS);
+const dry=await runFractaCycle(createSchedulerRunContext({}, {dryRun:true}),{
+  pullContinuations:async()=>{throw Error("must not dispatch during dry run")},
+});
+assert.equal(pullCalls,1);
+assert.match(dry.stages.find(s=>s.name==="cop_continuation_work_pull").details,/Dry run/);
+console.log("  ✓ Unit 3 passed: COP work-pull integrated with existing FractaScheduler");
 
 // CLI 1: cogentia scheduler status
 const statusOut = execFileSync(process.execPath, ["scripts/cogentia.js", "scheduler", "status", "--json"], {

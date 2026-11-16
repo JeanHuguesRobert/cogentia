@@ -45,6 +45,8 @@ export function createSchedulerRunContext(ctx, options = {}) {
       mutationsChecked: 0,
       issuesSynced: 0,
       continuationsAlive: 0,
+      workPullExecuted: 0,
+      parentResumptions: 0,
       fixedPointReached: false,
     },
     escalations: [],
@@ -119,6 +121,23 @@ export async function runFractaCycle(runCtx, hooks = {}) {
     }
     return { ok: true, details: "Skipped continuations maintenance." };
   });
+
+  // Stage 4b: optional COP work-pull, run by THIS existing FractaScheduler
+  // after its continuation maintenance. No independent timer/queue daemon;
+  // a host must explicitly provide authorized handlers and a durable COP
+  // store. No work-pull is attempted during a dry run.
+  if (typeof hooks.pullContinuations === "function") {
+    await recordStage(runCtx, "cop_continuation_work_pull", async () => {
+      if (dryRun) return {ok:true,details:"Dry run: work pull was not dispatched."};
+      const pull=await hooks.pullContinuations({max_steps:3});
+      if (!pull?.ok) return {ok:false,
+        details:pull?.status||"COP continuation work pull failed"};
+      runCtx.metrics.workPullExecuted=pull.work_executed||0;
+      runCtx.metrics.parentResumptions=pull.parent_resumptions||0;
+      return {ok:true,details:`COP pull: ${pull.work_executed||0} work step(s), `+
+        `${pull.parent_resumptions||0} parent resumed.`};
+    });
+  }
 
   // Stage 5: Views Store Export
   await recordStage(runCtx, "views_export", async () => {

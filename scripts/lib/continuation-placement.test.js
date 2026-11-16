@@ -49,3 +49,46 @@ test("invalid time and unavailable declarations never create runnable work",()=>
  assert.equal(result.counts.runnable_candidates,0);
  assert.equal(result.entries[0].handler_candidates.length,0);
 });
+
+
+test('temperature projection reuses COP journal and never presents parked descendants as ready',async()=>{
+ const {createSqliteCopEventStore}=await import('../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js');
+ const {linkPacketChild}=await import('../../../inseme/packages/cop-core/src/packet-parent-continuations.js');
+ const {changePacketTemperature}=await import('../../../inseme/packages/cop-core/src/packet-temperature.js');
+ const store=createSqliteCopEventStore(':memory:');
+ try{
+  const parent='continuation:ctn-projected-parent',child='continuation:ctn-projected-child';
+  const c=[{id:'ctn-projected-parent',status:'active',created_at:'2026-11-15T07:00:00Z',required_capability:'read'},
+   {id:'ctn-projected-child',status:'active',created_at:'2026-11-15T08:00:00Z',required_capability:'read'}];
+  const h=[{id:'worker',node:'fracta2',available:true,capabilities:['read']}];
+  const view=()=>projectContinuationPlacement({continuations:c,handlers:h,now:'2026-11-16T12:00:00Z',temperatureStore:store});
+  assert.equal(linkPacketChild(store,{parent_ref:parent,child_ref:child}).ok,true);
+  assert.equal(view().counts.runnable_candidates,2);
+  assert.equal(changePacketTemperature(store,{packet_ref:parent,temperature:'parked',transition_id:'p-park'}).ok,true);
+  assert.equal(view().counts.runnable_candidates,0);
+  assert.ok(view().entries.every(e=>e.blocked_reason==='temperature:parked'));
+  assert.equal(changePacketTemperature(store,{packet_ref:parent,temperature:'active',transition_id:'p-resume'}).ok,true);
+  assert.deepEqual(view().entries.filter(e=>e.runnable_candidate).map(e=>e.continuation_id),['ctn-projected-parent']);
+  assert.equal(changePacketTemperature(store,{packet_ref:child,temperature:'active',transition_id:'c-resume'}).ok,true);
+  assert.equal(view().counts.runnable_candidates,2);
+  assert.equal(store.auditCommitments().ok,true);
+ }finally{store.close()}
+});
+
+
+test('suspending a continuation overrides a warm packet placement independently',async()=>{
+ const {createSqliteCopEventStore}=await import('../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js');
+ const {changePacketTemperature}=await import('../../../inseme/packages/cop-core/src/packet-temperature.js');
+ const store=createSqliteCopEventStore(':memory:');try{
+  const c={id:'ctn-on-warm-packet',packetRef:'packet:already-warm',status:'active',
+    required_capability:'read'};
+  const h={id:'worker',node:'fracta2',available:true,capabilities:['read']};
+  const view=()=>projectContinuationPlacement({continuations:[c],handlers:[h],
+    temperatureStore:store,now:'2026-11-16T12:00:00Z'});
+  assert.equal(view().entries[0].runnable_candidate,true);
+  assert.equal(changePacketTemperature(store,{packet_ref:'continuation:ctn-on-warm-packet',
+    temperature:'parked',transition_id:'pause-continuation-only'}).ok,true);
+  assert.equal(view().entries[0].runnable_candidate,false);
+  assert.equal(view().entries[0].blocked_reason,'temperature:parked');
+ }finally{store.close()}
+});
