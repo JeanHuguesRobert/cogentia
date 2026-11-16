@@ -1,4 +1,4 @@
-/** Minimal authenticated loopback HTTP adapter for one canonical CPS provider. */
+/** Minimal authenticated loopback HTTP adapter, with machine-local continuations. */
 import http from 'node:http';
 import {timingSafeEqual} from 'node:crypto';
 
@@ -31,17 +31,24 @@ function emitSse(res,completion){
   res.end('data: [DONE]\n\n');
 }
 /** No internal scheduler: complete only assigns and waits on the shared store. */
-export function createChatgptOpenAiCpsHttpServer({complete,key,maxInflight=4}={}){
+export function createChatgptOpenAiCpsHttpServer({complete,key,maxInflight=4,localStatus}={}){
   if(typeof complete!=='function'||typeof key!=='string'||key.length<16)
     throw Error('local_provider_authentication_required');
   let inflight=0;
   return http.createServer(async(req,res)=>{
     if(req.method==='GET'&&req.url==='/health')return writeJson(res,200,{
-      service:'chatgpt-browser-cps-provider',ok:true,mode:'bridge_available',
+      service:'chatgpt-browser-openai-provider',ok:true,mode:'local_browser_adapter',
       browser_delivery_verified:false});
     if(!validBearer(req.headers.authorization,key))return writeJson(res,401,{error:{type:'authentication_error',code:'invalid_api_key'}});
     if(req.method==='GET'&&req.url==='/v1/models')return writeJson(res,200,{object:'list',data:[{
-      id:'chatgpt-browser',object:'model',owned_by:'cogentia-cps',capabilities:['text']}]});
+      id:'chatgpt-browser',object:'model',owned_by:'local-chatgpt-provider',capabilities:['text']}]});
+    if(req.method==='GET'&&/^\/v1\/continuations\/local_[a-f0-9]{32}$/.test(req.url||'')){
+      const id=req.url.split('/').at(-1);
+      const row=typeof localStatus==='function'?localStatus(id):null;
+      return row?writeJson(res,200,{id:row.id,status:row.status,reason:row.reason||null,
+        answer:row.status==='done'?row.answer:null,local:true}):
+        writeJson(res,404,{error:{code:'continuation_not_found'}});
+    }
     const legacy=req.url==='/v1/completions';
     if(req.method!=='POST'||(!legacy&&req.url!=='/v1/chat/completions'))
       return writeJson(res,404,{error:{type:'invalid_request_error',code:'not_found'}});
@@ -53,7 +60,7 @@ export function createChatgptOpenAiCpsHttpServer({complete,key,maxInflight=4}={}
     res.on('close',()=>{disconnected=true});
     try{
       const completion=await complete(body,{legacy,client_request_id:req.headers['x-client-request-id'],
-        signal:{get aborted(){return disconnected}}});
+        call_chain:req.headers['x-cogentia-call-chain']});
       if(disconnected)return;
       if(completion.status===200&&body.stream===true&&!legacy)return emitSse(res,completion.body);
       return writeJson(res,completion.status,completion.body);
