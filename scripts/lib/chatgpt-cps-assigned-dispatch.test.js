@@ -81,6 +81,13 @@ test('unconfirmed UI effect is not replayed after a cold restart',async()=>{
     continuation_id:id,admit:permit,dispatch:async()=>{attempts++;throw Error('timeout')}})).status,
     'needs_reconciliation');
   s.close();s=createSqliteCopEventStore(file);
+  const diagnostic=s.listTopic('continuation:'+id).filter(e=>
+    e.payload?.phase==='delivery_unconfirmed');
+  assert.equal(diagnostic.length,1);
+  assert.equal(diagnostic[0].payload?.diagnostic_code,'provider_dispatch_exception');
+  assert.equal(diagnostic[0].payload?.retry_authorized,false);
+  assert.equal(diagnostic[0].payload?.outcome_ambiguous,true);
+  assert.equal(diagnostic[0].payload?.click_delivery_proven,false);
   assert.deepEqual(listAssignedChatgptCpsContinuations(s).map(x=>x.status),['needs_reconciliation']);
   assert.equal((await dispatchAssignedChatgptCpsContinuation({store:s,
     continuation_id:id,admit:permit,dispatch:async()=>{attempts++;return send({continuation_id:id})}})).status,
@@ -203,5 +210,28 @@ test('CPS source recipe carries real packet question and exact return binding, n
   assert.equal(buildAssignedChatgptCpsPrompt({...c,correlation:{challenge:''}}).ok,false);
   assert.equal(buildAssignedChatgptCpsPrompt({...c,state:{...c.state,
     question:'x'.repeat(5500)}}).ok,false);
+ }finally{s.close()}
+});
+
+
+test('provider result ambiguity is committed without copying unexpected errors or retrying',async()=>{
+ const s=createSqliteCopEventStore(':memory:');try{
+  const id='ctn_assigned_uncertain_01';await assigned(s,id);
+  let invoked=0;
+  const outcome=await dispatchAssignedChatgptCpsContinuation({store:s,
+    continuation_id:id,admit:permit,dispatch:async()=>{
+      invoked++;return {ok:false,submitted:false,error:'Untrusted long error: token=SECRET'};
+    }});
+  assert.equal(outcome.status,'needs_reconciliation');
+  assert.equal(invoked,1);
+  const event=s.listTopic('continuation:'+id).find(x=>x.payload?.phase==='delivery_unconfirmed');
+  assert.equal(event.payload?.diagnostic_code,'unclassified_transport_outcome');
+  assert.equal(JSON.stringify(event).includes('SECRET'),false);
+  assert.equal(event.payload?.retry_authorized,false);
+  assert.equal((await dispatchAssignedChatgptCpsContinuation({store:s,
+    continuation_id:id,admit:permit,dispatch:async()=>{invoked++;return null}})).status,
+    'needs_reconciliation');
+  assert.equal(invoked,1);
+  assert.equal(s.auditCommitments().ok,true);
  }finally{s.close()}
 });

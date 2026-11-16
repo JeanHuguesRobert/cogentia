@@ -12,6 +12,9 @@ const RESULT='cop.continuation-result/v1';
 const ID=id=>typeof id==='string'&&/^ctn_[a-zA-Z0-9_]{3,120}$/.test(id);
 const intentKey=id=>`chatgpt-browser:${id}:first-dispatch-intent`;
 const completeKey=id=>`chatgpt-browser:${id}:first-dispatch-receipt`;
+const unconfirmedKey=id=>`chatgpt-browser:${id}:first-dispatch-unconfirmed`;
+const safeDiagnostic=x=>typeof x==='string'&&/^[a-z][a-z0-9_]{1,79}$/.test(x)
+  ?x:'unclassified_transport_outcome';
 const valid=x=>typeof x==='string'&&x.length>0&&x.length<=180;
 
 /** Core-owned prompt recipe, no DOM answer scraping and no new extension API.
@@ -151,18 +154,36 @@ export async function dispatchAssignedChatgptCpsContinuation({
   if(!fencing.ok)return {ok:false,status:'intent_commit_failed'};
   if(!fencing.value?.reserved)return {ok:false,status:fencing.value?.stale
     ?'stale_claim_or_budget':'needs_reconciliation'};
+  // Keep a typed, non-sensitive diagnostic. A failed John/MCP result after
+  // a committed intent is NOT evidence that the UI click was never made.
+  // The diagnostic is NOT a retry ticket and never unlocks dispatch.
+  const unconfirmed=reason=>{
+    const code=safeDiagnostic(reason);
+    try{store.append({topic_id:topic,event_type:'cop.event/v1',
+      actor_id:'cop:cps-assigned-dispatch',subject_ref:topic,
+      visibility:'restricted',epistemic_status:'observed',
+      idempotency_key:unconfirmedKey(continuation_id),
+      causal_refs:[intentKey(continuation_id)],
+      payload:{profile:PROFILE,phase:'delivery_unconfirmed',
+        continuation_id,diagnostic_code:code,
+        click_delivery_proven:false,outcome_ambiguous:true,
+        retry_authorized:false},
+    });}catch{/* Preserve the original unknown effect, not a second send. */}
+    return {ok:false,status:'needs_reconciliation'};
+  };
   // Projection is deterministic and bound to this already-fenced packet.
   // Invalid projections remain in reconciliation, never silently retrying.
   const projected=buildAssignedChatgptCpsPrompt(c);
-  if(!projected.ok)return {ok:false,status:'needs_reconciliation'};
+  if(!projected.ok)return unconfirmed('invalid_assigned_projection');
   let outcome;
   try{outcome=await dispatch({continuation:c,prompt:projected.prompt,continuation_id,
     authorization_ref:grant.authorization_ref,
     dispatch_intent_ref:intentKey(continuation_id)});}
-  catch{return {ok:false,status:'needs_reconciliation'}}
+  catch{return unconfirmed('provider_dispatch_exception')}
   if(outcome?.ok!==true||outcome.submitted!==true||
      outcome.continuation_id!==continuation_id||
-     !valid(outcome.execution_receipt_ref))return {ok:false,status:'needs_reconciliation'};
+     !valid(outcome.execution_receipt_ref))
+    return unconfirmed(outcome?.error||'provider_receipt_unconfirmed');
   const written=store.append({topic_id:topic,event_type:'cop.event/v1',
     actor_id:'cop:cps-assigned-dispatch',subject_ref:'continuation:'+continuation_id,
     visibility:'restricted',epistemic_status:'observed',

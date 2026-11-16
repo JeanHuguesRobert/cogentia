@@ -435,3 +435,50 @@ unreviewed candidate paths, repository mismatch; three cases complete
 sequentially through COP parent joins and a separate local SQLite CAS,
 without reissuing work; a fourth is blocked by the cohort limit. This is a
 narrow policy extension of the general existing handler, not a new service.
+
+### FBF — ambiguous browser dispatch in reviewed Barons cohort (2026-11-16)
+
+**Observed production incident:** the first reviewed Barons continuation,
+`ctn_04ba31c3` (`projects/school/README.md`), was automatically admitted
+and assigned. ONA next committed
+`chatgpt-browser:ctn_chatgpt_browser_41f023c6f0492e434557a7d638fcc075:first-dispatch-intent`
+under COP. John separately reserved and settled budget for `ensure_tab`,
+`status`, and `submit`, but the CPS continuation topic contains **no**
+`ui_click_dispatched_not_model_result` receipt and no accepted/result-return
+fact. This is an **uncertain external effect**. Accounting the browser request
+is not evidence that ChatGPT accepted the submission. The running ONA correctly
+returned `dispatch_needs_reconciliation` and blocked all subsequent assignments
+under the global single-flight policy; no blind retransmission occurred.
+
+A bounded read-only browser inspection found no visible message containing
+the exact continuation ID in either accessible ChatGPT conversation tab; the
+marked Judgment tab's composer was empty and had no visible send-failure
+indicator. These observations are **not sufficient proof of non-delivery**:
+one additional tab was not inspectable, and browser UI state may be stale or
+lost after a navigation. The pre-existing safe failed-draft recovery predicate
+requires an explicit send-failure banner **and** a still-bound draft, neither
+of which was observed. Do not reinsert/resend merely because a message is
+not visible. The historical CPS intent, claim, budget accounting and lineage
+must remain immutable and inspectable.
+
+**Diagnostic improvement:** after a new dispatch intent, if John rejects the
+attempt or a provider exception occurs, the assigned CPS dispatcher now writes
+one idempotent `cop.continuation-browser-dispatch/v1` event with phase
+`delivery_unconfirmed`, a **sanitized fixed-shape diagnostic code**, and
+`retry_authorized:false`. This preserves the reason for *future* ambiguous
+calls without leaking provider text, prompts or credentials. It **does not**
+authorize a retry or retroactively fabricate a delivery result for the
+incident above. Recovery requires either independent receipt evidence, or an
+explicitly chosen new attempt after the previous one is quarantined with its
+uncertainty preserved. A separate, independently budgeted provider or local
+handler is a viable alternative, but it requires the relevant mandate and
+must not pretend to be the original delivered browser continuation.
+
+**Operational choices:** (A) safest: leave the affected parent/child parked for
+manual reconciliation, retaining the remaining two items queued; (B) after
+independent operator confirmation that no request was sent, record an
+explicit abandonment/compensation and create a *new* attempt under a new
+correlation ID and budget, never edit the old intent; (C) authorize a separate
+trusted cognitive provider/local handler for the three public documents with
+its own receipts and accounting. None of these is automatic under the
+initial three-slot policy.
