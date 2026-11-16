@@ -5,6 +5,7 @@ import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {createConversationLocalStore} from './lib/conversation-local-store.mjs';
 import {createOpenAiConversationBridge} from './lib/openai-conversation-bridge.mjs';
+import {createOpenAiConversationHttpServer} from './lib/chatgpt-openai-http.mjs';
 
 test('ChatGPT and Claude adapter scopes share SQLite without shared scheduling locks',async()=>{
   const dir=mkdtempSync(join(tmpdir(),'conversation-adapters-'));
@@ -48,4 +49,35 @@ test('non-Cogentia conversational provider runs and defers recursion by adapter 
     assert.equal(result.body.choices[0].message.content,'Réponse générique');
     assert.equal(invoked,1);
   }finally{store.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test('provider-neutral HTTP endpoint serves another model without Cogentia',async()=>{
+  const dir=mkdtempSync(join(tmpdir(),'http-provider-noncop-'));
+  const store=createConversationLocalStore(join(dir,'http.sqlite'),{adapter:'claude-browser'});
+  const key='test-secret-for-claude-browser-adapter';
+  const complete=createOpenAiConversationBridge({store,model:'claude-browser',
+    lineageToken:'claude-browser',runTurn:async()=>({answer:'Claude answer'})});
+  const server=createOpenAiConversationHttpServer({complete,key,model:'claude-browser',
+    localStatus:id=>store.get(id)});
+  await new Promise(r=>server.listen(0,'127.0.0.1',r));
+  try{
+    const url='http://127.0.0.1:'+server.address().port;
+    const headers={Authorization:'Bearer '+key,'Content-Type':'application/json',
+      'X-Client-Request-Id':'req-claude'};
+    const listed=await fetch(url+'/v1/models',{headers});
+    assert.equal((await listed.json()).data[0].id,'claude-browser');
+    const request={model:'claude-browser',messages:[{role:'user',content:'Q'}]};
+    const defer=await fetch(url+'/v1/chat/completions',{method:'POST',headers:{
+      ...headers,'X-Continuation-Call-Chain':'client,claude-browser'
+    },body:JSON.stringify(request)});
+    assert.equal(defer.status,409);
+    assert.equal((await defer.json()).error.code,'local_continuation_required');
+    const finish=await fetch(url+'/v1/chat/completions',{method:'POST',headers,
+      body:JSON.stringify(request)});
+    assert.equal(finish.status,200);
+    assert.equal((await finish.json()).choices[0].message.content,'Claude answer');
+  }finally{
+    await new Promise(r=>server.close(r));
+    store.close();rmSync(dir,{recursive:true,force:true});
+  }
 });
