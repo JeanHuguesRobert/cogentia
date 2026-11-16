@@ -6,12 +6,14 @@
  * Two-phase, crash-recoverable protocol:
  * 1. Validate claim, independent admissibility, and baseline revision.
  * 2. Atomically publish next-epoch settlement intent (competes with reclaim).
- * 3. Atomically replace canonical continuation and publish a completion receipt.
+ * 3. Conditionally update canonical continuation in SQLite, then publish
+ *    a completion receipt. An interrupted second phase is recoverable.
  *
- * Unmediated writes to the same continuation file cannot be fenced by this
- * filesystem-only protocol. Do not expose this as an effect authorization.
+ * These checks do not confer authorization; callers must supply their
+ * independently validated COP authority and budget evidence.
  */
 import fs from "node:fs";
+import {continuationRepository} from "./continuation-sqlite-repository.mjs";
 import path from "node:path";
 import { createHash, randomUUID } from "node:crypto";
 import { PacketClaimEvent, projectPacketCoordination, isClaimExpired } from "../../../inseme/packages/cop-core/src/packet-coordination.js";
@@ -26,18 +28,15 @@ const safeId = (id) => {
     throw new Error("invalid continuation id");
   return id;
 };
-const continuationPath = (root,id) =>
-  path.join(root,".cogentia","continuations",safeId(id)+".json");
+const canonicalText = doc => JSON.stringify(doc,null,2)+"\n";
+const canonicalRevision = (root,id) => {
+  const continuation=continuationRepository(root).load(safeId(id));
+  if(!continuation)throw Error("continuation_not_found");
+  return sha(canonicalText(continuation));
+};
 const receiptPath = (root,id) =>
   path.join(root,".cogentia","resolvers","settlements",safeId(id)+".json");
 
-function atomicPublish(file, data) {
-  fs.mkdirSync(path.dirname(file),{recursive:true});
-  const temp=path.join(path.dirname(file),"."+randomUUID()+".tmp");
-  fs.writeFileSync(temp,data,{flag:"wx",encoding:"utf8"});
-  try { fs.renameSync(temp,file); }
-  finally { if(fs.existsSync(temp)) fs.unlinkSync(temp); }
-}
 function completeReceipt(root, id, intent) {
   const file=receiptPath(root,id);
   if (fs.existsSync(file)) {
@@ -76,16 +75,23 @@ export function recoverClaimedResolution(root,id) {
   if (!intent || intent.status!=="settlement_prepared" ||
       intent.schema!=="cogentia.cop-terminal-intent/v1")
     return {ok:false,code:"NO_PREPARED_SETTLEMENT"};
-  const file=continuationPath(root,id);
-  const current=fs.readFileSync(file,"utf8");
-  const currentHash=sha(current);
+  const repository=continuationRepository(root);
+  const current=repository.load(id);
+  if(!current)return {ok:false,code:"CONTINUATION_NOT_FOUND"};
+  const currentHash=sha(canonicalText(current));
   const desired=intent.settlement.desired_json;
   const desiredHash=sha(desired);
   if (desiredHash!==intent.settlement.result_sha256)
     return {ok:false,code:"CORRUPT_SETTLEMENT_INTENT"};
   if (currentHash!==desiredHash && currentHash!==intent.settlement.baseline_sha256)
     return {ok:false,code:"BASELINE_CHANGED_AFTER_PREPARE"};
-  if (currentHash!==desiredHash) atomicPublish(file,desired);
+  if (currentHash!==desiredHash){
+    const next=JSON.parse(desired);
+    Object.keys(current).forEach(k=>{if(!(k in next))delete current[k]});
+    Object.assign(current,next);
+    try {repository.save(current)}
+    catch(e){return {ok:false,code:"REVISION_CONFLICT",reason:e.message}}
+  }
   const receipt=completeReceipt(root,id,intent);
   return {...receipt, result_ref:intent.settlement.result_ref,
     recovered:currentHash!==desiredHash};
@@ -110,10 +116,10 @@ export function resolveClaimedContinuation(root,id,{
     return {ok:false,code:"DECISION_REQUIRED"};
   const current=validatePacketClaim(root,id,witness);
   if (!current.ok) return {ok:false,code:current.code};
-  const file=continuationPath(root,id);
-  const baseline=fs.readFileSync(file,"utf8");
-  if (sha(baseline)!==expectedSha256) return {ok:false,code:"BASELINE_CHANGED"};
-  const c=JSON.parse(baseline);
+  const repo=continuationRepository(root);
+  const c=repo.load(id);
+  if(!c||sha(canonicalText(c))!==expectedSha256)
+    return {ok:false,code:"BASELINE_CHANGED"};
   if (c.id!==id || c.status!=="active") return {ok:false,code:"CONTINUATION_NOT_ACTIVE"};
   const resultRef=c.return_contract?.result_ref;
   if (typeof resultRef!=="string" || !resultRef)
@@ -133,13 +139,13 @@ export function resolveClaimedContinuation(root,id,{
     baseline_sha256:expectedSha256,result_sha256:sha(desiredJson),
     desired_json:desiredJson,result_ref:resultRef,claim:witness,
     ...(budgetReservation ? {budget_reservation:budgetReservation} : {}),
-  },{checkBaseline:()=>sha(fs.readFileSync(file,"utf8"))===expectedSha256});
+  },{checkBaseline:()=>canonicalRevision(root,id)===expectedSha256});
   if (!intent.ok) return intent;
   if (typeof beforeCanonicalWrite==="function") beforeCanonicalWrite(intent.record);
   return recoverClaimedResolution(root,id);
 }
 export function continuationRevision(root,id) {
-  return sha(fs.readFileSync(continuationPath(root,id),"utf8"));
+  return canonicalRevision(root,id);
 }
 
 /**
