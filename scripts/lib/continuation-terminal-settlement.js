@@ -12,12 +12,12 @@
  * These checks do not confer authorization; callers must supply their
  * independently validated COP authority and budget evidence.
  */
-import fs from "node:fs";
 import {continuationRepository} from "./continuation-sqlite-repository.mjs";
-import path from "node:path";
-import { createHash, randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
 import { PacketClaimEvent, projectPacketCoordination, isClaimExpired } from "../../../inseme/packages/cop-core/src/packet-coordination.js";
 import { LATENT_SOVEREIGN_KIND } from "./latent-sovereign.js";
+import {claimEpochs,getTerminalReceipt,putTerminalReceipt}
+  from "./continuation-claim-sqlite.mjs";
 import {
   currentPacketClaim, validatePacketClaim, prepareTerminalEpoch,
 } from "./continuation-packet-claim.js";
@@ -34,40 +34,21 @@ const canonicalRevision = (root,id) => {
   if(!continuation)throw Error("continuation_not_found");
   return sha(canonicalText(continuation));
 };
-const receiptPath = (root,id) =>
-  path.join(root,".cogentia","resolvers","settlements",safeId(id)+".json");
-
-function completeReceipt(root, id, intent) {
-  const file=receiptPath(root,id);
-  if (fs.existsSync(file)) {
-    const old=JSON.parse(fs.readFileSync(file,"utf8"));
-    return {ok:old.result_sha256===intent.settlement.result_sha256,
-      code:"RECEIPT_ALREADY_PRESENT",receipt:old};
-  }
+function completeReceipt(root,id,intent){
   const receipt={
     schema:"cogentia.continuation-settlement-receipt/v1",
-    type:PacketClaimEvent.COMPLETED, continuation_id:id,
-    claim:intent.settlement.claim,
-    claim_id:intent.claim_id,handler_ref:intent.handler_ref,
+    type:PacketClaimEvent.COMPLETED,continuation_id:id,
+    claim:intent.settlement.claim,claim_id:intent.claim_id,
+    handler_ref:intent.handler_ref,
     epoch:intent.predecessor_epoch,settlement_epoch:intent.epoch,
     baseline_sha256:intent.settlement.baseline_sha256,
     result_sha256:intent.settlement.result_sha256,
     result_ref:intent.settlement.result_ref,
-    ...(intent.settlement.budget_reservation ? {budget_reservation:intent.settlement.budget_reservation} : {}),
+    ...(intent.settlement.budget_reservation
+      ?{budget_reservation:intent.settlement.budget_reservation}:{}),
     completed_at:new Date().toISOString(),delivery_confirmed:false,
   };
-  fs.mkdirSync(path.dirname(file),{recursive:true});
-  const tmp=path.join(path.dirname(file),"."+randomUUID()+".tmp");
-  fs.writeFileSync(tmp,JSON.stringify(receipt)+"\n",{flag:"wx"});
-  try {
-    try {fs.linkSync(tmp,file);}
-    catch(e) {
-      if(e.code!=="EEXIST") throw e;
-      const old=JSON.parse(fs.readFileSync(file,"utf8"));
-      return {ok:old.result_sha256===receipt.result_sha256,code:"RECEIPT_ALREADY_PRESENT",receipt:old};
-    }
-  }finally{fs.unlinkSync(tmp);}
-  return {ok:true,code:"COMPLETED",receipt};
+  return putTerminalReceipt(root,id,receipt);
 }
 export function recoverClaimedResolution(root,id) {
   safeId(id);
@@ -154,10 +135,7 @@ export function continuationRevision(root,id) {
  */
 export function inspectContinuationPacketCoordination(root,id) {
   safeId(id);
-  const dir=path.join(root,".cogentia","resolvers","claims-v1",id);
-  const files=fs.existsSync(dir)
-    ? fs.readdirSync(dir).filter(f=>/^\d{12}\.json$/.test(f)).sort() : [];
-  const records=files.map(f=>JSON.parse(fs.readFileSync(path.join(dir,f),"utf8")));
+  const records=claimEpochs(root,id);
   const events=[];
   let seenClaim=false;
   for (const record of records) {
@@ -168,9 +146,7 @@ export function inspectContinuationPacketCoordination(root,id) {
     });
     seenClaim=true;
   }
-  const receiptFile=receiptPath(root,id);
-  const receipt=fs.existsSync(receiptFile)
-    ? JSON.parse(fs.readFileSync(receiptFile,"utf8")) : null;
+  const receipt=getTerminalReceipt(root,id);
   if (receipt) events.push(receipt);
   const projection=projectPacketCoordination(events);
   const latest=records.at(-1) || null;
