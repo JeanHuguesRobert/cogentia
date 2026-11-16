@@ -78,7 +78,7 @@ export async function indexStatusCore(options = {}) {
 
 /**
  * Synchronize interaction trace packets from interaction_packets/*.md
- * and .cogentia/continuations/*.json into the structured continuation index.
+ * and the host-local SQLite continuation records into the structured continuation index.
  */
 export async function syncInteractionTracesCore(options = {}) {
   const root = options.root || process.cwd();
