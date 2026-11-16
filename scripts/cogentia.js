@@ -11,6 +11,7 @@
  */
 
 import fs from "node:fs";
+import {continuationRepository} from "./lib/continuation-sqlite-repository.mjs";
 import { wipInventory, wipCompare } from "./lib/wip-inventory.js";
 import { wipMergeInventories } from "./lib/wip-merge.js";
 import {createAgentMail} from "./lib/agent-mail.js";
@@ -11931,12 +11932,15 @@ function findConfig() {
 }
 
 function continuationsDir(ctx) {
-  return path.join(ctx.registryRoot || path.dirname(ctx.configPath), ".cogentia", "continuations");
+  // Historical name retained for the CLI/API output field; the operational
+  // store is now a host-local SQLite database, never a live JSON directory.
+  return continuationRepository(ctx.registryRoot || path.dirname(ctx.configPath)).path;
 }
 
 function continuationPath(ctx, id) {
-  if (!/^ctn_[a-f0-9]{8,}$/i.test(id)) throw new Error(`Invalid continuation id: ${id}`);
-  return path.join(continuationsDir(ctx), `${id}.json`);
+  if (!/^[a-zA-Z0-9_.:-]{1,200}$/.test(id))
+    throw new Error(`Invalid continuation id: ${id}`);
+  return `sqlite:${continuationsDir(ctx)}#${id}`;
 }
 
 function continuationId() {
@@ -11951,7 +11955,6 @@ function invalidateContinuationsCache() {
 
 function loadContinuations(ctx) {
   const dir = continuationsDir(ctx);
-  if (!fs.existsSync(dir)) return [];
   if (continuationCacheByDir.has(dir)) {
     return continuationCacheByDir.get(dir);
   }
@@ -12038,119 +12041,53 @@ function peekJsonNumberField(text, key) {
  * in memory or land in the published view.
  */
 function loadContinuationsForExport(ctx, { includeBodies = false } = {}) {
-  const dir = continuationsDir(ctx);
-  if (!fs.existsSync(dir)) return [];
-  const files = fs.readdirSync(dir).filter(file => /^ctn_[a-f0-9]+\.json$/i.test(file));
-  const HEAVY_FILE_BYTES = 80_000;
+  const repo = continuationRepository(ctx.registryRoot || path.dirname(ctx.configPath));
+  const rows = repo.list();
   const out = [];
-  for (const file of files) {
-    const full = path.join(dir, file);
-    let size = 0;
-    try {
-      size = fs.statSync(full).size;
-    } catch {
-      continue;
-    }
-
-    // Heavy files: metadata via peek only (never full-parse 10–17MB blobs)
-    if (size > HEAVY_FILE_BYTES) {
-      let text;
-      try {
-        // Top-level identity fields sit near the start of these records
-        const fd = fs.openSync(full, "r");
-        const buf = Buffer.alloc(Math.min(size, 65536));
-        fs.readSync(fd, buf, 0, buf.length, 0);
-        fs.closeSync(fd);
-        text = buf.toString("utf8");
-      } catch {
-        continue;
-      }
-      const id = peekJsonStringField(text, "id") || peekJsonStringField(text, "continuation_id") || file.replace(/\.json$/i, "");
-      const summary = normalizeContinuation({
-        id,
-        continuation_id: id,
-        status: peekJsonStringField(text, "status"),
-        kind: peekJsonStringField(text, "kind"),
-        title: peekJsonStringField(text, "title"),
-        question: peekJsonStringField(text, "question") || peekJsonStringField(text, "task"),
-        priority: peekJsonNumberField(text, "priority"),
-        created_at: peekJsonStringField(text, "created_at") || peekJsonStringField(text, "createdAt"),
-        updated_at: peekJsonStringField(text, "updated_at") || peekJsonStringField(text, "updatedAt"),
-        dedupe_key: peekJsonStringField(text, "dedupe_key"),
-        subject: {},
-        context: includeBodies
-          ? {
-              _truncated_for_view: true,
-              original_file_bytes: size,
-              note: `Omitted from view (file ${size} bytes). Use continuation inspect ${id}.`,
-            }
-          : undefined,
-        resolution: includeBodies
-          ? {
-              _truncated_for_view: true,
-              original_file_bytes: size,
-              note: `Omitted from view (file ${size} bytes). Use continuation inspect ${id}.`,
-            }
-          : undefined,
-      });
-      out.push(summary);
-      continue;
-    }
-
-    let raw;
-    try {
-      raw = readJson(full);
-    } catch {
-      continue;
-    }
+  for (const original of rows) {
     if (!includeBodies) {
-      const contextKind = typeof raw.context?.kind === "string" ? raw.context.kind : "";
+      const contextKind = typeof original.context?.kind === "string" ? original.context.kind : "";
       out.push(normalizeContinuation({
-        id: raw.id || raw.continuation_id,
-        continuation_id: raw.continuation_id || raw.id,
-        status: raw.status,
-        kind: raw.kind || contextKind,
-        title: raw.title,
-        question: raw.question || raw.task,
-        priority: raw.priority,
-        created_at: raw.created_at || raw.createdAt,
-        updated_at: raw.updated_at || raw.updatedAt,
-        subject: raw.subject,
-        dedupe_key: raw.dedupe_key,
-        // Only enough context for normalizeContinuation kind/title fallbacks
-        context: contextKind ? { kind: contextKind } : {},
+        id: original.id || original.continuation_id,
+        continuation_id: original.continuation_id || original.id,
+        status: original.status,kind: original.kind || contextKind,
+        title: original.title,question: original.question || original.task,
+        priority: original.priority,created_at: original.created_at || original.createdAt,
+        updated_at: original.updated_at || original.updatedAt,
+        subject: original.subject,dedupe_key: original.dedupe_key,
+        context: contextKind ? {kind:contextKind} : {},
       }));
       continue;
     }
-    // Full view on small files: stub any still-oversized nested blobs
-    const slim = { ...raw };
+    // Data lives in SQLite. A large JSON payload is still available via
+    // inspect, but must not be materialized in exported view projections.
+    const rawBytes=Buffer.byteLength(JSON.stringify(original),"utf8");
+    if(rawBytes>80_000) {
+      out.push(normalizeContinuation({
+        id:original.id,continuation_id:original.continuation_id||original.id,
+        status:original.status,kind:original.kind,
+        title:original.title,question:original.question||original.task,
+        priority:original.priority,created_at:original.created_at||original.createdAt,
+        updated_at:original.updated_at||original.updatedAt,
+        dedupe_key:original.dedupe_key,subject:original.subject||{},
+        context:{kind:original.kind,_truncated_for_view:true,original_file_bytes:rawBytes,
+          note:`Omitted from view (${rawBytes} bytes). Use continuation inspect ${original.id}.`},
+        resolution:{_truncated_for_view:true,original_file_bytes:rawBytes},
+      }));
+      continue;
+    }
+    const slim = {...original};
     for (const key of ["context", "resolution", "expected_response", "history"]) {
       if (slim[key] == null) continue;
-      let nestedSize;
-      try {
-        nestedSize = JSON.stringify(slim[key]).length;
-      } catch {
-        nestedSize = CONTINUATION_VIEW_JSON_MAX + 1;
-      }
+      const nestedSize=JSON.stringify(slim[key]).length;
       if (nestedSize > CONTINUATION_VIEW_JSON_MAX) {
         if (key === "history" && Array.isArray(slim[key])) {
           slim[key] = slim[key].slice(-12);
-        } else if (key === "context" || key === "resolution" || key === "expected_response") {
-          const keys = slim[key] && typeof slim[key] === "object" && !Array.isArray(slim[key])
-            ? Object.keys(slim[key])
-            : [];
-          const preservedKind = key === "context" && typeof slim[key]?.kind === "string"
-            ? slim[key].kind
-            : undefined;
-          // Preserve top-level kind before stubbing so normalizeContinuation
-          // does not reclassify truncated records as plain "judgment".
-          if (preservedKind && !slim.kind) slim.kind = preservedKind;
+        } else {
           slim[key] = {
-            _truncated_for_view: true,
-            original_chars: nestedSize,
-            keys: keys.slice(0, 30),
-            ...(preservedKind ? { kind: preservedKind } : {}),
-            note: `Omitted from view (${nestedSize} chars). Use continuation inspect ${raw.id || raw.continuation_id || file}.`,
+            _truncated_for_view: true,original_chars:nestedSize,
+            ...(key === "context" && typeof original.context?.kind === "string"
+              ? {kind:original.context.kind} : {}),
           };
         }
       }
@@ -12161,14 +12098,22 @@ function loadContinuationsForExport(ctx, { includeBodies = false } = {}) {
 }
 
 function loadContinuation(ctx, id) {
-  const full = continuationPath(ctx, id);
-  if (!fs.existsSync(full)) throw new Error(`Continuation not found: ${id}`);
-  return normalizeContinuation(readJson(full));
+  const repo = continuationRepository(ctx.registryRoot || path.dirname(ctx.configPath));
+  const original=repo.load(id);
+  if (!original) throw new Error(`Continuation not found: ${id}`);
+  const normalized=normalizeContinuation(original);
+  // normalizeContinuation constructs a new object. Retain the invisible
+  // optimistic revision witness for any later status transition.
+  for(const key of [Symbol.for("cogentia.continuation.sqlite_revision"),
+                    Symbol.for("cogentia.continuation.sqlite_locator")]){
+    Object.defineProperty(normalized,key,{value:original[key],writable:true,configurable:true});
+  }
+  return normalized;
 }
 
 function saveContinuation(ctx, continuation) {
-  ensureDir(continuationsDir(ctx));
-  fs.writeFileSync(continuationPath(ctx, continuation.id), `${JSON.stringify(continuation, null, 2)}\n`, "utf8");
+  const repo = continuationRepository(ctx.registryRoot || path.dirname(ctx.configPath));
+  repo.save(continuation);
   invalidateContinuationsCache();
 }
 
