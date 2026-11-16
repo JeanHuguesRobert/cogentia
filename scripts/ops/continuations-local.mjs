@@ -6,7 +6,8 @@
  */
 import {DatabaseSync} from 'node:sqlite';
 import {existsSync,statSync} from 'node:fs';
-import {resolve,dirname} from 'node:path';
+import {resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {continuationDatabasePath} from '../lib/continuation-sqlite-repository.mjs';
 
 function parse(args){
@@ -50,7 +51,7 @@ export function inspectLocalContinuations({command='health',db,limit=200,id=null
     throw Error('unknown_command:'+command);
   }finally{conn.close()}
 }
-if(process.argv[1]&&resolve(process.argv[1])===resolve(new URL(import.meta.url).pathname)){
+if(process.argv[1]&&resolve(process.argv[1])===resolve(fileURLToPath(import.meta.url))){
   try{
     const opt=parse(process.argv.slice(2));
     const db=opt.db||(opt.root&&continuationDatabasePath(opt.root));
