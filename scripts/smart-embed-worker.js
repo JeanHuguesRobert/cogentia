@@ -10,6 +10,7 @@
  */
 
 import fs from "fs";
+import {continuationRepository} from './lib/continuation-sqlite-repository.mjs';
 import path from "path";
 import { fileURLToPath } from "url";
 import { spawn } from "child_process";
@@ -32,7 +33,10 @@ const REGISTRY_ROOT = REGISTRY_PATH
   ? (fs.existsSync(REGISTRY_PATH) && fs.statSync(REGISTRY_PATH).isDirectory() ? REGISTRY_PATH : path.dirname(REGISTRY_PATH))
   : COGENTIA_DIR;
 const COGENTIA_STATE_DIR = process.env.COGENTIA_STATE_DIR || path.join(REGISTRY_ROOT, ".cogentia");
-const CONTINUATIONS_DIR = process.env.CONTINUATIONS_DIR || path.join(COGENTIA_STATE_DIR, "continuations");
+const CONTINUATION_ROOT=process.env.CONTINUATIONS_DIR
+  ? path.dirname(path.dirname(path.resolve(process.env.CONTINUATIONS_DIR))) : REGISTRY_ROOT;
+const continuationStore=continuationRepository(CONTINUATION_ROOT);
+const CONTINUATIONS_DIR=continuationStore.path;
 const RESULTS_DIR = process.env.COGENTIA_EMBEDDINGS_RESULTS_DIR || COGENTIA_STATE_DIR;
 
 const MAX_CHARS_PER_CHUNK = boundedInteger(process.env.COGENTIA_EMBEDDINGS_MAX_CHARS_PER_CHUNK, 30000, 1000, 200000);
@@ -89,28 +93,8 @@ function oversizedChunks(chunks) {
 /**
  * Read a continuation file directly
  */
-function readContinuation(id) {
-  const continuationPath = path.join(CONTINUATIONS_DIR, `${id}.json`);
-  if (!fs.existsSync(continuationPath)) {
-    return null;
-  }
-  try {
-    const content = fs.readFileSync(continuationPath, "utf-8");
-    return JSON.parse(content);
-  } catch (error) {
-    console.error(`[Worker] Failed to read continuation ${id}:`, error.message);
-    return null;
-  }
-}
-
-function continuationPath(id) {
-  return path.join(CONTINUATIONS_DIR, `${id}.json`);
-}
-
-function saveContinuation(continuation) {
-  fs.mkdirSync(CONTINUATIONS_DIR, { recursive: true });
-  fs.writeFileSync(continuationPath(continuation.id), `${JSON.stringify(continuation, null, 2)}\n`, "utf8");
-}
+function readContinuation(id) { return continuationStore.load(id); }
+function saveContinuation(continuation) { return continuationStore.save(continuation); }
 
 async function callRouterEmbeddings(texts, model, dimensions) {
   const baseUrl = process.env.COGENTIA_AI_ROUTER_URL || process.env.MAGISTRAL_URL || undefined;
@@ -506,9 +490,7 @@ function activeEmbeddingContinuations(options = {}) {
     const cont = readContinuation(options.id);
     return cont && cont.status === "active" && cont.kind === "embeddings-index" ? [cont] : [];
   }
-  const files = fs.existsSync(CONTINUATIONS_DIR) ? fs.readdirSync(CONTINUATIONS_DIR).filter(f => f.endsWith(".json")) : [];
-  return files
-    .map(file => readContinuation(file.replace(".json", "")))
+  return continuationStore.list()
     .filter(cont => cont && cont.status === "active" && cont.kind === "embeddings-index");
 }
 
