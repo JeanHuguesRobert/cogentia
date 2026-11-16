@@ -10,6 +10,7 @@
 // - Calculates dual metrics: Coverage vs Cognitive Gain
 
 import fs from "node:fs";
+import {continuationRepository} from "../continuation-sqlite-repository.mjs";
 import path from "node:path";
 import { qualifySystemAvailability } from "../idle-qualification.js";
 import { PUBLIC_VIEW } from "../privacy-views.js";
@@ -228,31 +229,15 @@ export async function runMonteCarloAudit(options = {}) {
 }
 
 function loadContinuationFile(root, continuationRef) {
-  let fullPath = continuationRef;
-  if (!fs.existsSync(fullPath)) {
-    fullPath = path.join(root, ".cogentia", "continuations", continuationRef);
-  }
-  if (!fs.existsSync(fullPath) && !continuationRef.endsWith(".json")) {
-    fullPath = path.join(root, ".cogentia", "continuations", `${continuationRef}.json`);
-  }
-
-  if (fs.existsSync(fullPath)) {
-    try {
-      const content = fs.readFileSync(fullPath, "utf8");
-      return JSON.parse(content);
-    } catch {
-      return null;
-    }
-  }
-  return null;
+  // Accept a prior file-style resumption argument as a logical identifier,
+  // but never read operational state from a mutable JSON source file.
+  const id=path.basename(String(continuationRef||'')).replace(/\.json$/i,'');
+  return continuationRepository(root).load(id);
 }
 
 function emitSleepCycleContinuation(root, { runId, reason, checkpoint, accumulatedSignals, metrics, options }) {
   const continuationId = `cont_${runId}_${Date.now()}`;
-  const dir = path.join(root, ".cogentia", "continuations");
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-
-  const filePath = path.join(dir, `${continuationId}.json`);
+  const store=continuationRepository(root);
 
   const packet = {
     schema: "cogentia.continuation.v1",
@@ -282,6 +267,6 @@ function emitSleepCycleContinuation(root, { runId, reason, checkpoint, accumulat
     }
   };
 
-  fs.writeFileSync(filePath, JSON.stringify(packet, null, 2), "utf8");
+  store.save(packet);
   return packet;
 }
