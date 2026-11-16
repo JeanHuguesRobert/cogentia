@@ -155,3 +155,33 @@ FractaNodes must still configure trusted continuation snapshots, an actual
 capable handler resolver and the existing COP mandate/budget admission
 before enabling this optional hook. The historical Corpus scheduler must not
 be treated as such an authority simply because it runs on the same node.
+
+### Two-machine execution receipt — reality test, 2026-11-16
+
+A test on Fracta2 used this **actual bounded FractaScheduler stage**, with
+two previously registered children and a declared `all` join. The first
+SHA-256 handler executed locally on Fracta2. The second handler executed a
+PowerShell SHA-256 computation on the **ThinkPad Windows host** over the
+existing authenticated SSH route. Each handler produced a host-identified,
+cryptographically checked result and appended its *own canonical COP effect
+receipt* before returning an explicit `receipt_ref` to the pull adapter.
+COP recorded both child settlements and reentered the parent's actual
+COPScheduler exactly **once**. A second FractaScheduler cycle executed no
+further handler or parent continuation; the COP journal commitment audit
+passed. Test-only journal: `/tmp/cop-real-remote-handler-194/journal.sqlite`.
+
+This test proves a remote **handler** and a central authoritative COP Store,
+not a remote deployment of the entire FractaScheduler on the ThinkPad. The
+only mandate admission used was a clearly marked **isolated test fixture**
+for harmless SHA-256 calculations. No production scheduler hook, autonomous
+browser action, third-party communication or real Cognitive Packet was
+activated by this test. Both a trusted continuation snapshot and real
+mandate/budget verification still have to be configured for production.
+
+**Cold-parent safety (FBF, Inseme #194):** the common COP parent reconciler now
+stores late child notifications even while a parent is parked, but suppresses
+all join, fallback and cancellation dispatch during that state. A later
+explicit `Resume(parent)` releases only the parent's gate; its next tick
+can reuse already returned child results and resume the parent's real
+continuation once, with children still cold. The invariant is tested in both
+Inseme's canonical parent join suite and Cogentia's pull integration tests.

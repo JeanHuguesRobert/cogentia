@@ -158,3 +158,44 @@ test('real FractaScheduler cycle uses the bounded pull adapter and reports paren
   assert.equal(store.auditCommitments().ok,true);
  }finally{store.close()}
 });
+
+
+test('late child results remain visible during Park(parent), but only Resume(parent) runs its join',async()=>{
+ const store=createSqliteCopEventStore(':memory:');try{
+  setup(store);
+  assert.equal(changePacketTemperature(store,{packet_ref:P,temperature:'parked',
+    transition_id:'park-while-child-may-return'}).ok,true);
+  // The workers were already dispatched before parking and may deliver late
+  // receipts. These are real canonical child facts, not permissions to wake.
+  for(const [ref,index] of [[A,1],[B,2]]){
+   const event=store.append({topic_id:ref,event_type:'cop.event/v1',
+    actor_id:'handler:late-result',subject_ref:ref,epistemic_status:'observed',
+    idempotency_key:'late:child:'+index,
+    payload:{profile:'cop.continuation-dispatch/v1',phase:'handler_completed',
+      parent_packet_status:'completed',result_ref:'artifact:late:'+index}});
+   assert.equal(event.ok,true);
+  }
+  let parentCalls=0;
+  const run=()=>pull(store,{parentJoinExecutor:async({view})=>{
+    parentCalls++;assert.equal(view.completed,2);
+    return {ok:true,receipt_ref:'parent:joined-after-warm'};
+  }});
+  const cold=await run();
+  assert.equal(cold.work_executed,0);
+  assert.equal(cold.parent_notifications,2);
+  assert.equal(cold.parent_resumptions,0);
+  assert.equal(parentCalls,0);
+  assert.equal(store.listTopic(P).filter(e=>e.payload?.phase==='resume_intent').length,0);
+  assert.equal(changePacketTemperature(store,{packet_ref:P,temperature:'active',
+    transition_id:'resume-parent-alone'}).ok,true);
+  const warm=await run();
+  assert.equal(warm.work_executed,0);
+  assert.equal(warm.parent_notifications,0);
+  assert.equal(warm.parent_resumptions,1);
+  assert.equal(parentCalls,1);
+  const repeated=await run();
+  assert.equal(repeated.parent_resumptions,0);
+  assert.equal(parentCalls,1);
+  assert.equal(store.auditCommitments().ok,true);
+ }finally{store.close()}
+});
