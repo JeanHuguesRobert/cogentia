@@ -95,6 +95,8 @@ test('ensure_tab creates an unfocused exact-origin tab when no ChatGPT tab exist
        exists=true;
        return {tab:{id:701,url:args.url}};
      }
+     if(method==='page.evaluate')return {value:{ok:true,composer_present:true,
+       composer_blank:true,generating:false}};
      throw Error('unexpected '+method);
    },
    async withTabLease(browser,id,fn){return fn(this)},
@@ -120,8 +122,10 @@ test('ensure_tab waits for just-created exact tab to finish navigation (real bro
      if(lists<4)return {tabs:[{id:79,url:'about:blank',title:''}]};
      return {tabs:[{id:79,url:'https://chatgpt.com/',title:'ChatGPT'}]};
    }
+   if(method==='page.evaluate')return {value:{ok:true,composer_present:true,
+     composer_blank:true,generating:false}};
    throw Error('unexpected: '+method);
-  },close(){}
+  },async withTabLease(_browser,_id,run){return run(this)},close(){}
  };
  const cap=createChatgptTurnCapability({sessionFactory:async()=>remote});
  const result=await cap.execute({action:'ensure_tab'});
@@ -141,7 +145,9 @@ test('ensure_tab preserves drafts and active generation; rejects caller-controll
        [{id:42,url:'https://chatgpt.com/c/abc12345'},
         {id:43,url:'https://chatgpt.com/c/def12345'}]};
      if(method==='page.evaluate')return {value:{
-       ok:true,composer_present:true,composer_chars:26,composer_blank:false,
+       ok:true,composer_present:true,
+       composer_chars:args.tabId===702?0:26,
+       composer_blank:args.tabId===702,
        generating:args.tabId===43,
      }};
      if(method==='tabs.create'){exists=true;return {tab:{id:702,url:args.url}}}
@@ -324,7 +330,11 @@ test('ensure_tab never reuses an unmarked personal conversation',async()=>{
        ?[{id:100,url:'https://chatgpt.com/c/abc12345',title:'Personal chat'},
          {id:102,url:'https://chatgpt.com/',title:'ChatGPT'}]
        :[{id:100,url:'https://chatgpt.com/c/abc12345',title:'Personal chat'}]};
-     if(method==='page.evaluate')throw Error('personal_tab_must_not_be_probed');
+     if(method==='page.evaluate'){
+       assert.notEqual(args.tabId,100,'personal tab must not be probed');
+       return {value:{ok:true,composer_present:true,composer_blank:true,
+         generating:false}};
+     }
      if(method==='tabs.create'){
        created=true;assert.equal(args.active,false);
        return {tab:{id:102,url:'https://chatgpt.com/'}};
@@ -336,7 +346,7 @@ test('ensure_tab never reuses an unmarked personal conversation',async()=>{
  const result=await cap.execute({action:'ensure_tab'});
  assert.equal(result.created,true);
  assert.equal(result.tab_id,102);
- assert.equal(calls.filter(x=>x[0]==='page.evaluate').length,0);
+ assert.equal(calls.filter(x=>x[0]==='page.evaluate'&&x[1]?.tabId===100).length,0);
 });
 
 
@@ -367,5 +377,91 @@ test('ensure_tab isolates a parked uncertain Judgment conversation even when its
  const result=await cap.execute({action:'ensure_tab'});
  assert.equal(result.created,true);
  assert.equal(result.tab_id,39);
+ assert.equal(probes,1,'new root probed; marked conversation not probed');
+});
+
+
+test('ensure_tab waits for hydration of newly created exact-origin root before returning',async()=>{
+ let created=false,reads=0;
+ const session={
+   async call(method,args){
+     if(method==='tabs.list')return {tabs:created?
+       [{id:305,url:'https://chatgpt.com/',title:'ChatGPT'}]:[]};
+     if(method==='tabs.create'){
+       created=true;return {tab:{id:305,url:'https://chatgpt.com/'}};
+     }
+     if(method==='page.evaluate'){
+       assert.equal(args.tabId,305);
+       assert.equal(args.expectedUrl,'https://chatgpt.com/');
+       reads++;
+       return {value:{ok:true,composer_present:reads>=3,
+         composer_blank:true,generating:false}};
+     }
+     throw Error('unexpected '+method);
+   },
+   async withTabLease(_browser,_id,run){return run(this)},
+   close(){}
+ };
+ const cap=createChatgptTurnCapability({sessionFactory:async()=>session});
+ const r=await cap.execute({action:'ensure_tab'});
+ assert.equal(r.created,true);
+ assert.equal(r.editor_ready_observed,true);
+ assert.equal(reads,3);
+});
+
+test('clear_owned_draft can only remove a canonical, ID-bound draft from an unmarked root',async()=>{
+ const id='ctn_chatgpt_browser_1234567890abcdef1234567890abcdef';
+ const expected='[COGENTIA JUDGMENT - NE PAS INTERAGIR]\n'+id+'\n'+ 'A'.repeat(150);
+ let probes=0;
+ const session={
+  async call(method,args){
+   if(method==='tabs.list')return {tabs:[{id:99,url:'https://chatgpt.com/',title:'ChatGPT'}]};
+   if(method==='page.evaluate'){
+    probes++;assert.equal(args.expectedUrl,'https://chatgpt.com/');
+    assert.equal(args.tabId,99);
+    assert.ok(args.code.includes(JSON.stringify(id)));
+    assert.ok(args.code.includes(JSON.stringify(expected)));
+    assert.ok(args.code.includes('draft_mismatch'));
+    assert.ok(args.code.includes('execCommand("delete"'));
+    assert.equal(args.code.includes('send.click()'),false);
+    return {value:{ok:true,cleared:true,originally_matched:true,
+      original_char_count:expected.length}};
+   }
+   throw Error('unexpected '+method);
+  },
+  async withTabLease(_browser,_id,run){return run(this)},close(){}
+ };
+ const cap=createChatgptTurnCapability({sessionFactory:async()=>session});
+ assert.equal(validateChatgptTurnRequest({action:'clear_owned_draft',tab_id:99,
+    expected_continuation_id:id,expected_prompt:expected}).ok,true);
+ assert.equal(validateChatgptTurnRequest({action:'clear_owned_draft',tab_id:99,
+    expected_continuation_id:id,expected_prompt:'user text'}).ok,false);
+ const r=await cap.execute({action:'clear_owned_draft',tab_id:99,
+   expected_continuation_id:id,expected_prompt:expected});
+ assert.equal(r.cleared,true);assert.equal(probes,1);
+});
+
+test('clear_owned_draft cannot edit an existing conversation or a mismatched draft',async()=>{
+ const id='ctn_chatgpt_browser_1234567890abcdef1234567890abcdef';
+ const expected='[COGENTIA JUDGMENT - NE PAS INTERAGIR]\n'+id+'\n'+'Q'.repeat(120);
+ let probes=0;
+ const session={
+  async call(method){
+   if(method==='tabs.list')return {tabs:[
+     {id:13,url:'https://chatgpt.com/c/abcde1234567',title:'Personal conversation'},
+     {id:14,url:'https://chatgpt.com/',title:'ChatGPT'}]};
+   if(method==='page.evaluate'){
+    probes++;return {value:{ok:false,error:'draft_mismatch'}};
+   }
+   throw Error('unexpected '+method);
+  },
+  async withTabLease(_browser,_id,run){return run(this)},close(){}
+ };
+ const cap=createChatgptTurnCapability({sessionFactory:async()=>session});
+ await assert.rejects(cap.execute({action:'clear_owned_draft',tab_id:13,
+   expected_continuation_id:id,expected_prompt:expected}),/owned_draft_requires_unmarked_root/);
  assert.equal(probes,0);
+ await assert.rejects(cap.execute({action:'clear_owned_draft',tab_id:14,
+   expected_continuation_id:id,expected_prompt:expected}),/draft_mismatch/);
+ assert.equal(probes,1);
 });

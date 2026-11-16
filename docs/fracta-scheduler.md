@@ -592,3 +592,53 @@ incident into a safe retry; it remains parked with `retry_authorized:false`.
 The new pre-submit recovery is justified only by the stronger, separate
 negative evidence about the actual submit action. All steps remain accounted
 in the pre-existing COP budget and parent lineage.
+
+### FBF — an old completed CPS prompt left as *shared root-tab draft*
+
+During the third reviewed Barons-Mariana assignment, two successive John
+preflights (the first and its single safe recovery) reported
+`composer_not_ready`, each **before** a `submit` reservation. Read-only
+inspection of the two newly created ChatGPT root tabs found a non-empty
+5,348-character editor draft. Both drafts were bound to the *previous*
+completed CPS continuation, not to the third one. Comparing them to the
+previous signed COP declaration's deterministic prompt demonstrated exact
+agreement **after only normalizing line breaks created by the rich-text
+editor**. The root tab was not merely slow to hydrate: a prior machine-owned
+draft had been restored into the new root tab. The safe pre-submit guard did
+the correct thing by declining to overwrite it.
+
+Two generic remedies share the EXISTING `browser.chatgpt.turn` capability:
+
+* `ensure_tab` on a newly created exact-origin root now waits for its editor
+  to hydrate, under the current browser lease, using a bounded read-only
+  `statusCode` probe. A new tab is not declared safe merely because its URL
+  has changed. If the editor remains unready, the separate downstream status
+  still fails closed. No extra browser turn or backend daemon is introduced.
+* `clear_owned_draft` is a narrowly constrained cleanup of an **already
+  completed and locally resolved** CPS Judgment prompt, never a generic editor
+  wipe. The caller must supply the exact already admitted prompt and
+  continuation ID from COP. On the browser side, the action requires an
+  **unmarked root tab** on `https://chatgpt.com/`, an idle editor and a
+  normalized exact match of **all** draft text to that canonical prompt.
+  Only then does it delete the editor contents using the existing DOM
+  interaction, verify empty text, and return a governed John receipt.
+  Personal conversations, drafts with any mismatch, unknown IDs, generating
+  tabs or arbitrary caller-provided JavaScript are refused. The operation
+  never clicks Send or claims that the old CPS result was returned twice.
+
+Reusable audited operator recipe, read-only unless `--apply` is explicitly
+present:
+
+```sh
+node scripts/ops/clear-owned-cps-browser-draft.mjs --id=<previous completed CPS id> --tab=<exact root tab id>
+node scripts/ops/clear-owned-cps-browser-draft.mjs --id=<previous completed CPS id> --tab=<exact root tab id> --apply
+```
+
+The recipe verifies the previous *child* returned/completed, the prior
+*parent* has an actual `local_resolution_confirmed`, a fresh root tab and
+its exact prompt. It routes the action through the ALREADY signed John MCP
+browser turn (with its independent budget) and appends a distinct causal
+`cogentia.cps-browser-owned-draft/v1 verified_owned_draft_cleared` receipt.
+Its idempotency key prevents repeating the effect after restart. This is a
+browser-draft cleanup only; no COP source, returned Judgment answer, local
+continuation or immutable edition is deleted or revised.

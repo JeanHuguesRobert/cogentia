@@ -32,7 +32,9 @@ export function createGovernedJohnBrowserAction({
       handler:{id:'governed.step_reasoner',kind:'governed_reasoner',
         allowed_capabilities:['browser.chatgpt.turn']},
       input:{prompt:action==='submit'?argumentsValue.prompt:
-        'Vérifier seulement le composeur ChatGPT, ne soumettre aucun message.',
+        action==='clear_owned_draft'
+          ?'Nettoyer seulement un brouillon Cogentia vérifié, sans envoyer de message.'
+          :'Vérifier seulement le composeur ChatGPT, ne soumettre aucun message.',
         arguments:argumentsValue},
     };
     let response;

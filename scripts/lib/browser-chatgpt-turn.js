@@ -24,7 +24,7 @@ export function canRecoverChatgptFailedDraft(observed={}){
    observed.generating===false;
 }
 export function validateChatgptTurnRequest(input={}){
- if(!input||typeof input!=='object'||!['submit','observe','status','send_draft','ensure_tab'].includes(input.action))
+ if(!input||typeof input!=='object'||!['submit','observe','status','send_draft','ensure_tab','clear_owned_draft'].includes(input.action))
    return {ok:false,error:'chatgpt_action_invalid'};
  if(input.action==='ensure_tab'){
    if(input.tab_id!==undefined||input.prompt!==undefined||
@@ -37,6 +37,17 @@ export function validateChatgptTurnRequest(input={}){
  if(input.action==='submit' &&
     (typeof input.prompt!=='string'||!input.prompt.trim()||input.prompt.length>6000))
    return {ok:false,error:'chatgpt_prompt_invalid'};
+ if(input.action==='clear_owned_draft'&&(
+    typeof input.expected_continuation_id!=='string'||
+    !/^ctn_chatgpt_browser_[a-f0-9]{32}$/.test(input.expected_continuation_id)||
+    typeof input.expected_prompt!=='string'||
+    input.expected_prompt.length<100||input.expected_prompt.length>6000||
+    !input.expected_prompt.includes(input.expected_continuation_id)||
+    !input.expected_prompt.includes(JUDGMENT_TAB_MARKER)||
+    input.prompt!==undefined))
+   return {ok:false,error:'verified_draft_binding_invalid'};
+ if(input.action!=='clear_owned_draft'&&input.expected_prompt!==undefined)
+   return {ok:false,error:'chatgpt_unexpected_expected_prompt'};
  if(input.action==='send_draft'&&
     (typeof input.expected_continuation_id!=='string'||
      !/^ctn_chatgpt_browser_[a-f0-9]{32}$/.test(input.expected_continuation_id)||
@@ -141,6 +152,46 @@ const observeCode=`(() => {
 })()`;
 // Status-only path for CPS workers: never read assistant messages, main text,
 // transcript, model Output or the contents of another browser tab.
+// A bounded editor cleanup, NEVER a generic browser-delete primitive.
+// The identical previously admitted CPS prompt is supplied from the
+// CANONICAL COP declaration by an already governed caller. Browser-side
+// exact normalized equality prevents erasing any different user draft.
+// No message is sent, no page navigated, and no prior COP trace changed.
+const clearOwnedDraftCode=`(() => {
+  const expectedContinuationId=null;
+  const expectedPrompt=null;
+  if(location.origin!=="https://chatgpt.com"||location.pathname!=="/")
+    return {ok:false,error:"not_blank_chatgpt_root"};
+  if(document.title.startsWith("[COGENTIA JUDGMENT - NE PAS INTERAGIR]"))
+    return {ok:false,error:"marked_conversation_not_clearable"};
+  if(typeof expectedPrompt!=="string"||
+     !expectedPrompt.includes(expectedContinuationId)||
+     !expectedPrompt.includes("[COGENTIA JUDGMENT - NE PAS INTERAGIR]"))
+    return {ok:false,error:"invalid_expected_prompt"};
+  const editor=document.querySelector("#prompt-textarea,[contenteditable=true][role=textbox]");
+  if(!editor||!editor.isContentEditable)return {ok:false,error:"editor_not_ready"};
+  if(document.querySelector('button[data-testid="stop-button"],button[aria-label="Stop generating"]'))
+    return {ok:false,error:"generation_active"};
+  const actual=editor.innerText||"";
+  const normalize=s=>s.replace(/\r/g,"").replace(/\n{2,}/g,"\n").trim();
+  if(normalize(actual)!==normalize(expectedPrompt))
+    return {ok:false,error:"draft_mismatch"};
+  editor.focus();
+  if(document.activeElement!==editor)return {ok:false,error:"editor_focus_not_confirmed"};
+  const sel=window.getSelection();
+  if(!sel)return {ok:false,error:"selection_unavailable"};
+  const range=document.createRange();range.selectNodeContents(editor);
+  sel.removeAllRanges();sel.addRange(range);
+  const issued=document.execCommand("delete",false,null);
+  sel.removeAllRanges();
+  if(!issued)return {ok:false,error:"editor_delete_not_confirmed"};
+  // Notify controlled editors using the same native input event that
+  // ordinary typing emits. Never call the ChatGPT Send handler.
+  editor.dispatchEvent(new InputEvent('input',{bubbles:true,
+    inputType:'deleteContentBackward',data:null}));
+  return {ok:true,cleared:(editor.innerText||'').trim().length===0,
+    originally_matched:true,original_char_count:actual.length};
+})()`;
 const statusCode=`(() => {
   const expectedContinuationId=null;
   if(location.origin!=="https://chatgpt.com")return {ok:false,error:"origin_changed"};
@@ -237,9 +288,31 @@ export function createChatgptTurnCapability({gateway=GATEWAY,browserId=BROWSER,t
            if(attempt<5)await sleep(250);
          }
          if(!actual)deny('chatgpt_created_tab_not_verified');
+         // URL readiness precedes hydration of the actual ChatGPT editor.
+         // The next independent John `status` call used to race that
+         // hydration and reported composer_not_ready. Wait for a *read-only*
+         // stable composer on THIS newly created tab under its exact URL.
+         // No insertText or click is attempted; failed readiness still
+         // falls through to the independently gated status (fail-closed).
+         let editor_ready=false;
+         for(let attempt=0;attempt<8;attempt++){
+           try{
+             editor_ready=await session.withTabLease(browserId,id,async owner=>{
+               const result=await owner.call('page.evaluate',{
+                 browser_instance_id:browserId,tabId:id,
+                 expectedUrl:actual.url,code:statusCode,
+               });
+               const status=value(result);
+               return status.ok===true&&status.composer_present===true&&
+                 status.composer_blank===true&&status.generating===false;
+             },10000);
+           }catch{editor_ready=false}
+           if(editor_ready)break;
+           if(attempt<7)await sleep(250);
+         }
          return {browser_instance_id:browserId,tab_id:id,
            origin:ORIGIN,action:'ensure_tab',created:true,reused:false,
-           url:actual.url};
+           editor_ready_observed:editor_ready,url:actual.url};
        }
        return await session.withTabLease(browserId,input.tab_id,async owner=>{
          const tabs=await owner.call('tabs.list',{browser_instance_id:browserId});
@@ -250,6 +323,22 @@ export function createChatgptTurnCapability({gateway=GATEWAY,browserId=BROWSER,t
          const rpc=async code=>value(await owner.call('page.evaluate',{
            browser_instance_id:browserId,tabId:input.tab_id,
            expectedUrl:tab.url,code}));
+         if(input.action==='clear_owned_draft'){
+           if(new URL(tab.url).pathname!=='/'||
+              String(tab.title||'').startsWith(JUDGMENT_TAB_MARKER))
+             deny('owned_draft_requires_unmarked_root');
+           const code=clearOwnedDraftCode
+             .replace('const expectedContinuationId=null;',
+               'const expectedContinuationId='+JSON.stringify(input.expected_continuation_id)+';')
+             .replace('const expectedPrompt=null;',
+               'const expectedPrompt='+JSON.stringify(input.expected_prompt)+';');
+           const cleared=await rpc(code);
+           if(cleared.ok!==true||cleared.cleared!==true||
+              cleared.originally_matched!==true)
+             deny(cleared.error||'verified_draft_clear_unconfirmed');
+           return {...meta,action:'clear_owned_draft',cleared:true,
+             original_char_count:cleared.original_char_count};
+         }
          if(input.action==='status'){
            const code=input.expected_continuation_id
              ?statusCode.replace('const expectedContinuationId=null;',
