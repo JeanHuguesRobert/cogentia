@@ -177,20 +177,24 @@ export function createChatgptTurnCapability({gateway=GATEWAY,browserId=BROWSER,t
        if(input.action==='ensure_tab'){
          const listed=await session.call('tabs.list',{browser_instance_id:browserId});
          if(!Array.isArray(listed?.tabs))deny('chatgpt_tabs_list_unavailable');
-         // Tabs owned by the Principal are considered reusable only if
-         // their actual editor is empty and the response is not generating.
-         // Never overwrite an existing draft or interrupt a running turn.
+         // Each CPS judgment needs a DISTINCT conversation. A marked
+         // previous Judgment conversation may still receive a delayed
+         // response even if its composer looks idle. Never reuse it after
+         // an ambiguous send: reuse only an UNMARKED blank-root tab,
+         // otherwise create a fresh exact-origin tab. Existing drafts,
+         // active generations and personal conversations stay untouched.
          for(const candidate of listed.tabs){
            if(!Number.isSafeInteger(candidate.id)||candidate.id<1||
               !isChatgptTabUrl(candidate.url)||
-              !(new URL(candidate.url).pathname==='/'||
-                String(candidate.title||'').startsWith(JUDGMENT_TAB_MARKER)))continue;
+              new URL(candidate.url).pathname!=='/'||
+              String(candidate.title||'').startsWith(JUDGMENT_TAB_MARKER))continue;
            try{
              const reusable=await session.withTabLease(
                browserId,candidate.id,async owner=>{
                  const fresh=await owner.call('tabs.list',{browser_instance_id:browserId});
                  const same=fresh.tabs?.find(x=>x.id===candidate.id);
-                 if(!same||same.url!==candidate.url)return false;
+                 if(!same||same.url!==candidate.url||
+                    String(same.title||'').startsWith(JUDGMENT_TAB_MARKER))return false;
                  const result=await owner.call('page.evaluate',{
                    browser_instance_id:browserId,tabId:candidate.id,
                    expectedUrl:candidate.url,code:statusCode,

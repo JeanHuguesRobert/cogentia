@@ -7,6 +7,8 @@
  */
 import {projectPacketCoordination,validateCurrentPacketClaim} from '../../../inseme/packages/cop-core/src/packet-coordination.js';
 import {runMandateToBoundary} from './mandate-continuation.js';
+import {projectPacketTemperature} from '../../../inseme/packages/cop-core/src/packet-temperature.js';
+import {inspectQuarantinedBrowserDelivery} from './chatgpt-cps-delivery-quarantine.js';
 const PROFILE='cop.continuation-browser-dispatch/v1';
 const RESULT='cop.continuation-result/v1';
 const ID=id=>typeof id==='string'&&/^ctn_[a-zA-Z0-9_]{3,120}$/.test(id);
@@ -80,9 +82,17 @@ export function listAssignedChatgptCpsContinuations(store,{limit=25}={}){
       x.payload?.profile==='cop.continuation-abandonment/v1');
   }).slice(0,limit).map(e=>{
     const c=e.payload.continuation;
+    const quarantine=inspectQuarantinedBrowserDelivery(store,c.continuation_id);
+    // A child may be parked by a parent cascade. Only a *validated*,
+    // explicit uncertainty quarantine may downgrade its historical dispatch
+    // blocker to non-runnable parked status. Any other cold child stays
+    // excluded from dispatch and its issue remains visible to reconciliation.
+    const warmth=projectPacketTemperature(store,{packet_ref:'continuation:'+c.continuation_id});
+    const hasIntent=Boolean(store.eventByIdempotency(intentKey(c.continuation_id)));
     return {continuation_id:c.continuation_id,packet_ref:c.packet_ref,
-      status:store.eventByIdempotency(intentKey(c.continuation_id))
-        ?'needs_reconciliation':'ready',
+      status:quarantine.ok&&quarantine.quarantined?'parked':
+        hasIntent?'needs_reconciliation':
+        warmth.ok&&warmth.runnable?'ready':'cold_deferred',
       declaration_receipt_ref:e.idempotency_key};
   });
 }
@@ -121,6 +131,8 @@ export async function dispatchAssignedChatgptCpsContinuation({
     return {ok:false,status:'already_dispatched'};
   if(store.eventByIdempotency(intentKey(continuation_id)))
     return {ok:false,status:'needs_reconciliation'};
+  if(!projectPacketTemperature(store,{packet_ref:topic}).runnable)
+    return {ok:false,status:'packet_temperature_deferred'};
   if(!reservationAndClaimCurrent(store,c,now))
     return {ok:false,status:'stale_claim_or_budget'};
   let grant;
@@ -132,6 +144,8 @@ export async function dispatchAssignedChatgptCpsContinuation({
     return {ok:false,status:'not_admitted'};
   const fencing=store.transaction(tx=>{
     if(tx.eventByIdempotency(intentKey(continuation_id)))return {reserved:false};
+    if(!projectPacketTemperature(tx,{packet_ref:topic}).runnable)
+      return {reserved:false,stale:true};
     // Must re-read the existing authority/claim after crossing the async
     // admission boundary, under the journal's serialized SQLite write lock.
     const latest=tx.listTopic(topic).find(e=>e.payload?.profile==='cop/continuation');

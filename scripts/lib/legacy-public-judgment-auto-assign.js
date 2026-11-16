@@ -14,6 +14,7 @@ import {createHash} from 'node:crypto';
 import {projectPacketTemperature} from '../../../inseme/packages/cop-core/src/packet-temperature.js';
 import {previewPublicLegacyJudgment,preparePublicLegacyJudgmentCps}
   from './legacy-public-judgment-cps.js';
+import {inspectQuarantinedBrowserDelivery} from './chatgpt-cps-delivery-quarantine.js';
 import {prepareAssignedChatgptCpsContinuation}
   from './chatgpt-cps-assignment.js';
 
@@ -56,6 +57,10 @@ function outstanding(store,local,allDeclarations){
   for(const c of allDeclarations.filter(c=>c.provider==='chatgpt'&&c.channel==='browser')){
     const events=store.listTopic('continuation:'+c.continuation_id);
     const returned=events.some(isReturn);
+    const quarantine=inspectQuarantinedBrowserDelivery(store,c.continuation_id);
+    // An explicitly quarantined cold child holds its own uncertain outcome;
+    // never re-dispatch it, but don't starve independent ready work either.
+    if(quarantine.ok&&quarantine.quarantined)continue;
     const abandoned=events.some(e=>e.payload?.profile==='cop.continuation-abandonment/v1');
     if(!returned&&!abandoned)return 'browser_turn_in_flight';
     const legacyId=c.state?.assignment_ref?.startsWith('legacy:')?
@@ -97,10 +102,15 @@ export function inspectAutoPublicLegacyJudgment({store,localRecords=[],
   // Check all existing CPS outcomes, not only the legacy subset. If a browser
   // intent was committed without a reliable receipt it must be reconciled,
   // never hidden behind a new assignment.
-  const unresolved=store.replay().some(e=>e.payload?.profile===
-    'cop.continuation-browser-dispatch/v1'&&e.payload.phase==='intent_committed'&&
-    !store.eventByIdempotency('chatgpt-browser:'+e.payload.continuation_id+':first-dispatch-receipt')&&
-    !store.listTopic('continuation:'+e.payload.continuation_id).some(isReturn));
+  const unresolved=store.replay().some(e=>{
+    const p=e.payload;
+    if(p?.profile!=='cop.continuation-browser-dispatch/v1'||
+       p.phase!=='intent_committed')return false;
+    if(store.eventByIdempotency('chatgpt-browser:'+p.continuation_id+':first-dispatch-receipt')||
+       store.listTopic('continuation:'+p.continuation_id).some(isReturn))return false;
+    const quarantined=inspectQuarantinedBrowserDelivery(store,p.continuation_id);
+    return !(quarantined.ok&&quarantined.quarantined);
+  });
   if(unresolved)return {ok:true,status:'browser_dispatch_needs_reconciliation',
     total_auto_assignments:intents.length,eligible:0};
   const candidates=localRecords.filter(x=>x.status==='active'&&

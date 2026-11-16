@@ -58,14 +58,13 @@ test('already drafted prompt can be sent only under exact continuation binding',
  assert.equal(validateChatgptTurnRequest({action:'send_draft',tab_id:42,expected_continuation_id:'other'}).ok,false);
 });
 
-test('ensure_tab reuses a free existing ChatGPT editor without creating anything',async()=>{
+test('ensure_tab reuses only an unmarked blank-root ChatGPT editor',async()=>{
  const calls=[];
  const mock={
    async call(method,args){
      calls.push([method,args]);
      if(method==='tabs.list')return {tabs:[{id:60,url:'https://example.com/'},
-       {id:42,url:'https://chatgpt.com/c/abc12345',
-        title:JUDGMENT_TAB_MARKER+' | Test'}]};
+       {id:42,url:'https://chatgpt.com/',title:'ChatGPT'}]};
      if(method==='page.evaluate')return {value:{ok:true,composer_present:true,
        composer_chars:1,composer_blank:true,generating:false,stable_composer:true}};
      throw Error('unexpected '+method);
@@ -338,4 +337,35 @@ test('ensure_tab never reuses an unmarked personal conversation',async()=>{
  assert.equal(result.created,true);
  assert.equal(result.tab_id,102);
  assert.equal(calls.filter(x=>x[0]==='page.evaluate').length,0);
+});
+
+
+test('ensure_tab isolates a parked uncertain Judgment conversation even when its editor is empty',async()=>{
+ let created=false,probes=0;
+ const marked='[COGENTIA JUDGMENT - NE PAS INTERAGIR] | ChatGPT';
+ const session={
+   async call(method,args){
+     if(method==='tabs.list')return {tabs:[
+       {id:31,url:'https://chatgpt.com/c/deadbeef1234',title:marked},
+       ...(created?[{id:39,url:'https://chatgpt.com/',title:'ChatGPT'}]:[])]};
+     if(method==='page.evaluate'){
+       probes++;assert.notEqual(args.tabId,31);
+       return {value:{ok:true,composer_present:true,composer_chars:0,
+         composer_blank:true,generating:false}};
+     }
+     if(method==='tabs.create'){
+       assert.equal(args.url,'https://chatgpt.com/');
+       assert.equal(args.active,false);
+       created=true;return {tab:{id:39}};
+     }
+     throw Error('unexpected method: '+method);
+   },
+   async withTabLease(_browser,_id,run){return run(this)},
+   close(){}
+ };
+ const cap=createChatgptTurnCapability({sessionFactory:async()=>session});
+ const result=await cap.execute({action:'ensure_tab'});
+ assert.equal(result.created,true);
+ assert.equal(result.tab_id,39);
+ assert.equal(probes,0);
 });

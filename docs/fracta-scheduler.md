@@ -482,3 +482,71 @@ correlation ID and budget, never edit the old intent; (C) authorize a separate
 trusted cognitive provider/local handler for the three public documents with
 its own receipts and accounting. None of these is automatic under the
 initial three-slot policy.
+
+### CPS delivery quarantine / independent work progress (2026-11-16, #194)
+
+**Do not confuse a failed delivery with a failed cognitive packet.** After
+an ambiguous browser submission, the canonical `first-dispatch-intent` and
+all budget accounting remain immutable. Merely parking a child or clearing
+a local queue is insufficient to suppress an unknown external effect.
+
+The pre-existing `cop.packet-temperature/v1` is the sole temperature
+mechanism: `changePacketTemperature(parent, 'parked')` atomically cools the
+parent **and its linked descendants**. A later `Resume(parent)` only warms
+that parent; it never implicitly resumes any child. Each cooling event
+retains its causal lineage and is reconstructible from COP after restart.
+
+The CPS bridge adds a narrowly typed, append-only
+`cogentia.cps-browser-delivery-quarantine/v1` **quarantine receipt**. The
+receipt is permitted only when the original child declaration and
+`cop.packet-parent-continuation/v1 child_linked` are present, and the
+original `first-dispatch-intent` exists without a confirmed browser delivery
+receipt or returned model result. It causally references the original
+intent and the parent cooling transition. The original request remains
+`delivery_unknown`, `retry_authorized:false`; no second prompt is ever
+emitted for that continuation, and any future model return remains intact.
+A later result is evidence to reconcile *separately*, not an implicit resume.
+
+`inspectQuarantinedBrowserDelivery` requires **both** an exact quarantine
+receipt and matching `parked` parent/child temperatures. If the receipt is
+missing, corrupt, or a parent or child has been rewarmed, the old uncertain
+submission becomes a hard blocker again. Only a validated quarantine allows
+the old child to be projected as `parked`, removed from **runnable** work, and
+excluded from the single-flight blocker for *independent* new assignments.
+The original canonical event is never deleted, rewritten, marked complete,
+or disguised as a browser return.
+
+The existing ONA CPS dispatcher and the public-document selector both use
+this same projection. They continue to check current packet temperature,
+mandate, PacketClaim, provider permission and budget at real dispatch.
+The other work packets in the original three-slot Barons reviewed cohort
+retain their exact independently audited document paths. Each assignment
+still consumes its slot, including the quarantined one: the quota never
+silently expands. The ONA read-only frontier reports `parked_cps` separately
+from `reconciliation` and `cps_pending`.
+
+**Browser isolation is essential:** `browser.chatgpt.turn` `ensure_tab` now
+reuses only an unmarked, empty, idle root ChatGPT editor (`/`), never an
+already marked Judgment *conversation*. If there is no safe root, it creates
+a fresh exact-origin, unfocused tab using the pre-existing capability. This
+prevents a late response in a quarantined conversation from sharing the next
+judgment's browser conversation. It does not make an ambiguous earlier click
+certainly unsent.
+
+Read-only preview of one exact original CPS continuation:
+
+```sh
+node scripts/ops/park-uncertain-cps-delivery.mjs --id=ctn_chatgpt_browser_<id>
+```
+
+If and only if owner-authorized quarantine is appropriate, the same existing
+COP primitives are invoked explicitly with `--apply`, recording temperature
+transitions and the causal quarantine event. No new scheduler, database,
+general suspension service, or provider grant was introduced. A crash after
+cooling but before the quarantine receipt remains fail-closed; rerunning the
+same bounded command is idempotent.
+
+The test suite verifies wrong/missing links, unknown versus confirmed
+browser deliveries, `Parked` without quarantine still blocking, cascaded
+cooling, idempotence, late returns, parent-only resume, independent
+second/third cohort jobs, and strict browser conversation separation.

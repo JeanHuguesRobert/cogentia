@@ -120,7 +120,8 @@ export async function runScheduledHeartbeat({env=process.env,assignedWorker=null
           `missing_handler_contract=${frontier.local.requiring_contract}; `+
           `generic_candidate=${frontier.local.candidates_needing_admission}; `+
           `cps_pending=${frontier.cop.specialized_cps_ready}; `+
-          `reconciliation=${frontier.cop.needs_reconciliation}`
+          `reconciliation=${frontier.cop.needs_reconciliation}; `+
+          `parked_cps=${frontier.cop.parked_uncertain_deliveries}`
         :`COP frontier observer: ${frontier.status}`;
       const legacy=resultWithLegacy.public_legacy_settlement;
       const auto=resultWithLegacy.public_legacy_auto_assignment;
@@ -158,6 +159,7 @@ export async function runChatgptCpsResidentCycle({store,reconcile,env={},
   const next=listChatgptCpsNextSteps(store,{limit:100});
   const overview={pending_assigned:assigned.filter(x=>x.status==='ready').length,
     assigned_needs_reconciliation:assigned.filter(x=>x.status==='needs_reconciliation').length,
+    assigned_parked:assigned.filter(x=>x.status==='parked').length,
     pending_next_actions:next.filter(x=>x.status==='pending_admission').length,
     next_needs_reconciliation:next.filter(x=>x.status==='needs_reconciliation').length};
   const common={steps_completed:result.steps_completed,
@@ -207,6 +209,7 @@ export async function runChatgptCpsResidentCycle({store,reconcile,env={},
     ...common,steps_completed:steps,
     pending_assigned:assignedAfter.filter(x=>x.status==='ready').length,
     assigned_needs_reconciliation:assignedAfter.filter(x=>x.status==='needs_reconciliation').length,
+    assigned_parked:assignedAfter.filter(x=>x.status==='parked').length,
     pending_next_actions:nextAfter.filter(x=>x.status==='pending_admission').length,
     next_needs_reconciliation:nextAfter.filter(x=>x.status==='needs_reconciliation').length,
     autonomous_browser_worker:Boolean(overview.pending_assigned||overview.pending_next_actions)};

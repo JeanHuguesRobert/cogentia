@@ -71,6 +71,7 @@ export function projectProductionWorkFrontier({store,localRecords=[]}={}){
     cop:{declared:canonical.length,assigned_ready:assignedReady.length,
       result_wakes_ready:wakeReady.length,next_steps_ready:nextReady.length,
       needs_reconciliation:unsafe,
+      parked_uncertain_deliveries:assigned.filter(c=>c.status==='parked').length,
       // Existing specialized, independently governed CPS worker owns these
       // queues. Never dispatch a second time via generic work pull.
       specialized_cps_ready:assignedReady.length+wakeReady.length+nextReady.length},

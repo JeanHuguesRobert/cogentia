@@ -12,6 +12,10 @@ import {inspectAutoPublicLegacyJudgment,autoAssignPublicLegacyJudgment,
   PUBLIC_COHORT_POLICIES} from './legacy-public-judgment-auto-assign.js';
 import {runResidentPublicLegacyJudgmentSettlement} from './legacy-public-judgment-resident.js';
 import {reconcilePacketParentContinuations} from '../../../inseme/packages/cop-core/src/packet-parent-continuations.js';
+import {quarantineUncertainBrowserDelivery,inspectQuarantinedBrowserDelivery}
+  from './chatgpt-cps-delivery-quarantine.js';
+import {projectPacketTemperature}from '../../../inseme/packages/cop-core/src/packet-temperature.js';
+import{runChatgptCpsResidentCycle}from '../ops/ona-chatgpt-cps-reconcile.mjs';
 
 const PATHS=PUBLIC_COHORT_POLICIES.baronsReviewed.paths;
 const record=(id,path,repo='barons-Mariani')=>({id,status:'active',
@@ -154,5 +158,59 @@ test('three independently admitted public judgments settle sequentially and neve
      e.payload?.cohort_id===PUBLIC_COHORT_POLICIES.baronsReviewed.id).length,3);
    assert.equal(f.store.auditCommitments().ok,true);
    const again=await f.run();assert.equal(again.status,'cohort_exhausted');
+ }finally{f.close()}
+});
+
+
+test('one quarantined uncertain CPS child does not starve two independent reviewed judgments',async()=>{
+ const f=fixture();try{
+  const first=await f.run();
+  assert.equal(first.legacy_id,'ctn_reviewed_1');
+  const child='continuation:'+first.cps_child_id;
+  assert.equal(append(f.store,child,
+    'chatgpt-browser:'+first.cps_child_id+':first-dispatch-intent',{
+      profile:'cop.continuation-browser-dispatch/v1',phase:'intent_committed',
+      continuation_id:first.cps_child_id}).ok,true);
+  assert.equal((await f.run()).status,'browser_turn_in_flight');
+  const q=quarantineUncertainBrowserDelivery(f.store,{
+    continuation_id:first.cps_child_id,
+    transition_id:'park-first-uncertain-without-redelivery'});
+  assert.equal(q.ok,true,JSON.stringify(q));
+  assert.equal(projectPacketTemperature(f.store,{packet_ref:'continuation:'+first.legacy_id}).runnable,false);
+  assert.equal(projectPacketTemperature(f.store,{packet_ref:child}).runnable,false);
+  assert.equal(q.retry_authorized,false);
+  // The previously blocked ONA worker must become healthy without any
+  // attempted retry of the first browser continuation.
+  const cycle=await runChatgptCpsResidentCycle({store:f.store,
+    reconcile:async()=>({ok:true,steps_completed:0,pending_count:0,needs_reconciliation:0}),
+    env:{COGENTIA_CPS_BROWSER_DISPATCH_ENABLED:'1'}});
+  assert.equal(cycle.ok,true,JSON.stringify(cycle));
+  assert.equal(cycle.assigned_needs_reconciliation,0);
+  assert.equal(cycle.pending_assigned,0);
+  const second=await f.run();
+  assert.equal(second.legacy_id,'ctn_reviewed_2',JSON.stringify(second));
+  assert.equal((await f.run()).status,'browser_turn_in_flight');
+  await returnAndSettle(f,second);
+  const third=await f.run();
+  assert.equal(third.legacy_id,'ctn_reviewed_3',JSON.stringify(third));
+  await returnAndSettle(f,third,'source');
+  const finished=await f.run();
+  assert.equal(finished.status,'cohort_exhausted');
+  assert.equal(f.store.listTopic(child).filter(e=>
+    e.payload?.phase==='ui_click_dispatched_not_model_result').length,0);
+  assert.equal(f.store.listTopic(child).filter(e=>
+    e.payload?.phase==='intent_committed').length,1);
+  const local=createContinuationSqliteRepository({registryRoot:f.root,dbPath:f.localFile});
+  try{
+    assert.equal(local.load(first.legacy_id).status,'active');
+    assert.equal(local.load(second.legacy_id).status,'resolved');
+    assert.equal(local.load(third.legacy_id).status,'resolved');
+  }finally{local.close()}
+  assert.equal(append(f.store,child,'late-observed:'+first.cps_child_id,{
+    profile:'cop.continuation-result/v1',phase:'returned'}).ok,true);
+  const cold=inspectQuarantinedBrowserDelivery(f.store,first.cps_child_id);
+  assert.equal(cold.late_return_observed,true);
+  assert.equal(projectPacketTemperature(f.store,{packet_ref:child}).runnable,false);
+  assert.equal(f.store.auditCommitments().ok,true);
  }finally{f.close()}
 });
