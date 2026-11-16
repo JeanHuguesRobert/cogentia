@@ -4,6 +4,7 @@
  */
 
 import fs from "node:fs";
+import {continuationRepository} from "../continuation-sqlite-repository.mjs";
 import path from "node:path";
 import { listActiveConversations, loadConversation, saveConversation } from "./conversation-store.js";
 import { requestOutboundSend, buildActionRequestId } from "./outbound-gate.js";
@@ -124,19 +125,17 @@ export function processCockpitCommand(text, config) {
 
   if (lower.startsWith("approve ")) {
     const ctnId = raw.slice(8).trim();
-    const continuationsDir = path.join(process.cwd(), ".cogentia", "continuations");
-    const ctnPath = path.join(continuationsDir, `${ctnId}.json`);
-
-    if (!fs.existsSync(ctnPath)) {
+    const continuationStore=continuationRepository(process.cwd());
+    const ctn=continuationStore.load(ctnId);
+    if (!ctn) {
       return `❌ Continuation \`${ctnId}\` not found.`;
     }
 
     try {
-      const ctn = JSON.parse(fs.readFileSync(ctnPath, "utf8"));
       ctn.status = "closed";
-      ctn.resolved_at = new Date().toISOString(),
+      ctn.resolved_at = new Date().toISOString();
       ctn.resolution = { ok: true, decision: "approved_by_human_via_whatsapp" };
-      fs.writeFileSync(ctnPath, JSON.stringify(ctn, null, 2), "utf8");
+      continuationStore.save(ctn);
 
       // Update associated conversation if any
       if (ctn.sender_jid) {
@@ -154,19 +153,17 @@ export function processCockpitCommand(text, config) {
 
   if (lower.startsWith("reject ")) {
     const ctnId = raw.slice(7).trim();
-    const continuationsDir = path.join(process.cwd(), ".cogentia", "continuations");
-    const ctnPath = path.join(continuationsDir, `${ctnId}.json`);
-
-    if (!fs.existsSync(ctnPath)) {
+    const continuationStore=continuationRepository(process.cwd());
+    const ctn=continuationStore.load(ctnId);
+    if (!ctn) {
       return `❌ Continuation \`${ctnId}\` not found.`;
     }
 
     try {
-      const ctn = JSON.parse(fs.readFileSync(ctnPath, "utf8"));
       ctn.status = "closed";
       ctn.resolved_at = new Date().toISOString();
       ctn.resolution = { ok: false, decision: "rejected_by_human_via_whatsapp" };
-      fs.writeFileSync(ctnPath, JSON.stringify(ctn, null, 2), "utf8");
+      continuationStore.save(ctn);
 
       if (ctn.sender_jid) {
         const conv = loadConversation(config, ctn.sender_jid);
