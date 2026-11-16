@@ -1,94 +1,60 @@
 /**
- * Resolver capability registry + local optimistic PacketClaim adapter
- * (inseme#111, part of the "Super ACP" umbrella, inseme#112).
- *
- * Architectural status (2026-10-18): this file is NOT a separate coordination
- * layer. It is a small filesystem enforcement adapter for the canonical COP
- * PacketClaim semantics (`cop.packet-claim/v1`) documented in
- * inseme/packages/cop-core/Terminology.md and implemented by the packet
- * coordination work tracked in inseme#121.
- * COP owns logical work identity, claim/lease/fencing semantics and
- * reconciliation; this module only supplies atomic local create-if-absent
- * behavior for a continuation claim.
- *
- * Design note (kept here rather than a separate doc, per the issue's own
- * preference for a short note over a research paper):
- *
- * - Implements cognitive_packets.md §10.6's "routing" payload kind for
- *   real: a continuation carries a `required_capability` (a coarse
- *   string from an open, uncontrolled vocabulary -- e.g.
- *   "corpus_research", "tool_use", "image_view"); a resolver declares,
- *   in a small registered file, which capabilities it currently has.
- * - Deliberately NOT auto-discovery: resolvers register themselves via
- *   registerResolver() (a human or agent calls this once per session/
- *   process start); nothing probes liveness or capability automatically.
- *   Per the issue's own stated assumption, the realistic resolver pool
- *   is small (jhrobert + one or two coding-agent sessions), so a
- *   manually-maintained registry is acceptable for v1.
- * - Claiming realizes one local COP PacketClaim enforcement strategy using the
- *   filesystem's own atomic "create if not exists"
- *   semantics (`fs.writeFileSync(path, data, { flag: "wx" })`) as the
- *   optimistic-locking primitive: two resolvers racing to claim the same
- *   continuation will have exactly one writeFileSync succeed and one
- *   throw EEXIST, with no separate lock server or database needed --
- *   matching the corpus's existing preference for git-trackable,
- *   inspectable, filesystem-based state.
- * - This module deliberately does NOT touch cogentia.js's own
- *   SQLite operational continuations -- resolver registrations and
- *   claims live in a sibling `.cogentia/resolvers/` tree, so this stays
- *   additive and doesn't require changing continuation.js's file format
- *   or its owning code.
- * - NOT wired into continuation-acp-server.js yet (inseme#107/#108/#109/
- *   #110's server) -- this is the claim-step prototype only, tested in
- *   isolation, per the issue's own Next Action #2 ("prototype the claim
- *   step only... before wiring it into the full ACP server").
+ * Resolver capability registry and legacy scoped PacketClaim adapter.
+ * SQLite-local and independent from COP deployment. No JSON runtime state.
+ * Admission remains the caller's duty; registration is NOT authority.
  */
+import {DatabaseSync} from 'node:sqlite';
+import {readFileSync,existsSync,readdirSync} from 'node:fs';
+import {join} from 'node:path';
+import {continuationDatabasePath} from './continuation-sqlite-repository.mjs';
 
-import fs from "node:fs";
-import path from "node:path";
-
-function resolversDir(cogentiaRoot) {
-  return path.join(cogentiaRoot, ".cogentia", "resolvers");
+function validId(value){
+  if(typeof value!=='string'||!/^[a-zA-Z0-9_.:-]{1,200}$/.test(value))
+    throw new Error('invalid_resolver_or_continuation_id');
+  return value;
 }
-
-function claimsDir(cogentiaRoot) {
-  return path.join(resolversDir(cogentiaRoot), "claims");
+function connect(root){
+  const db=new DatabaseSync(continuationDatabasePath(root));
+  db.exec(`PRAGMA busy_timeout=5000; PRAGMA journal_mode=WAL;
+    CREATE TABLE IF NOT EXISTS resolver_registry(
+      resolver_id TEXT PRIMARY KEY, capabilities_json TEXT NOT NULL,
+      registered_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS resolver_claims(
+      continuation_id TEXT PRIMARY KEY, resolver_id TEXT NOT NULL,
+      claimed_at TEXT NOT NULL);`);
+  return db;
 }
-
-function ensureDir(dir) {
-  fs.mkdirSync(dir, { recursive: true });
+function within(root,fn){
+  const db=connect(root);
+  try{return fn(db)}finally{db.close()}
 }
-
-/**
- * Register (or re-register, overwriting) a resolver's declared
- * capabilities. Idempotent -- calling it again just updates the file.
- */
-export function registerResolver(cogentiaRoot, resolverId, capabilities) {
-  if (!resolverId) throw new Error("registerResolver requires a resolverId");
-  if (!Array.isArray(capabilities)) throw new Error("registerResolver requires an array of capability strings");
-  const dir = resolversDir(cogentiaRoot);
-  ensureDir(dir);
-  const record = {
-    resolver_id: resolverId,
-    capabilities,
-    registered_at: new Date().toISOString(),
-  };
-  fs.writeFileSync(path.join(dir, `${resolverId}.json`), JSON.stringify(record, null, 2), "utf8");
+function decodeResolver(row){
+  return row?{resolver_id:row.resolver_id,
+    capabilities:JSON.parse(row.capabilities_json),registered_at:row.registered_at}:null;
+}
+function decodeClaim(row){
+  return row?{continuation_id:row.continuation_id,
+    resolver_id:row.resolver_id,claimed_at:row.claimed_at}:null;
+}
+export function registerResolver(root,resolverId,capabilities){
+  validId(resolverId);
+  if(!Array.isArray(capabilities)||capabilities.some(c=>typeof c!=='string'||!c.trim()))
+    throw new Error('registerResolver requires an array of capability strings');
+  const record={resolver_id:resolverId,capabilities,
+    registered_at:new Date().toISOString()};
+  within(root,db=>db.prepare(`INSERT INTO resolver_registry(resolver_id,capabilities_json,registered_at)
+    VALUES(?,?,?) ON CONFLICT(resolver_id) DO UPDATE SET
+    capabilities_json=excluded.capabilities_json,registered_at=excluded.registered_at`)
+    .run(resolverId,JSON.stringify(capabilities),record.registered_at));
   return record;
 }
-
-export function deregisterResolver(cogentiaRoot, resolverId) {
-  const file = path.join(resolversDir(cogentiaRoot), `${resolverId}.json`);
-  if (fs.existsSync(file)) fs.unlinkSync(file);
+export function deregisterResolver(root,resolverId){
+  validId(resolverId);
+  within(root,db=>db.prepare('DELETE FROM resolver_registry WHERE resolver_id=?').run(resolverId));
 }
-
-export function listResolvers(cogentiaRoot) {
-  const dir = resolversDir(cogentiaRoot);
-  if (!fs.existsSync(dir)) return [];
-  return fs
-    .readdirSync(dir)
-    .filter((f) => f.endsWith(".json"))
-    .map((f) => JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")));
+export function listResolvers(root){
+  return within(root,db=>db.prepare('SELECT * FROM resolver_registry ORDER BY resolver_id').all()
+    .map(decodeResolver));
 }
 
 /**
@@ -121,40 +87,81 @@ export function findCapableResolversForAll(cogentiaRoot, requiredCapabilities) {
   );
 }
 
-/**
- * Attempt to claim a continuation for a given resolver. Returns
- * { claimed: true, claim } on success, { claimed: false, existingClaim }
- * if someone else already claimed it first -- the optimistic-locking
- * race resolution, using the filesystem's own atomic exclusive-create.
+
+export function claimContinuation(root,continuationId,resolverId){
+  validId(continuationId);validId(resolverId);
+  return within(root,db=>{
+    db.exec('BEGIN IMMEDIATE');
+    try{
+      const now=new Date().toISOString();
+      const inserted=db.prepare('INSERT OR IGNORE INTO resolver_claims(continuation_id,resolver_id,claimed_at) VALUES(?,?,?)')
+        .run(continuationId,resolverId,now);
+      const row=decodeClaim(db.prepare('SELECT * FROM resolver_claims WHERE continuation_id=?').get(continuationId));
+      db.exec('COMMIT');
+      return inserted.changes===1?{claimed:true,claim:row}:{claimed:false,existingClaim:row};
+    }catch(error){db.exec('ROLLBACK');throw error}
+  });
+}
+export function getClaim(root,continuationId){
+  validId(continuationId);
+  return within(root,db=>decodeClaim(db.prepare('SELECT * FROM resolver_claims WHERE continuation_id=?')
+    .get(continuationId)));
+}
+export function releaseClaim(root,continuationId){
+  validId(continuationId);
+  within(root,db=>db.prepare('DELETE FROM resolver_claims WHERE continuation_id=?').run(continuationId));
+}
+
+/** Explicit one-time import of historical resolver JSON (read-only originals).
+ * A changed/contradictory claim is surfaced, never overwritten.
  */
-export function claimContinuation(cogentiaRoot, continuationId, resolverId) {
-  if (!continuationId) throw new Error("claimContinuation requires a continuationId");
-  if (!resolverId) throw new Error("claimContinuation requires a resolverId");
-  const dir = claimsDir(cogentiaRoot);
-  ensureDir(dir);
-  const claimFile = path.join(dir, `${continuationId}.json`);
-  const claim = { continuation_id: continuationId, resolver_id: resolverId, claimed_at: new Date().toISOString() };
-  try {
-    fs.writeFileSync(claimFile, JSON.stringify(claim, null, 2), { encoding: "utf8", flag: "wx" });
-    return { claimed: true, claim };
-  } catch (err) {
-    if (err.code === "EEXIST") {
-      const existingClaim = JSON.parse(fs.readFileSync(claimFile, "utf8"));
-      return { claimed: false, existingClaim };
+export function importLegacyResolverJson(root,{apply=false}={}){
+  const dir=join(root,'.cogentia','resolvers');
+  const claimDir=join(dir,'claims');
+  const result={apply,resolvers:0,claims:0,imported:0,already_present:0,
+    conflicts:[],invalid:[]};
+  const files=folder=>existsSync(folder)?readdirSync(folder).filter(n=>n.endsWith('.json')).sort():[];
+  const resolverFiles=files(dir),claimFiles=files(claimDir);
+  result.resolvers=resolverFiles.length;result.claims=claimFiles.length;
+  for(const [folder,list,kind] of [[dir,resolverFiles,'resolver'],[claimDir,claimFiles,'claim']]){
+    for(const name of list){
+      try{
+        const doc=JSON.parse(readFileSync(join(folder,name),'utf8'));
+        if(kind==='resolver'){
+          validId(doc.resolver_id);
+          if(!Array.isArray(doc.capabilities))throw Error('invalid_capabilities');
+        }else{validId(doc.continuation_id);validId(doc.resolver_id)}
+        if(!apply)continue;
+        within(root,db=>{
+          if(kind==='resolver'){
+            const existing=db.prepare('SELECT * FROM resolver_registry WHERE resolver_id=?').get(doc.resolver_id);
+            if(existing){
+              if(JSON.stringify(JSON.parse(existing.capabilities_json))!==JSON.stringify(doc.capabilities))
+                result.conflicts.push({kind,file:name,id:doc.resolver_id});
+              else result.already_present++;
+            }else{
+              db.prepare('INSERT INTO resolver_registry(resolver_id,capabilities_json,registered_at) VALUES(?,?,?)')
+                .run(doc.resolver_id,JSON.stringify(doc.capabilities),doc.registered_at||new Date().toISOString());
+              result.imported++;
+            }
+          }else{
+            const existing=db.prepare('SELECT * FROM resolver_claims WHERE continuation_id=?').get(doc.continuation_id);
+            if(existing){
+              if(existing.resolver_id!==doc.resolver_id)
+                result.conflicts.push({kind,file:name,id:doc.continuation_id});
+              else result.already_present++;
+            }else{
+              db.prepare('INSERT INTO resolver_claims(continuation_id,resolver_id,claimed_at) VALUES(?,?,?)')
+                .run(doc.continuation_id,doc.resolver_id,doc.claimed_at||new Date().toISOString());
+              result.imported++;
+            }
+          }
+        });
+      }catch(e){result.invalid.push({kind,file:name,error:String(e.message)})}
     }
-    throw err;
   }
-}
-
-export function getClaim(cogentiaRoot, continuationId) {
-  const claimFile = path.join(claimsDir(cogentiaRoot), `${continuationId}.json`);
-  if (!fs.existsSync(claimFile)) return null;
-  return JSON.parse(fs.readFileSync(claimFile, "utf8"));
-}
-
-export function releaseClaim(cogentiaRoot, continuationId) {
-  const claimFile = path.join(claimsDir(cogentiaRoot), `${continuationId}.json`);
-  if (fs.existsSync(claimFile)) fs.unlinkSync(claimFile);
+  result.ok=result.conflicts.length===0&&result.invalid.length===0;
+  return result;
 }
 
 /**
@@ -179,3 +186,4 @@ export function claimAdmissibleResolver(cogentiaRoot, continuationId, requiredCa
   }
   return { claimed: false, reason: "no_admissible_resolver" };
 }
+
