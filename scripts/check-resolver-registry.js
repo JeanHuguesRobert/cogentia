@@ -21,6 +21,8 @@ import {
 } from "./lib/resolver-registry.js";
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), "resolver-registry-test-"));
+const previousDb=process.env.COGENTIA_CONTINUATIONS_DB;
+process.env.COGENTIA_CONTINUATIONS_DB=path.join(root,"test-continuations.sqlite");
 
 try {
   // Registration is idempotent and readable back.
@@ -112,5 +114,7 @@ try {
 
   console.log(JSON.stringify({ ok: true, message: "resolver registry + optimistic-locking claim protocol verified" }, null, 2));
 } finally {
-  fs.rmSync(root, { recursive: true, force: true });
+  if(previousDb===undefined)delete process.env.COGENTIA_CONTINUATIONS_DB;
+  else process.env.COGENTIA_CONTINUATIONS_DB=previousDb;
+  fs.rmSync(root,{recursive:true,force:true});
 }
