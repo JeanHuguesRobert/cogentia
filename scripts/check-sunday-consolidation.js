@@ -3,6 +3,7 @@
 // Verifies dual privacy domains: public digest vs private digest.
 
 import fs from "node:fs";
+import {createContinuationSqliteRepository} from "./lib/continuation-sqlite-repository.mjs";
 import os from "node:os";
 import path from "path";
 import { spawnSync } from "node:child_process";
@@ -16,6 +17,9 @@ async function runSundayConsolidationTest() {
   const fixtureBase = fs.mkdtempSync(path.join(os.tmpdir(), "cogentia-consolidation-"));
   const fixtureRoot = path.join(fixtureBase, "cogentia");
   fs.mkdirSync(fixtureRoot, { recursive: true });
+  const dbPath=path.join(fixtureBase,"continuations.sqlite");
+  process.env.COGENTIA_CONTINUATIONS_DB=dbPath;
+  const continuationStore=createContinuationSqliteRepository({registryRoot:fixtureRoot,dbPath});
   for (const name of [
     "FractaVolta", "marenostrum", "barons-Mariani", "inseme", "Inox",
     "registre-mariani", "ubikia", "JeanHuguesRobert", "StructEnv",
@@ -131,27 +135,36 @@ async function runSundayConsolidationTest() {
     }
   }
 
+  const completedId=result.consolidation_packet.split("#").at(-1);
+  const nextId=result.scheduled_next_packet.split("#").at(-1);
   const trackedOutputs = [publicDigest, privateDigest, publicLlms, privateLlms,
     result.privacy.public.llms_full_path, result.privacy.private.llms_full_path,
-    path.join(fixtureRoot, "docs", "registry.json"),
-    result.consolidation_packet, result.scheduled_next_packet];
+    path.join(fixtureRoot, "docs", "registry.json")];
   const snapshot = trackedOutputs.map(file => [file, fs.readFileSync(file, "utf8"), fs.statSync(file).mtimeMs]);
+  const completedRevision=continuationStore.inspect(completedId).revision;
+  const nextRevision=continuationStore.inspect(nextId).revision;
   const repeat = await runWeeklyConsolidation({ root: fixtureRoot, now: "2026-09-20T18:00:00.000Z", fanOut: false });
   if (!repeat.skipped) throw new Error("Complete same-week run must skip");
+  if (continuationStore.inspect(completedId).revision!==completedRevision ||
+      continuationStore.inspect(nextId).revision!==nextRevision)
+    throw new Error("Repeat consolidation unexpectedly changed a continuation");
   for (const [file, bytes, mtime] of snapshot) {
     if (fs.readFileSync(file, "utf8") !== bytes || fs.statSync(file).mtimeMs !== mtime) {
       throw new Error(`Repeat run rewrote ${file}`);
     }
   }
-  for (const missing of [privateDigest, result.privacy.private.llms_full_path, result.scheduled_next_packet]) {
+  for (const missing of [privateDigest, result.privacy.private.llms_full_path]) {
     fs.unlinkSync(missing);
     const recovered = await runWeeklyConsolidation({ root: fixtureRoot, now: "2026-09-20T18:00:00.000Z", fanOut: false });
     if (recovered.skipped || !fs.existsSync(missing)) throw new Error(`Partial output was not recovered: ${missing}`);
   }
-  fs.writeFileSync(result.consolidation_packet, "{broken");
+  const incomplete=continuationStore.load(completedId);
+  incomplete.execution_steps_completed=4;
+  continuationStore.save(incomplete);
   const recoveredPacket = await runWeeklyConsolidation({ root: fixtureRoot, now: "2026-09-20T18:00:00.000Z", fanOut: false });
-  if (recoveredPacket.skipped || JSON.parse(fs.readFileSync(result.consolidation_packet)).status !== "completed") {
-    throw new Error("Malformed completion packet must not mask incomplete work");
+  if (recoveredPacket.skipped ||
+      continuationStore.load(completedId).execution_steps_completed!==5) {
+    throw new Error("Incomplete SQLite completion packet must not mask incomplete work");
   }
   const forced = await runWeeklyConsolidation({ root: fixtureRoot, now: "2026-09-20T19:00:00.000Z", force: true, fanOut: false });
   if (forced.skipped || !fs.readFileSync(publicDigest, "utf8").includes("2026-09-20T19:00:00.000Z")) {
@@ -187,6 +200,7 @@ async function runSundayConsolidationTest() {
   console.log("✅ SUNDAY CORPUS CONSOLIDATION DUAL-PRIVACY VERIFICATION PASSED (100%)");
   console.log("==========================================================================");
   } finally {
+    continuationStore.close();
     fs.rmSync(fixtureBase, { recursive: true, force: true });
   }
 }
