@@ -242,8 +242,69 @@ function sampleGraph() {
     assert.ok(packet.routing_trace.some((step) => step.step === "resolve_document_title"));
   });
 
+  check("long CPS question resolves the existing source before peripheral concepts", () => {
+    const packet = orientCorpus({
+      query: "How does Cognitive Packet Switching avoid an end-to-end circuit through durable continuations and Store and Forward?",
+      concepts: [
+        {
+          name: "Cognitive Packet",
+          repo: "cogentia",
+          short_definition: "A bounded packet envelope for work and routing",
+          documents: ["research/cognitive_packets.md"],
+        },
+      ],
+      documents: [
+        { repo: "cogentia", rel: "research/cognitive_packets.md", title: "Cognitive Packets", document_role: "source" },
+        { repo: "cogentia", rel: "research/cognitive_packet_switching.md", title: "Cognitive Packet Switching", document_role: "source" },
+        { repo: "cogentia", rel: "research/cogentia_continuation_packet_routing.md", title: "Cogentia as a Cognitive Continuation Packet Router", document_role: "source" },
+      ],
+    });
+    assert.equal(packet.read_first[0].path, "research/cognitive_packet_switching.md");
+    assert.ok(packet.routing_trace.some((t) => t.step === "resolve_document_title"));
+    assert.ok(packet.resolved_concepts.some((c) => c.name === "Cognitive Packet Switching"));
+  });
+
+  check("a shared reference must not hijack CPS to Eventual Reconciliation", () => {
+    const packet = orientCorpus({
+      query: "CPS sans circuit fixe",
+      concepts: [{
+        name: "Eventual Reconciliation",
+        repo: "cogentia",
+        documents: [
+          "research/documents_as_cognitive_packets.md",
+          "research/cognitive_packet_switching.md",
+        ],
+      }],
+      documents: [{
+        repo: "cogentia",
+        rel: "research/cognitive_packet_switching.md",
+        title: "Cognitive Packet Switching",
+        document_role: "source",
+      }],
+    });
+    assert.equal(packet.resolved_concepts[0].name, "Cognitive Packet Switching");
+    assert.equal(packet.read_first[0].path, "research/cognitive_packet_switching.md");
+  });
+
+  check("short CPS acronym resolves to the existing canonical doctrine", () => {
+    const packet = orientCorpus({
+      query: "CPS sans circuit fixe",
+      concepts: [],
+      documents: [
+        { repo: "cogentia", rel: "research/cognitive_packet_switching.md", title: "Cognitive Packet Switching", document_role: "source" },
+      ],
+    });
+    assert.equal(packet.read_first[0].path, "research/cognitive_packet_switching.md");
+  });
+
+  check("shorter Cognitive Packet is not misresolved to Cognitive Packet Switching", () => {
+    const alias = resolveConceptAlias("cognitive packet");
+    assert.notEqual(alias.canonical_rel, "research/cognitive_packet_switching.md");
+  });
+
   check("load-bearing doctrine aliases resolve to their canonical source", () => {
     const expected = [
+      ["CPS", "cogentia", "research/cognitive_packet_switching.md"],
       ["locality", "cogentia", "research/locality_principle.md"],
       ["DHITL", "marenostrum", "research/DHITL.md"],
       ["control/data plane separation", "Inox", "research/concepts.md"],
@@ -527,8 +588,9 @@ async function runMcp(base, messages) {
   await rmScratchSafely(scratchRoot);
 }
 
-check("fixtures are five questions with expectation_basis on every must_reach", () => {
-  assert.equal(ORIENT_REALITY_FIXTURES.length, 5);
+check("fixtures include the CPS regression and expectation_basis on every must_reach", () => {
+  assert.ok(ORIENT_REALITY_FIXTURES.length >= 6);
+  assert.ok(ORIENT_REALITY_FIXTURES.some((fx) => fx.id === "q-cps-no-circuit-existing-doctrine"));
   for (const fx of ORIENT_REALITY_FIXTURES) {
     assert.ok(fx.question);
     for (const t of fx.expected.must_reach) {
@@ -563,7 +625,7 @@ check("fixtures are five questions with expectation_basis on every must_reach", 
       const r = run(["orient-benchmark", "--json"], { env: { COGENTIA_REGISTRY: nearest } });
       assert.equal(r.status, 0, r.stderr);
       assert.equal(r.json.ok, true);
-      assert.equal(r.json.total, 5);
+      assert.equal(r.json.total, ORIENT_REALITY_FIXTURES.length);
       console.log(`\n--- corpus.orient Reality Tests (HumanBootstrapHints=${r.json.human_bootstrap_hints}) ---`);
       let strictFails = 0;
       for (const row of r.json.results) {

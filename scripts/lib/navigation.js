@@ -14,6 +14,15 @@ import {
  */
 export const SEED_CONCEPT_ALIASES = [
   {
+    name: "Cognitive Packet Switching",
+    aliases: [
+      "cps", "commutation de paquets cognitifs",
+    ],
+    canonical_repo: "cogentia",
+    canonical_rel: "research/cognitive_packet_switching.md",
+    canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cognitive_packet_switching.md",
+  },
+  {
     name: "Potentics",
     aliases: ["potentics", "science des possibles", "transition possibiliste", "potentialite graduee"],
     canonical_repo: "barons-Mariani",

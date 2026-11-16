@@ -3,9 +3,9 @@ title: Cogentia Shared Agent Instructions
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 status: "working-paper — active operational mandate"
-version: 55
+version: 56
 date: 2026-10-02
-last_modified_at: "2026-11-15"
+last_modified_at: "2026-11-16"
 license: CC BY-SA 4.0
 language: en
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/instructions/AGENTS.shared.md
@@ -30,6 +30,20 @@ classification_confidence: "medium"
 ---
 
 # Cogentia Shared Agent Instructions
+
+## Corpus prior-art and navigation before claiming novelty
+
+When a question touches an existing Cogentia, Fractanet, COP or CPS concept,
+**locate the existing source before proposing a new doctrine or document**.
+Use the existing `cogentia_orient` conceptual route and `cogentia_search`
+evidence retrieval (or their CLI/Corpus equivalents) and verify exact
+passages. If orientation gives irrelevant concepts, or a long lexical search
+returns zero hits, retry with a short distinctive phrase before concluding
+the material is absent. An agent's failure to find a principle is
+**navigation debt**, not proof that the principle has not been written.
+Prefer repairing the orientation index, source aliases and discovery
+tests over duplicating established content. See
+[Corpus evidence retrieval](../skills/corpus-evidence-retrieval/SKILL.md).
 
 ## Compute capability self-discovery before declaring an execution blocker
 

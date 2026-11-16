@@ -101,6 +101,28 @@ function titleContainsTokens(title, tokens) {
   );
 }
 
+/**
+ * Match a source title even when the user adds context beyond its words.
+ *
+ * A long question can contain the entire canonical document title; requiring
+ * every question token to appear in that title (the old direction) misses it.
+ * Keep the short-query title match too (e.g. "locality" -> Locality Principle).
+ *
+ * This is only a structural retrieval signal, not semantic truth.
+ */
+function sourceTitleMatchesQuery(title, queryTokens) {
+  if (titleContainsTokens(title, queryTokens)) return true;
+  const titleTokens = tokenize(title);
+  if (titleTokens.length < 2 || !queryTokens.length) return false;
+  return titleTokens.every((nameToken) =>
+    queryTokens.some((queryToken) =>
+      queryToken === nameToken ||
+      (queryToken.length >= 6 && nameToken.length >= 6 &&
+       stem(queryToken) === stem(nameToken))
+    )
+  );
+}
+
 function parseDocRef(raw, fallbackRepo) {
   const text = String(raw || "").trim();
   if (!text) return null;
@@ -149,7 +171,8 @@ export function selectSeedConcepts(query, concepts = [], documents = [], policy 
   // A source whose title directly answers the request is stronger structural
   // evidence than an alias inferred from a secondary document basename.
   for (const doc of documents) {
-    if ((doc.document_role !== "source" && doc.role !== "source") || !titleContainsTokens(doc.title, tokens)) continue;
+    if ((doc.document_role !== "source" && doc.role !== "source") ||
+        !sourceTitleMatchesQuery(doc.title, tokens)) continue;
     scored.push({
       concept: {
         name: doc.title || doc.rel,
@@ -160,7 +183,11 @@ export function selectSeedConcepts(query, concepts = [], documents = [], policy 
         related: [],
         short_definition: "",
       },
-      score: 110,
+      // Prefer the longest *literal* source title present in the need.
+      // In "Cognitive Packet Switching", a partial "Cognitive Packets"
+      // stem match must not outrank the exact canonical source title.
+      score: 110 + Math.min(tokenize(doc.title).length, 8) * 2 +
+        (norm(q).includes(norm(doc.title)) ? 20 : 0),
       provenance: EVIDENCE_CLASS.derived_structurally,
       reason: "seed_source_title",
     });
@@ -168,10 +195,12 @@ export function selectSeedConcepts(query, concepts = [], documents = [], policy 
 
   const aliasHit = resolveConceptAlias(q, documents);
   if (aliasHit.hit) {
+    // A document can be referenced by MANY concepts. Sharing a source
+    // cannot make an unrelated concept an alias of the named doctrine.
+    // Resolve identity by name and canonical repository, otherwise use
+    // an explicit synthetic source anchor instead of a false conceptual edge.
     const match = concepts.find(
-      (c) =>
-        norm(c.name) === norm(aliasHit.name) ||
-        (c.repo === aliasHit.canonical_repo && (c.documents || []).some((d) => String(d).includes(aliasHit.canonical_rel)))
+      (c) => c.repo === aliasHit.canonical_repo && norm(c.name) === norm(aliasHit.name)
     );
     scored.push({
       concept: match || {
@@ -433,7 +462,7 @@ function lexicalResidual(query, documents, already, limit) {
       const hay = norm(`${doc.title || ""} ${doc.rel || ""} ${doc.description || ""}`);
       const title = norm(doc.title || "");
       const exactTitle = Boolean(title && title === normalizedQuery);
-      const titleContainsQuery = titleContainsTokens(doc.title, tokens);
+      const titleContainsQuery = sourceTitleMatchesQuery(doc.title, tokens);
       const sourceTitleMatch = (doc.document_role === "source" || doc.role === "source") && titleContainsQuery;
       const score = exactTitle ? 100 : sourceTitleMatch ? 60 : scoreHaystack(hay, tokens);
       const provenance = exactTitle

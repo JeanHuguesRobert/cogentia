@@ -6,6 +6,40 @@
  */
 export const ORIENT_REALITY_FIXTURES = [
   {
+    id: "q-cps-no-circuit-existing-doctrine",
+    question: "How does Cognitive Packet Switching avoid a fixed end-to-end circuit through continuations and Store & Forward?",
+    expected: {
+      must_reach: [
+        {
+          kind: "source",
+          id: "cogentia/research/cognitive_packet_switching.md",
+          expectation_basis: {
+            type: "explicit_source",
+            evidence: [
+              "CPS primary source, research/cognitive_packet_switching.md",
+            ],
+          },
+        },
+      ],
+      should_reach: [
+        {
+          kind: "source",
+          id: "cogentia/research/cogentia_continuation_packet_routing.md",
+          expectation_basis: {
+            type: "explicit_source",
+            evidence: [
+              "§3 says packet switching needs no dedicated end-to-end circuit",
+            ],
+          },
+        },
+      ],
+      must_not_treat_as_canonical: [],
+    },
+    expectation_basis: { type: "explicit_source", evidence: [] },
+    budget: { max_seeds: 5, max_hops: 3, max_nodes: 30 },
+    external_research_expected: false,
+  },
+  {
     id: "q1-john-vote",
     question: "Can John vote on behalf of Jean Hugues?",
     expected: {

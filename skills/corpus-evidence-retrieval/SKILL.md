@@ -12,6 +12,7 @@ description: >
   get_lines, docs_inspect, views_snapshot.
 triggers:
   - research question requiring corpus evidence
+  - claim that a proposed architectural principle is new or missing from the Corpus
   - claim about Cogentia / corpus content needing citation
   - context pack or search before answering
   - verify a source_id or line interval
@@ -60,11 +61,23 @@ Produce **bounded, citable** evidence from the Cogentia corpus without dumping p
 ## Procedure
 
 1. **Bootstrap (optional)** — `cogentia_views_snapshot` or `cogentia_agent_start` if session-cold.
-2. **Broad** — `cogentia_context_pack` with the question (or `cogentia_search` while exploring).
-3. **Verify** — before asserting a passage, `cogentia_get_lines` on the cited `source_id` / ref interval.
-4. **Inspect** — `cogentia_docs_inspect` when document role/metadata matters.
-5. **Qualify** — state evidence strength: direct quote vs paraphrase vs inference; note gaps.
-6. **Cite** — always return `source_id` (and repo/path/lines when present). Prefer packet envelope `citations[]` from MCP Phase 3.
+2. **Orient existing doctrine first** — before proposing a new principle, call
+   `cogentia_orient` with the cognitive need (or read the canonical concept/source
+   index if unavailable). Orientation gives a navigation plan, not an evidence
+   guarantee. Check that the first sources actually match the claimed doctrine.
+3. **Retrieve evidence** — use `cogentia_context_pack` or `cogentia_search`.
+   Long, multi-concept keyword queries may return zero because lexical terms
+   are jointly constrained. Rephrase to a few distinctive words (for example,
+   `packet switching circuit`) and retry before declaring a principle absent.
+   Treat a poorly ranked conceptual route as navigation debt, not proof of
+   missing source material.
+4. **Verify** — before asserting a passage, `cogentia_get_lines` on the cited
+   `source_id` / ref interval.
+5. **Inspect** — `cogentia_docs_inspect` when document role/metadata matters.
+6. **Qualify** — distinguish already documented doctrine from a new hypothesis,
+   and evidence strength: direct quote vs paraphrase vs inference; note gaps.
+7. **Cite** — always return `source_id` (and repo/path/lines when present).
+   Prefer packet envelope `citations[]` from MCP Phase 3.
 
 ## MCP / CLI
 
