@@ -185,3 +185,52 @@ explicit `Resume(parent)` releases only the parent's gate; its next tick
 can reuse already returned child results and resume the parent's real
 continuation once, with children still cold. The invariant is tested in both
 Inseme's canonical parent join suite and Cogentia's pull integration tests.
+
+### Production observation / two source stores (Inseme #194, 2026-11-16)
+
+ONA's pre-existing `cps:chatgpt-return-reconcile` 60-second job now performs
+an additional **read-only** production frontier projection after the normal
+CPS work. It reads the **host-local Cogentia continuation SQLite** and the
+**canonical COP event journal** (the latter already owned by the CPS job).
+It does not replicate the two stores, rewrite old continuations, invent missing
+handlers, queue work to a provider, or create another timer. Disable this
+observation only via `COGENTIA_COP_WORK_FRONTIER_ENABLED=0` if necessary.
+
+Inspect an aggregate status safely from the FractaNode shell:
+
+```bash
+node scripts/ops/ona-chatgpt-cps-reconcile.mjs --frontier
+```
+
+The inspection does not expose question bodies, private document titles,
+mandate secrets or historical prompt contents. The in-process ONA job records
+aggregate numbers in its normal job detail event. It separates:
+
+- **`local.active`**: legacy open continuations, **not** a number of runnable
+  work items; `resume.command=continuation resolve` is an output adapter, not
+  the cognitive handler contract.
+- **`local.requiring_contract`**: legacy active continuations lacking a
+  `resumeTo`/`resume_to` executable handler contract (so should never be
+  auto-dispatched just because their status is `active`).
+- **`cop.specialized_cps_ready`**: already-owned, currently assigned browser
+  dispatch / result wake / next-step queues. They remain exclusive to their
+  separately governed CPS worker (so a generic work-pull must never
+  process or double-count them).
+- **`cop.needs_reconciliation`**: effects whose durable intent exists but
+  whose outcome cannot safely be inferred.
+- **`generic_runnable`**: deliberately zero until an actual handler route,
+  registered continuation packet reference, verified mandate and provider
+  budget are all available at the effect boundary. A matching declaration
+  is insufficient authorization.
+
+Live Fracta2 preflight on 2026-11-16: 467 local records (392 `active`, 75
+not-active), of which all 392 active records lacked an executable handler
+contract. 19 COP continuation declarations, **zero** assigned CPS-ready /
+result-wake / next-step events and **zero** unsettled CPS effects. The
+resident loop therefore has no legitimate generic work to dispatch yet.
+This is a **read-only production rollout**, not evidence that the historic
+cognitive backlog has been processed. The next step is to bind actual
+JudgmentHandler and semantic-search contracts to selected legacy
+continuations, after checking provider capability, mandate, budget and
+relevance against their up-to-date sources; rollout one child per cycle
+before broadening the bounded drain.

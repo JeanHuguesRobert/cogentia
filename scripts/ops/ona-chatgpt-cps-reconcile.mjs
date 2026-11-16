@@ -13,6 +13,7 @@ import {createChatgptCpsLocalWakeReconciler} from '../lib/chatgpt-cps-return-eva
 import {listAssignedChatgptCpsContinuations,runAssignedChatgptCpsBatch} from '../lib/chatgpt-cps-assigned-dispatch.js';
 import {listChatgptCpsNextSteps,runChatgptCpsNextStepBatch} from '../lib/chatgpt-cps-next-step.js';
 import {createCpsDefaultAssignedWorker,createCpsDefaultNextWorker} from '../lib/chatgpt-cps-default-worker.js';
+import {inspectHostProductionWorkFrontier} from '../lib/production-work-frontier.js';
 
 const DB='/var/lib/cogentia/cop/john-root-v1.sqlite';
 const FP='SHA256:lG9BC3fIjurrBccYLO1w7VQpmc9ZMr8MvM1o3zJ6L3c';
@@ -48,8 +49,33 @@ export async function runScheduledHeartbeat({env=process.env,assignedWorker=null
       assignedWorker:configuredWorker});
     // Await while the canonical SQLite store is still open; otherwise the
     // enclosing finally closes prepared statements during async COP replay.
-    return await runChatgptCpsResidentCycle({store,
+    const result=await runChatgptCpsResidentCycle({store,
       reconcile,env,assignedWorker:configuredWorker,nextWorker:configuredNext});
+    // The resident ONA job now inspects BOTH real continuation stores on
+    // every cycle.  This is a read-only production discovery bridge, not a
+    // second dispatcher: the specialized CPS queue keeps sole ownership of
+    // its existing browser/MCP continuations and generic pull stays fenced
+    // until concrete handler and mandate/budget adapters are configured.
+    if(env.COGENTIA_COP_WORK_FRONTIER_ENABLED==='0')return result;
+    try{
+      const frontier=inspectHostProductionWorkFrontier({store,
+        registryRoot:env.COGENTIA_WORK_FRONTIER_REGISTRY_ROOT||
+          '/srv/cogentia/repos/JeanHuguesRobert'});
+      const metrics=frontier.ok
+        ?`COP frontier: local_active=${frontier.local.active}; `+
+          `missing_handler_contract=${frontier.local.requiring_contract}; `+
+          `generic_candidate=${frontier.local.candidates_needing_admission}; `+
+          `cps_pending=${frontier.cop.specialized_cps_ready}; `+
+          `reconciliation=${frontier.cop.needs_reconciliation}`
+        :`COP frontier observer: ${frontier.status}`;
+      return {...result,work_frontier:frontier,
+        detail:result.detail?result.detail+'; '+metrics:metrics};
+    }catch{
+      // Observability must not invalidate valid CPS effect receipts.  The
+      // failure is explicit and cannot be mistaken for an empty queue.
+      return {...result,work_frontier:{ok:false,status:'frontier_projection_failed',
+        external_effects:0}};
+    }
   });
 }
 
@@ -126,7 +152,15 @@ export async function runChatgptCpsResidentCycle({store,reconcile,env={},
 
 if(process.argv[1]&&import.meta.url===new URL('file:'+process.argv[1]).href){
   const args=process.argv.slice(2);
-  if(args.length===1&&args[0]==='--status'){
+  if(args.length===1&&args[0]==='--frontier'){
+    // Read-only local control-plane inspection, with no issuer replay or
+    // background dispatch. Only aggregate counts are emitted.
+    const store=createSqliteCopEventStore(DB);
+    try{console.log(JSON.stringify(inspectHostProductionWorkFrontier({store,
+      registryRoot:process.env.COGENTIA_WORK_FRONTIER_REGISTRY_ROOT||
+        '/srv/cogentia/repos/JeanHuguesRobert'})));}
+    finally{store.close()}
+  }else if(args.length===1&&args[0]==='--status'){
     const {listChatgptCpsWakes}=await import('../lib/chatgpt-cps-wake-consumer.js');
     const store=createSqliteCopEventStore(DB);
     try{console.log(JSON.stringify({mode:'read_only',
@@ -139,7 +173,7 @@ if(process.argv[1]&&import.meta.url===new URL('file:'+process.argv[1]).href){
     console.log(JSON.stringify(result));
     if(!result.ok)process.exitCode=1;
   }else{
-    console.error('Use --status or --run-once (opt-in only; no browser actions)');
+    console.error('Use --frontier, --status or --run-once (opt-in only; no browser actions)');
     process.exitCode=2;
   }
 }
