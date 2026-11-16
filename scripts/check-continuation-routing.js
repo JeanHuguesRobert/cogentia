@@ -9,6 +9,8 @@ import { registerResolver, releaseClaim } from "./lib/resolver-registry.js";
 import { nextContinuation, rerouteContinuation, inspectRouting, recordRoutingOutcome } from "./lib/continuation-routing.js";
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), "inseme-111-"));
+const previousDb=process.env.COGENTIA_CONTINUATIONS_DB;
+process.env.COGENTIA_CONTINUATIONS_DB=path.join(root,"test-continuations.sqlite");
 try {
   registerResolver(root, "router-a", ["tool_use"]);
   registerResolver(root, "judge-b", ["Judgement", "tool_use"]);
@@ -71,4 +73,8 @@ try {
   // A resolution is produced by the canonical continuation store, not by routing.
   assert.equal(c.id, "ctn_routing_test");
   console.log("inseme#111 local routing and PacketClaim tests: PASS");
-} finally { fs.rmSync(root,{recursive:true,force:true}); }
+} finally {
+  if(previousDb===undefined)delete process.env.COGENTIA_CONTINUATIONS_DB;
+  else process.env.COGENTIA_CONTINUATIONS_DB=previousDb;
+  fs.rmSync(root,{recursive:true,force:true});
+}
