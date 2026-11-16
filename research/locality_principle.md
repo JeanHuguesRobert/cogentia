@@ -586,6 +586,27 @@ Keep two different uses of "optimistic" distinct:
 - **Optimistic collaboration**: allow ordinary cooperative work without prophylactic obstacles; observe and correct demonstrated problems.
 - **Optimistic concurrency control**: use versions, conditional compare-and-set updates and explicit reconciliation when concurrent edits conflict; it does not grant authorization.
 
+**Optimistic progress, reconciliation, and eventual convergence (2026-11-16).**
+The goal is not to forbid every collision. Independent local handlers may
+work from a shared observed version; conditional commits and causal
+references reveal incompatible mutations. Reconcile at the smallest
+sufficient locality, reusing validated memoized results and preserving
+alternatives when semantic disagreement cannot be merged. Escalate only
+when the necessary information, capability or judgment is absent locally.
+Optimistic locking supplies conflict detection; it does **not** guarantee
+eventual consistency without propagation and an actual convergence rule.
+For irreversible external effects, use narrowly scoped effect-level
+deduplication/admission rather than global preventive work locks.
+
+**Movable work, situated state.** Logical work identity, execution site,
+state residence, cached materializations and authority are separate
+dimensions. A primitive continuation can remain in RAM, persist in
+host-local SQLite, be reconstructed by Side-style replay, or be
+handed off to another host. Its move does not require COP governance;
+when COP applies, the move cannot expand existing authority. Local
+durable state is not permanent ownership: preserve a verifiable handoff
+and explicit recovery path instead of introducing a global state owner.
+
 **Keep application and governance semantics outside the database by default.** PostgreSQL/Supabase should primarily provide durable state, indexing, queries, constraints and atomic commits. Prefer explicit application code for agent orchestration, configuration inheritance, mandate resolution, routing and business rules. Avoid stored procedures, triggers and SQL-embedded workflows as routine implementation strategies. Database-native atomicity or integrity constraints are justified when the invariant genuinely requires them, and should remain small and documented rather than becoming a second opaque control plane.
 
 For `instance_config`, do not infer a design flaw solely from a broad non-secret read policy. First identify the actual disclosure contract and whether the row represents ordinary shareable configuration or genuinely restricted material. Protect the latter at a justified boundary; do not automatically add RLS walls between mutually cooperative logical agents. No SQL or RLS change is mandated by this clarification.
@@ -936,6 +957,8 @@ The initial locality invariants are:
 14. **Control must be effectively coupled.** A control rule that exists but is not activated at the act it governs has failed operationally; correct both the artifact and the activation loop.
 15. **Local incapacity is not network incapacity.** A capability absent in one locality may be routed through an explicit resumable continuation to an authorized locality without global state capture or authority widening.
 16. **Coordinator loss should degrade coordination before continuity.** Where Reality has justified local retention, loss of a global discovery or routing surface SHOULD preserve bounded local knowledge, pending work, packet identity and explicit retry state without widening authority.
+17. **Optimistic progress before global exclusion.** Detect actual conflicts through versions and causal dependencies, then reconcile locally when possible; do not equate optimistic locking with a guarantee of eventual convergence.
+18. **Mobility without captivity.** Execution site, state residence, cache location and authority are distinct; a verified continuation handoff MAY change the first three without silently transferring the fourth.
 
 ### Normative fractality and the meta-control plane
 
