@@ -12,6 +12,7 @@ import * as jsYaml from 'js-yaml';
 import { loadManifest } from './manifest.js';
 import { renderLivingBookPdf } from './pdf-book-renderer.js';
 import { renderLivingBookEpub } from './epub-renderer.js';
+import { loadWorkingSelection } from './projection-selection.js';
 
 function repositoryContext(projectDir) {
   try {
@@ -188,70 +189,69 @@ export function renderLivingBookProjections(projectDirInput, options = {}) {
     date: new Date().toISOString().split('T')[0]
   };
 
-  // 1. Read Manuscript Chapters
-  let manuscriptDir = path.join(projectDir, 'manuscript');
-  if (!fs.existsSync(manuscriptDir)) {
-    throw new Error(`manuscript directory not found in ${projectDir}`);
-  }
-
-  let files = fs.readdirSync(manuscriptDir)
-    .filter(f => f.endsWith('.md') && f.toLowerCase() !== 'readme.md')
-    .sort();
-
-  if (files.length === 0) {
-    const candidateSubdirs = ['n1', 'book', 'n4', 'v1'];
-    for (const sub of candidateSubdirs) {
-      const subPath = path.join(manuscriptDir, sub);
-      if (fs.existsSync(subPath) && fs.statSync(subPath).isDirectory()) {
-        const subFiles = fs.readdirSync(subPath)
-          .filter(f => f.endsWith('.md') && f.toLowerCase() !== 'readme.md')
-          .sort();
-        if (subFiles.length > 0) {
-          manuscriptDir = subPath;
-          files = subFiles;
-          break;
-        }
-      }
-    }
-  }
-
-  if (files.length === 0) {
-    throw new Error(`No manuscript chapters found in ${manuscriptDir}`);
-  }
-
-  const chapters = [];
+  // 1. Prefer a declared editorial selection, preserving the legacy default.
+  const selection = loadWorkingSelection(projectDir, manifest);
   const linkWarnings = [];
   const repoContext = repositoryContext(projectDir);
   const siteRoot = path.join(projectDir, 'site');
+  let inputs;
+  if (selection) {
+    inputs = selection.sources;
+  } else {
+    let manuscriptDir = path.join(projectDir, 'manuscript');
+    if (!fs.existsSync(manuscriptDir)) {
+      throw new Error('manuscript directory not found: ' + manuscriptDir);
+    }
+    let files = fs.readdirSync(manuscriptDir)
+      .filter(f => f.endsWith('.md') && f.toLowerCase() !== 'readme.md').sort();
+    if (files.length === 0) {
+      for (const sub of ['n1', 'book', 'n4', 'v1']) {
+        const candidate = path.join(manuscriptDir, sub);
+        if (fs.existsSync(candidate) && fs.statSync(candidate).isDirectory()) {
+          const subFiles = fs.readdirSync(candidate)
+            .filter(f => f.endsWith('.md') && f.toLowerCase() !== 'readme.md').sort();
+          if (subFiles.length > 0) {
+            manuscriptDir = candidate;
+            files = subFiles;
+            break;
+          }
+        }
+      }
+    }
+    if (files.length === 0) {
+      throw new Error('No manuscript chapters found in ' + manuscriptDir);
+    }
+    inputs = files.map(f => ({ absolute: path.join(manuscriptDir, f), part: 'Livre', declaredPath: f }));
+  }
 
-  for (const f of files) {
-    const fullPath = path.join(manuscriptDir, f);
+  const chapters = [];
+  for (const source of inputs) {
+    const fullPath = source.absolute;
+    const f = path.basename(fullPath);
     const rawContent = fs.readFileSync(fullPath, 'utf8');
-
     let frontmatter = {};
     let body = rawContent;
-
     if (rawContent.startsWith('---')) {
       const end = rawContent.indexOf('---', 3);
       if (end !== -1) {
         try {
           frontmatter = jsYaml.load(rawContent.slice(3, end)) || {};
-        } catch (e) {}
+        } catch (e) {
+          throw new Error('Malformed source frontmatter in ' + source.declaredPath + ': ' + e.message);
+        }
         body = rawContent.slice(end + 3).trim();
       }
     }
-
-    const title = frontmatter.title || f.replace(/^\d+-/, '').replace(/\.md$/, '').replace(/-/g, ' ');
+    const baseTitle = frontmatter.title || f.replace(/^\d+-/, '').replace(/\.md$/, '').replace(/-/g, ' ');
+    const title = source.part === 'Livre' ? baseTitle : source.part + ' — ' + baseTitle;
     const subtitle = frontmatter.subtitle || '';
-    const htmlBody = markdownToSimpleHtml(body, href => resolveSourceLink(href, fullPath, siteRoot, repoContext, linkWarnings));
-
+    const htmlBody = markdownToSimpleHtml(body,
+      href => resolveSourceLink(href, fullPath, siteRoot, repoContext, linkWarnings));
     chapters.push({
-      file: f,
-      title,
-      subtitle,
-      frontmatter,
-      rawBody: body,
-      htmlBody
+      file: source.declaredPath,
+      part: source.part,
+      sourceSha256: crypto.createHash('sha256').update(rawContent).digest('hex'),
+      title, subtitle, frontmatter, rawBody: body, htmlBody
     });
   }
 
@@ -384,7 +384,7 @@ ${sourceSiteHeader || `<header class="site">
     <a href="magazine.html">Magazine</a>
     <a href="annexes.html">Annexes</a>
     <a href="contribuer.html">Contribuer</a>
-    <a href="guide.html">Guide</a>
+    ${manifest.editorial?.guide !== false ? '<a href="guide.html">Guide</a>' : ''}
     <a href="mentions.html">Mentions</a>
   </nav>
 </header>`}
@@ -449,6 +449,8 @@ ${chaptersHtml}
         size: epubBuffer.length
       }
     },
+    source_selection: selection ? { path: path.relative(projectDir, selection.selectionFile), sha256: selection.selectionSha256 } : null,
+    sources: chapters.map(ch => ({ path: ch.file, part: ch.part, sha256: ch.sourceSha256 })),
     rule: 'This projection is a working preview in preparation. It does not constitute a frozen edition.'
   };
 
@@ -459,6 +461,8 @@ ${chaptersHtml}
     bookId: bookMeta.id,
     projDir,
     linkWarnings,
+    sourceCount: chapters.length,
+    sourceSelection: selection ? path.relative(projectDir, selection.selectionFile) : null,
     html: { path: htmlProjPath, sha256: htmlSha, size: Buffer.byteLength(fullHtml, 'utf8') },
     pdf: { path: pdfProjPath, sha256: pdfSha, size: pdfBuffer.length },
     epub: { path: epubProjPath, sha256: epubSha, size: epubBuffer.length }

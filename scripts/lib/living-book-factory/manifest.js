@@ -104,6 +104,16 @@ export function validateManifest(manifest) {
     }
   }
 
+  // Projection selection is an optional bounded local YAML path.
+  const selection = manifest.projection?.selection;
+  if (selection !== undefined && selection !== null) {
+    if (typeof selection !== 'string' || !selection.trim() ||
+        path.isAbsolute(selection) || selection.includes('\\') ||
+        selection.split('/').includes('..') || !/\.ya?ml$/i.test(selection)) {
+      errors.push('Invalid projection.selection: expected a relative local YAML path');
+    }
+  }
+
   // Magazine section
   if (manifest.magazine) {
     const mode = manifest.magazine.mode || 'local';

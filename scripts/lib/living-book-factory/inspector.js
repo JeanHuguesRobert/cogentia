@@ -141,6 +141,13 @@ export function inspectLivingBook(targetPath) {
     check('extensions', 'cases', 'Reality Cases extension', hasCases, '⚠', 'cases/ or site/cases.html');
   }
 
+  if (declaredExts.includes('maps')) {
+    const hasMapMaterial = ['site/atlas.html', 'site/map.html', 'atlas/points.yml', 'atlas/data.geojson', 'maps/data.geojson']
+      .some(rel => fs.existsSync(path.join(projectDir, rel)));
+    check('extensions', 'maps', 'Cartographic extension actually populated',
+      hasMapMaterial, '⚠', 'Manifest declaration is not a published or sourced map');
+  }
+
   // 3. Epistemic Surfaces
   const hasCorpusYml = fs.existsSync(path.join(projectDir, 'corpus.yml'));
   check('epistemic_surfaces', 'corpus_projection_distinction', 'Source vs projection distinction (corpus.yml)', hasCorpusYml, '⚠', 'corpus.yml distinguishes living corpus from projections');

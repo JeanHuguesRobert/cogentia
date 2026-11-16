@@ -31,7 +31,8 @@ export function scaffoldLivingBook(manifest, targetDir, options = {}) {
       skippedFiles.push(relPath);
       return;
     }
-    fs.writeFileSync(full, content, 'utf8');
+    const normalized = content.replace(/^[ \t]+$/gm, '').replace(/\n+$/, '\n');
+    fs.writeFileSync(full, normalized, 'utf8');
     createdFiles.push(relPath);
   }
 
@@ -78,16 +79,19 @@ export function scaffoldLivingBook(manifest, targetDir, options = {}) {
   const {
     publisher = 'C.O.R.S.I.C.A.',
     research_unit = 'Institut Mariani',
-    license = 'CC BY-SA 4.0'
+    license = 'CC BY-SA 4.0',
+    editorial_director = publisher
   } = manifest.institution || {};
 
   const isJanus = Boolean(manifest.editorial?.janus);
+  const guideEnabled = manifest.editorial?.guide !== false;
 
   // Ephemeral binary build outputs are artifacts, not Git sources.
   // Applies per Living Book even when hosted outside barons-Mariani.
   // Frozen releases are immutable GitHub Release assets instead.
   writeFile('.gitignore', [
     '# Living Book Factory — replaceable working artifacts',
+    '/projections/preview.html',
     '/projections/preview.pdf',
     '/projections/preview.epub',
     '/projections/preview.yml',
@@ -104,7 +108,7 @@ export function scaffoldLivingBook(manifest, targetDir, options = {}) {
 title: "${title}"
 subtitle: "${subtitle}"
 description: "${description}"
-author: "Jean Hugues Noël Robert, baron Mariani"
+author: "${editorial_director}"
 affiliation: "${research_unit} / ${publisher}"
 date: "${new Date().toISOString().split('T')[0]}"
 version: "0.1"
@@ -148,7 +152,7 @@ Ce n'est ni un simple livre électronique mis à jour, ni un fil sans mémoire :
 - [Architecture éditoriale](editorial-architecture.md)
 - [Registre des éditions](editions/index.md)
 - [Manifeste de corpus](corpus.yml)
-- [Profil Guide](guide-profile.yml)
+${guideEnabled ? '- [Profil Guide](guide-profile.yml)' : '- Guide conversationnel non activé'}
 - [Projection publique (Site)](site/index.html)
 `);
 
@@ -162,7 +166,7 @@ visibility: public
 updated: "${new Date().toISOString().split('T')[0]}"
 source_of_truth: "repository files under projects/${id}, and the referenced sources; this manifest points at them and does not replace them"
 target_identity: "https://${canonical_host}"
-target_identity_status: "prepared name only; workstation DNS check did not resolve ${canonical_host}; not a live deployment and not a frozen edition"
+target_identity_status: "prepared name only; DNS, TLS and deployment have not been independently checked for ${canonical_host}; not a live deployment and not a frozen edition"
 institutional_frame: "${research_unit} / ${publisher}, 1 cours Paoli, F-20250 Corte, Corsica"
 
 architecture:
@@ -197,7 +201,7 @@ sources:
   writeFile('editorial-architecture.md', `---
 title: "${title} — Architecture éditoriale"
 subtitle: "Publication continue, éditions immuables, asymétrie fond/forme et triptyque éditorial"
-author: "Jean Hugues Noël Robert, baron Mariani"
+author: "${editorial_director}"
 affiliation: "${research_unit} / ${publisher}, 1 cours Paoli, F-20250 Corte, Corsica"
 date: "${new Date().toISOString().split('T')[0]}"
 version: "0.1"
@@ -287,7 +291,7 @@ Ces propositions ne deviennent des modifications du Corpus qu'après qualificati
   writeFile('architecture.md', `---
 title: "${title} — Architecture technique"
 subtitle: "Structure des dossiers, contrats de projection et outillage d'inspection"
-author: "Jean Hugues Noël Robert, baron Mariani"
+author: "${editorial_director}"
 affiliation: "${research_unit} / ${publisher}"
 date: "${new Date().toISOString().split('T')[0]}"
 version: "0.1"
@@ -334,7 +338,7 @@ node scripts/living-book.js inspect projects/${id}/living-book.yml
   // 7. editions/index.md
   writeFile('editions/index.md', `---
 title: "${title} — Registre des éditions"
-author: "Jean Hugues Noël Robert, baron Mariani"
+author: "${editorial_director}"
 affiliation: "${research_unit} / ${publisher}"
 date: "${new Date().toISOString().split('T')[0]}"
 language: "${language}"
@@ -352,7 +356,7 @@ Règle du Livre Vivant :
 `);
 
   // 8. guide-profile.yml
-  writeFile('guide-profile.yml', `schema: ${id}.guide_profile.v1
+  if (guideEnabled) writeFile('guide-profile.yml', `schema: ${id}.guide_profile.v1
 profile: ${id}
 name: "Guide public — ${title}"
 base_url: "https://cogentia.fractavolta.com"
@@ -439,7 +443,7 @@ language: "${language}"
 # Architecture de déploiement — ${title}
 
 - **Hôte cible :** \`${canonical_host}\`
-- **Statut :** Nom préparé, non résolu.
+- **Statut :** Nom cible déclaré ; DNS, TLS et déploiement non vérifiés.
 - **Autorité opérationnelle :** Operium possède la responsabilité exclusive des déploiements et modifications DNS.
 `);
 
@@ -452,13 +456,13 @@ language: "${language}"
     <a href="magazine.html">Magazine</a>
     <a href="annexes.html">Annexes</a>
     <a href="contribuer.html">Contribuer</a>
-    <a href="guide.html">Guide</a>
+    ${guideEnabled ? '<a href="guide.html">Guide</a>' : ''}
     <a href="mentions.html">Mentions</a>
   </nav>
 </header>`;
 
   const footerHtml = `<footer>
-  <p>${title} · Direction éditoriale : Jean Hugues Noël Robert, baron Mariani · ${research_unit} / ${publisher} · Licence ${license}</p>
+  <p>${title} · Direction éditoriale : ${editorial_director} · ${research_unit} / ${publisher} · Licence ${license}</p>
 </footer>`;
 
   writeFile('site/styles.css', `/* Living Book Baseline Stylesheet */
@@ -629,7 +633,7 @@ ${navHtml.replace('href="index.html">Accueil<', 'href="index.html" aria-current=
   <p class="pill">Projection de travail · Non gelée</p>
   <h1>${title}</h1>
   ${subtitle ? `<p class="lede"><strong>${subtitle}</strong></p>` : ''}
-  <p class="byline">Direction éditoriale : Jean Hugues Noël Robert, baron Mariani · ${research_unit} / ${publisher} · Licence ${license}</p>
+  <p class="byline">Direction éditoriale : ${editorial_director} · ${research_unit} / ${publisher} · Licence ${license}</p>
 
   <blockquote>
     <p>« Un Livre Vivant est un Corpus qui se donne à lire, à parcourir et à interroger, tout en permettant au Réel de lui répondre par des traces imputables susceptibles de transformer ses projections futures. »</p>
@@ -660,7 +664,7 @@ ${navHtml.replace('href="index.html">Accueil<', 'href="index.html" aria-current=
     </div>
     <div class="meta-item">
       <span class="meta-label">Assistance</span>
-      <p><strong><a href="guide.html">Guide interactif</a></strong> : exploration assistée bornée au corpus.</p>
+      ${guideEnabled ? '<p><strong><a href="guide.html">Guide interactif</a></strong> : exploration assistée bornée au corpus.</p>' : '<p>Guide conversationnel non activé pour ce Livre Vivant.</p>'}
     </div>
   </div>
 
@@ -774,7 +778,7 @@ ${footerHtml}
 </html>
 `);
 
-  writeFile('site/guide.html', `<!doctype html>
+  if (guideEnabled) writeFile('site/guide.html', `<!doctype html>
 <html lang="${language}">
 <head>
 <meta charset="utf-8">
@@ -811,7 +815,7 @@ ${navHtml.replace('href="mentions.html">Mentions<', 'href="mentions.html" aria-c
 <main id="contenu">
   <h1>Mentions légales &amp; Responsabilité éditoriale</h1>
   <p><strong>Éditeur responsable :</strong> ${publisher} / ${research_unit}</p>
-  <p><strong>Direction éditoriale :</strong> Jean Hugues Noël Robert, baron Mariani</p>
+  <p><strong>Direction éditoriale :</strong> ${editorial_director}</p>
   <p><strong>Licence :</strong> ${license} (Open Commons Default)</p>
   <p><strong>Nature du site :</strong> Projection de travail publique non gelée d'un Livre Vivant.</p>
 </main>
@@ -827,7 +831,7 @@ ${footerHtml}
   <url><loc>https://${canonical_host}/magazine.html</loc></url>
   <url><loc>https://${canonical_host}/annexes.html</loc></url>
   <url><loc>https://${canonical_host}/contribuer.html</loc></url>
-  <url><loc>https://${canonical_host}/guide.html</loc></url>
+  ${guideEnabled ? '<url><loc>https://${canonical_host}/guide.html</loc></url>' : ''}
   <url><loc>https://${canonical_host}/mentions.html</loc></url>
 </urlset>
 `);

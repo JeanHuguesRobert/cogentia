@@ -7,8 +7,9 @@
 import zlib from 'node:zlib';
 
 export class ZipBuilder {
-  constructor() {
+  constructor(options = {}) {
     this.entries = [];
+    this.timestamp = options.timestamp || null;
   }
 
   /**
@@ -47,10 +48,13 @@ export class ZipBuilder {
     const centralHeaders = [];
     let offset = 0;
 
-    const now = new Date();
+    const now = this.timestamp ? new Date(this.timestamp) : new Date();
+    if (!Number.isFinite(now.getTime())) {
+      throw new Error('Invalid deterministic ZIP timestamp');
+    }
     // MS-DOS time and date format
-    const dosTime = ((now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1)) & 0xffff;
-    const dosDate = (((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate()) & 0xffff;
+    const dosTime = ((now.getUTCHours() << 11) | (now.getUTCMinutes() << 5) | (now.getUTCSeconds() >> 1)) & 0xffff;
+    const dosDate = (((now.getUTCFullYear() - 1980) << 9) | ((now.getUTCMonth() + 1) << 5) | now.getUTCDate()) & 0xffff;
 
     for (const entry of this.entries) {
       const nameBuf = Buffer.from(entry.name, 'utf8');

@@ -17,7 +17,9 @@ function escapeXml(str) {
 }
 
 export function renderLivingBookEpub(bookMeta, chapters) {
-  const zip = new ZipBuilder();
+  // Date is supplied by the projection metadata; do not put the wall clock
+  // into an otherwise reproducible EPUB artifact.
+  const zip = new ZipBuilder({ timestamp: (bookMeta.date || new Date().toISOString().slice(0, 10)) + 'T00:00:00Z' });
 
   const {
     id = 'living-book',
@@ -176,7 +178,7 @@ ${ncxPoints}
     <dc:publisher>${escapeXml(publisher)}</dc:publisher>
     <dc:language>${language}</dc:language>
     <dc:date>${date}</dc:date>
-    <meta property="dcterms:modified">${new Date().toISOString().replace(/\.[0-9]{3}/, '')}</meta>
+    <meta property="dcterms:modified">${(date + 'T00:00:00Z')}</meta>
   </metadata>
   <manifest>
     <item id="toc" href="toc.ncx" media-type="application/x-dtbncx+xml"/>

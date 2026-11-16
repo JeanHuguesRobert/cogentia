@@ -765,6 +765,25 @@ deployment                         → separate authorized act
 
 Failure is informative. If the Factory needs many one-off exceptions for institut, revise the abstraction rather than forcing the project to fit it.
 
+## 16 bis. RT-LBF-002 — Orta : la Factory à l'épreuve d'un nouveau territoire (16 November 2026)
+
+The first version of the Orta Living Book is a controlled follow-up Reality Test of the existing Factory, distinct from RT-LBF-001 (Institut Mariani). Its canonical subject is the Orta valley in Corte, while the Factory remains generic and independent of this subject.
+
+**Operational observations on Fracta2, in isolated Git worktrees:**
+
+- A `living-book/v1` manifest instantiated `projects/orta/` with `book.id: orta` and a target hostname of `orta.acorsica.org`. That host is a **target**, not a verified public deployment.
+- The working composition is explicit: `projection.selection: projections/n1-working.yml`, selecting manuscript chapters, dated Magazine items, and evidence Annexes. Source paths and SHA-256 digests are recorded in the generated working projection receipt.
+- The **same renderer** successfully composed the Orta working issue and the already-existing Musée Mariani `n1-working.yml` without changing either book's local source authority or rewriting frozen editions.
+- The previous executable Factory tests and the new `scripts/check-living-book-selection.js` Reality Test passed. Tests covered duplicate/missing/out-of-scope source rejection, prevention of partial output mutation on selection failures, byte-for-byte repeated HTML/PDF/EPUB builds with unchanged sources and projection date, JSON CLI stdout, and source fingerprint invalidation.
+- The ZIP/EPUB build no longer injects wall-clock timestamps inconsistent with an unchanged dated projection. Unimplemented `maps` surfaces are reported as warnings rather than deemed complete. A disabled Guide no longer creates a misleading guide page at scaffold time.
+- Binary working previews remain replaceable local/deployment artifacts, not new canonical sources or immutable editions.
+
+**FractaCognitive feedback:** the original source-folder heuristics were useful for prototyping but could not express a complete Book/Magazine/Annexes composition or a stable ordered source set. The new selection adapter is an **optional extension to the existing Factory**: legacy books can retain their previous behavior until a local editorial selection provides more value. We generalized the observed relation (selection → reproducible projection → receipt), not the Orta-specific geography.
+
+**Explicit residual limits:** the map extension is declared but not implemented; no rights of passage have been validated; the legacy Python previews pipeline is not migrated by this change; the direct publication/deployment of the site remains a separate authorized operation. The existence of a compiled PDF/EPUB is not proof of satisfactory typography or print readiness. Inspect reports distinguish verified surfaces from incomplete ones.
+
+See the [Orta working source](https://github.com/JeanHuguesRobert/barons-Mariani/tree/main/projects/orta), the [Musée selection](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/projects/musee/projections/n1-working.yml), and the executable test contract above.
+
 ## 17. Minimal implementation sequence
 
 ~~~text

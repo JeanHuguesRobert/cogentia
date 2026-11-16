@@ -127,7 +127,7 @@ async function main() {
       }
 
       const targetDir = flags.out || (filePath ? path.dirname(filePath) : process.cwd());
-      console.log(`Scaffolding Living Book "${manifest.book.title}" in ${targetDir}...`);
+      if (!flags.json) console.log(`Scaffolding Living Book "${manifest.book.title}" in ${targetDir}...`);
       const res = scaffoldLivingBook(manifest, targetDir, { force: Boolean(flags.force) });
 
       if (flags.json) {
@@ -228,7 +228,7 @@ async function main() {
       }
     } else if (command === 'render') {
       const target = positional[1] || '.';
-      console.log(`Rendering projections in preparation (HTML, PDF, EPUB) for ${target}...`);
+      if (!flags.json) console.log(`Rendering projections in preparation (HTML, PDF, EPUB) for ${target}...`);
       const res = renderLivingBookProjections(target, flags);
 
       if (flags.json) {

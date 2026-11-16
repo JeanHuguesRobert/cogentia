@@ -133,6 +133,16 @@
         }
       }
     },
+    "projection": {
+      "type": "object",
+      "description": "Optional declarative composition of an unfrozen working projection.",
+      "properties": {
+        "selection": {
+          "type": "string",
+          "description": "Relative path inside the Living Book to a selection YAML (e.g. projections/n1-working.yml)."
+        }
+      }
+    },
     "extensions": {
       "type": "array",
       "items": {
