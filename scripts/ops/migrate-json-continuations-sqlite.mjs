@@ -21,7 +21,7 @@ export function migrateJsonContinuations({source,dbPath,apply=false}={}){
   const names=readdirSync(root).filter(f=>f.endsWith('.json')).sort();
   const report={schema:'primitive-continuation-json-migration/v1',
     source:root,database:resolve(dbPath),apply,scanned:names.length,
-    imported:0,already_imported:0,variants:0,source_versions:0,conflicts:[],invalid:[],candidates:0,
+    imported:0,already_imported:0,variants:0,source_versions:0,source_changes:[],conflicts:[],invalid:[],candidates:0,
     by_status:{},by_kind:{}};
   const seenLogicalIds=new Map();
   const store=apply?createPrimitiveContinuationStore(dbPath):null;
@@ -49,20 +49,36 @@ export function migrateJsonContinuations({source,dbPath,apply=false}={}){
         report.by_kind[kind]=(report.by_kind[kind]||0)+1;
         report.candidates++;
         if(!store)continue;
-        const put=store.create(entry);
-        if(put.ok){
-          if(put.existing)report.already_imported++;
-          else report.imported++;
-        }else if(variant&&put.code==='continuation_identity_conflict'&&put.current?.id===doc.id){
-          // Source incarnations may differ while retaining one logical ID.
-          // Do not create a second work identity for an archival variant.
+        const origin='legacy-json:'+hostname()+':'+name;
+        const existing=store.get(doc.id);
+        const previousSources=existing?store.sources(doc.id):[];
+        const sameSource=previousSources.find(s=>s.source_hash===sourceHash&&
+          (s.source_ref===origin||s.source_ref===origin+':sha256:'+sourceHash));
+        if(!existing){
+          const put=store.create(entry);
+          if(!put.ok){report.conflicts.push({file:name,id:doc.id,code:put.code});continue;}
+          report.imported++;
         }else{
-          report.conflicts.push({file:name,id:doc.id,code:put.code});
-          continue;
+          // Never overwrite a continuation advanced in SQLite, nor treat a
+          // previously imported source as an operational version conflict.
+          if(sameSource)report.already_imported++;
+          else if(!variant)report.variants++;
         }
-        const sourcePut=store.attachSource(doc.id,'legacy-json:'+hostname()+':'+name,sourceHash,doc);
-        if(sourcePut.ok)report.source_versions++;
-        else report.conflicts.push({file:name,id:doc.id,code:sourcePut.code});
+        if(sameSource){report.source_versions++;continue}
+        const stale=previousSources.filter(s=>s.source_ref===origin||
+          s.source_ref.startsWith(origin+':sha256:'));
+        // Content-addressed historical versions preserve source changes
+        // after the first import. A newer JSON and a newer SQLite mutation
+        // remain separate until a deliberate reconciliation decision.
+        const sourceRef=stale.length?origin+':sha256:'+sourceHash:origin;
+        const sourcePut=store.attachSource(doc.id,sourceRef,sourceHash,doc);
+        if(sourcePut.ok) {
+          report.source_versions++;
+          if(stale.length)report.source_changes.push({
+            id:doc.id,file:name,old_hashes:stale.map(x=>x.source_hash),
+            new_hash:sourceHash,requires_reconciliation:true,
+          });
+        }else report.conflicts.push({file:name,id:doc.id,code:sourcePut.code});
       }catch(e){report.invalid.push({file:name,error:e.message});}
     }
   }finally{store?.close()}
