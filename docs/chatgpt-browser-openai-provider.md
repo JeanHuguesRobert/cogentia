@@ -132,17 +132,81 @@ node scripts/ops/migrate-json-continuations-sqlite.mjs \
   --db /absolute/local/path/continuations.sqlite --apply
 ```
 
-As of the 2026-11-16 isolated Fracta2 exercise: 20 JSON source files
-were imported to a **temporary** SQLite database as 19 logical
-continuations plus one alternate original version, with 20 source
-records and no unresolved import conflicts. The second import was
-idempotent. The original files were not modified or deleted.
+### Operational migration state — 16 November 2026
 
-**Migration is not yet complete operationally:** the old Cogentia CLI,
-embedding workers, consolidation routines, and other JSON consumers
-have not all switched to SQLite. Do not delete or exclude their active
-JSON files until that transition has been tested. No production or
-live service database was changed during this work.
+The **live operational readers and writers** in `cogentia.js`, the
+embedding and semantic-search workers, the weekly consolidation flow,
+the WhatsApp cockpit, packet relations and terminal settlement now
+use `continuation-sqlite-repository.mjs` with conditional revisions.
+The old `cogentia.v1-history.js` remains historical, not a runtime
+entrypoint. The Operium weekly release check also uses SQLite.
+
+On Fracta2, two registry-local SQLite stores were verified using
+`continuations-local.mjs health` and `PRAGMA quick_check`:
+- Corpus root `/srv/cogentia/repos/JeanHuguesRobert`: **467 logical
+  continuations**, 467 historical source versions, integrity `ok`.
+- Cogentia root `/srv/cogentia/repos/cogentia`: **20 logical
+  continuations**, 21 historical source versions, integrity `ok`.
+
+The original JSON snapshots remain readable archival evidence and must
+not be treated as concurrently authoritative live records. One
+logical ID can have several historical source incarnations; this is
+not a reason to manufacture a second work ID. The first migration
+was dry-run-first and its apply pass was idempotent.
+
+The legacy local resolver capability registry, its primitive claim
+records and the **COP PacketClaim epoch / terminal receipt filesystem
+stores** have also been converted to local SQLite tables. The latter
+remain COP-governed in semantics; moving the storage does not remove
+mandate, budget or effect-boundary controls. Independent tests cover
+cross-process claim races, expiry, fencing, interrupted settlement,
+recovery and budget reconciliation. The two inspected Fracta2 registry
+roots had **zero** legacy `claims-v1` epoch files and zero terminal
+receipts awaiting import.
+
+For an additional FractaNode, perform the migrations **locally** and
+report only inventories, checksums and provenance across the network.
+Do not replicate the entire continuation database by default.
+
+```bash
+# On each node, against each *actual* registry root:
+node scripts/ops/migrate-json-continuations-sqlite.mjs \
+  --source /path/to/registry/.cogentia/continuations
+node scripts/ops/migrate-json-continuations-sqlite.mjs \
+  --source /path/to/registry/.cogentia/continuations --apply
+
+node scripts/ops/migrate-legacy-resolvers-sqlite.mjs \
+  --root /path/to/registry
+node scripts/ops/migrate-legacy-resolvers-sqlite.mjs \
+  --root /path/to/registry --apply
+
+node scripts/ops/migrate-legacy-cop-claims-sqlite.mjs \
+  --root /path/to/registry
+node scripts/ops/migrate-legacy-cop-claims-sqlite.mjs \
+  --root /path/to/registry --apply
+
+node scripts/ops/continuations-local.mjs health \
+  --root /path/to/registry
+```
+
+The ThinkPad was verified reachable as `i7-thinkpad-jhr` with
+Node.js 24.5 and SQLite 3.50, but no legacy continuation directory or
+operational database was found in the principal locations inspected.
+That is **not** a claim that an exhaustive full-disk search has
+completed. No remote continuation data was copied, deleted or created.
+The Android mobile node and the older FractaNode were not reachable
+during this check.
+
+The Fracta2 and Operium source checkouts were fast-forwarded to
+GitHub `main` without overwriting pre-existing local changes.
+Long-running Cogentia daemons must be restarted or otherwise reloaded
+through their already-authorized operations channel before claiming
+that newly edited JavaScript modules are active in those processes.
+
+**Remaining boundary:** atomic cross-host ownership transfer,
+automatic semantic reconciliation after partitions, and real hosted
+browser delivery have not been validated. None is implied by a
+successful SQLite import.
 
 ## Tests and limitations
 
