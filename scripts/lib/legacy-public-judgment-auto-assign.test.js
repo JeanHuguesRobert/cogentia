@@ -136,3 +136,15 @@ test('ambiguous CPS prepare failure leaves durable selection intent and halts co
     e.payload?.profile==='cogentia.legacy-public-auto-assignment/v1').length,1);
  }finally{f.close()}
 });
+
+
+test('production default preparer is bound; without real signed mandate fails closed',async()=>{
+ const f=fixture();try{
+  const result=await f.run({prepare:undefined});
+  assert.equal(result.ok,false);
+  assert.equal(result.status,'assignment_needs_reconciliation');
+  assert.equal(f.store.replay().filter(e=>e.payload?.profile===
+    'cogentia.legacy-public-auto-assignment/v1').length,1);
+  assert.equal(f.store.replay().filter(e=>e.payload?.profile==='cop/continuation').length,0);
+ }finally{f.close()}
+});

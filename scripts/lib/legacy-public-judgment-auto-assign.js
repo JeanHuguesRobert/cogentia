@@ -14,6 +14,8 @@ import {createHash} from 'node:crypto';
 import {projectPacketTemperature} from '../../../inseme/packages/cop-core/src/packet-temperature.js';
 import {previewPublicLegacyJudgment,preparePublicLegacyJudgmentCps}
   from './legacy-public-judgment-cps.js';
+import {prepareAssignedChatgptCpsContinuation}
+  from './chatgpt-cps-assignment.js';
 
 const PROFILE='cogentia.legacy-public-auto-assignment/v1';
 const DEFAULT_ROOT='/srv/cogentia/repos/JeanHuguesRobert';
