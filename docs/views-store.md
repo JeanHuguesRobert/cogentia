@@ -31,6 +31,36 @@ classification_confidence: "medium"
 
 # Views Store
 
+## Availability correction — 2026-11-16
+
+**The live URLs in the historical table below no longer describe a
+running Views Store.** The original HTTP service on `fracta:3423`
+was not moved when the public IP and publication services migrated to
+`fracta2` on 2026-11-10. The Cogentia public Guide and MCP endpoints
+are healthy, but `https://cogentia.fractavolta.com/api/views`
+currently returns **404 (unassigned route)**. Absence of a listener at
+`fracta2:3423` was therefore expected, not evidence that the new
+Cogentia daemon was unhealthy.
+
+A distinct, working **La Nasa** observer is provided on the
+Fractanet/Tailscale interface of the Fracta2 Operium Node Agent,
+at `http://fracta2:8794/`. La Nasa is a projection of node
+observations, not a replacement for the generated Views Store.
+Its remote kiosk on `rpi3-view` must be diagnosed separately.
+
+Source exports such as `corpus-state.md` and
+`continuations-list.md` exist in the corpus registry, but several
+retain older generation timestamps. Do **not** republish these
+as if they represented current state. A restoration must regenerate
+source projections, review public/private visibility and freshness,
+choose a new local serving destination, test it, then explicitly
+configure any intended public route. Never silently make
+private operator projections publicly accessible.
+
+The API descriptions below remain the **legacy service contract**,
+not a statement of verified current availability.
+
+
 Public HTTP surface for **generated Cogentia views** (issues, continuations, indexes, concepts, env samples, package manifests, …).
 
 | | |
