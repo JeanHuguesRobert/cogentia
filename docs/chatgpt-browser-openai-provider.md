@@ -1,107 +1,167 @@
 ---
-title: ChatGPT browser — local OpenAI-compatible Magistral provider
+title: Conversational adapters — primitive SQLite continuations and ChatGPT OpenAI provider
 date: 2026-11-16
 document_role: operational
 document_kind: runbook
 visibility: public
 lifecycle_state: working
 update_policy: UP-DEFAULT-REVIEWED
-status: experimental — source verified, no live browser deployment
+status: experimental — unit and mock-transport tests verified; no real hosted-browser delivery
 ---
 
-# Local ChatGPT browser provider
+# OpenAI-compatible conversation adapters and primitive continuations
 
-## Principle
+## Architectural boundary
 
-Ordinary completion:
+The OpenAI-compatible HTTP surface, conversational request bridge, primitive
+continuation persistence, and conversational service transport are **separate
+components**. The generic machinery has no Cogentia MCP or COP dependency.
+ChatGPT is the first real browser-specific prompt/runner adapter; tests
+exercise generic Claude/Grok-like adapters with injected fake turn runners.
 
-    OpenAI client -> Magistral -> loopback ChatGPT provider
-           -> existing authorized browser-turn transport -> ChatGPT UI
-           -> observed ChatGPT answer -> OpenAI completion
+```text
+Magistral (or direct client) -> generic OpenAI HTTP bridge
+  -> generic per-adapter conversation store -> primitive SQLite continuations
+  -> adapter-specific renderer / action transport -> conversation service
+```
 
-The **provider itself** has NO COP packet, mandate, claim, scheduler, MCP
-result submission or GitHub Issue. The existing John browser transport is
-governed **upstream**, outside the provider. This separation does not
-remove or bypass the real browser executor's existing authorization gate.
+Ordinary text completion creates a local primitive continuation. It does
+**not** create a governed COP packet or mandate. A primitive local *claim*
+arbitrates incompatible use of one conversation/browser resource; it is
+not a COP PacketClaim. Other work and other adapter scopes continue.
+The state machine supports optimistic revisions, per-slot memoization,
+immutable transition history, checked portable snapshots, and historical
+source variants.
 
-MCP judgment continuation:
+A continuation is a resumable computation, not an entire serialized
+JavaScript call stack. Side-style memoized replay and explicitly bounded
+effects are suitable primitive mechanisms. A governed continuation is the
+composition of such a primitive with **optional** COP authority, budget,
+judgment and effect controls. A Cogentia MCP tool that requests a judgment
+continues to use the pre-existing Cogentia handler; ordinary OpenAI
+completions do not impersonate that handler.
 
-    ChatGPT -> Cogentia MCP tool -> continuation_required
-             -> existing Cogentia COP/mandate/continuation handler
+## Provider-neutral interface and locality
 
-A tool-side judgment continuation stays within the Cogentia mechanism
-(see \`skills/continuation-handling/SKILL.md\` and the existing
-\`cogentia_continuation_result_submit\` endpoint), not within the ordinary
-completion adapter. A provider response is not evidence of a Cogentia
-continuation receipt.
+- `scripts/lib/primitive-continuations.mjs`: SQLite-local primitive
+  identity, versioned compare-and-swap, scoped claims, memo slots, sources,
+  event history, checked snapshot export/import and interrupted-runner marking.
+- `scripts/lib/conversation-local-store.mjs`: provider-scoped durable
+  turn records, idempotency, bounded resource arbitration, and recovery.
+- `scripts/lib/openai-conversation-bridge.mjs`: provider-neutral
+  text-only OpenAI completion projection, recursion lineage and local
+  suspension.
+- `scripts/lib/chatgpt-openai-local-store.mjs` and
+  `scripts/lib/chatgpt-openai-bridge.mjs`: small ChatGPT-specific adapters.
+- `scripts/lib/chatgpt-openai-browser-runner.mjs`: UI observation, send,
+  response observation. Requires an injected action callback, not COP.
+- `scripts/lib/chatgpt-openai-http.mjs`: generic authenticated loopback
+  HTTP server with a ChatGPT compatibility constructor.
+- `scripts/ops/serve-chatgpt-openai-provider.mjs`: concrete ChatGPT server.
+- `scripts/ops/migrate-json-continuations-sqlite.mjs`: one-way import tool.
 
-## Locality and recursion
+The provider stores state in **SQLite on the machine running that provider**,
+default `~/.local/state/cogentia/chatgpt-browser-provider.sqlite`,
+overridable via `COGENTIA_BROWSER_CHAT_STATE_DB`. There is no global
+continuation database, mandatory GitHub Issue, or automatic cross-machine
+storage migration. A checked snapshot contains the durable work identity,
+causal history, memoized slots and original source variants, and can be
+imported elsewhere. **Import is not yet an atomic ownership handoff**:
+caller coordination is needed before claiming that execution authority has
+moved or that concurrent effects cannot occur across machines.
 
-The provider persists requests in SQLite **on the host that runs it**.
-Default: \`~/.local/state/cogentia/chatgpt-browser-provider.sqlite\`;
-override with \`COGENTIA_BROWSER_CHAT_STATE_DB\`. No persistent work
-records are exported to GitHub or a remote shared COP journal.
+`X-Client-Request-Id` is the retry identity. The preferred recursion header
+is `X-Continuation-Call-Chain`, with
+`X-Cogentia-Call-Chain` accepted as a legacy integration spelling.
+Magistral forwards the generic header on explicitly pinned
+`no_fallback_on_error` providers. When the target adapter token appears
+in its inherited call chain, a request is deferred locally and returns
+HTTP 409 `local_continuation_required`, not a recursive browser call.
+Use `GET /v1/continuations/local_<id>` and then retry the same request
+with the same idempotency key after the recursion clears. Unknown browser
+delivery stays `uncertain` rather than being blindly replayed.
 
-The local store tracks \`queued|running|deferred|done|uncertain\`.
-A browser turn acquires the only available local running slot.
-While a turn is running, nested calls to the same provider return HTTP
-409 \`local_continuation_required\` with a local job ID **without
-dispatching a second browser turn**. Explicit
-\`X-Cogentia-Call-Chain: chatgpt-browser,cogentia-mcp\` also causes a
-suspension even when the browser appears idle.
+Local SQLite compare-and-swap detects actual conflicts; it does **not**
+guarantee eventual convergence. Reconciling incompatible semantic results
+or cross-machine competing effects is a separate higher-level operation.
+Non-idempotent external effects require their own admission/deduplication
+boundary. A local process lock cannot prevent independent remote callers
+from sending into the very same physical browser. The actual browser
+executor must enforce access to that shared resource.
 
-The caller can inspect \`GET /v1/continuations/local_<id>\` with the
-provider's bearer credential and later retry the same request with the
-same \`X-Client-Request-Id\`; a deferred job can then resume, subject to
-the same local single-flight check. A job whose actual browser outcome
-is unknown stays \`uncertain\` after restart and is NEVER replayed
-blindly. Reconciliation is an operator/higher-level handler responsibility.
+## Choosing an action transport (with or without Cogentia)
 
-When a Cogentia tool needs judgment, its caller must use the **existing
-governed Cogentia continuation mechanism**. Its API router client now
-preserves the local provider's \`continuation\` metadata on HTTP 409; a
-409 is not a new COP mandate, and the bridge does not create one.
+The ChatGPT server has two mutually exclusive boot routes:
 
-If multiple hosts deliberately share a single hosted ChatGPT browser,
-their local locks alone cannot prevent cross-host simultaneous sends:
-the higher-level router must preserve call lineage and arbitrate shared
-browser access. The deployed Navigation Assistant tab lease remains
-the transport-level defense.
+1. `CHATGPT_BROWSER_ACTION_MODULE=/absolute/path/to/adapter.mjs`:
+   the operator supplies a local module exporting
+   `createBrowserAction({adapter})`. This may be asynchronous and must
+   return `invoke(action,request_id,args)`, where results are shaped as
+   `{ok:true,observation:{...}}`. Actions are
+   `ensure_tab`, `status`, `observe`, and `submit`.
+   This route needs **no Cogentia token**. The operator still has to supply
+   a separately authorized browser transport; the module is an explicit
+   local execution dependency, never a user-input URL.
+2. Otherwise, the optional historical John bridge is selected through
+   `COGENTIA_MCP_JHN_TOKEN`. Its existing upstream COP controls are
+   retained for browser actions; this is an **integration choice**, not
+   a core primitive mandate.
 
-## Source
+Both routes require the separate loopback HTTP bearer credential
+`COGENTIA_BROWSER_CHAT_PROVIDER_KEY` (or existing `COGENTIA_API_KEY`).
+Do not put credentials in Git, logs or prompts. Port
+`127.0.0.1:8898` can be changed through
+`COGENTIA_BROWSER_CHAT_PORT`.
 
-- \`scripts/lib/chatgpt-openai-local-store.mjs\`: local durable state
-- \`scripts/lib/chatgpt-openai-bridge.mjs\`: OpenAI projection and reentrancy
-- \`scripts/lib/chatgpt-openai-browser-runner.mjs\`: ChatGPT UI turn/observation
-- \`scripts/lib/chatgpt-openai-http.mjs\`: bearer-protected local HTTP
-- \`scripts/ops/serve-chatgpt-openai-provider.mjs\`: server binding
-- \`scripts/lib/chatgpt-cps-john-dispatch.js\`: shared existing governed
-  transport, also used by the separate Cogentia CPS handler
-- \`operium/profiles/magistral-chatgpt-browser-node.v1.json\`: additive map
+## Migration of historical JSON state
 
-## Running and testing
+The original `.cogentia/continuations/*.json` files are a **different**
+legacy operational population, not merely old browser requests. The importer
+preserves each original kind, status, entire JSON payload, filename and hash;
+when two files refer to the same logical continuation, both are retained as
+distinct source versions, **without fabricating a second work identity**.
 
-Only from a reviewed, host-local checkout with the already authorized
-John browser transport and its existing authenticated MCP token:
+```bash
+node scripts/ops/migrate-json-continuations-sqlite.mjs \
+  --source .cogentia/continuations \
+  --db /absolute/local/path/continuations.sqlite
 
-    node --test scripts/test-chatgpt-openai-provider.mjs
+# After verifying report and destination, import without deleting originals:
+node scripts/ops/migrate-json-continuations-sqlite.mjs \
+  --source .cogentia/continuations \
+  --db /absolute/local/path/continuations.sqlite --apply
+```
 
-    COGENTIA_BROWSER_CHAT_STATE_DB=<local cache directory>/chatgpt-provider.sqlite \
-      node scripts/ops/serve-chatgpt-openai-provider.mjs
+As of the 2026-11-16 isolated Fracta2 exercise: 20 JSON source files
+were imported to a **temporary** SQLite database as 19 logical
+continuations plus one alternate original version, with 20 source
+records and no unresolved import conflicts. The second import was
+idempotent. The original files were not modified or deleted.
 
-The service requires \`COGENTIA_BROWSER_CHAT_PROVIDER_KEY\` (or the
-existing \`COGENTIA_API_KEY\`) and \`COGENTIA_MCP_JHN_TOKEN\` in its
-process environment. Never copy them into Git, prompts or log output.
+**Migration is not yet complete operationally:** the old Cogentia CLI,
+embedding workers, consolidation routines, and other JSON consumers
+have not all switched to SQLite. Do not delete or exclude their active
+JSON files until that transition has been tested. No production or
+live service database was changed during this work.
 
-The endpoint is loopback \`127.0.0.1:8898\` by default, separate from
-the already occupied port 8798. Add the Operium map entry to the
-existing Magistral map; do not replace other model nodes.
+## Tests and limitations
 
-Supported: bounded text Chat Completions, legacy text completions,
-\`GET /v1/models\`, and buffered SSE. Actual model pinning,
-OpenAI token usage, tool-call shapes, native role hierarchy and
-real token-level streaming are **not** available through the browser UI.
+```bash
+node --test scripts/test-primitive-continuations.mjs \
+  scripts/test-conversation-adapters.mjs \
+  scripts/test-chatgpt-openai-provider.mjs \
+  scripts/test-chatgpt-provider-bootstrap.mjs
+```
 
-**Verification:** source and isolated tests are not a live Reality Test.
-No production service restart, map mutation or automated ChatGPT turn
-was performed by this change.
+The bootstrap test launches the **actual standalone provider** with
+a fake locally injected browser action and no John/Cogentia token.
+It tests HTTP request/response handling, not a real ChatGPT login
+or real hosted-browser DOM. ChatGPT browser output is not a native
+OpenAI API response: model pinning, actual token usage, native tool
+calls, role hierarchy and token-by-token streaming remain unsupported.
+SSE responses are buffered rather than incremental.
+
+The present primitive handoff test verifies checked snapshots between
+two local SQLite databases. Cross-host custody, distributed effects,
+network-partition convergence and automatic `uncertain`-state repair
+remain to be implemented and tested.
