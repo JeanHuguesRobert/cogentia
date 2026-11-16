@@ -662,3 +662,29 @@ a **new, deterministic `--recovery-1` John request ID**; no replay of the
 previous accounting entry. A fresh exact-match read check remains mandatory
 before any new editor change, and the canonical COP owned-draft receipt is
 written only after the browser returns `cleared:true`.
+
+### Final bounded continuation after two *proven no-submit* preflight failures
+
+A third reviewed public Judgment continuation reached `composer_not_ready`
+**twice**: original preflight and one separate recovery. Both its original
+and recovery John ledgers show only `ensure_tab` and `status`, **no**
+`submit` reservation. A separate, successfully governed browser cleanup then
+removed one independently verified stale prompt from a root tab, leaving the
+editor blank and writing a canonical causal `verified_owned_draft_cleared`
+receipt. This new evidence admits **one final** pre-submit attempt, never an
+unbounded status polling or third blind submission.
+
+The existing `inspectPreSubmitRecovery` is fail-closed: before recovery #2
+it requires original intent/typed preflight failure, recovery #1 intent and
+typed preflight failure, no John `submit` reservation in either previous
+attempt, no prior confirmed delivery, no result return, no recovery #2
+intent, a real separate canonical owned-draft-cleared receipt and an active
+packet temperature. The final intent is recorded under
+`pre-submit-recovery-intent-2` with causal references to the older failure
+and the cleanup receipt, and new John request IDs with suffix
+`--recovery-2`. All independent issuer, mandate, provider and budget gates
+remain at the original dispatcher, including its serialized COP transaction.
+After recovery #2, no further recovery is automatically available regardless
+of how the browser responds. A previous attempt with *any* budgeted submit
+is ineligible. This does not apply to the first genuinely ambiguous browser
+click, whose parent remains `Parked` with unknown delivery.

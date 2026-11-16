@@ -16,8 +16,8 @@ export function createGovernedJohnBrowserAction({
      typeof fetchImpl!=='function')
     throw new TypeError('authenticated_local_john_browser_transport_required');
   async function invoke(action,continuation_id,argumentsValue,recovery_attempt=0){
-    if(![0,1].includes(recovery_attempt))return fail('invalid_recovery_attempt');
-    const suffix=recovery_attempt?'--recovery-1':'';
+    if(![0,1,2].includes(recovery_attempt))return fail('invalid_recovery_attempt');
+    const suffix=recovery_attempt?'--recovery-'+recovery_attempt:'';
     const request_id=validId(continuation_id)
       ?`jhn-cps-${action}-${continuation_id}${suffix}`
       :`jhn-openai-${action}-${continuation_id}${suffix}`;
@@ -69,7 +69,7 @@ export function createCpsGovernedJohnBrowserDispatch({
     throw new TypeError('authenticated_local_john_browser_transport_required');
   const invoke=createGovernedJohnBrowserAction({token,fetchImpl,mcpUrl});
   return async function governedDispatch({continuation_id,prompt,recovery_attempt=0}={}){
-    if(!validId(continuation_id)||![0,1].includes(recovery_attempt)||
+    if(!validId(continuation_id)||![0,1,2].includes(recovery_attempt)||
        typeof prompt!=='string'||!prompt||prompt.length>6000)
       return fail('canonical_prompt_missing');
     // Non-extractive composer readiness observation. A failure cannot be used

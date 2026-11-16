@@ -93,3 +93,24 @@ test('pre-submit recovery has distinct canonical John request IDs without changi
  assert.equal(new Set(calls.map(x=>x.id)).size,3);
  assert.equal(calls.every(x=>x.id.length<=120),true);
 });
+
+test('second and final pre-submit recovery has distinct audited John request IDs',async()=>{
+ const calls=[];
+ const fetchImpl=async(_url,{body})=>{
+  const req=JSON.parse(body).params.arguments.request;
+  calls.push(req.request_id);
+  const action=req.input.arguments.action;
+  const obs=action==='ensure_tab'?{tab_id:91}:
+    action==='status'?{stable_composer:true,composer_blank:true,generating:false}:
+    {submitted:true,delivery_state:'ui_click_dispatched_not_model_result'};
+  return {ok:true,json:async()=>({result:{structuredContent:{ok:true,data:{
+    ok:true,text:JSON.stringify(obs),canonical_accounting:{settled_steps:2}}}}})};
+ };
+ const r=await createCpsGovernedJohnBrowserDispatch({token:'test',fetchImpl})({
+  continuation_id:id,prompt:'A previously unsubmitted task, with repaired editor',
+  recovery_attempt:2});
+ assert.equal(r.ok,true);
+ assert.equal(calls.length,3);
+ assert.equal(calls.every(x=>x.endsWith('--recovery-2')),true);
+ assert.equal(new Set(calls).size,3);
+});

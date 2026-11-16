@@ -340,3 +340,76 @@ test('existing ONA scheduler autonomously recovers once after proven pre-submit 
   assert.equal(s.auditCommitments().ok,true);
  }finally{s.close()}
 });
+
+test('a second final recovery needs two proven pre-submit failures AND prior governed draft-cleanup',async()=>{
+ const s=createSqliteCopEventStore(':memory:');try{
+  const id='ctn_assigned_hydration_cleaned_01';await assigned(s,id);
+  let calls=0;
+  const notReady=async()=>{calls++;return {ok:false,error:'composer_not_ready'}};
+  assert.equal((await dispatchAssignedChatgptCpsContinuation({store:s,
+    continuation_id:id,admit:permit,dispatch:notReady})).status,'needs_reconciliation');
+  assert.equal(inspectPreSubmitRecovery(s,id).recovery_attempt,1);
+  assert.equal((await dispatchAssignedChatgptCpsContinuation({store:s,
+    continuation_id:id,admit:permit,dispatch:async({recovery_attempt})=>{
+      assert.equal(recovery_attempt,1);return notReady();
+    }})).status,'needs_reconciliation');
+  assert.equal(calls,2);
+  assert.equal(inspectPreSubmitRecovery(s,id).status,
+    'second_pre_submit_recovery_requires_governed_draft_cleanup');
+  assert.equal(listAssignedChatgptCpsContinuations(s)[0].status,'needs_reconciliation');
+  const cleanup=s.append({topic_id:'continuation:ctn_chatgpt_browser_1234567890abcdef1234567890abcdef',
+    event_type:'cop.event/v1',actor_id:'cop:fixture',
+    subject_ref:'continuation:ctn_chatgpt_browser_1234567890abcdef1234567890abcdef',
+    idempotency_key:'governed:owned-draft-cleared:fixture',
+    payload:{profile:'cogentia.cps-browser-owned-draft/v1',
+      phase:'verified_owned_draft_cleared',confirmed_by_john:true,send_effects:0,
+      source_continuation_id:'ctn_chatgpt_browser_1234567890abcdef1234567890abcdef',
+      source_prompt_sha256:'a'.repeat(64),tab_id:99}});
+  assert.equal(cleanup.ok,true);
+  const allowed=inspectPreSubmitRecovery(s,id);
+  assert.equal(allowed.eligible,true,JSON.stringify(allowed));
+  assert.equal(allowed.recovery_attempt,2);
+  assert.equal(allowed.cleanup_receipt_ref,'governed:owned-draft-cleared:fixture');
+  const accepted=await dispatchAssignedChatgptCpsContinuation({store:s,
+    continuation_id:id,admit:permit,dispatch:async({recovery_attempt})=>{
+      calls++;assert.equal(recovery_attempt,2);return send({continuation_id:id});
+    }});
+  assert.equal(accepted.ok,true,JSON.stringify(accepted));
+  assert.equal(calls,3);
+  const event=s.listTopic('continuation:'+id).find(e=>
+    e.payload?.phase==='pre_submit_recovery_intent'&&e.payload.recovery_attempt===2);
+  assert.ok(event);
+  assert.equal(s.eventByIdempotency('chatgpt-browser:'+id+':pre-submit-recovery-intent-2')?.payload?.max_recovery_attempts,2);
+  assert.equal(s.listTopic('continuation:'+id).filter(e=>
+    e.payload?.phase==='ui_click_dispatched_not_model_result').length,1);
+  assert.equal(inspectPreSubmitRecovery(s,id).eligible,false);
+  assert.equal(s.auditCommitments().ok,true);
+ }finally{s.close()}
+});
+
+test('a second recovery is forbidden if the first recovery reached John submit reservation',async()=>{
+ const s=createSqliteCopEventStore(':memory:');try{
+  const id='ctn_assigned_hydration_submit_01';await assigned(s,id);
+  for(let n=0;n<2;n++){
+    const result=await dispatchAssignedChatgptCpsContinuation({store:s,
+      continuation_id:id,admit:permit,
+      dispatch:async()=>({ok:false,error:'composer_not_ready'})});
+    assert.equal(result.ok,false);
+  }
+  assert.equal(s.append({topic_id:'continuation:fixture-other',
+    event_type:'cop.event/v1',actor_id:'cop:fixture',subject_ref:'continuation:fixture-other',
+    idempotency_key:'governed-cleanup-other',payload:{
+      profile:'cogentia.cps-browser-owned-draft/v1',phase:'verified_owned_draft_cleared',
+      confirmed_by_john:true,send_effects:0,
+      source_continuation_id:'ctn_chatgpt_browser_1234567890abcdef1234567890abcdef',
+      source_prompt_sha256:'a'.repeat(64),tab_id:99}}).ok,true);
+  const ledger=createEventSourcedExecutionBudgetLedger({store:s,budget_id:BUDGET,
+    limits:{max_steps:20},require_authority_grant:false});
+  assert.equal(ledger.reserve({
+    idempotency_key:'chatgpt-turn:jhn-cps-submit-'+id+'--recovery-1',
+    expected_version:ledger.snapshot().version,demand:{max_steps:1}}).ok,true);
+  assert.equal(inspectPreSubmitRecovery(s,id).eligible,false);
+  assert.equal(listAssignedChatgptCpsContinuations(s)[0].status,'needs_reconciliation');
+  assert.equal(s.auditCommitments().ok,true);
+ }finally{s.close()}
+});
