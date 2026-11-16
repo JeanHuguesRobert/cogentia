@@ -3,6 +3,7 @@
  * Monitor embeddings processing progress
  */
 import fs from "fs";
+import {continuationRepository} from './lib/continuation-sqlite-repository.mjs';
 import path from "path";
 import { fileURLToPath } from "url";
 import { execFileSync } from "child_process";
@@ -15,7 +16,10 @@ const REGISTRY_ROOT = REGISTRY_PATH
   ? (fs.existsSync(REGISTRY_PATH) && fs.statSync(REGISTRY_PATH).isDirectory() ? REGISTRY_PATH : path.dirname(REGISTRY_PATH))
   : COGENTIA_DIR;
 const COGENTIA_STATE_DIR = process.env.COGENTIA_STATE_DIR || path.join(REGISTRY_ROOT, ".cogentia");
-const CONTINUATIONS_DIR = process.env.CONTINUATIONS_DIR || path.join(COGENTIA_STATE_DIR, "continuations");
+const CONTINUATION_ROOT=process.env.CONTINUATIONS_DIR
+  ? path.dirname(path.dirname(path.resolve(process.env.CONTINUATIONS_DIR))) : REGISTRY_ROOT;
+const continuationStore=continuationRepository(CONTINUATION_ROOT);
+const CONTINUATIONS_DIR=continuationStore.path;
 const EMBEDDINGS_RESULT_DIR = process.env.COGENTIA_EMBEDDINGS_RESULTS_DIR || COGENTIA_STATE_DIR;
 
 function listResultFiles() {
@@ -35,10 +39,7 @@ function listResultFiles() {
 }
 
 function getContinuationStatus() {
-  if (!fs.existsSync(CONTINUATIONS_DIR)) return [];
-  return fs.readdirSync(CONTINUATIONS_DIR)
-    .filter(f => f.endsWith(".json"))
-    .map(f => JSON.parse(fs.readFileSync(path.join(CONTINUATIONS_DIR, f), "utf-8")))
+  return continuationStore.list()
     .filter(cont => cont.kind === "embeddings-index")
     .map(cont => ({
       id: cont.id,
