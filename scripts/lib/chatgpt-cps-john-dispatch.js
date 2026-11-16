@@ -15,10 +15,12 @@ export function createGovernedJohnBrowserAction({
   if(mcpUrl!==LOCAL_MCP||typeof token!=='string'||!token||
      typeof fetchImpl!=='function')
     throw new TypeError('authenticated_local_john_browser_transport_required');
-  async function invoke(action,continuation_id,argumentsValue){
+  async function invoke(action,continuation_id,argumentsValue,recovery_attempt=0){
+    if(![0,1].includes(recovery_attempt))return fail('invalid_recovery_attempt');
+    const suffix=recovery_attempt?'--recovery-1':'';
     const request_id=validId(continuation_id)
-      ?`jhn-cps-${action}-${continuation_id}`
-      :`jhn-openai-${action}-${continuation_id}`;
+      ?`jhn-cps-${action}-${continuation_id}${suffix}`
+      :`jhn-openai-${action}-${continuation_id}${suffix}`;
     if(!/^[a-zA-Z0-9_.:-]{1,120}$/.test(request_id))
       return fail('invalid_browser_request_id');
     const req={version:'john.request.v1',request_id,
@@ -64,29 +66,30 @@ export function createCpsGovernedJohnBrowserDispatch({
   if(tab_id!==undefined&&(!Number.isSafeInteger(tab_id)||tab_id<1))
     throw new TypeError('authenticated_local_john_browser_transport_required');
   const invoke=createGovernedJohnBrowserAction({token,fetchImpl,mcpUrl});
-  return async function governedDispatch({continuation_id,prompt}={}){
-    if(!validId(continuation_id)||typeof prompt!=='string'||!prompt||prompt.length>6000)
+  return async function governedDispatch({continuation_id,prompt,recovery_attempt=0}={}){
+    if(!validId(continuation_id)||![0,1].includes(recovery_attempt)||
+       typeof prompt!=='string'||!prompt||prompt.length>6000)
       return fail('canonical_prompt_missing');
     // Non-extractive composer readiness observation. A failure cannot be used
     // to justify a blind second submission after a possibly ambiguous click.
     // No fixed tab identifier is required: the existing browser.chatgpt.turn
-    // ensure_tab operation selects only a marked Judgment conversation or a
-    // blank root tab, under the same governed John/mandate channel.
+    // ensure_tab operation selects only an unmarked empty root tab or
+    // creates a new one, under the same governed John/mandate channel.
     let targetTab=tab_id;
     if(targetTab===undefined){
-      const selection=await invoke('ensure_tab',continuation_id,{action:'ensure_tab'});
+      const selection=await invoke('ensure_tab',continuation_id,{action:'ensure_tab'},recovery_attempt);
       if(!selection.ok)return selection;
       targetTab=selection.observation.tab_id;
       if(!Number.isSafeInteger(targetTab)||targetTab<1)
         return fail('governed_tab_not_available');
     }
-    const status=await invoke('status',continuation_id,{action:'status',tab_id:targetTab});
+    const status=await invoke('status',continuation_id,{action:'status',tab_id:targetTab},recovery_attempt);
     if(!status.ok)return status;
     if(status.observation.stable_composer!==true||
        status.observation.composer_blank!==true||
        status.observation.generating!==false)
       return fail('composer_not_ready');
-    const sent=await invoke('submit',continuation_id,{action:'submit',tab_id:targetTab,prompt});
+    const sent=await invoke('submit',continuation_id,{action:'submit',tab_id:targetTab,prompt},recovery_attempt);
     if(!sent.ok)return sent;
     if(sent.observation.submitted!==true||
        sent.observation.delivery_state!=='ui_click_dispatched_not_model_result')

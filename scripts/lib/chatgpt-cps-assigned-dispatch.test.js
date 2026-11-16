@@ -9,7 +9,7 @@ import {declaredContinuationRecord} from '../../../inseme/packages/cop-core/src/
 import {EventStorePacketClaimCoordinator} from '../../../inseme/packages/cop-kernel/src/packetCoordination.js';
 import {runChatgptCpsResidentCycle} from '../ops/ona-chatgpt-cps-reconcile.mjs';
 import {buildAssignedChatgptCpsPrompt,listAssignedChatgptCpsContinuations,dispatchAssignedChatgptCpsContinuation,
-  runAssignedChatgptCpsBatch} from './chatgpt-cps-assigned-dispatch.js';
+  runAssignedChatgptCpsBatch,inspectPreSubmitRecovery} from './chatgpt-cps-assigned-dispatch.js';
 const BUDGET='budget:mandate:jhn:john-root';
 const permit=async()=>({granted:true,provider_permitted:true,budget_admitted:true,
   authorization_ref:'cop:mandate:v4',provider_permission_receipt_ref:'cop:provider:authorized',
@@ -232,6 +232,111 @@ test('provider result ambiguity is committed without copying unexpected errors o
     continuation_id:id,admit:permit,dispatch:async()=>{invoked++;return null}})).status,
     'needs_reconciliation');
   assert.equal(invoked,1);
+  assert.equal(s.auditCommitments().ok,true);
+ }finally{s.close()}
+});
+
+
+test('a proven composer-not-ready preflight permits exactly one separate governed attempt',async()=>{
+ const s=createSqliteCopEventStore(':memory:');try{
+  const id='ctn_assigned_preflight_only_01';await assigned(s,id);
+  let first=0,second=0;
+  const failed=await dispatchAssignedChatgptCpsContinuation({store:s,
+    continuation_id:id,admit:permit,dispatch:async()=>{
+      first++;return {ok:false,error:'composer_not_ready'};
+    }});
+  assert.equal(failed.status,'needs_reconciliation');
+  assert.equal(inspectPreSubmitRecovery(s,id).eligible,true);
+  assert.equal(listAssignedChatgptCpsContinuations(s)[0].status,'pre_submit_recovery_ready');
+  const result=await dispatchAssignedChatgptCpsContinuation({store:s,
+    continuation_id:id,admit:permit,dispatch:async({recovery_attempt})=>{
+      second++;assert.equal(recovery_attempt,1);return send({continuation_id:id});
+    }});
+  assert.equal(result.ok,true,JSON.stringify(result));
+  assert.equal(first,1);assert.equal(second,1);
+  assert.equal(s.listTopic('continuation:'+id).filter(e=>
+    e.payload?.phase==='pre_submit_recovery_intent').length,1);
+  const delivered=s.listTopic('continuation:'+id).find(e=>
+    e.payload?.phase==='ui_click_dispatched_not_model_result');
+  assert.equal(delivered.payload.recovery_attempt,1);
+  assert.equal(s.eventByIdempotency(
+    'chatgpt-browser:'+id+':pre-submit-recovery-intent-1')?.payload?.recovery_attempt,1);
+  assert.equal(listAssignedChatgptCpsContinuations(s).length,0);
+  const repeat=await dispatchAssignedChatgptCpsContinuation({store:s,
+    continuation_id:id,admit:permit,dispatch:async()=>{second++;return null}});
+  assert.equal(repeat.ok,false);assert.equal(second,1);
+  assert.equal(s.auditCommitments().ok,true);
+ }finally{s.close()}
+});
+
+test('any canonical original John submit reservation vetoes preflight recovery',async()=>{
+ const s=createSqliteCopEventStore(':memory:');try{
+  const id='ctn_assigned_status_race_01';await assigned(s,id);
+  assert.equal((await dispatchAssignedChatgptCpsContinuation({store:s,
+    continuation_id:id,admit:permit,dispatch:async()=>({
+      ok:false,error:'composer_not_ready'})})).ok,false);
+  const ledger=createEventSourcedExecutionBudgetLedger({store:s,budget_id:BUDGET,
+    limits:{max_steps:20},require_authority_grant:false});
+  const r=ledger.reserve({idempotency_key:'chatgpt-turn:jhn-cps-submit-'+id,
+    expected_version:ledger.snapshot().version,demand:{max_steps:1}});
+  assert.equal(r.ok,true);
+  assert.equal(inspectPreSubmitRecovery(s,id).eligible,false);
+  assert.equal(inspectPreSubmitRecovery(s,id).status,'submit_attempt_may_have_occurred');
+  assert.equal(listAssignedChatgptCpsContinuations(s)[0].status,'needs_reconciliation');
+  assert.equal(s.auditCommitments().ok,true);
+ }finally{s.close()}
+});
+
+test('a failed recovery attempt is never replayed even if the first failure was pre-submit',async()=>{
+ const s=createSqliteCopEventStore(':memory:');try{
+  const id='ctn_assigned_recovery_failed_01';await assigned(s,id);
+  let attempts=0;
+  assert.equal((await dispatchAssignedChatgptCpsContinuation({store:s,
+    continuation_id:id,admit:permit,dispatch:async()=>{
+      attempts++;return {ok:false,error:'composer_not_ready'};
+    }})).ok,false);
+  assert.equal((await dispatchAssignedChatgptCpsContinuation({store:s,
+    continuation_id:id,admit:permit,dispatch:async({recovery_attempt})=>{
+      attempts++;assert.equal(recovery_attempt,1);
+      return {ok:false,error:'john_transport_ambiguous'};
+    }})).ok,false);
+  assert.equal(inspectPreSubmitRecovery(s,id).eligible,false);
+  assert.equal(listAssignedChatgptCpsContinuations(s)[0].status,'needs_reconciliation');
+  assert.equal(s.listTopic('continuation:'+id).filter(x=>
+    x.payload?.phase==='pre_submit_recovery_intent').length,1);
+  assert.equal(s.listTopic('continuation:'+id).filter(x=>
+    x.payload?.phase==='delivery_unconfirmed').length,2);
+  assert.equal((await dispatchAssignedChatgptCpsContinuation({store:s,
+    continuation_id:id,admit:permit,dispatch:async()=>{
+      attempts++;return send({continuation_id:id});
+    }})).status,'needs_reconciliation');
+  assert.equal(attempts,2);
+  assert.equal(s.auditCommitments().ok,true);
+ }finally{s.close()}
+});
+
+test('existing ONA scheduler autonomously recovers once after proven pre-submit failure',async()=>{
+ const s=createSqliteCopEventStore(':memory:');try{
+  const id='ctn_resident_preflight_recovery_01';await assigned(s,id);
+  const initial=await dispatchAssignedChatgptCpsContinuation({store:s,
+    continuation_id:id,admit:permit,
+    dispatch:async()=>({ok:false,error:'composer_not_ready'})});
+  assert.equal(initial.status,'needs_reconciliation');
+  let recovered=0;
+  const cycle=await runChatgptCpsResidentCycle({store:s,reconcile:noWakes,
+    env:{COGENTIA_CPS_BROWSER_DISPATCH_ENABLED:'1'},assignedWorker:{
+      admit:permit,dispatch:async({recovery_attempt})=>{
+        recovered++;assert.equal(recovery_attempt,1);
+        return send({continuation_id:id});
+      }}});
+  assert.equal(cycle.ok,true,JSON.stringify(cycle));
+  assert.equal(cycle.status,'dispatched_awaiting_return');
+  assert.equal(recovered,1);
+  const reboot=await runChatgptCpsResidentCycle({store:s,reconcile:noWakes,
+    env:{COGENTIA_CPS_BROWSER_DISPATCH_ENABLED:'1'},assignedWorker:{
+      admit:permit,dispatch:async()=>{recovered++;throw Error('duplicate')}}});
+  assert.equal(reboot.ok,true);
+  assert.equal(recovered,1);
   assert.equal(s.auditCommitments().ok,true);
  }finally{s.close()}
 });

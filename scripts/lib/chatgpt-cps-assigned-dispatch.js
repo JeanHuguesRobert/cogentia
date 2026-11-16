@@ -15,9 +15,46 @@ const ID=id=>typeof id==='string'&&/^ctn_[a-zA-Z0-9_]{3,120}$/.test(id);
 const intentKey=id=>`chatgpt-browser:${id}:first-dispatch-intent`;
 const completeKey=id=>`chatgpt-browser:${id}:first-dispatch-receipt`;
 const unconfirmedKey=id=>`chatgpt-browser:${id}:first-dispatch-unconfirmed`;
+const recoveryKey=id=>`chatgpt-browser:${id}:pre-submit-recovery-intent-1`;
+const recoveryUnconfirmedKey=id=>`chatgpt-browser:${id}:pre-submit-recovery-unconfirmed-1`;
+const RECOVERY_PROFILE='cop.continuation-browser-pre-submit-recovery/v1';
 const safeDiagnostic=x=>typeof x==='string'&&/^[a-z][a-z0-9_]{1,79}$/.test(x)
   ?x:'unclassified_transport_outcome';
 const valid=x=>typeof x==='string'&&x.length>0&&x.length<=180;
+
+/** An observed composer_not_ready exits John *before* invoking submit. The
+ * separate canonical budget store must independently prove that the original
+ * jhn-cps-submit request was NEVER reserved. Only this exact combination
+ * admits ONE new attempt under its own John request IDs and COP recovery
+ * intent. A generic timeout, missing receipt or provider exception can
+ * never be interpreted as no-send evidence. */
+export function inspectPreSubmitRecovery(store,id){
+  if(typeof store?.eventByIdempotency!=='function'||!ID(id))
+    return {ok:false,eligible:false,status:'invalid_recovery_source'};
+  const original=store.eventByIdempotency(intentKey(id));
+  const unconfirmed=store.eventByIdempotency(unconfirmedKey(id));
+  if(original?.payload?.profile!==PROFILE||original.payload.phase!=='intent_committed'||
+    unconfirmed?.payload?.profile!==PROFILE||
+    unconfirmed.payload.phase!=='delivery_unconfirmed'||
+    unconfirmed.payload.diagnostic_code!=='composer_not_ready')
+    return {ok:true,eligible:false,status:'no_proven_pre_submit_failure'};
+  if(store.eventByIdempotency(recoveryKey(id))||
+     store.eventByIdempotency(completeKey(id))||
+     store.listTopic('continuation:'+id).some(e=>
+       e.payload?.profile===RESULT&&e.payload?.phase==='returned'))
+    return {ok:true,eligible:false,status:'recovery_already_spent_or_completed'};
+  const originalSubmit='chatgpt-turn:jhn-cps-submit-'+id;
+  const budget=store.listTopic('execution-budget:budget:mandate:jhn:john-root');
+  if(budget.some(e=>e.event_type==='ExecutionBudgetReservation'&&
+     e.payload?.reservation?.idempotency_key===originalSubmit))
+    return {ok:true,eligible:false,status:'submit_attempt_may_have_occurred'};
+  const warmth=projectPacketTemperature(store,{packet_ref:'continuation:'+id});
+  if(!warmth.ok||!warmth.runnable)
+    return {ok:true,eligible:false,status:'packet_temperature_deferred'};
+  return {ok:true,eligible:true,status:'pre_submit_recovery_ready',
+    original_dispatch_intent_ref:intentKey(id),
+    original_preflight_receipt_ref:unconfirmedKey(id)};
+}
 
 /** Core-owned prompt recipe, no DOM answer scraping and no new extension API.
  * Delivers a correlated CPS result by the existing Cogentia MCP capability.
@@ -89,9 +126,10 @@ export function listAssignedChatgptCpsContinuations(store,{limit=25}={}){
     // excluded from dispatch and its issue remains visible to reconciliation.
     const warmth=projectPacketTemperature(store,{packet_ref:'continuation:'+c.continuation_id});
     const hasIntent=Boolean(store.eventByIdempotency(intentKey(c.continuation_id)));
+    const recovery=hasIntent?inspectPreSubmitRecovery(store,c.continuation_id):null;
     return {continuation_id:c.continuation_id,packet_ref:c.packet_ref,
       status:quarantine.ok&&quarantine.quarantined?'parked':
-        hasIntent?'needs_reconciliation':
+        hasIntent?(recovery?.eligible?'pre_submit_recovery_ready':'needs_reconciliation'):
         warmth.ok&&warmth.runnable?'ready':'cold_deferred',
       declaration_receipt_ref:e.idempotency_key};
   });
@@ -129,7 +167,8 @@ export async function dispatchAssignedChatgptCpsContinuation({
     return {ok:false,status:'assigned_continuation_missing'};
   if(store.eventByIdempotency(completeKey(continuation_id)))
     return {ok:false,status:'already_dispatched'};
-  if(store.eventByIdempotency(intentKey(continuation_id)))
+  const isRecovery=Boolean(store.eventByIdempotency(intentKey(continuation_id)));
+  if(isRecovery&&!inspectPreSubmitRecovery(store,continuation_id).eligible)
     return {ok:false,status:'needs_reconciliation'};
   if(!projectPacketTemperature(store,{packet_ref:topic}).runnable)
     return {ok:false,status:'packet_temperature_deferred'};
@@ -143,14 +182,32 @@ export async function dispatchAssignedChatgptCpsContinuation({
      !valid(grant.provider_permission_receipt_ref)||!valid(grant.budget_authorization_ref))
     return {ok:false,status:'not_admitted'};
   const fencing=store.transaction(tx=>{
-    if(tx.eventByIdempotency(intentKey(continuation_id)))return {reserved:false};
     if(!projectPacketTemperature(tx,{packet_ref:topic}).runnable)
       return {reserved:false,stale:true};
-    // Must re-read the existing authority/claim after crossing the async
-    // admission boundary, under the journal's serialized SQLite write lock.
+    // Recheck current authority/claim under the same serialized journal lock
+    // as BOTH the initial intent and the exceptionally admitted recovery.
     const latest=tx.listTopic(topic).find(e=>e.payload?.profile==='cop/continuation');
     if(latest?.idempotency_key!==row.idempotency_key||
        !reservationAndClaimCurrent(tx,c,new Date()))return {reserved:false,stale:true};
+    if(isRecovery){
+      const p=inspectPreSubmitRecovery(tx,continuation_id);
+      if(!p.eligible)return {reserved:false,stale:true};
+      const written=tx.append({topic_id:topic,event_type:'cop.event/v1',
+        actor_id:'cop:cps-assigned-dispatch',subject_ref:topic,
+        visibility:'restricted',epistemic_status:'decided',
+        idempotency_key:recoveryKey(continuation_id),
+        causal_refs:[p.original_dispatch_intent_ref,p.original_preflight_receipt_ref,
+          grant.authorization_ref,grant.provider_permission_receipt_ref,
+          grant.budget_authorization_ref],
+        payload:{profile:RECOVERY_PROFILE,phase:'pre_submit_recovery_intent',
+          continuation_id,recovery_attempt:1,
+          evidence:'composer_not_ready_and_no_original_submit_budget_reservation',
+          previous_click_was_not_invoked:true,max_recovery_attempts:1},
+      });
+      if(!written.ok)throw Error(written.error||'recovery_intent_failed');
+      return {reserved:true,recovery_attempt:1};
+    }
+    if(tx.eventByIdempotency(intentKey(continuation_id)))return {reserved:false};
     const written=tx.append({topic_id:topic,event_type:'cop.event/v1',
       actor_id:'cop:cps-assigned-dispatch',subject_ref:'continuation:'+continuation_id,
       visibility:'restricted',epistemic_status:'decided',
@@ -163,7 +220,7 @@ export async function dispatchAssignedChatgptCpsContinuation({
         budget_authorization_ref:grant.budget_authorization_ref},
     });
     if(!written.ok)throw Error(written.error||'dispatch_intent_failed');
-    return {reserved:true};
+    return {reserved:true,recovery_attempt:0};
   });
   if(!fencing.ok)return {ok:false,status:'intent_commit_failed'};
   if(!fencing.value?.reserved)return {ok:false,status:fencing.value?.stale
@@ -176,10 +233,12 @@ export async function dispatchAssignedChatgptCpsContinuation({
     try{store.append({topic_id:topic,event_type:'cop.event/v1',
       actor_id:'cop:cps-assigned-dispatch',subject_ref:topic,
       visibility:'restricted',epistemic_status:'observed',
-      idempotency_key:unconfirmedKey(continuation_id),
-      causal_refs:[intentKey(continuation_id)],
+      idempotency_key:isRecovery?recoveryUnconfirmedKey(continuation_id):
+        unconfirmedKey(continuation_id),
+      causal_refs:isRecovery?[intentKey(continuation_id),recoveryKey(continuation_id)]:
+        [intentKey(continuation_id)],
       payload:{profile:PROFILE,phase:'delivery_unconfirmed',
-        continuation_id,diagnostic_code:code,
+        continuation_id,recovery_attempt:isRecovery?1:0,diagnostic_code:code,
         click_delivery_proven:false,outcome_ambiguous:true,
         retry_authorized:false},
     });}catch{/* Preserve the original unknown effect, not a second send. */}
@@ -192,7 +251,8 @@ export async function dispatchAssignedChatgptCpsContinuation({
   let outcome;
   try{outcome=await dispatch({continuation:c,prompt:projected.prompt,continuation_id,
     authorization_ref:grant.authorization_ref,
-    dispatch_intent_ref:intentKey(continuation_id)});}
+    dispatch_intent_ref:isRecovery?recoveryKey(continuation_id):intentKey(continuation_id),
+    recovery_attempt:isRecovery?1:0});}
   catch{return unconfirmed('provider_dispatch_exception')}
   if(outcome?.ok!==true||outcome.submitted!==true||
      outcome.continuation_id!==continuation_id||
@@ -202,9 +262,12 @@ export async function dispatchAssignedChatgptCpsContinuation({
     actor_id:'cop:cps-assigned-dispatch',subject_ref:'continuation:'+continuation_id,
     visibility:'restricted',epistemic_status:'observed',
     idempotency_key:completeKey(continuation_id),
-    causal_refs:[intentKey(continuation_id),outcome.execution_receipt_ref],
+    causal_refs:[intentKey(continuation_id),
+      ...(isRecovery?[recoveryKey(continuation_id)]:[]),
+      outcome.execution_receipt_ref],
     payload:{profile:PROFILE,phase:'ui_click_dispatched_not_model_result',
-      continuation_id,execution_receipt_ref:outcome.execution_receipt_ref,
+      continuation_id,recovery_attempt:isRecovery?1:0,
+      execution_receipt_ref:outcome.execution_receipt_ref,
       result_returned:false,receipt_basis:'mandated_john_dispatcher'},
   });
   if(!written.ok)return {ok:false,status:'needs_reconciliation'};
@@ -221,7 +284,8 @@ export async function runAssignedChatgptCpsBatch({store,admit,dispatch,max_steps
   const running=await runMandateToBoundary({max_steps,inspect:async()=>{
     const pending=listAssignedChatgptCpsContinuations(store,{limit:100});
     if(pending.some(x=>x.status==='needs_reconciliation'))return {hard_blocker:true};
-    const next=pending.find(x=>x.status==='ready');
+    const next=pending.find(x=>x.status==='ready'||
+      x.status==='pre_submit_recovery_ready');
     if(!next)return {objective_met:true};
     return {next_step_clear:true,next_step_allowed:true,
       continuation_id:next.continuation_id};
@@ -237,7 +301,8 @@ export async function runAssignedChatgptCpsBatch({store,admit,dispatch,max_steps
     (running.reason==='step_limit'&&left.length===0);
   return {ok:drained,status:drained?'queue_drained':running.reason,
     steps_completed:running.steps_completed,
-    pending_count:left.filter(x=>x.status==='ready').length,
+    pending_count:left.filter(x=>x.status==='ready'||
+      x.status==='pre_submit_recovery_ready').length,
     needs_reconciliation:left.filter(x=>x.status==='needs_reconciliation').length,
     autonomous_browser_worker:false, parent_packet_completed:false,
     events:running.events};

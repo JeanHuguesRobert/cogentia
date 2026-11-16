@@ -157,7 +157,8 @@ export async function runChatgptCpsResidentCycle({store,reconcile,env={},
     execute:parentJoinExecutor,max_parents:50,max_child_events:100});
   const assigned=listAssignedChatgptCpsContinuations(store,{limit:100});
   const next=listChatgptCpsNextSteps(store,{limit:100});
-  const overview={pending_assigned:assigned.filter(x=>x.status==='ready').length,
+  const overview={pending_assigned:assigned.filter(x=>
+    x.status==='ready'||x.status==='pre_submit_recovery_ready').length,
     assigned_needs_reconciliation:assigned.filter(x=>x.status==='needs_reconciliation').length,
     assigned_parked:assigned.filter(x=>x.status==='parked').length,
     pending_next_actions:next.filter(x=>x.status==='pending_admission').length,
@@ -207,7 +208,8 @@ export async function runChatgptCpsResidentCycle({store,reconcile,env={},
   const nextAfter=listChatgptCpsNextSteps(store,{limit:100});
   return {ok:true,status:steps>result.steps_completed?'dispatched_awaiting_return':result.status,
     ...common,steps_completed:steps,
-    pending_assigned:assignedAfter.filter(x=>x.status==='ready').length,
+    pending_assigned:assignedAfter.filter(x=>
+      x.status==='ready'||x.status==='pre_submit_recovery_ready').length,
     assigned_needs_reconciliation:assignedAfter.filter(x=>x.status==='needs_reconciliation').length,
     assigned_parked:assignedAfter.filter(x=>x.status==='parked').length,
     pending_next_actions:nextAfter.filter(x=>x.status==='pending_admission').length,

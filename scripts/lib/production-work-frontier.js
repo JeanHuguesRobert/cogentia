@@ -57,7 +57,8 @@ export function projectProductionWorkFrontier({store,localRecords=[]}={}){
   const assigned=listAssignedChatgptCpsContinuations(store,{limit:100});
   const wakes=listChatgptCpsWakes(store,{limit:100});
   const next=listChatgptCpsNextSteps(store,{limit:100});
-  const assignedReady=assigned.filter(c=>c.status==='ready');
+  const assignedReady=assigned.filter(c=>c.status==='ready'||
+    c.status==='pre_submit_recovery_ready');
   const wakeReady=wakes.filter(c=>c.status==='pending');
   const nextReady=next.filter(c=>c.status==='pending_admission');
   const unsafe=assigned.filter(c=>c.status==='needs_reconciliation').length+

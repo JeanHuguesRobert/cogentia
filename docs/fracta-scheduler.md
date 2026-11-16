@@ -550,3 +550,45 @@ The test suite verifies wrong/missing links, unknown versus confirmed
 browser deliveries, `Parked` without quarantine still blocking, cascaded
 cooling, idempotence, late returns, parent-only resume, independent
 second/third cohort jobs, and strict browser conversation separation.
+
+### Strictly proven *pre-submit* recovery (FBF, 2026-11-16)
+
+The preceding quarantine is intentionally irreversible without explicit
+consideration when the external delivery is truly unknown. A second observed
+failure mode, on the *next* reviewed public document's newly created browser
+root, is much narrower: the existing governed dispatcher returned the typed
+error `composer_not_ready`. Its implementation aborts **before** issuing any
+John `submit` action. The canonical ledger independently confirms that the
+original `chatgpt-turn:jhn-cps-submit-<continuation>` reservation is absent;
+only `ensure_tab` and `status` were recorded. A subsequent read-only browser
+inspection found the original newly created, exact-origin root compose area
+present, blank, editable and idle; the initial status had run before hydration
+was complete. This is **proven pre-submit failure**, not an ambiguous click.
+
+The CPS dispatcher now admits *exactly one* additional browser attempt for
+this narrow state. `inspectPreSubmitRecovery` requires **all** of:
+original dispatch intent; typed `delivery_unconfirmed` with exact
+`diagnostic_code=composer_not_ready`; no original John submit reservation;
+no confirmed browser click; no model return; no earlier recovery intent; and
+current runnable packet temperature. The existing signed mandate, issuer,
+provider permission, claim and budget are checked **again**, inside the
+existing serialized SQLite COP transaction. It writes a causal event
+`cop.continuation-browser-pre-submit-recovery/v1` with phase
+`pre_submit_recovery_intent` before touching the browser.
+
+The recovery uses *fresh deterministic John request IDs* ending
+`--recovery-1` for `ensure_tab`, `status` and `submit`; this prevents collision
+with the original, settled John preflight IDs. It uses the existing browser
+capability and the same core answer/return correlation ID, not a new provider
+or a second scheduler. When submitted, the single original CPS delivery
+receipt references the recovery intent. If the recovery itself is uncertain,
+its separate `delivery_unconfirmed` receipt blocks any further retry: **one
+recovery, no loop**. A confirmed or possibly invoked original submit can
+never take this path, regardless of whether its UI result is visible.
+
+This pre-submit path does **not** convert the earlier
+`ctn_chatgpt_browser_41f023c6f0492e434557a7d638fcc075` unknown-click
+incident into a safe retry; it remains parked with `retry_authorized:false`.
+The new pre-submit recovery is justified only by the stronger, separate
+negative evidence about the actual submit action. All steps remain accounted
+in the pre-existing COP budget and parent lineage.

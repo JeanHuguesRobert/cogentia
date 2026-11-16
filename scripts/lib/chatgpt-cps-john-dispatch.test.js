@@ -70,3 +70,26 @@ test('governed ensure_tab selects a dedicated tab without requiring a historical
   assert.equal(r.ok,true);
   assert.deepEqual(fake.calls,['ensure_tab','status','submit']);
 });
+
+
+test('pre-submit recovery has distinct canonical John request IDs without changing the browser capability',async()=>{
+ const calls=[];
+ const transport=async(_url,{body})=>{
+   const req=JSON.parse(body).params.arguments.request;
+   calls.push({id:req.request_id,action:req.input.arguments.action});
+   const a=req.input.arguments.action;
+   const obs=a==='ensure_tab'?{tab_id:72}:
+     a==='status'?{stable_composer:true,composer_blank:true,generating:false}:
+     {submitted:true,delivery_state:'ui_click_dispatched_not_model_result'};
+   return {ok:true,json:async()=>({result:{structuredContent:{ok:true,data:{
+     ok:true,text:JSON.stringify(obs),canonical_accounting:{settled_steps:2}}}}})};
+ };
+ const dispatch=createCpsGovernedJohnBrowserDispatch({token:'fixture',fetchImpl:transport});
+ const r=await dispatch({continuation_id:id,prompt:'safe same task, no original submit',
+   recovery_attempt:1});
+ assert.equal(r.ok,true);
+ assert.deepEqual(calls.map(x=>x.action),['ensure_tab','status','submit']);
+ assert.equal(calls.every(x=>x.id.endsWith('--recovery-1')),true);
+ assert.equal(new Set(calls.map(x=>x.id)).size,3);
+ assert.equal(calls.every(x=>x.id.length<=120),true);
+});
