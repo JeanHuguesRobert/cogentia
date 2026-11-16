@@ -35,9 +35,9 @@ sharing process internals or SQLite tables.
 Short form:
 
 ```text
-Cogentia owns the corpus.
-Magistral owns capability routing, including model routing.
-The boundary is an AI Router API.
+Cogentia owns the corpus, cognitive memory, mandates and CPS decisions.
+Magistral supplies substitutable capabilities: inference and byte custody.
+The boundaries are explicit, minimal contracts; standards are optional facades.
 ```
 
 ## Responsibilities
@@ -60,10 +60,40 @@ Magistral is responsible for:
 - ACP client and provider surfaces for explicitly exposed rich-agent sessions;
 - provider failover, local fallback and degraded modes;
 - provider health, metrics and traffic logs;
-- optional local operational cache.
+- optional local operational cache;
+- provider-neutral custody of immutable, content-addressed bytes, without
+  deciding what an agent should remember, forget, infer, or materialize.
 
 The two services may run on the same machine. They should still keep separate
 stores and talk through explicit APIs.
+
+## Object Memory Contract (experimental v0, 16 November 2026)
+
+The first code increment is published in Inseme at
+[Magistral Object Memory v0](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/magistral/docs/object-memory-v0.md)
+(commit fd0d7da). It is a small local Node.js library and CLI, NOT a new
+network service or an S3 server.
+
+- Object identity is the existing COP SHA-256 content reference, decoupled
+  from the physical storage location.
+- Providers only expose byte custody: immutable put and verified get.
+  A put can require N verified physical copies, with explicit warnings
+  that distinct directories are not independent failure domains.
+- v0 rejects paid or unknown-billing providers with mandatory zero
+  monetary budget. It requires an explicit absolute local storage path.
+- A successful storage receipt is evidence of observed bytes, NOT proof
+  of a Cogentia mandate, a cognitive task's completion, permanent storage,
+  offsite redundancy, or an authorization to delete an original.
+- Object choice, retention, provenance, epistemic assessment, CPS
+  continuations, reconciliation, and control-plane authority belong to
+  Cogentia/COP. Magistral's technical fallback never replaces these acts.
+- S3, Google Drive, Dropbox, and recipe-based materialization remain
+  potential optional adapters, deliberately not claimed as implemented.
+  Unsupported portions of an external standard must be advertised as such.
+
+This increment does not rewrite historic Git objects or alter existing
+COP artifact schemas. Existing content_ref and TraceRef identifiers are
+sufficient for future integration.
 
 ## AI Router Contract
 
