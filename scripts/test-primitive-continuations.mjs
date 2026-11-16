@@ -86,10 +86,18 @@ test('JSON migration is dry-run-first, idempotent and preserves legacy semantics
   const check=migrateJsonContinuations({source,dbPath:target,apply:false});
   assert.equal(check.candidates,1);
   assert.equal(check.imported,0);
+  // An archived JSON incarnation may reuse the same logical ID while
+  // containing a different status or payload. Preserve both sources.
+  writeFileSync(join(source,'ctn_legacy_case_archive.json'),
+    JSON.stringify({...raw,status:'completed',message:{prompt:'previous'}}));
   const first=migrateJsonContinuations({source,dbPath:target,apply:true});
   assert.equal(first.imported,1);
+  assert.equal(first.variants,1);
+  assert.equal(first.source_versions,2);
+  assert.equal(first.conflicts.length,0);
   const repeat=migrateJsonContinuations({source,dbPath:target,apply:true});
   assert.equal(repeat.already_imported,1);
+  assert.equal(repeat.variants,1);
   const destination=createPrimitiveContinuationStore(target);
   try{
     const row=destination.get(raw.id);
@@ -97,6 +105,7 @@ test('JSON migration is dry-run-first, idempotent and preserves legacy semantics
     assert.equal(row.kind,'human_attention_request');
     assert.deepEqual(row.body.original,raw);
     assert.equal(destination.events(raw.id).length,1);
+    assert.equal(destination.sources(raw.id).length,2);
   }finally{destination.close()}
   writeFileSync(join(source,'ctn_legacy_case.json'),JSON.stringify({...raw,message:'mutated'}));
   const conflict=migrateJsonContinuations({source,dbPath:target,apply:true});
