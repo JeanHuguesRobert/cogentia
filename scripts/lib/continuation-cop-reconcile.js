@@ -14,7 +14,7 @@ import { isResolvedCallerAuth } from "./cogentia-mcp-auth.js";
 import { currentPacketClaim } from "./continuation-packet-claim.js";
 import { isClaimExpired } from "../../../inseme/packages/cop-core/src/packet-coordination.js";
 import {
-  recoverClaimedResolution, inspectContinuationPacketCoordination,
+  recoverClaimedResolution, inspectContinuationPacketCoordination, continuationRevision,
 } from "./continuation-terminal-settlement.js";
 
 const hash=value=>createHash("sha256").update(value).digest("hex");
@@ -82,13 +82,12 @@ export function reconcileJohnCopSettlement(root,id,{
     return refuse("COP_RESERVATION_RELEASED");
   if(ledger.snapshot().budget_id!==b.budget_id)
     return refuse("COP_LEDGER_IDENTITY_MISMATCH");
-  const file=path.join(root,".cogentia","continuations",id+".json");
-  const body=fs.readFileSync(file,"utf8");
+  const currentHash=continuationRevision(root,id);
   const desired=intent.settlement.desired_json;
   if(hash(desired)!==intent.settlement.result_sha256)
     return refuse("CORRUPT_TERMINAL_INTENT");
-  if(hash(body)!==intent.settlement.baseline_sha256 &&
-     hash(body)!==intent.settlement.result_sha256)
+  if(currentHash!==intent.settlement.baseline_sha256 &&
+     currentHash!==intent.settlement.result_sha256)
     return refuse("TERMINAL_REVISION_CONFLICT");
   // An existing receipt is checked, not trusted blindly.
   const before=inspectContinuationPacketCoordination(root,id);
