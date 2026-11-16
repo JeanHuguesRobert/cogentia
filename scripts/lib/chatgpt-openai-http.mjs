@@ -1,4 +1,4 @@
-/** Minimal authenticated loopback HTTP adapter, with machine-local continuations. */
+/** Provider-neutral authenticated loopback OpenAI HTTP adapter. */
 import http from 'node:http';
 import {timingSafeEqual} from 'node:crypto';
 
@@ -31,17 +31,18 @@ function emitSse(res,completion){
   res.end('data: [DONE]\n\n');
 }
 /** No internal scheduler: complete only assigns and waits on the shared store. */
-export function createChatgptOpenAiHttpServer({complete,key,maxInflight=4,localStatus}={}){
+export function createOpenAiConversationHttpServer({complete,key,maxInflight=4,localStatus,
+  model='chatgpt-browser'}={}){
   if(typeof complete!=='function'||typeof key!=='string'||key.length<16)
     throw Error('local_provider_authentication_required');
   let inflight=0;
   return http.createServer(async(req,res)=>{
     if(req.method==='GET'&&req.url==='/health')return writeJson(res,200,{
-      service:'chatgpt-browser-openai-provider',ok:true,mode:'local_browser_adapter',
+      service:'conversation-openai-provider',model,ok:true,mode:'local_conversation_adapter',
       browser_delivery_verified:false});
     if(!validBearer(req.headers.authorization,key))return writeJson(res,401,{error:{type:'authentication_error',code:'invalid_api_key'}});
     if(req.method==='GET'&&req.url==='/v1/models')return writeJson(res,200,{object:'list',data:[{
-      id:'chatgpt-browser',object:'model',owned_by:'local-chatgpt-provider',capabilities:['text']}]});
+      id:model,object:'model',owned_by:'local-conversation-adapter',capabilities:['text']}]});
     if(req.method==='GET'&&/^\/v1\/continuations\/local_[a-f0-9]{32}$/.test(req.url||'')){
       const id=req.url.split('/').at(-1);
       const row=typeof localStatus==='function'?localStatus(id):null;
@@ -60,7 +61,7 @@ export function createChatgptOpenAiHttpServer({complete,key,maxInflight=4,localS
     res.on('close',()=>{disconnected=true});
     try{
       const completion=await complete(body,{legacy,client_request_id:req.headers['x-client-request-id'],
-        call_chain:req.headers['x-cogentia-call-chain']});
+        call_chain:req.headers['x-continuation-call-chain']||req.headers['x-cogentia-call-chain']});
       if(disconnected)return;
       if(completion.status===200&&body.stream===true&&!legacy)return emitSse(res,completion.body);
       return writeJson(res,completion.status,completion.body);
@@ -68,3 +69,6 @@ export function createChatgptOpenAiHttpServer({complete,key,maxInflight=4,localS
     finally{inflight--}
   });
 }
+
+export const createChatgptOpenAiHttpServer=options=>
+  createOpenAiConversationHttpServer({...options,model:'chatgpt-browser'});
