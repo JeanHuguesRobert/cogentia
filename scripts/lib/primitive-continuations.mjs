@@ -172,7 +172,7 @@ export function createPrimitiveContinuationStore(path){
       return content?{...content,sha256:hash(content)}:null;
     }catch(e){db.exec('ROLLBACK');throw e}
   }
-  function importSnapshot(envelope,{scope=null}={}){
+  function validatedSnapshot(envelope,{scope=null}={}){
     if(!envelope||envelope.format!=='primitive-continuation-snapshot/v1')throw Error('invalid_snapshot');
     const {sha256,...content}=envelope;
     if(hash(content)!==sha256)throw Error('snapshot_checksum_mismatch');
@@ -188,6 +188,10 @@ export function createPrimitiveContinuationStore(path){
        content.history.some((h,i)=>h?.revision!==i||
          !validString(h.verb)||!validString(h.new_status)||!validString(h.created_at)))
       throw Error('invalid_snapshot_history');
+    return {c,content,sha256,targetScope};
+  }
+  function importSnapshot(envelope,{scope=null}={}){
+    const {c,content,sha256,targetScope}=validatedSnapshot(envelope,{scope});
     return transaction(()=>{
       const existing=get(c.id);
       if(existing){
@@ -215,6 +219,91 @@ export function createPrimitiveContinuationStore(path){
       return {ok:true,existing:false,row:get(c.id)};
     });
   }
+  /**
+   * Causal merge of a newer portable snapshot into an already-existing
+   * LOCAL continuation. This is a state reconciliation, NOT a distributed
+   * ownership transfer or authority grant. Never replays external effects.
+   *
+   * A matching causal prefix can advance the local state by CAS; incompatible
+   * branches are retained as content-addressed evidence, not overwritten.
+   */
+  function reconcileSnapshot(envelope,{scope=null,preserveDivergence=true}={}){
+    const {c,content,sha256}=validatedSnapshot(envelope);
+    if(scope!==null&&!validString(scope))throw Error('invalid_snapshot_scope');
+    return transaction(()=>{
+      const existing=get(c.id);
+      if(!existing)return {ok:false,code:'not_found'};
+      if(scope!==null&&scope!==existing.scope)
+        return {ok:false,code:'local_scope_mismatch',current:existing};
+      const divergent=reason=>{
+        if(!preserveDivergence)return {ok:false,code:reason,current:existing};
+        const ref='divergent-snapshot:sha256:'+sha256;
+        const prior=sourceGet.get(c.id,ref);
+        if(!prior)sourceInsert.run(c.id,ref,sha256,json(envelope));
+        return {ok:false,code:reason,preserved:true,
+          already_preserved:!!prior,source_ref:ref,current:existing};
+      };
+      if(existing.creation_hash!==c.creation_hash||existing.kind!==c.kind||
+         existing.idempotency_key!==c.idempotency_key||
+         existing.request_hash!==c.request_hash||
+         existing.origin_ref!==c.origin_ref)
+        return divergent('snapshot_identity_conflict');
+      const local=snapshotContent(c.id);
+      const overlap=Math.min(local.history.length,content.history.length);
+      if(!local.history.slice(0,overlap).every((event,i)=>
+         json(event)===json(content.history[i])))
+        return divergent('causal_divergence');
+      if(c.revision<existing.revision)
+        return {ok:false,code:'stale_snapshot',current:existing};
+      if(c.revision===existing.revision&&
+         (c.status!==existing.status||json(c.body)!==json(existing.body)))
+        return divergent('snapshot_state_conflict');
+      // Verify the union of memo slots and historical source records BEFORE
+      // changing state. Identical keys with incompatible dependencies never
+      // overwrite one another.
+      for(const slot of content.slots){
+        if(!validString(slot.slot)||!validString(slot.input_hash))
+          throw Error('invalid_snapshot_slot');
+        const old=slotSelect.get(c.id,slot.slot);
+        if(old&&(old.input_hash!==slot.input_hash||
+           old.result_json!==json(slot.result)))
+          return divergent('memo_slot_conflict');
+      }
+      for(const source of content.sources){
+        if(!validString(source.source_ref)||!validString(source.source_hash))
+          throw Error('invalid_snapshot_source');
+        const old=sourceGet.get(c.id,source.source_ref);
+        if(old&&(old.source_hash!==source.source_hash||
+           old.payload_json!==json(source.payload)))
+          return divergent('snapshot_source_conflict');
+      }
+      if(c.revision>existing.revision){
+        const changed=db.prepare(`UPDATE primitive_continuations
+          SET status=?,body_json=?,revision=?,updated_at=CURRENT_TIMESTAMP
+          WHERE id=? AND revision=?`)
+          .run(c.status,json(c.body),c.revision,c.id,existing.revision);
+        if(changed.changes!==1)
+          return {ok:false,code:'revision_conflict',current:get(c.id)};
+        for(const ev of content.history.slice(existing.revision+1))
+          eventWithTime.run(c.id,ev.revision,ev.verb,ev.old_status,
+            ev.new_status,json(ev.detail),ev.created_at);
+      }
+      let mergedSlots=0,mergedSources=0;
+      for(const slot of content.slots){
+        const put=slotInsert.run(c.id,slot.slot,slot.input_hash,json(slot.result));
+        mergedSlots+=put.changes;
+      }
+      for(const source of content.sources){
+        const put=sourceInsert.run(c.id,source.source_ref,source.source_hash,
+          json(source.payload));
+        mergedSources+=put.changes;
+      }
+      return {ok:true,advanced:c.revision>existing.revision,
+        existing:c.revision===existing.revision,
+        from_revision:existing.revision,row:get(c.id),
+        merged_slots:mergedSlots,merged_sources:mergedSources};
+    });
+  }
   function recoverInterrupted({kind='primitive',scope=null,from='running',to='uncertain'}={}){
     if(![kind,from,to].every(validString))throw Error('invalid_recovery_filter');
     return transaction(()=>{
@@ -227,7 +316,7 @@ export function createPrimitiveContinuationStore(path){
     });
   }
   return {path:filename,get,getByKey:key=>unpack(byKey.get(key)),create,compareAndSwap,
-    claim,remember,snapshot,importSnapshot,recoverInterrupted,attachSource,sources,
+    claim,remember,snapshot,importSnapshot,reconcileSnapshot,recoverInterrupted,attachSource,sources,
     events:id=>eventsFor.all(id).map(r=>({...r,detail:parse(r.detail_json)})),
     list({status=null,kind=null,limit=200}={}){
       const rows=db.prepare('SELECT * FROM primitive_continuations WHERE (? IS NULL OR status=?) AND (? IS NULL OR kind=?) ORDER BY created_at,id LIMIT ?')
