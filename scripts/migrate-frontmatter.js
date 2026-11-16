@@ -19,6 +19,7 @@
  */
 
 import fs from "fs";
+import {continuationRepository} from "./lib/continuation-sqlite-repository.mjs";
 import path from "path";
 
 const DEFAULT_TWEESIC_ROOT = "C:\\tweesic";
@@ -96,9 +97,7 @@ function findRegistryPath(explicitRoot) {
 
 function getContinuationsDir(registryPath) {
   if (!registryPath) return null;
-  const dir = path.join(path.dirname(registryPath), ".cogentia", "continuations");
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  return dir;
+  return continuationRepository(path.dirname(registryPath)).path;
 }
 
 function generateContinuationId() {
@@ -144,8 +143,8 @@ function emitContinuation(registryPath, fileRel, repo, reasons, snapshot, legacy
       hint: "Voir research/agent_resumable_cli.md et la section CONTINUATION PROTOCOL dans scripts/cogentia.js",
     },
   };
-  const filePath = path.join(contDir, `${id}.json`);
-  fs.writeFileSync(filePath, JSON.stringify(continuation, null, 2) + "\n", "utf8");
+  continuationRepository(path.dirname(registryPath)).save(continuation);
+  const filePath=`sqlite:${contDir}#${id}`;
   return { emitted: true, id, file: filePath };
 }
 
