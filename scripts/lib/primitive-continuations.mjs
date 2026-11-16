@@ -190,10 +190,10 @@ export function createPrimitiveContinuationStore(path){
       return {ok:true,existing:false,row:get(c.id)};
     });
   }
-  function recoverInterrupted({kind='primitive',from='running',to='uncertain'}={}){
+  function recoverInterrupted({kind='primitive',scope=null,from='running',to='uncertain'}={}){
     if(![kind,from,to].every(validString))throw Error('invalid_recovery_filter');
     return transaction(()=>{
-      const rows=db.prepare('SELECT id,revision FROM primitive_continuations WHERE kind=? AND status=?').all(kind,from);
+      const rows=db.prepare('SELECT id,revision FROM primitive_continuations WHERE kind=? AND status=? AND (? IS NULL OR scope=?)').all(kind,from,scope,scope);
       for(const row of rows){
         transitionWithin(row.id,row.revision,{status:to,verb:'recover_interrupted',
           detail:{reason:'previous_runner_outcome_unknown'}});
