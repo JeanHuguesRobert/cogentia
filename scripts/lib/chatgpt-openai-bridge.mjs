@@ -64,7 +64,13 @@ export function createChatgptOpenAiBridge({store,runTurn,clock=()=>Date.now()}={
       normalized.error,normalized.error);
     const key=typeof client_request_id==='string'&&/^[a-zA-Z0-9_.:-]{1,128}$/.test(client_request_id)
       ?client_request_id:randomUUID();
-    const hash=createHash('sha256').update(JSON.stringify({body,legacy})).digest('hex');
+    // Routing lineage is transport context, not part of the semantic
+    // request. A suspended invocation must be resumable after the parent
+    // ChatGPT turn ends and its call-chain marker is no longer present.
+    const semantic={...body};
+    delete semantic._cogentia_call_chain;
+    delete semantic._client_request_id;
+    const hash=createHash('sha256').update(JSON.stringify({body:semantic,legacy})).digest('hex');
     const inserted=store.enqueue({key,hash,question:normalized.question});
     if(!inserted.ok)return error(409,inserted.error,inserted.error);
     const row=inserted.row;
