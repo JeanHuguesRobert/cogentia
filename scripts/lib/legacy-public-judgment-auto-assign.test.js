@@ -117,7 +117,22 @@ test('two-slot cohort: one unresolved at a time, no reallocation after restart',
   const final=await autoAssignPublicLegacyJudgment({store:reopened,
     registryRoot:f.root,localDbPath:f.legacyFile,sourceRoot:f.root,
     admit:f.admit,prepare:f.prepare,enabled:true});
-  assert.equal(final.status,'cohort_exhausted');assert.equal(final.assigned,0);
+  assert.equal(final.status,'browser_turn_in_flight');assert.equal(final.assigned,0);
+  const child2='continuation:'+second.cps_child_id;
+  assert.equal(reopened.append({topic_id:child2,event_type:'cop.event/v1',
+    actor_id:'cop:test',subject_ref:child2,epistemic_status:'observed',
+    idempotency_key:'returned:second',payload:{profile:'cop.continuation-result/v1',
+      phase:'returned'}}).ok,true);
+  assert.equal(reopened.append({topic_id:'continuation:'+second.legacy_id,
+    event_type:'cop.event/v1',actor_id:'cop:cas',
+    subject_ref:'continuation:'+second.legacy_id,epistemic_status:'observed',
+    idempotency_key:'resolved:second',payload:{
+      profile:'cogentia.legacy-continuation-settlement/v1',
+      phase:'local_resolution_confirmed'}}).ok,true);
+  const complete=await autoAssignPublicLegacyJudgment({store:reopened,
+    registryRoot:f.root,localDbPath:f.legacyFile,sourceRoot:f.root,
+    admit:f.admit,prepare:f.prepare,enabled:true});
+  assert.equal(complete.status,'cohort_exhausted');assert.equal(complete.assigned,0);
   assert.equal(f.store.replay().filter(e=>
     e.payload?.profile==='cogentia.legacy-public-auto-assignment/v1').length,2);
   assert.equal(reopened.auditCommitments().ok,true);

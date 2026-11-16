@@ -66,11 +66,13 @@ export function inspectAutoPublicLegacyJudgment({store,localRecords=[],
   if(typeof store?.replay!=='function'||!Array.isArray(localRecords))
     return {ok:false,status:'invalid_auto_assignment_inputs'};
   const intents=autoIntents(store);
-  if(intents.length>=MAX_COHORT)return {ok:true,status:'cohort_exhausted',
-    total_auto_assignments:intents.length,eligible:0};
+  // A full cohort is NOT necessarily a completed cohort: preserve the
+  // in-flight/reconciliation status until its last child actually returns.
   const blocker=outstanding(store,null,declared(store));
   if(blocker)return {ok:true,status:blocker,total_auto_assignments:intents.length,
     eligible:0};
+  if(intents.length>=MAX_COHORT)return {ok:true,status:'cohort_exhausted',
+    total_auto_assignments:intents.length,eligible:0};
   // Check all existing CPS outcomes, not only the legacy subset. If a browser
   // intent was committed without a reliable receipt it must be reconciled,
   // never hidden behind a new assignment.
