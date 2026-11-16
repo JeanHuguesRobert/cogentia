@@ -113,26 +113,24 @@ try {
   continuationRepository(root).save(external);
   assert.equal(recoverClaimedResolution(root,fourth.id).code,"BASELINE_CHANGED_AFTER_PREPARE");
   assert.equal(cli("inspect",fourth.id).continuation.updated_at,"synthetic_out_of_band_change");
-  // Deterministic race: a competing future-time reclaim publishes epoch+1
-  // between terminal validation and the final hard-link operation.
+  // SQLite serializes the short epoch-commit boundary. The previous
+  // filesystem hard-link race was possible between precheck and publication;
+  // a concurrent reclaim cannot publish an epoch during this transaction.
   const fifth=cli("emit","--kind","judgment","--question","CAS race fixture").continuation;
   const timed=acquirePacketClaim(root,fifth.id,"claimant-a",{leaseMs:100}).claim;
   let checked=0;
-  const compete=prepareTerminalEpoch(root,fifth.id,timed,{marker:"synthetic"},{
-    checkBaseline:()=>{
-      checked++;
-      if(checked===2) {
-        const reclaimed=acquirePacketClaim(root,fifth.id,"claimant-b",{
-          leaseMs:30000,now:new Date(Date.now()+1000),
-        });
-        assert.equal(reclaimed.claimed,true);
-      }
-      return true;
-    },
+  const prepared=prepareTerminalEpoch(root,fifth.id,timed,{marker:"synthetic"},{
+    checkBaseline:()=>{checked++;return true;},
   });
-  assert.equal(compete.ok,false);
-  assert.equal(compete.code,"TERMINAL_RACE_LOST");
-  assert.equal(currentPacketClaim(root,fifth.id).handler_ref,"claimant-b");
+  assert.equal(prepared.ok,true);
+  assert.equal(prepared.code,"SETTLEMENT_PREPARED");
+  assert.equal(checked,1);
+  assert.equal(currentPacketClaim(root,fifth.id).status,"settlement_prepared");
+  const late=acquirePacketClaim(root,fifth.id,"claimant-b",{
+    leaseMs:30000,now:new Date(Date.now()+1000),
+  });
+  assert.equal(late.claimed,false);
+  assert.equal(late.code,"TERMINAL_SETTLEMENT_PENDING");
   const sixth=cli("emit","--kind",LATENT_SOVEREIGN_KIND,
     "--question","Synthetic side-effectful materialization").continuation;
   const unsafeClaim=acquirePacketClaim(root,sixth.id,"judge-b",{leaseMs:20000}).claim;
