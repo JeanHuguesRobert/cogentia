@@ -3,6 +3,7 @@
 // Emits two privacy domains: public (publishable) and private (workspace-only).
 
 import fs from "node:fs";
+import {continuationRepository} from "./continuation-sqlite-repository.mjs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import {
@@ -42,6 +43,7 @@ export async function runWeeklyConsolidation(options = {}) {
   const nextYear = weekNumber === 52 ? year + 1 : year;
   const nextSprintTag = `${nextYear}-W${String(nextWeekNumber).padStart(2, "0")}`;
   const monorepo = defaultMonorepoRepos(root);
+  const continuationStore=continuationRepository(root);
 
   // This is a WEEKLY pipeline (rewrites the digest for the current ISO week
   // and fans out llms.txt to every registered repo). A caller invoking it
@@ -58,7 +60,6 @@ export async function runWeeklyConsolidation(options = {}) {
     path.join(root, ".cogentia", "projections", "llms.txt"),
     path.join(root, ".cogentia", "projections", "llms-full.txt"),
     path.join(root, "docs", "registry.json"),
-    path.join(root, ".cogentia", "continuations", `ctn_weekly_consolidation_${nextSprintTag}.json`),
   ];
   if (options.fanOut !== false) {
     for (const repo of filterReposForView(monorepo, PUBLIC_VIEW)) {
@@ -67,13 +68,14 @@ export async function runWeeklyConsolidation(options = {}) {
       requiredOutputs.push(path.join(repoDir, "llms.txt"), path.join(repoDir, "llms-full.txt"));
     }
   }
-  let completedPacket = null;
-  try {
-    completedPacket = JSON.parse(fs.readFileSync(path.join(root, ".cogentia", "continuations", "ctn_weekly_consolidation.json"), "utf8"));
-  } catch { /* A missing or malformed completion packet requires recovery. */ }
+  // The packet is identified by its durable logical ID, not by a
+  // mutable historical filename alias such as ctn_weekly_consolidation.json.
+  const completedPacket=continuationStore.load(`ctn_weekly_consolidation_${sprintTag}`);
+  const scheduledNext=continuationStore.load(`ctn_weekly_consolidation_${nextSprintTag}`);
   const complete = completedPacket?.id === `ctn_weekly_consolidation_${sprintTag}`
     && completedPacket.status === "completed"
     && completedPacket.execution_steps_completed === 5
+    && scheduledNext !== null
     && requiredOutputs.every(file => fs.existsSync(file) && fs.statSync(file).isFile() && fs.statSync(file).size > 0);
   if (!options.force && complete) {
     return {
@@ -210,9 +212,7 @@ export async function runWeeklyConsolidation(options = {}) {
   console.log(`✓ PRIVATE digest → ${privateDigestPath}`);
 
   // 3. Register Consolidation Cognitive Packet Descriptor
-  const ctnPath = path.join(root, ".cogentia", "continuations", "ctn_weekly_consolidation.json");
-  const ctnDir = path.dirname(ctnPath);
-  if (!fs.existsSync(ctnDir)) fs.mkdirSync(ctnDir, { recursive: true });
+  const ctnPath=`sqlite:${continuationStore.path}#ctn_weekly_consolidation_${sprintTag}`;
 
   const consolidationPacket = {
     id: `ctn_weekly_consolidation_${sprintTag}`,
@@ -253,10 +253,14 @@ export async function runWeeklyConsolidation(options = {}) {
     serendipity_ledger_count: highSignalDownloads.length,
     continuation_scheduled: `CPKT-${nextSprintTag}-CONSOLIDATION`
   };
-  fs.writeFileSync(ctnPath, JSON.stringify(consolidationPacket, null, 2) + "\n", "utf8");
+  const priorCompleted=continuationStore.load(consolidationPacket.id);
+  if(priorCompleted){
+    Object.assign(priorCompleted,consolidationPacket);
+    continuationStore.save(priorCompleted);
+  }else continuationStore.save(consolidationPacket);
 
   // 4. Auto-Schedule Next Week's Consolidation Mission Packet
-  const nextCtnPath = path.join(root, ".cogentia", "continuations", `ctn_weekly_consolidation_${nextSprintTag}.json`);
+  const nextCtnPath=`sqlite:${continuationStore.path}#ctn_weekly_consolidation_${nextSprintTag}`;
   const scheduledNextPacket = {
     id: `ctn_weekly_consolidation_${nextSprintTag}`,
     packet_id: `CPKT-${nextSprintTag}-CONSOLIDATION`,
@@ -273,7 +277,9 @@ export async function runWeeklyConsolidation(options = {}) {
       continuation_parent: `CPKT-${sprintTag}-CONSOLIDATION`
     }
   };
-  fs.writeFileSync(nextCtnPath, JSON.stringify(scheduledNextPacket, null, 2) + "\n", "utf8");
+  // Never reset an already advanced or completed next-week packet.
+  if(!continuationStore.load(scheduledNextPacket.id))
+    continuationStore.save(scheduledNextPacket);
 
   console.log(`✓ Current Consolidation Packet completed: ${ctnPath}`);
   console.log(`✓ Next Sprint Consolidation Packet scheduled [${nextSprintTag}]: ${nextCtnPath}`);
