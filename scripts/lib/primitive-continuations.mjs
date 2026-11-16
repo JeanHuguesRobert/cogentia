@@ -159,8 +159,19 @@ export function createPrimitiveContinuationStore(path){
       return {ok:true,existing:false,row:get(c.id)};
     });
   }
+  function recoverInterrupted({kind='primitive',from='running',to='uncertain'}={}){
+    if(![kind,from,to].every(validString))throw Error('invalid_recovery_filter');
+    return transaction(()=>{
+      const rows=db.prepare('SELECT id,revision FROM primitive_continuations WHERE kind=? AND status=?').all(kind,from);
+      for(const row of rows){
+        transitionWithin(row.id,row.revision,{status:to,verb:'recover_interrupted',
+          detail:{reason:'previous_runner_outcome_unknown'}});
+      }
+      return rows.length;
+    });
+  }
   return {path:filename,get,getByKey:key=>unpack(byKey.get(key)),create,compareAndSwap,
-    claim,remember,snapshot,importSnapshot,
+    claim,remember,snapshot,importSnapshot,recoverInterrupted,
     events:id=>eventsFor.all(id).map(r=>({...r,detail:parse(r.detail_json)})),
     list({status=null,kind=null,limit=200}={}){
       const rows=db.prepare('SELECT * FROM primitive_continuations WHERE (? IS NULL OR status=?) AND (? IS NULL OR kind=?) ORDER BY created_at,id LIMIT ?')
