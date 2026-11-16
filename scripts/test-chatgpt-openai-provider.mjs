@@ -57,7 +57,8 @@ test('reentrant call suspends locally and resumes without duplicating the origin
   }});
   const first=complete(input('outer'),{client_request_id:'outer'});
   await new Promise(r=>setTimeout(r,0));
-  const nested=await complete(input('inner'),{client_request_id:'inner',
+  const nested=await complete({...input('inner'),_cogentia_call_chain:'chatgpt-browser,cogentia-mcp',
+    _client_request_id:'inner'},{client_request_id:'inner',
     call_chain:'chatgpt-browser,cogentia-mcp'});
   assert.equal(nested.status,409);
   assert.equal(nested.body.error.code,'local_continuation_required');
