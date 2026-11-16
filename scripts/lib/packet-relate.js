@@ -1,5 +1,6 @@
 /** Read-only candidate packet attachment. No new packet, mutation or authority. */
 import fs from 'node:fs';
+import {continuationRepository} from './continuation-sqlite-repository.mjs';
 import path from 'node:path';
 
 const STOP = new Set('the and for from with that this have into about work issue notes source status title type should would after before when where which comme dans pour avec cette sont plus nous vous mais sans donc aussi cela dont chaque tout leur tres etre avoir vers elle entre puis parce cette ses des les une aux par sur est ont qui que un du de la le en au ce et ou pas its not are was one can may our new use all any has why how what when been work possible possible'.split(' '));
@@ -20,9 +21,18 @@ function enumerate(base, depth, out, max=3500){
 }
 function candidates(root){
   const files=[];
-  // Packet sources, live and completed continuations, issue packets. Nothing else.
-  for(const p of ['.cogentia/continuations','.cogentia/issues','research'])enumerate(path.join(root,p),p==='research'?1:3,files);
-  return files;
+  // Canonical continuations are now SQLite records, not JSON files.
+  for(const p of ['.cogentia/issues','research'])
+    enumerate(path.join(root,p),p==='research'?1:3,files);
+  const store=continuationRepository(root);
+  const continuations=store.list({limit:3500}).map(c=>({
+    virtual:true,rel:`continuation:${c.id}`,file:`sqlite:${c.id}.json`,
+    content:JSON.stringify({
+      id:c.id,packet_id:c.packet_id,title:c.title,subject:c.subject,
+      status:c.status,kind:c.kind,visibility:c.visibility,
+    }),
+  }));
+  return [...files,...continuations];
 }
 function meta(text,file){
   if (file.endsWith('.json')) {
@@ -40,12 +50,13 @@ export function relatePacket({text,roots=[],limit=6,source='inline',maxFiles=350
   const found=[],seen=new Set();let scanned=0,read=0;
   for(const rootArg of roots){
     const root=path.resolve(rootArg);
-    for(const file of candidates(root).slice(0,maxFiles)){
+    for(const item of candidates(root).slice(0,maxFiles)){
       scanned++;
-      const rel=path.relative(root,file);
+      const file=typeof item==='string'?item:item.file;
+      const rel=typeof item==='string'?path.relative(root,file):item.rel;
       const key=`${root}/${rel}`;
       if(seen.has(key))continue;seen.add(key);
-      const content=safeRead(file);
+      const content=typeof item==='string'?safeRead(file):item.content;
       if(!content)continue;read++;
       // Never rediscover the Judgment Continuation this command just emitted:
       // doing so changes the candidate set and defeats content-addressed deduplication.
