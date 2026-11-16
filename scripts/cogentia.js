@@ -16867,7 +16867,7 @@ function formatIssueList(repo, issues, state) {
 function continuationSchema() {
   return {
     protocol: CONTINUATION_PROTOCOL,
-    storage: "<registry-root>/.cogentia/continuations/<ctn_id>.json",
+    storage: "host-local SQLite: ~/.local/state/cogentia/continuations/<registry-root-hash>.sqlite",
     statuses: [...CONTINUATION_STATUSES],
     liveness: {
       alive: [...CONTINUATION_LIVENESS.alive],
