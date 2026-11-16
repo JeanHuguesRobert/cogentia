@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync,rmSync} from 'node:fs';
 import {join} from 'node:path';
+import {spawnSync} from 'node:child_process';
 import {tmpdir} from 'node:os';
 import {createPrimitiveContinuationStore} from './lib/primitive-continuations.mjs';
 
@@ -80,3 +81,46 @@ test('identity mismatch and invalid checksum never silently advance work',()=>pa
   assert.equal(a.reconcileSnapshot(snapshot,{scope:'different'}).code,'local_scope_mismatch');
   assert.equal(a.get(id).revision,0);
 }));
+
+test('local CLI exports, imports and reconciles without changing transport policy',()=>{
+  const dir=mkdtempSync(join(tmpdir(),'cps-cli-test-'));
+  const a=join(dir,'a.sqlite'),b=join(dir,'b.sqlite');
+  const exportA=join(dir,'outbound.json'),exportB=join(dir,'return.json');
+  const cli=join(import.meta.dirname,'ops','continuation-snapshot-local.mjs');
+  const run=(action,...args)=>{
+    const r=spawnSync(process.execPath,[cli,action,...args],{encoding:'utf8'});
+    assert.equal(r.status,0,r.stderr||r.stdout);
+    return JSON.parse(r.stdout);
+  };
+  try{
+    const source=createPrimitiveContinuationStore(a);
+    source.create({id:'ctn_cli_smoke',scope:'fracta2',body:{step:0}});
+    source.remember('ctn_cli_smoke','compute','input:1',{answer:42});
+    source.compareAndSwap('ctn_cli_smoke',0,
+      {status:'parked',body:{step:1},verb:'park'});
+    source.close();
+    assert.equal(run('export','--db',a,'--id','ctn_cli_smoke',
+      '--out',exportA).revision,1);
+    assert.equal(run('import','--db',b,'--in',exportA,
+      '--scope','thinkpad').ok,true);
+    const remote=createPrimitiveContinuationStore(b);
+    assert.equal(remote.compareAndSwap('ctn_cli_smoke',1,
+      {status:'suspended',body:{step:2},verb:'resume'}).ok,true);
+    remote.close();
+    assert.equal(run('export','--db',b,'--id','ctn_cli_smoke',
+      '--out',exportB).revision,2);
+    assert.equal(run('reconcile','--db',a,'--in',exportB,
+      '--scope','fracta2').advanced,true);
+    assert.equal(run('reconcile','--db',a,'--in',exportB,
+      '--scope','fracta2').existing,true);
+    const result=createPrimitiveContinuationStore(a);
+    try{
+      assert.equal(result.get('ctn_cli_smoke').revision,2);
+      assert.equal(result.remember('ctn_cli_smoke','compute',
+        'input:1',{answer:0}).result.answer,42);
+    }finally{result.close()}
+    const forbidden=spawnSync(process.execPath,[cli,'export','--db',a,
+      '--id','ctn_cli_smoke','--out',exportA],{encoding:'utf8'});
+    assert.notEqual(forbidden.status,0,'existing output must never be overwritten');
+  }finally{rmSync(dir,{recursive:true,force:true})}
+});
