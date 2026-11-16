@@ -234,3 +234,39 @@ JudgmentHandler and semantic-search contracts to selected legacy
 continuations, after checking provider capability, mandate, budget and
 relevance against their up-to-date sources; rollout one child per cycle
 before broadening the bounded drain.
+
+### First governed legacy → CPS pilot (public document role, #194)
+
+The bounded, reusable admission bridge
+`scripts/lib/legacy-public-judgment-cps.js` takes one **active** host-local
+`index.document_role_judgment` continuation, checks its structured-response
+contract, validates a public `cogentia` repository-relative Markdown path,
+requires that the source content match `origin/main` **byte for byte**, and
+prepares one *self-contained* JudgmentHandler question. It never transfers
+unpublished drafts, untracked files, symlink escapes, secret questions or
+private repositories to a model.
+
+```bash
+# Read-only preview; no budget reservation, no browser request:
+node scripts/ops/promote-public-legacy-judgment.mjs --id=ctn_...
+# Actual one-task COP declaration (only if mandate and budget authorize):
+node scripts/ops/promote-public-legacy-judgment.mjs --id=ctn_... --apply
+```
+
+`--apply` calls the **already-existing** signed-v5
+`prepareAssignedChatgptCpsContinuation`, whose idempotent CPS continuation
+gets its own COP PacketClaim and one execution-budget reservation. It then
+links that child to the original legacy continuation topic and registers an
+ordinary `all` join. The **resident** assigned-browser worker remains the
+only authorized provider dispatcher: preparing does not send a browser turn.
+The resulting answer stays an inspectable returned child; the older legacy
+continuation is **not** marked resolved until a later handler verifies the
+schema-specific `decision` and `reason`, preserves provenance and performs a
+CAS update in the local continuation SQLite. Do not confuse an LLM answer or
+`handler_completed` with approval of a document's visibility classification.
+
+This deliberately starts with a single *already published public document*,
+not bulk promotion of hundreds of private or ambiguous documents. Broader
+promotion depends on evidence of task relevance, provider correctness,
+privacy, mandate and budget per candidate. The provider permissions are
+independent of having a browser connector technically reachable.
