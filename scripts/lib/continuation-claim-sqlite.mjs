@@ -87,8 +87,13 @@ export function putTerminalReceipt(root,continuationId,receipt){
         WHERE continuation_id=?`).get(safe));
       if(existing){
         db.exec('COMMIT');
-        return {ok:existing.result_sha256===receipt.result_sha256,
-          code:'RECEIPT_ALREADY_PRESENT',receipt:existing};
+        const same=existing.result_sha256===receipt.result_sha256&&
+          existing.claim_id===receipt.claim_id&&
+          existing.settlement_epoch===receipt.settlement_epoch&&
+          existing.result_ref===receipt.result_ref&&
+          (existing.budget_reservation?.reservation_id??null)===
+            (receipt.budget_reservation?.reservation_id??null);
+        return {ok:same,code:'RECEIPT_ALREADY_PRESENT',receipt:existing};
       }
       db.prepare('INSERT INTO cop_terminal_receipts(continuation_id,receipt_json) VALUES(?,?)')
         .run(safe,JSON.stringify(receipt));
