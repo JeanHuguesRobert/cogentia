@@ -112,7 +112,11 @@ test('JSON migration is dry-run-first, idempotent and preserves legacy semantics
   }finally{destination.close()}
   writeFileSync(join(source,'ctn_legacy_case.json'),JSON.stringify({...raw,message:'mutated'}));
   const conflict=migrateJsonContinuations({source,dbPath:target,apply:true});
-  assert.equal(conflict.conflicts.length,1);
+  assert.equal(conflict.conflicts.length,0);
+  assert.equal(conflict.source_changes.length,1);
+  assert.equal(conflict.source_changes[0].requires_reconciliation,true);
+  const check=createPrimitiveContinuationStore(target);
+  try{assert.equal(check.sources(raw.id).length,3)}finally{check.close()}
 }));
 
 test('portable continuation may change execution scope without changing identity',()=>withStores(async (local,dir)=>{
