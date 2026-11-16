@@ -106,7 +106,7 @@ try {
   assert.equal(result.providers[0].dimensions, 4);
   assert.deepEqual(result.embeddings[0].embedding, [0.25, 0.5, 0.75, 1]);
 
-  const continuation = JSON.parse(fs.readFileSync(path.join(continuationsDir, `${continuationId}.json`), "utf8"));
+  const continuation = continuationStore.load(continuationId);
   assert.equal(continuation.status, "resolved");
   assert.equal(continuation.resolution.decision, "multi_provider_embeddings_generated");
 
