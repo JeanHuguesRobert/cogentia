@@ -22,6 +22,8 @@ test('primitive continuation requires no COP, mandate, network or remote daemon'
   assert.equal(a.ok,true);assert.equal(a.row.revision,1);
   assert.equal(db.compareAndSwap('ctn:a',0,{body:{step:'lost'}}).code,'revision_conflict');
   assert.deepEqual(db.get('ctn:a').body,{step:2});
+  // Creation is idempotent against its original identity, not mutable state.
+  assert.equal(db.create({id:'ctn:a',body:{step:1},scope:'worker:1'}).existing,true);
   assert.equal(db.events('ctn:a').length,2);
 }));
 
@@ -55,6 +57,7 @@ test('snapshot imports keep identity, revision, cache and checksum',()=>withStor
     assert.equal(receiver.importSnapshot(snap).ok,true);
     assert.equal(receiver.importSnapshot(snap).existing,true);
     assert.equal(receiver.get('work:migrate').revision,1);
+    assert.deepEqual(receiver.events('work:migrate').map(e=>e.verb),['create','transition']);
     assert.equal(receiver.remember('work:migrate','read','v1',{answer:3}).result.answer,42);
     assert.equal(receiver.compareAndSwap('work:migrate',1,{status:'suspended'}).ok,true);
     assert.equal(receiver.importSnapshot(snap).code,'snapshot_conflict');
@@ -110,4 +113,18 @@ test('JSON migration is dry-run-first, idempotent and preserves legacy semantics
   writeFileSync(join(source,'ctn_legacy_case.json'),JSON.stringify({...raw,message:'mutated'}));
   const conflict=migrateJsonContinuations({source,dbPath:target,apply:true});
   assert.equal(conflict.conflicts.length,1);
+}));
+
+test('portable continuation may change execution scope without changing identity',()=>withStores(async (local,dir)=>{
+  local.create({id:'move:1',scope:'fracta2',body:{work:'read'}});
+  const snap=local.snapshot('move:1');
+  const target=createPrimitiveContinuationStore(join(dir,'remote.sqlite'));
+  try{
+    assert.equal(target.importSnapshot(snap,{scope:'thinkpad'}).ok,true);
+    assert.equal(target.get('move:1').scope,'thinkpad');
+    assert.equal(target.importSnapshot(snap,{scope:'thinkpad'}).existing,true);
+    assert.equal(target.get('move:1').id,'move:1');
+    assert.equal(target.compareAndSwap('move:1',0,{status:'suspended',
+      body:{work:'read',replayed:true}}).ok,true);
+  }finally{target.close()}
 }));
