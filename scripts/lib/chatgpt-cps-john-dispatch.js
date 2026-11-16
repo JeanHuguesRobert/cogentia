@@ -8,16 +8,19 @@ const LOCAL_MCP='http://127.0.0.1:8791/mcp';
 const validId=x=>typeof x==='string'&&/^ctn_[a-zA-Z0-9_]{3,120}$/.test(x);
 const fail=code=>({ok:false,submitted:false,error:code});
 
-export function createCpsGovernedJohnBrowserDispatch({
-  token,tab_id,fetchImpl=globalThis.fetch,mcpUrl=LOCAL_MCP,
+export function createGovernedJohnBrowserAction({
+  token,fetchImpl=globalThis.fetch,mcpUrl=LOCAL_MCP,
 }={}){
   // Do not use a remote URL or an attacker-supplied MCP endpoint.
   if(mcpUrl!==LOCAL_MCP||typeof token!=='string'||!token||
-     (tab_id!==undefined&&(!Number.isSafeInteger(tab_id)||tab_id<1))||
      typeof fetchImpl!=='function')
     throw new TypeError('authenticated_local_john_browser_transport_required');
   async function invoke(action,continuation_id,argumentsValue){
-    const request_id=`jhn-cps-${action}-${continuation_id}`;
+    const request_id=validId(continuation_id)
+      ?`jhn-cps-${action}-${continuation_id}`
+      :`jhn-openai-${action}-${continuation_id}`;
+    if(!/^[a-zA-Z0-9_.:-]{1,120}$/.test(request_id))
+      return fail('invalid_browser_request_id');
     const req={version:'john.request.v1',request_id,
       principal:{id:'principal:jhn'},mandate:{id:'mandate:chatgpt-corpus-coding',version:'1'},
       budget:{id:'budget:mandate:jhn:john-root'},
@@ -53,6 +56,14 @@ export function createCpsGovernedJohnBrowserDispatch({
     catch{return fail('john_observation_unparseable')}
     return {ok:true,request_id,observation};
   }
+  return invoke;
+}
+export function createCpsGovernedJohnBrowserDispatch({
+  token,tab_id,fetchImpl=globalThis.fetch,mcpUrl=LOCAL_MCP,
+}={}){
+  if(tab_id!==undefined&&(!Number.isSafeInteger(tab_id)||tab_id<1))
+    throw new TypeError('authenticated_local_john_browser_transport_required');
+  const invoke=createGovernedJohnBrowserAction({token,fetchImpl,mcpUrl});
   return async function governedDispatch({continuation_id,prompt}={}){
     if(!validId(continuation_id)||typeof prompt!=='string'||!prompt||prompt.length>6000)
       return fail('canonical_prompt_missing');
