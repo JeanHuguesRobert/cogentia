@@ -147,6 +147,15 @@ On Fracta2, two registry-local SQLite stores were verified using
   continuations**, 467 historical source versions, integrity `ok`.
 - Cogentia root `/srv/cogentia/repos/cogentia`: **20 logical
   continuations**, 21 historical source versions, integrity `ok`.
+- Private Operium root `/srv/cogentia/repos/registre-mariani/operium`:
+  **1 resolved logical continuation**, 1 historical source version,
+  integrity `ok`. This is a distinct local registry, not a duplicate
+  of the public Operium checkout.
+
+This gives **488 distinct locally stored continuation records across
+three Fracta2 SQLite databases**. Three isolated test-only resolver
+databases were verified by fixture IDs and removed; no operational
+continuation database was deleted.
 
 The original JSON snapshots remain readable archival evidence and must
 not be treated as concurrently authoritative live records. One
