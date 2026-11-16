@@ -80,8 +80,8 @@ test('independent work in distinct scopes advances concurrently and reconciles b
 }));
 
 test('JSON migration is dry-run-first, idempotent and preserves legacy semantics',()=>withStores(async (_db,dir)=>{
-  const source=join(dir,'legacy');
-  mkdirSync(source);
+  const source=join(dir,'.cogentia','continuations');
+  mkdirSync(source,{recursive:true});
   const raw={id:'ctn_legacy_case',kind:'human_attention_request',status:'alive',
     message:{prompt:'draft'},history:[{event:'created'}]};
   writeFileSync(join(source,'ctn_legacy_case.json'),JSON.stringify(raw));
