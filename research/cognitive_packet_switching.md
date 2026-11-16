@@ -234,6 +234,56 @@ packets, **not** three new packet kinds or independent persistence stores.
 
 ---
 
+## Execution substrate, planes, and convergence — clarification (2026-11-16)
+
+CPS builds on a **primitive continuation** mechanism rather than making every
+suspension a COP-governed judgment. A primitive continuation represents a
+resumable computation: its identity, dependencies, memoized intermediate
+results, and the state or references sufficient to restart. It may live
+entirely in RAM; it needs neither a COP mandate nor a GitHub Issue. A
+**governed continuation** composes those primitives with applicable COP
+mandate, budget, effect admission, and trace requirements. Governance is
+**orthogonal** to execution locality and persistence. An in-process
+continuation does not have to be serialized into a routable Cognitive Packet
+until a genuine boundary makes materialization useful.
+
+**Internet-like layering is explanatory, not a mandatory OSI stack**:
+messaging/transport supports execution continuity; continuation primitives
+support CPS work routing and handler cooperation; applications use CPS where
+needed. At each scale (RAM, worker/process, host, Fractanet, federation), a
+**data plane** executes and carries values, while a **control plane** decides
+placement, scheduling, admission and movement; management/observation is
+distinguishable from both. A packet **envelope carries control information**;
+it is not itself the control plane. COP supplies an optional *governance
+profile*, not the entirety of scheduling or control.
+
+Prefer **local progress and optimistic concurrency** over global preventative
+locks. Independent attempts may compute against one observed version;
+versioned commits/compare-and-set reveal conflicting effects. Reconciliation
+may merge compatible results, rerun only invalidated computations, retain
+genuinely competing alternatives, or request a governed judgment when one
+is actually required. **Optimistic locking is not by itself eventual
+consistency**: eventual convergence additionally requires dissemination,
+well-defined reconciliation, and appropriate failure assumptions.
+Irreversible/non-idempotent external effects need a separate, narrowly
+scoped exactly-once-or-reconcile *commit boundary*; do not blindly replay
+them.
+
+**Locality without captivity:** work identity, current state residence,
+executing handler and authority are separate. A Side-style cached replay
+can reconstitute work elsewhere without serializing a live process stack.
+Persist operational continuation state locally (SQLite is a suitable host
+profile), use explicit verified handoffs across localities, and retain
+canonical Cognitive Packet/COP histories in their own appropriate substrate.
+A global scheduler, global database, universal COP mandate or universal
+claim lock is not a precondition for ordinary CPS progress.
+
+See [Locality Principle](locality_principle.md),
+[Packet/Continuation Machine](packet_continuation_machine.md) and
+[Fractanet](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/fractanet.md).
+
+---
+
 ## Abstract
 
 Most current workflow systems model AI-assisted work as pipelines, graphs, orchestrators, agents, tasks, traces, or durable execution states. These are useful but incomplete. They often leave underspecified the unit of cognitive work that must circulate through the system.
