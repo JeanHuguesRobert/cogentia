@@ -31,7 +31,7 @@ function emitSse(res,completion){
   res.end('data: [DONE]\n\n');
 }
 /** No internal scheduler: complete only assigns and waits on the shared store. */
-export function createChatgptOpenAiCpsHttpServer({complete,key,maxInflight=4,localStatus}={}){
+export function createChatgptOpenAiHttpServer({complete,key,maxInflight=4,localStatus}={}){
   if(typeof complete!=='function'||typeof key!=='string'||key.length<16)
     throw Error('local_provider_authentication_required');
   let inflight=0;
