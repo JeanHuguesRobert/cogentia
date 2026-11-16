@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import fs from "fs";
+import {continuationRepository} from './lib/continuation-sqlite-repository.mjs';
 import path from "path";
 import { fileURLToPath } from "url";
 import { execFileSync } from "child_process";
@@ -15,27 +16,19 @@ const REGISTRY_ROOT = REGISTRY_PATH
   ? (fs.existsSync(REGISTRY_PATH) && fs.statSync(REGISTRY_PATH).isDirectory() ? REGISTRY_PATH : path.dirname(REGISTRY_PATH))
   : COGENTIA_DIR;
 const COGENTIA_STATE_DIR = process.env.COGENTIA_STATE_DIR || path.join(REGISTRY_ROOT, ".cogentia");
-const CONTINUATIONS_DIR = process.env.CONTINUATIONS_DIR || path.join(COGENTIA_STATE_DIR, "continuations");
+const CONTINUATION_ROOT=process.env.CONTINUATIONS_DIR
+  ? path.dirname(path.dirname(path.resolve(process.env.CONTINUATIONS_DIR))) : REGISTRY_ROOT;
+const continuationStore=continuationRepository(CONTINUATION_ROOT);
+const CONTINUATIONS_DIR=continuationStore.path;
 const RESULTS_DIR = process.env.COGENTIA_SEMANTIC_RESULTS_DIR || COGENTIA_STATE_DIR;
 
-function continuationPath(id) {
-  return path.join(CONTINUATIONS_DIR, `${id}.json`);
-}
-
-function readContinuation(id) {
-  const full = continuationPath(id);
-  if (!fs.existsSync(full)) return null;
-  return JSON.parse(fs.readFileSync(full, "utf8"));
-}
-
+function readContinuation(id) { return continuationStore.load(id); }
 function activeSemanticContinuations(options = {}) {
-  if (!fs.existsSync(CONTINUATIONS_DIR)) return [];
-  return fs.readdirSync(CONTINUATIONS_DIR)
-    .filter(file => file.endsWith(".json"))
-    .map(file => readContinuation(file.replace(/\.json$/i, "")))
-    .filter(cont => cont && cont.status === "active" && cont.kind === "semantic-search")
-    .filter(cont => !options.id || cont.id === options.id)
-    .sort((a, b) => (b.priority || 0) - (a.priority || 0) || String(a.created_at || "").localeCompare(String(b.created_at || "")));
+  return continuationStore.list()
+    .filter(cont=>cont.status==='active'&&cont.kind==='semantic-search')
+    .filter(cont=>!options.id||cont.id===options.id)
+    .sort((a,b)=>(b.priority||0)-(a.priority||0)||
+      String(a.created_at||'').localeCompare(String(b.created_at||'')));
 }
 
 function loadCredentialHints(profile) {
