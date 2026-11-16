@@ -44,6 +44,21 @@ export function createAiRouterClient(options = {}) {
       : await response.text().catch(() => "");
 
     if (!response.ok) {
+      // A local ChatGPT provider must not recursively invoke itself. Its
+      // suspended reference belongs to the machine that issued the API call.
+      // Forward the reference intact so the MCP consumer can create/handle
+      // a governed Cogentia continuation when judgment is actually required.
+      if (response.status === 409 && body?.error?.code === "local_continuation_required" &&
+          typeof body.error?.continuation?.id === "string") {
+        return {
+          ok: false,
+          status: 409,
+          error: "continuation_required",
+          continuation: body.error.continuation,
+          message: body.error.message || "local_provider_continuation",
+          router: publicRouterInfo(baseUrl),
+        };
+      }
       return {
         ok: false,
         status: response.status,
@@ -66,7 +81,12 @@ export function createAiRouterClient(options = {}) {
     publicInfo: () => publicRouterInfo(baseUrl),
     health: () => request("/health"),
     models: () => request("/v1/models"),
-    chatCompletions: payload => request("/v1/chat/completions", { method: "POST", body: payload }),
+    chatCompletions: payload => request("/v1/chat/completions", {
+      method: "POST", body: payload,
+      headers: typeof payload?._cogentia_call_chain === "string" &&
+        /^[a-zA-Z0-9_,.:/-]{1,256}$/.test(payload._cogentia_call_chain)
+          ? { "X-Cogentia-Call-Chain": payload._cogentia_call_chain } : {},
+    }),
     embeddings: payload => request("/v1/embeddings", { method: "POST", body: payload }),
   };
 }
