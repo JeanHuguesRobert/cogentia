@@ -19,6 +19,7 @@ export function migrateJsonContinuations({source,dbPath,apply=false}={}){
     source:root,database:resolve(dbPath),apply,scanned:names.length,
     imported:0,already_imported:0,variants:0,source_versions:0,conflicts:[],invalid:[],candidates:0,
     by_status:{},by_kind:{}};
+  const seenLogicalIds=new Map();
   const store=apply?createPrimitiveContinuationStore(dbPath):null;
   try{
     for(const name of names){
@@ -32,9 +33,14 @@ export function migrateJsonContinuations({source,dbPath,apply=false}={}){
            typeof doc.status!=='string'||!doc.status.trim())
           throw Error('invalid_legacy_continuation_shape');
         const kind=typeof doc.kind==='string'&&doc.kind.trim()?doc.kind:'legacy_continuation';
+        const sourceHash=digest(bytes);
+        const firstHash=seenLogicalIds.get(doc.id);
+        const variant=firstHash!==undefined&&firstHash!==sourceHash;
+        if(variant)report.variants++;
+        if(firstHash===undefined)seenLogicalIds.set(doc.id,sourceHash);
         const entry={id:doc.id,kind,status:doc.status,scope:'legacy:'+hostname(),
-          body:{source_format:'json-continuation',source_sha256:digest(bytes),
-            source_basename:name,original:doc},origin_ref:'legacy-json:'+name};
+          body:{source_format:'json-continuation',source_sha256:sourceHash,
+            source_basename:name,original:doc},origin_ref:'legacy-json:'+hostname()+':'+name};
         report.by_status[doc.status]=(report.by_status[doc.status]||0)+1;
         report.by_kind[kind]=(report.by_kind[kind]||0)+1;
         report.candidates++;
@@ -43,16 +49,14 @@ export function migrateJsonContinuations({source,dbPath,apply=false}={}){
         if(put.ok){
           if(put.existing)report.already_imported++;
           else report.imported++;
-        }else if(put.code==='continuation_identity_conflict'&&put.current?.id===doc.id){
-          // Same logical continuation can have distinct, legitimate JSON
-          // historical incarnations. Preserve them as source versions,
-          // never fabricate a second logical continuation ID.
-          report.variants++;
+        }else if(variant&&put.code==='continuation_identity_conflict'&&put.current?.id===doc.id){
+          // Source incarnations may differ while retaining one logical ID.
+          // Do not create a second work identity for an archival variant.
         }else{
           report.conflicts.push({file:name,id:doc.id,code:put.code});
           continue;
         }
-        const sourcePut=store.attachSource(doc.id,'legacy-json:'+name,digest(bytes),doc);
+        const sourcePut=store.attachSource(doc.id,'legacy-json:'+hostname()+':'+name,sourceHash,doc);
         if(sourcePut.ok)report.source_versions++;
         else report.conflicts.push({file:name,id:doc.id,code:sourcePut.code});
       }catch(e){report.invalid.push({file:name,error:e.message});}
