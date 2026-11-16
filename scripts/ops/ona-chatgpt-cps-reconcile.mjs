@@ -16,6 +16,8 @@ import {createCpsDefaultAssignedWorker,createCpsDefaultNextWorker} from '../lib/
 import {inspectHostProductionWorkFrontier} from '../lib/production-work-frontier.js';
 import {runResidentPublicLegacyJudgmentSettlement}
   from '../lib/legacy-public-judgment-resident.js';
+import {autoAssignPublicLegacyJudgment}
+  from '../lib/legacy-public-judgment-auto-assign.js';
 
 const DB='/var/lib/cogentia/cop/john-root-v1.sqlite';
 const FP='SHA256:lG9BC3fIjurrBccYLO1w7VQpmc9ZMr8MvM1o3zJ6L3c';
@@ -73,6 +75,22 @@ export async function runScheduledHeartbeat({env=process.env,assignedWorker=null
           status:'local_settlement_reconciliation_required'}};
       }
     }
+    // Limited cohort rollout only: an opt-in public legacy assignment
+    // AFTER the settlement stage. No parallel timer or generic queue; the
+    // existing signed CPS browser worker remains the only provider route.
+    if(env.COGENTIA_CPS_PUBLIC_LEGACY_AUTO_ASSIGN_ENABLED==='1'){
+      let assigned;
+      if(env.COGENTIA_CPS_PUBLIC_LEGACY_SETTLEMENT_ENABLED!=='1'||
+         !resultWithLegacy.ok||resultWithLegacy.public_legacy_settlement?.ok===false)
+        assigned={ok:true,status:'prior_stage_not_healthy',assigned:0};
+      else{
+        try{assigned=await autoAssignPublicLegacyJudgment({store,
+          enabled:true,admit:configuredWorker?.admit});}
+        catch{assigned={ok:false,status:'auto_assignment_needs_reconciliation',
+          assigned:0}}
+      }
+      resultWithLegacy={...resultWithLegacy,public_legacy_auto_assignment:assigned};
+    }
     if(env.COGENTIA_COP_WORK_FRONTIER_ENABLED==='0')return resultWithLegacy;
     try{
       const frontier=inspectHostProductionWorkFrontier({store,
@@ -86,8 +104,10 @@ export async function runScheduledHeartbeat({env=process.env,assignedWorker=null
           `reconciliation=${frontier.cop.needs_reconciliation}`
         :`COP frontier observer: ${frontier.status}`;
       const legacy=resultWithLegacy.public_legacy_settlement;
+      const auto=resultWithLegacy.public_legacy_auto_assignment;
       const detail=metrics+(legacy?'; legacy_settled='+legacy.settled+
-        '; legacy_review='+legacy.needs_review:'');
+        '; legacy_review='+legacy.needs_review:'')+
+        (auto?'; auto_assignment='+auto.status+'; auto_assigned='+auto.assigned:'');
       return {...resultWithLegacy,work_frontier:frontier,
         detail:result.detail?result.detail+'; '+detail:detail};
     }catch{

@@ -320,3 +320,60 @@ contracts. Existing sqlite-vec acceleration was separately rebuilt from
 cache is now healthy, but it does not magically supply query embeddings for
 117 historical semantic-search continuations or increase corpus embedding
 coverage beyond 11,524 of 41,286 chunks.
+
+### Bounded autonomous assignment of public legacy judgments (#194, 2026-11-16)
+
+A **second, separately opt-in** phase of the *existing* ONA CPS job can now
+select a small cohort without human dispatch of every task:
+`COGENTIA_CPS_PUBLIC_LEGACY_AUTO_ASSIGN_ENABLED=1`. It requires the earlier
+`COGENTIA_CPS_PUBLIC_LEGACY_SETTLEMENT_ENABLED=1` and the independently
+configured signed CPS JudgmentHandler. It does **not** create a new timer,
+authentication issuer, queue, extra budget or independent LLM provider.
+
+`legacy-public-judgment-auto-assign.js` deliberately restricts the first
+production cohort to **at most two assignments total**. The policy chooses
+one unresolved document-role judgment at a time, from already published
+byte-for-byte identical public `cogentia` sources under the narrowly defined
+`skills/*/SKILL.md`, `patterns/*/{PATTERN,PRIOR_ART}.md`, or
+`mcp-apps/README.md` paths. Local fixtures, personal Barons Mariani sources,
+other repositories, modified worktrees, symlink escapes and sources larger
+than 20 KB are excluded. Candidates are sorted deterministically, and COP
+parent temperature must allow work. A finite two-slot cohort avoids a
+permanent, silently expanding budget commitment.
+
+The assigned browser route is reused *only after* the existing actual
+`assignedWorker.admit` validates the signed Principal/actor/mandate,
+independently reviewed provider permission and available COP budget.
+A **durable selection intent** is serialized in COP before invoking the
+existing budget-reserving, packet-claiming CPS preparer. Each candidate is
+idempotently keyed by its legacy continuation ID. A failed or ambiguous
+preparation remains fenced and is reported as needing reconciliation, not
+reissued until an operator studies the receipt. The COP transaction also
+rechecks outstanding browser turns and parent temperature. Results are
+returned to the parent through the normal CPS event topic, and the resident
+CAS-based local settlement phase runs on later ticks.
+
+**Single-flight includes results, not just dispatches:** after a browser
+click, the next candidate remains blocked until the previous child has a
+canonical `returned` result and its legacy parent has the causal
+`local_resolution_confirmed` receipt. This prevents the scheduler from
+mistaking delivery to a browser for completion of a cognitive job. A task
+which returns `needs_more_context`, is stale/ambiguous or cannot be settled
+halts this small cohort instead of allowing a runaway stream of LLM turns.
+
+The ONA job detail distinguishes `auto_assignment=assigned_pending_judgment`,
+`auto_assignment=browser_turn_in_flight`, `auto_assignment=legacy_child_not_reconciled`,
+`auto_assignment=cohort_exhausted`, and `auto_assignment=no_public_candidate`.
+The value `auto_assigned=1` means a signed CPS continuation was declared
+this tick; it does **not** claim a returned model result or resolved local
+continuation. Disable the phase by setting the private environment flag to
+`0` and restarting ONA via its existing owner-admin route. The earlier
+CPS wake/dispatch and local result reconcilers remain independent.
+
+Test fixture coverage: published-only content, no transport admission => no
+selection effects, one unresolved browser child at a time, two-slot finite
+cohort across a reopened COP Store, no duplicate claims, and an ambiguous
+preparation halting in a durable `selection_intent_needs_reconciliation`.
+Extension to private documents, further public repositories, high-volume
+judgments or independent FractaSchedulers on other nodes is *not* authorized
+by this initial cohort policy.
