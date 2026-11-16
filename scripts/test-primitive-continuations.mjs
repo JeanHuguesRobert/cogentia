@@ -115,8 +115,8 @@ test('JSON migration is dry-run-first, idempotent and preserves legacy semantics
   assert.equal(conflict.conflicts.length,0);
   assert.equal(conflict.source_changes.length,1);
   assert.equal(conflict.source_changes[0].requires_reconciliation,true);
-  const check=createPrimitiveContinuationStore(target);
-  try{assert.equal(check.sources(raw.id).length,3)}finally{check.close()}
+  const sourceCheck=createPrimitiveContinuationStore(target);
+  try{assert.equal(sourceCheck.sources(raw.id).length,3)}finally{sourceCheck.close()}
 }));
 
 test('portable continuation may change execution scope without changing identity',()=>withStores(async (local,dir)=>{
