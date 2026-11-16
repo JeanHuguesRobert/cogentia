@@ -4,7 +4,7 @@
  * An event is evidence of a local transition, not a distributed consensus proof.
  */
 import {DatabaseSync} from 'node:sqlite';
-import {mkdirSync} from 'node:fs';
+import {mkdirSync,chmodSync} from 'node:fs';
 import {dirname,resolve} from 'node:path';
 import {createHash} from 'node:crypto';
 
@@ -19,6 +19,9 @@ export function createPrimitiveContinuationStore(path){
   const filename=resolve(path);
   mkdirSync(dirname(filename),{recursive:true,mode:0o700});
   const db=new DatabaseSync(filename);
+  // Continuations can contain private work context: local file permissions
+  // must not follow a permissive host default umask.
+  try{chmodSync(filename,0o600)}catch(e){db.close();throw e}
   db.exec('PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000; PRAGMA foreign_keys=ON;');
   db.exec(`CREATE TABLE IF NOT EXISTS primitive_continuations(
     id TEXT PRIMARY KEY, kind TEXT NOT NULL, scope TEXT NOT NULL,
