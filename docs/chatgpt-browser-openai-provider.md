@@ -198,20 +198,78 @@ The ThinkPad was verified reachable as `i7-thinkpad-jhr` with
 Node.js 24.5 and SQLite 3.50, but no legacy continuation directory or
 operational database was found in the principal locations inspected.
 That is **not** a claim that an exhaustive full-disk search has
-completed. No remote continuation data was copied, deleted or created.
-The Android mobile node and the older FractaNode were not reachable
-during this check.
+completed. No **pre-existing operational continuation** was copied,
+deleted or overwritten. A separate, entirely synthetic continuation
+was later created in temporary SQLite stores on both nodes for an
+explicit cross-platform migration test; those test artifacts were
+removed afterwards. The Android mobile node and the older FractaNode
+were not reachable during this check.
 
 The Fracta2 and Operium source checkouts were fast-forwarded to
 GitHub `main` without overwriting pre-existing local changes.
-Long-running Cogentia daemons must be restarted or otherwise reloaded
-through their already-authorized operations channel before claiming
-that newly edited JavaScript modules are active in those processes.
+The Cogentia daemon was restarted on 2026-11-16 at 18:36:57 UTC
+through the governed ThinkPad → owner SSH/sudo maintenance route after
+diagnosing recurrent cgroup OOM kills under 250 MB RAM / 50 MB swap.
+Systemd's effective persistent limits are now 768 MiB RAM / 192 MiB
+swap (`NeedDaemonReload=no`). The daemon returned live MCP cockpit
+and continuation-list results after restart. Other long-running
+processes must be verified independently when their code changes.
 
 **Remaining boundary:** atomic cross-host ownership transfer,
 automatic semantic reconciliation after partitions, and real hosted
 browser delivery have not been validated. None is implied by a
 successful SQLite import.
+
+## Portable snapshots and causal return (cross-platform test, 2026-11-16)
+
+The primitive kernel now exposes an explicit local CLI with no
+transport, mandate or global scheduler dependency:
+
+```bash
+# At the source node: export a single named continuation to a private
+# snapshot. The file is created mode 0600 and is NEVER overwritten.
+node scripts/ops/continuation-snapshot-local.mjs export \
+  --db /local/state/continuations.sqlite \
+  --id ctn_example --out /private/ctn_example.snapshot.json
+
+# Transfer the snapshot through an independently authenticated transport.
+# At the destination node, import a NEW logical identity into local SQLite:
+node scripts/ops/continuation-snapshot-local.mjs import \
+  --db /local/state/continuations.sqlite \
+  --in /private/ctn_example.snapshot.json --scope local-node
+
+# When the successor comes back to a store which ALREADY holds that ID:
+node scripts/ops/continuation-snapshot-local.mjs reconcile \
+  --db /local/state/continuations.sqlite \
+  --in /private/ctn_example.returned.json --scope local-node
+```
+
+The reconciliation operation conditionally advances the original state
+when the incoming history contains the **exact local causal prefix**,
+and unions compatible memo slots and historical sources. A concurrent
+branch or conflicting cache input is retained as a content-addressed
+`divergent-snapshot:sha256:…` source record, while the live continuation
+remains unchanged. A genuinely stale snapshot is rejected, rather than
+replaying its earlier state. The operation is idempotent.
+
+**Actual host test:** a synthetic `ctn_crosshost_smoke_20261116`
+was exported from an isolated SQLite database on Fracta2,
+transported to the ThinkPad using the existing owner-authenticated SSH
+route, imported under Windows Node.js/SQLite, resumed from a memoized
+result without recalculation, and returned to Fracta2. The **original
+Fracta2 database**, not a duplicate empty database, was successfully
+advanced from revision 1 to revision 2 by causal reconciliation.
+The test also confirmed checksum validation, cache retention,
+idempotent repeated merge and stale-state rejection. Original
+operational databases were not involved.
+
+**Important boundary:** snapshots and causal reconciliation prove
+portable *state*, not atomic transfer of execution custody. Callers
+must independently fence simultaneous non-idempotent effects and
+preserve the actual COP authority envelope whenever governance applies.
+An SHA-256 snapshot checksum is evidence of integrity, not identity or
+authorization. Network partition convergence and automatic repair of
+`uncertain` effects remain future work.
 
 ## Tests and limitations
 
@@ -219,7 +277,8 @@ successful SQLite import.
 node --test scripts/test-primitive-continuations.mjs \
   scripts/test-conversation-adapters.mjs \
   scripts/test-chatgpt-openai-provider.mjs \
-  scripts/test-chatgpt-provider-bootstrap.mjs
+  scripts/test-chatgpt-provider-bootstrap.mjs \
+  scripts/test-primitive-snapshot-reconciliation.mjs
 ```
 
 The bootstrap test launches the **actual standalone provider** with
@@ -230,7 +289,8 @@ OpenAI API response: model pinning, actual token usage, native tool
 calls, role hierarchy and token-by-token streaming remain unsupported.
 SSE responses are buffered rather than incremental.
 
-The present primitive handoff test verifies checked snapshots between
-two local SQLite databases. Cross-host custody, distributed effects,
+Portable continuation state and memo reuse have now been tested on
+two **different physical hosts and operating systems**. Cross-host
+*exclusive execution custody*, distributed irreversible effects,
 network-partition convergence and automatic `uncertain`-state repair
 remain to be implemented and tested.
