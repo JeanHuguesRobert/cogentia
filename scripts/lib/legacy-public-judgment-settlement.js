@@ -9,11 +9,11 @@ import {projectPacketTemperature} from '../../../inseme/packages/cop-core/src/pa
 import {previewPublicLegacyJudgment} from './legacy-public-judgment-cps.js';
 
 export function inspectPublicLegacyJudgmentResult({store,continuation,repositoryRoot,
-  requirePublishedSource=true}={}){
+  publicRepo='cogentia',requirePublishedSource=true}={}){
   if(typeof store?.listTopic!=='function'||!continuation)
     return {ok:false,status:'invalid_source'};
   const preview=previewPublicLegacyJudgment({continuation,repositoryRoot,
-    requirePublishedSource});
+    publicRepo,requirePublishedSource});
   if(!preview.ok)return preview;
   const t=preview.child_ref,es=store.listTopic(t);
   const c=es.find(e=>e.payload?.profile==='cop/continuation')?.payload?.continuation;
@@ -79,7 +79,7 @@ function recordCanonicalLocalResolution(store,{continuation_id,decision,
 }
 
 export async function settlePublicLegacyJudgment({store,continuation,
-  repositoryRoot,apply,requirePublishedSource=true}={}){
+  repositoryRoot,publicRepo='cogentia',apply,requirePublishedSource=true}={}){
   if(typeof apply!=='function')return {ok:false,status:'missing_legacy_cas_writer'};
   if(continuation?.status==='resolved'){
     const ref=continuation.resolution?.payload?.cps_return_receipt_ref;
@@ -101,7 +101,7 @@ export async function settlePublicLegacyJudgment({store,continuation,
     return {ok:false,status:'legacy_already_resolved_other_provenance'};
   }
   const p=inspectPublicLegacyJudgmentResult({store,continuation,repositoryRoot,
-    requirePublishedSource});
+    publicRepo,requirePublishedSource});
   if(!p.ok||!p.ready)return p;
   const result=await apply({continuation_id:p.legacy_id,decision:p.decision,
     reason:p.reason,payload:{continuation_id:p.legacy_id,decision:p.decision,

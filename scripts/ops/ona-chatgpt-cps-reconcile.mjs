@@ -91,6 +91,25 @@ export async function runScheduledHeartbeat({env=process.env,assignedWorker=null
       }
       resultWithLegacy={...resultWithLegacy,public_legacy_auto_assignment:assigned};
     }
+    // A separate, finite, reviewed PUBLIC disclosure cohort. The new
+    // repository is not inferred from the GitHub repo's public flag: three
+    // exact paths were inspected and pinned in the cohort policy. Existing
+    // global single-flight, signed mandate, provider and budget gates apply.
+    if(env.COGENTIA_CPS_BARONS_REVIEWED_AUTO_ASSIGN_ENABLED==='1'){
+      let reviewed;
+      if(env.COGENTIA_CPS_PUBLIC_LEGACY_SETTLEMENT_ENABLED!=='1'||
+         !resultWithLegacy.ok||resultWithLegacy.public_legacy_settlement?.ok===false||
+         resultWithLegacy.public_legacy_settlement?.needs_review>0||
+         resultWithLegacy.public_legacy_auto_assignment?.assigned>0)
+        reviewed={ok:true,status:'prior_stage_not_healthy_or_busy',assigned:0};
+      else{
+        try{reviewed=await autoAssignPublicLegacyJudgment({store,enabled:true,
+          cohort:'baronsReviewed',admit:configuredWorker?.admit});}
+        catch{reviewed={ok:false,status:'reviewed_assignment_needs_reconciliation',
+          assigned:0}}
+      }
+      resultWithLegacy={...resultWithLegacy,barons_reviewed_auto_assignment:reviewed};
+    }
     if(env.COGENTIA_COP_WORK_FRONTIER_ENABLED==='0')return resultWithLegacy;
     try{
       const frontier=inspectHostProductionWorkFrontier({store,
@@ -105,9 +124,12 @@ export async function runScheduledHeartbeat({env=process.env,assignedWorker=null
         :`COP frontier observer: ${frontier.status}`;
       const legacy=resultWithLegacy.public_legacy_settlement;
       const auto=resultWithLegacy.public_legacy_auto_assignment;
+      const reviewed=resultWithLegacy.barons_reviewed_auto_assignment;
       const detail=metrics+(legacy?'; legacy_settled='+legacy.settled+
         '; legacy_review='+legacy.needs_review:'')+
-        (auto?'; auto_assignment='+auto.status+'; auto_assigned='+auto.assigned:'');
+        (auto?'; auto_assignment='+auto.status+'; auto_assigned='+auto.assigned:'')+
+        (reviewed?'; barons_assignment='+reviewed.status+
+          '; barons_assigned='+reviewed.assigned:'');
       return {...resultWithLegacy,work_frontier:frontier,
         detail:result.detail?result.detail+'; '+detail:detail};
     }catch{

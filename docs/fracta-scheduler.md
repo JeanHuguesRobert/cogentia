@@ -377,3 +377,61 @@ preparation halting in a durable `selection_intent_needs_reconciliation`.
 Extension to private documents, further public repositories, high-volume
 judgments or independent FractaSchedulers on other nodes is *not* authorized
 by this initial cohort policy.
+
+### Reviewed *barons-Mariani* public cohort — explicit second disclosure policy (2026-11-16)
+
+The **public GitHub visibility of a repository is not consent to relay every
+file in it to an external provider**. Review of the active document-role
+continuations in `JeanHuguesRobert/barons-Mariani` identified 244 active
+judgments. Of those, 106 files were verified as byte-identical to the
+published `origin/main` and had explicit `visibility: public` metadata.
+Personal/family memory (`memory/marie-louise`), suicide/testimony materials,
+identity/revocation registers, investigations of individuals, internal
+infrastructure journals, and ambiguous metadata remain excluded from any
+automatic model disclosure, even if the repository or a source is public.
+
+Three **named and manually content-reviewed** public files form the only
+second-cohort policy (`barons-school-1755-public-v1`):
+
+1. `projects/school/README.md` — School public project-index, no sensitive
+   personal data beyond published authorship metadata.
+2. `projects/school/editorial-architecture.md` — public methodology and
+   editorial architecture, no private documents embedded.
+3. `projects/1755/magazine/2026-10-09-une-cote-pour-la-constitution.md` —
+   public historical research article identifying an archival collection
+   reference; no confidential archival reproduction or private witness
+   testimony included.
+
+This is an *exact path allowlist*, not a regex permitting arbitrary new files.
+The existing `legacy-public-judgment-cps.js` now accepts a separately passed,
+known public repository (`barons-Mariani`) and requires an **explicit
+`visibility: public` frontmatter declaration**, in addition to the original
+byte-for-byte `origin/main` check, size limit, safe relative path and no
+symlink escape. No private drafts are passed to ChatGPT. The same signed v5
+CPS `browser.chatgpt.turn` admission, independent provider permission,
+existing PacketClaim and COP budget govern each turn. No new capability or
+provider was introduced.
+
+Activate the cohort only with the separate private ONA flag
+`COGENTIA_CPS_BARONS_REVIEWED_AUTO_ASSIGN_ENABLED=1`, alongside the existing
+public-legacy settlement flag. The canonical journal records the cohort ID,
+source digest, independently admitted authorization references and
+`selection_intent`; the three-slot limit is enforced transactionally under
+SQLite's existing COP claim boundary. Previous `cogentia-public-v1` two-slot
+records keep their historical keys and remain exhausted. Both cohorts share
+the same **global** single-flight guard, including unsettled results.
+
+The ONA logs a separate `barons_assignment` and `barons_assigned` pair,
+so an assignment is not mistaken for return or local resolution. The
+resident CAS reconciler resolves the host-local continuation using the
+*source repository's* verified path, but runs the already-existing Cogentia
+`continuation resolve` CLI from its own tool repository. A successful local
+CAS is followed by one causal COP `local_resolution_confirmed`; an ambiguous
+or stale result is fenced rather than retried. No user-private folder or
+entire family sub-project has been enabled.
+
+Safety tests: reject missing `visibility: public`, unpublished local changes,
+unreviewed candidate paths, repository mismatch; three cases complete
+sequentially through COP parent joins and a separate local SQLite CAS,
+without reissuing work; a fourth is blocked by the cohort limit. This is a
+narrow policy extension of the general existing handler, not a new service.

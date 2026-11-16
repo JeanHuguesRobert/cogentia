@@ -1,13 +1,13 @@
-/** A small, deliberately finite production cohort of PUBLIC Cogentia
- * document-role judgments, assigned through the existing signed CPS worker.
+/** Small, separately bounded, reviewed cohorts of PUBLIC document-role
+ * judgments, assigned through the existing signed CPS worker.
  *
  * Uses the resident ONA clock, the COP journal's atomic selection-intent,
  * the signed mandate/budget PacketClaim preparer and the already-tested
  * parent/child join. NEVER infers authority from public visibility alone.
  *
- * This cohort is capped at TWO automatic assignments in total, one unresolved
- * CPS task at a time. Expanding beyond that requires a separately reviewed
- * policy, not an accidental retry or undocumented configuration tweak.
+ * The original Cogentia cohort is capped at TWO, and a separate reviewed
+ * Barons Mariani cohort at THREE explicit paths. One unresolved CPS task at
+ * a time globally. Wider disclosure needs another reviewed policy.
  */
 import {createContinuationSqliteRepository} from './continuation-sqlite-repository.mjs';
 import {createHash} from 'node:crypto';
@@ -21,8 +21,27 @@ const PROFILE='cogentia.legacy-public-auto-assignment/v1';
 const DEFAULT_ROOT='/srv/cogentia/repos/JeanHuguesRobert';
 const DEFAULT_SOURCE='/srv/cogentia/repos/cogentia';
 const PATH_COHORT=/^(?:skills\/[a-zA-Z0-9_-]+\/SKILL\.md|patterns\/[a-zA-Z0-9_-]+\/(?:PRIOR_ART|PATTERN)\.md|mcp-apps\/README\.md)$/;
-const MAX_COHORT=2;
-const KEY=id=>'public-legacy-auto-assignment:v1:'+id;
+// Deliberately reviewed, finite provider-disclosure policies, *not* general
+// public-repo capabilities. Extend only after inspecting source content.
+export const PUBLIC_COHORT_POLICIES=Object.freeze({
+  cogentia:Object.freeze({id:'cogentia-public-v1',repo:'cogentia',
+    root:DEFAULT_SOURCE,max:2,paths:PATH_COHORT}),
+  baronsReviewed:Object.freeze({id:'barons-school-1755-public-v1',
+    repo:'barons-Mariani',root:'/srv/cogentia/repos/barons-Mariani',max:3,
+    paths:Object.freeze([
+      'projects/school/README.md',
+      'projects/school/editorial-architecture.md',
+      'projects/1755/magazine/2026-10-09-une-cote-pour-la-constitution.md',
+    ])}),
+});
+const policyFor=name=>PUBLIC_COHORT_POLICIES[name]||null;
+const allowedPath=(policy,path)=>policy.paths instanceof RegExp?
+  policy.paths.test(path):policy.paths.includes(path);
+const cohortIntents=(store,policy)=>autoIntents(store).filter(e=>
+  (e.payload.cohort_id||'cogentia-public-v1')===policy.id);
+// Retain the original idempotency key and exactly two historical slots.
+const KEY=(id,policy)=>'public-legacy-auto-assignment:v1:'+
+  (policy.id==='cogentia-public-v1'?'':policy.id+':')+id;
 const isReturn=e=>e.payload?.profile==='cop.continuation-result/v1'&&
   e.payload.phase==='returned';
 const declared=store=>store.replay().filter(e=>e.payload?.profile==='cop/continuation'&&
@@ -62,16 +81,18 @@ function outstanding(store,local,allDeclarations){
 
 /** Inspection selects a candidate but creates no COP intent or model effect. */
 export function inspectAutoPublicLegacyJudgment({store,localRecords=[],
-  sourceRoot=DEFAULT_SOURCE}={}){
-  if(typeof store?.replay!=='function'||!Array.isArray(localRecords))
+  sourceRoot=null,cohort='cogentia'}={}){
+  const policy=policyFor(cohort);
+  if(!policy||typeof store?.replay!=='function'||!Array.isArray(localRecords))
     return {ok:false,status:'invalid_auto_assignment_inputs'};
-  const intents=autoIntents(store);
+  const root=sourceRoot||policy.root;
+  const intents=cohortIntents(store,policy);
   // A full cohort is NOT necessarily a completed cohort: preserve the
   // in-flight/reconciliation status until its last child actually returns.
   const blocker=outstanding(store,null,declared(store));
   if(blocker)return {ok:true,status:blocker,total_auto_assignments:intents.length,
     eligible:0};
-  if(intents.length>=MAX_COHORT)return {ok:true,status:'cohort_exhausted',
+  if(intents.length>=policy.max)return {ok:true,status:'cohort_exhausted',
     total_auto_assignments:intents.length,eligible:0};
   // Check all existing CPS outcomes, not only the legacy subset. If a browser
   // intent was committed without a reliable receipt it must be reconciled,
@@ -83,20 +104,23 @@ export function inspectAutoPublicLegacyJudgment({store,localRecords=[],
   if(unresolved)return {ok:true,status:'browser_dispatch_needs_reconciliation',
     total_auto_assignments:intents.length,eligible:0};
   const candidates=localRecords.filter(x=>x.status==='active'&&
-    x.kind==='index.document_role_judgment'&&x.subject?.repo==='cogentia'&&
-    PATH_COHORT.test(x.subject?.path||''))
+    x.kind==='index.document_role_judgment'&&x.subject?.repo===policy.repo&&
+    allowedPath(policy,x.subject?.path||''))
     .sort((a,b)=>{
-      const pa=a.subject.path.startsWith('skills/')?0:1;
-      const pb=b.subject.path.startsWith('skills/')?0:1;
+      const pa=policy.paths instanceof RegExp?
+        (a.subject.path.startsWith('skills/')?0:1):policy.paths.indexOf(a.subject.path);
+      const pb=policy.paths instanceof RegExp?
+        (b.subject.path.startsWith('skills/')?0:1):policy.paths.indexOf(b.subject.path);
       return pa-pb||String(a.created_at||'').localeCompare(String(b.created_at||''))||
         String(a.id).localeCompare(String(b.id));
     });
   let skipped=0;
   for(const c of candidates){
     const p=previewPublicLegacyJudgment({continuation:c,
-      repositoryRoot:sourceRoot});
+      repositoryRoot:root,publicRepo:policy.repo});
     if(!p.ok){skipped++;continue;}
-    if(store.eventByIdempotency(KEY(c.id))){skipped++;continue;}
+    if(store.eventByIdempotency(KEY(c.id,policy))||
+       declared(store).some(x=>x.state?.assignment_ref==='legacy:'+c.id)){skipped++;continue;}
     const temperature=projectPacketTemperature(store,{packet_ref:p.parent_ref});
     if(!temperature.ok||!temperature.runnable){skipped++;continue;}
     // Avoid carrying full private question/document text into logs/status.
@@ -112,18 +136,21 @@ export function inspectAutoPublicLegacyJudgment({store,localRecords=[],
  * intent committed BEFORE any budget reservation. A crash at this boundary
  * fences the cohort and requires reconciliation rather than repeating effects. */
 export async function autoAssignPublicLegacyJudgment({store,
-  registryRoot=DEFAULT_ROOT,sourceRoot=DEFAULT_SOURCE,localDbPath=null,
-  admit,prepare=prepareAssignedChatgptCpsContinuation,
+  registryRoot=DEFAULT_ROOT,sourceRoot=null,localDbPath=null,
+  cohort='cogentia',admit,prepare=prepareAssignedChatgptCpsContinuation,
   enabled=false}={}){
   if(!enabled)return {ok:true,status:'disabled',assigned:0};
-  if(typeof store?.transaction!=='function'||typeof admit!=='function'||
+  const policy=policyFor(cohort);
+  if(!policy||typeof store?.transaction!=='function'||typeof admit!=='function'||
     typeof prepare!=='function')
     return {ok:false,status:'handler_or_source_not_configured',assigned:0};
+  const root=sourceRoot||policy.root;
   const local=createContinuationSqliteRepository({registryRoot,
     ...(localDbPath?{dbPath:localDbPath}:{})});
   try{
     const records=local.list();
-    const preview=inspectAutoPublicLegacyJudgment({store,localRecords:records,sourceRoot});
+    const preview=inspectAutoPublicLegacyJudgment({store,localRecords:records,
+      sourceRoot:root,cohort});
     if(!preview.ok||preview.status!=='candidate_ready')return {...preview,assigned:0};
     let authority;
     try{authority=await admit();}
@@ -140,8 +167,8 @@ export async function autoAssignPublicLegacyJudgment({store,
     const choice=store.transaction(tx=>{
       // Keep disk/git I/O outside BEGIN IMMEDIATE. The idempotent
       // preparation checks the source again after the intent.
-      if(autoIntents(tx).length>=MAX_COHORT||
-         tx.eventByIdempotency(KEY(preview.legacy_id))||
+      if(cohortIntents(tx,policy).length>=policy.max||
+         tx.eventByIdempotency(KEY(preview.legacy_id,policy))||
          outstanding(tx,null,declared(tx))||
          !projectPacketTemperature(tx,{packet_ref:'continuation:'+preview.legacy_id}).runnable)
         return {status:'selection_changed',reserved:false};
@@ -153,14 +180,14 @@ export async function autoAssignPublicLegacyJudgment({store,
       const receipt=tx.append({topic_id:p.parent_ref,event_type:'cop.event/v1',
         actor_id:'cop:ona-public-auto-assignment',subject_ref:p.parent_ref,
         visibility:'restricted',epistemic_status:'decided',
-        idempotency_key:KEY(row.id),
+        idempotency_key:KEY(row.id,policy),
         causal_refs:[authority.authorization_ref,
           authority.provider_permission_receipt_ref,
           authority.budget_authorization_ref],
         payload:{profile:PROFILE,phase:'selection_intent',legacy_id:row.id,
           child_id:p.child_ref.slice('continuation:'.length),
           source_digest:p.source_digest,source_path:p.path,
-          public_repo:'cogentia',max_cohort:MAX_COHORT},
+          public_repo:policy.repo,cohort_id:policy.id,max_cohort:policy.max},
       });
       return {status:receipt.ok?'reserved':'intent_not_committed',
         reserved:receipt.ok};
@@ -170,7 +197,7 @@ export async function autoAssignPublicLegacyJudgment({store,
     const selected=records.find(x=>x.id===preview.legacy_id);
     let result;
     try{result=await preparePublicLegacyJudgmentCps({store,
-      continuation:selected,repositoryRoot:sourceRoot,prepare});}
+      continuation:selected,repositoryRoot:root,publicRepo:policy.repo,prepare});}
     catch{return {ok:false,status:'assignment_needs_reconciliation',assigned:0}}
     return result.ok?{ok:true,status:'assigned_pending_judgment',assigned:1,
       legacy_id:selected.id,cps_child_id:result.cps_continuation_id,

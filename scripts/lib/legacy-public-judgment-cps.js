@@ -20,12 +20,18 @@ const docPath=p=>typeof p==='string'&&p.endsWith('.md')&&
   p.split('/').every(x=>x&&x!=='.'&&x!=='..');
 const sha=x=>createHash('sha256').update(x).digest('hex');
 const sourceType='index.document_role_judgment';
+const PUBLIC_REPOS=new Set(['cogentia','barons-Mariani']);
+const declaredPublic=x=>{
+  const header=x.match(/^---\n([\s\S]*?)\n---\n/);
+  return Boolean(header&&/^visibility[ \t]*:[ \t]*[\"']?public[\"']?[ \t]*$/mi.test(header[1]));
+};
 
 export function previewPublicLegacyJudgment({continuation,repositoryRoot,
   publicRepo='cogentia',requirePublishedSource=true}={}){
   if(!continuation||!safeId(continuation.id)||
      continuation.status!=='active'||continuation.kind!==sourceType||
-     continuation.subject?.repo!==publicRepo||!docPath(continuation.subject.path)||
+     continuation.subject?.repo!==publicRepo||!PUBLIC_REPOS.has(publicRepo)||
+     !docPath(continuation.subject.path)||
      typeof repositoryRoot!=='string'||!repositoryRoot.trim())
     return {ok:false,status:'nonpublic_or_nonjudgment_continuation'};
   const required=continuation.expected_response?.required||[];
@@ -42,6 +48,11 @@ export function previewPublicLegacyJudgment({continuation,repositoryRoot,
        !statSync(full).isFile()||statSync(full).size>20_000)
       return {ok:false,status:'source_not_admitted'};
     contents=readFileSync(full,'utf8');
+    // A public GitHub repository can still contain private or accidentally
+    // committed material. For the family repository, an explicit on-file
+    // declaration of public visibility is mandatory in addition to GitHub.
+    if(publicRepo==='barons-Mariani'&&!declaredPublic(contents))
+      return {ok:false,status:'explicit_public_frontmatter_required'};
     if(requirePublishedSource){
       // A repository directory may contain unpublished/private local edits.
       // Only send content byte-for-byte identical to origin/main, never an

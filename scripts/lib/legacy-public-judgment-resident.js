@@ -14,9 +14,17 @@ import {inspectPublicLegacyJudgmentResult,settlePublicLegacyJudgment}
 const ID=/^ctn_[A-Za-z0-9_-]{5,120}$/;
 const DEFAULT_ROOT='/srv/cogentia/repos/JeanHuguesRobert';
 const DEFAULT_SOURCE='/srv/cogentia/repos/cogentia';
+const BARONS_SOURCE='/srv/cogentia/repos/barons-Mariani';
+const publicSourceFor=(continuation,sourceRoot,baronsSourceRoot)=>{
+  const repo=continuation?.subject?.repo;
+  if(repo==='cogentia')return {repositoryRoot:sourceRoot,publicRepo:repo};
+  if(repo==='barons-Mariani')return {repositoryRoot:baronsSourceRoot,publicRepo:repo};
+  return null;
+};
 
 export async function runResidentPublicLegacyJudgmentSettlement({store,
   registryRoot=DEFAULT_ROOT,sourceRoot=DEFAULT_SOURCE,
+  baronsSourceRoot=BARONS_SOURCE,
   localDbPath=null,max_steps=1,resolveCli=null}={}){
   if(typeof store?.replay!=='function'||!Number.isSafeInteger(max_steps)||
      max_steps<1||max_steps>3||
@@ -45,15 +53,17 @@ export async function runResidentPublicLegacyJudgmentSettlement({store,
         e.payload.phase==='local_resolution_confirmed'))continue;
       const continuation=local.load(id);
       if(!continuation){findings.push({id,status:'local_source_absent'});needs_review++;continue;}
+      const source=publicSourceFor(continuation,sourceRoot,baronsSourceRoot);
+      if(!source){findings.push({id,status:'unapproved_public_source_repo'});needs_review++;continue;}
       if(continuation.status==='resolved'){
         const r=await settlePublicLegacyJudgment({store,continuation,
-          repositoryRoot:sourceRoot,apply:async()=>({ok:false})});
+          ...source,apply:async()=>({ok:false})});
         if(r.ok){reconciled++;findings.push({id,status:'legacy_audit_reconciled'})}
         else{needs_review++;findings.push({id,status:r.status})}
         continue;
       }
       const p=inspectPublicLegacyJudgmentResult({store,continuation,
-        repositoryRoot:sourceRoot});
+        ...source});
       if(!p.ok){needs_review++;findings.push({id,status:p.status});continue;}
       if(!p.ready){not_ready++;continue;}
       const apply=resolveCli|| (async({continuation_id,payload})=>{
@@ -61,13 +71,13 @@ export async function runResidentPublicLegacyJudgmentSettlement({store,
           'scripts/cogentia.js','continuation','resolve',continuation_id,
           '--payload-json',JSON.stringify(payload),
           '--registry',registryRoot+'/.cogentia.json','--json'],{
-          cwd:sourceRoot,encoding:'utf8',timeout:20000,maxBuffer:750000});
+          cwd:DEFAULT_SOURCE,encoding:'utf8',timeout:20000,maxBuffer:750000});
         const response=JSON.parse(stdout);
         return {ok:response.ok===true};
       });
       let r;
       try{r=await settlePublicLegacyJudgment({store,continuation,
-        repositoryRoot:sourceRoot,apply})}
+        ...source,apply})}
       catch{r={ok:false,status:'local_cas_or_cop_reconciliation_needed'}}
       if(r.ok){settled++;findings.push({id,status:r.status})}
       else{needs_review++;findings.push({id,status:r.status})}
