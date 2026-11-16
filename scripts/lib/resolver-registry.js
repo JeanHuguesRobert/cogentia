@@ -34,7 +34,7 @@
  *   matching the corpus's existing preference for git-trackable,
  *   inspectable, filesystem-based state.
  * - This module deliberately does NOT touch cogentia.js's own
- *   `.cogentia/continuations/*.json` files -- resolver registrations and
+ *   SQLite operational continuations -- resolver registrations and
  *   claims live in a sibling `.cogentia/resolvers/` tree, so this stays
  *   additive and doesn't require changing continuation.js's file format
  *   or its owning code.
