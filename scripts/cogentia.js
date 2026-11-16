@@ -11947,20 +11947,12 @@ function continuationId() {
   return `ctn_${randomBytes(4).toString("hex")}`;
 }
 
-let continuationCacheByDir = new Map();
-
-function invalidateContinuationsCache() {
-  continuationCacheByDir.clear();
-}
-
+// Multiple local CLI/daemon/worker processes can update the same SQLite
+// database. Do not reuse an in-memory continuation inventory after another
+// process may have committed a change. SQLite is the operational truth.
+function invalidateContinuationsCache() { /* no cache to invalidate */ }
 function loadContinuations(ctx) {
-  const dir = continuationsDir(ctx);
-  if (continuationCacheByDir.has(dir)) {
-    return continuationCacheByDir.get(dir);
-  }
-  const loaded = loadContinuationsForExport(ctx, { includeBodies: true });
-  continuationCacheByDir.set(dir, loaded);
-  return loaded;
+  return loadContinuationsForExport(ctx, { includeBodies: true });
 }
 
 /** Map a stored operational status to view-facing liveness. */
