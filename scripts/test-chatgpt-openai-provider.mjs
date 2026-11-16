@@ -6,7 +6,7 @@ import {join} from 'node:path';
 import {createChatgptLocalStore} from './lib/chatgpt-openai-local-store.mjs';
 import {createChatgptOpenAiBridge,normalizeOpenAiRequest} from './lib/chatgpt-openai-bridge.mjs';
 import {createChatgptBrowserTurnRunner} from './lib/chatgpt-openai-browser-runner.mjs';
-import {createChatgptOpenAiCpsHttpServer} from './lib/chatgpt-openai-http.mjs';
+import {createChatgptOpenAiHttpServer} from './lib/chatgpt-openai-http.mjs';
 
 const key='local-test-provider-secret-long-enough';
 const input=text=>({model:'chatgpt-browser',messages:[{role:'user',content:text}]});
@@ -111,7 +111,7 @@ test('browser runner reads new response without invoking MCP result submit',asyn
 
 test('HTTP bearer, local status and buffered SSE',()=>withStore(async(store)=>{
   const complete=createChatgptOpenAiBridge({store,runTurn:async()=>({answer:'Bonjour'})});
-  const server=createChatgptOpenAiCpsHttpServer({complete,key,localStatus:id=>store.get(id)});
+  const server=createChatgptOpenAiHttpServer({complete,key,localStatus:id=>store.get(id)});
   await new Promise(r=>server.listen(0,'127.0.0.1',r));
   try{
     const base='http://127.0.0.1:'+server.address().port;
