@@ -2,6 +2,7 @@
 
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import {createContinuationSqliteRepository} from "./lib/continuation-sqlite-repository.mjs";
 import http from "node:http";
 import net from "node:net";
 import os from "node:os";
@@ -14,16 +15,18 @@ const execFileAsync = promisify(execFile);
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "cogentia-embedding-step-"));
 const registryPath = path.join(tempRoot, ".cogentia.json");
 const stateDir = path.join(tempRoot, ".cogentia");
-const continuationsDir = path.join(stateDir, "continuations");
+const continuationDbPath = path.join(tempRoot,"continuations.sqlite");
+process.env.COGENTIA_CONTINUATIONS_DB = continuationDbPath;
+const continuationStore = createContinuationSqliteRepository({registryRoot:tempRoot,dbPath:continuationDbPath});
 const continuationId = "ctn_stepfeed";
 const routerPort = await freePort();
 const routerBase = `http://127.0.0.1:${routerPort}`;
 const router = await startMockRouter(routerPort);
 
 try {
-  fs.mkdirSync(continuationsDir, { recursive: true });
+  fs.mkdirSync(stateDir, { recursive: true });
   fs.writeFileSync(registryPath, `${JSON.stringify({ repos: [] }, null, 2)}\n`, "utf8");
-  fs.writeFileSync(path.join(continuationsDir, `${continuationId}.json`), `${JSON.stringify(testContinuation(), null, 2)}\n`, "utf8");
+  continuationStore.save(testContinuation());
 
   const defaultStep = await runStep();
   assert.match(defaultStep.stdout, /Direct intelligent-service fulfillment is disabled by default/);
@@ -41,7 +44,7 @@ try {
   assert.equal(partialResult.total_embeddings, 1);
   assert.equal(partialResult.remaining_chunks, 1);
 
-  const activeContinuation = JSON.parse(fs.readFileSync(path.join(continuationsDir, `${continuationId}.json`), "utf8"));
+  const activeContinuation = continuationStore.load(continuationId);
   assert.equal(activeContinuation.status, "active");
   assert.equal(activeContinuation.context.chunks.length, 1);
 
@@ -53,6 +56,7 @@ try {
   console.log(JSON.stringify({ ok: true, continuation_id: continuationId, pending_files: resultFiles.length }, null, 2));
 } finally {
   await new Promise(resolve => router.close(resolve));
+  continuationStore.close();
   fs.rmSync(tempRoot, { recursive: true, force: true });
 }
 
