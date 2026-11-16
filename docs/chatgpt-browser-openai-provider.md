@@ -1,154 +1,107 @@
 ---
-title: ChatGPT browser as Magistral OpenAI-shaped upstream
+title: ChatGPT browser — local OpenAI-compatible Magistral provider
 date: 2026-11-16
 document_role: operational
 document_kind: runbook
 visibility: public
 lifecycle_state: working
 update_policy: UP-DEFAULT-REVIEWED
-status: experimental — source committed, not deployed
+status: experimental — source verified, no live browser deployment
 ---
 
-# ChatGPT browser → canonical CPS → OpenAI Chat Completions
+# Local ChatGPT browser provider
 
-Tracking: [cogentia#335](https://github.com/JeanHuguesRobert/cogentia/issues/335).
+## Principle
 
-## Goal and architectural ownership
+Ordinary completion:
 
-This implements a **private, loopback-only** text-generation upstream for the
-existing Magistral router. It does **not** call OpenAI's paid API and is
-**not** a claim of authorization to repurpose the ChatGPT website.
+    OpenAI client -> Magistral -> loopback ChatGPT provider
+           -> existing authorized browser-turn transport -> ChatGPT UI
+           -> observed ChatGPT answer -> OpenAI completion
 
-1. Magistral accepts OpenAI-style HTTP and selects the opt-in
-   \`chatgpt-browser\` model/tier.
-2. A local bridge creates an assigned Cognitive Packet continuation in the
-   **existing canonical JHN COP event store**, using
-   \`prepareAssignedChatgptCpsContinuation\`.
-3. The **existing resident ONA worker** (if independently configured and
-   admitted) delivers the assigned question through the already governed
-   \`browser.chatgpt.turn\` capability / Navigation Assistant.
-4. ChatGPT's designated JudgmentHandler invokes
-   \`cogentia_continuation_result_submit\`; Cogentia validates correlation,
-   claim, budget and receipt, and appends \`cop.continuation-result/v1\`
-   with \`phase=returned\`.
-5. The bridge reads that durable result and returns one OpenAI-shaped JSON
-   response. The turn's answer does **not** complete a parent mandate.
+The **provider itself** has NO COP packet, mandate, claim, scheduler, MCP
+result submission or GitHub Issue. The existing John browser transport is
+governed **upstream**, outside the provider. This separation does not
+remove or bypass the real browser executor's existing authorization gate.
 
-No second scheduler, browser extension, direct CDP bridge, browser cookie
-scraper or copied COP state machine is introduced. The bridge does not
-deliver prompts itself: a running HTTP process alone does not enable ONA.
+MCP judgment continuation:
 
-Source:
-- \`scripts/lib/chatgpt-openai-cps-bridge.mjs\` — validation, deterministic
-  assignment reference, returned-result projection
-- \`scripts/lib/chatgpt-openai-cps-http.mjs\` — authenticated HTTP surface,
-  bounded concurrency and buffered SSE
-- \`scripts/ops/serve-chatgpt-openai-cps-provider.mjs\` — loopback host,
-  canonical SQLite binding
-- \`scripts/test-chatgpt-openai-cps-provider.mjs\` — isolated tests
-- \`inseme/packages/magistral/src/router.js\` — no fallback on ambiguous
-  browser outcome and HTTP status preservation
-- \`operium/profiles/magistral-chatgpt-browser-node.v1.json\` — additive,
-  **not automatically deployed**, map node
+    ChatGPT -> Cogentia MCP tool -> continuation_required
+             -> existing Cogentia COP/mandate/continuation handler
 
-## Local-only setup (operator-controlled)
+A tool-side judgment continuation stays within the Cogentia mechanism
+(see \`skills/continuation-handling/SKILL.md\` and the existing
+\`cogentia_continuation_result_submit\` endpoint), not within the ordinary
+completion adapter. A provider response is not evidence of a Cogentia
+continuation receipt.
 
-Prerequisites: use a Fracta2 checkout with sibling \`cogentia\` and \`inseme\`
-repos; verify the canonical COP journal path and JHN root mandate;
-independently verify provider/channel permission and resident ONA worker
-configuration. Do not infer any of those from the existence of this file.
+## Locality and recursion
 
-Choose a deployment secret, supplied to the process securely. It must be
-the same **internal upstream** secret that Magistral loads under the
-\`COGENTIA_API_KEY\` slot; do not commit it or print it to logs.
+The provider persists requests in SQLite **on the host that runs it**.
+Default: \`~/.local/state/cogentia/chatgpt-browser-provider.sqlite\`;
+override with \`COGENTIA_BROWSER_CHAT_STATE_DB\`. No persistent work
+records are exported to GitHub or a remote shared COP journal.
 
-\`\`\`bash
-# On the owner-governed Fracta2 deployment host, after reviewing permissions:
-cd /srv/cogentia/repos/cogentia
-COGENTIA_COP_STORE=/var/lib/cogentia/cop/john-root-v1.sqlite \
-  node scripts/ops/serve-chatgpt-openai-cps-provider.mjs
-# listens only on 127.0.0.1:8898 (also requires a secret in its environment)
-\`\`\`
+The local store tracks \`queued|running|deferred|done|uncertain\`.
+A browser turn acquires the only available local running slot.
+While a turn is running, nested calls to the same provider return HTTP
+409 \`local_continuation_required\` with a local job ID **without
+dispatching a second browser turn**. Explicit
+\`X-Cogentia-Call-Chain: chatgpt-browser,cogentia-mcp\` also causes a
+suspension even when the browser appears idle.
 
-The runtime reads \`COGENTIA_BROWSER_CHAT_PROVIDER_KEY\`, falling back to
-\`COGENTIA_API_KEY\` as its bearer. Service installation and lifecycle
-belong to Operium, not this source module.
+The caller can inspect \`GET /v1/continuations/local_<id>\` with the
+provider's bearer credential and later retry the same request with the
+same \`X-Client-Request-Id\`; a deferred job can then resume, subject to
+the same local single-flight check. A job whose actual browser outcome
+is unknown stays \`uncertain\` after restart and is NEVER replayed
+blindly. Reconciliation is an operator/higher-level handler responsibility.
 
-**Map activation is a separate operator action.** Merge the *single* node
-from \`operium/profiles/magistral-chatgpt-browser-node.v1.json\` into
-the live Magistral map; **do not replace** the existing model map with the
-one-element file. The provider entry opts out of automatic fallback,
-and uses a dedicated tier, \`chatgpt-browser\`.
+When a Cogentia tool needs judgment, its caller must use the **existing
+governed Cogentia continuation mechanism**. Its API router client now
+preserves the local provider's \`continuation\` metadata on HTTP 409; a
+409 is not a new COP mandate, and the bridge does not create one.
 
-## Client contract
+If multiple hosts deliberately share a single hosted ChatGPT browser,
+their local locks alone cannot prevent cross-host simultaneous sends:
+the higher-level router must preserve call lineage and arbitrate shared
+browser access. The deployed Navigation Assistant tab lease remains
+the transport-level defense.
 
-\`\`\`http
-POST /v1/chat/completions
-Authorization: Bearer <MAGISTRAL_API_KEY>
-X-Client-Request-Id: <stable unique client request ID>
-Content-Type: application/json
+## Source
 
-{
-  "model": "chatgpt-browser",
-  "messages": [
-    {"role":"user","content":"Expliquez la distinction entre un paquet et un mandat."}
-  ],
-  "stream": false
-}
-\`\`\`
+- \`scripts/lib/chatgpt-openai-local-store.mjs\`: local durable state
+- \`scripts/lib/chatgpt-openai-bridge.mjs\`: OpenAI projection and reentrancy
+- \`scripts/lib/chatgpt-openai-browser-runner.mjs\`: ChatGPT UI turn/observation
+- \`scripts/lib/chatgpt-openai-http.mjs\`: bearer-protected local HTTP
+- \`scripts/ops/serve-chatgpt-openai-provider.mjs\`: server binding
+- \`scripts/lib/chatgpt-cps-john-dispatch.js\`: shared existing governed
+  transport, also used by the separate Cogentia CPS handler
+- \`operium/profiles/magistral-chatgpt-browser-node.v1.json\`: additive map
 
-Client → Magistral authentication uses \`MAGISTRAL_API_KEY\`;
-Magistral → local CPS provider uses \`COGENTIA_API_KEY\` (configured
-through \`apiKeyEnv\`). The client never receives either upstream key.
+## Running and testing
 
-Also exposed:
-- \`GET /v1/models\`: advertises \`chatgpt-browser\`.
-- \`POST /v1/completions\`: string \`prompt\` to one text completion;
-  legacy streaming intentionally unsupported.
-- \`stream:true\` on chat: buffered SSE role/content/stop chunks **only after**
-  the correlated MCP result exists, not genuine token streaming.
-- \`GET /health\` on the bridge: verifies the HTTP service only, **not** a
-  live browser session, signed mandate, result connector or ONA worker.
+Only from a reviewed, host-local checkout with the already authorized
+John browser transport and its existing authenticated MCP token:
 
-Limits: text only, no reliable native system/developer role hierarchy,
-unsupported function/tool calling, image/audio and structured-output tools.
-Sampling parameters such as \`temperature\` are accepted for broad client
-interoperability but ignored and reported as \`parameters_not_enforced\`.
-No trustworthy ChatGPT UI token usage or exact model-version pin is available;
-\`usage\` is \`null\`. A response contains \`_cps.continuation_id\` and
-\`_cps.receipt_ref\` for provenance.
+    node --test scripts/test-chatgpt-openai-provider.mjs
 
-The browser-dispatch recipe is currently bounded by ChatGPT's 6,000-character
-prompt and assignment's 4,500-character question; this adapter imposes a
-smaller request limit to reserve room for delivery instructions.
+    COGENTIA_BROWSER_CHAT_STATE_DB=<local cache directory>/chatgpt-provider.sqlite \
+      node scripts/ops/serve-chatgpt-openai-provider.mjs
 
-A timeout is **not** a cancellation. HTTP 504
-\`error.code=cps_result_pending\` includes a continuation ID; the
-canonical result may arrive later. Never automatically switch to an
-alternative model after submission or dispatch ambiguity. Repeating the
-same payload with the same \`X-Client-Request-Id\` gives the same
-durable assignment; new client IDs intentionally produce new assignments.
-Avoid timeouts/reverse proxies that drop long-running requests without
-preserving their durable continuation references.
+The service requires \`COGENTIA_BROWSER_CHAT_PROVIDER_KEY\` (or the
+existing \`COGENTIA_API_KEY\`) and \`COGENTIA_MCP_JHN_TOKEN\` in its
+process environment. Never copy them into Git, prompts or log output.
 
-## Verification / acceptance
+The endpoint is loopback \`127.0.0.1:8898\` by default, separate from
+the already occupied port 8798. Add the Operium map entry to the
+existing Magistral map; do not replace other model nodes.
 
-\`\`\`bash
-node --test scripts/test-chatgpt-openai-cps-provider.mjs
-# From sibling inseme checkout (workspace dependencies installed):
-node --test packages/magistral/tests/router.test.js
-\`\`\`
+Supported: bounded text Chat Completions, legacy text completions,
+\`GET /v1/models\`, and buffered SSE. Actual model pinning,
+OpenAI token usage, tool-call shapes, native role hierarchy and
+real token-level streaming are **not** available through the browser UI.
 
-A production Reality Test must separately prove:
-1. Signed current JHN mandate, provider permission, budget and ONA worker
-   **authorized** and **reachable**, not merely advertised.
-2. Authenticated Magistral request reaching the loopback upstream.
-3. ONE canonical assignment and ONE governed Navigation Assistant browser
-   submission; no duplicate send after a timeout.
-4. Real ChatGPT MCP result accepted into the canonical COP journal;
-   the resulting HTTP answer has the same text and receipt.
-5. No hidden fallback, and no false assertion that an HTTP reply or browser
-   composer state completed the parent Cognitive Packet.
-
-**As of source creation, this document does not certify a live end-to-end
-test, service installation, permanent worker readiness or provider permission.**
+**Verification:** source and isolated tests are not a live Reality Test.
+No production service restart, map mutation or automated ChatGPT turn
+was performed by this change.
