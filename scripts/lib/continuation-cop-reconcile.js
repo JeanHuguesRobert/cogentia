@@ -7,11 +7,11 @@
  * require a server-resolved JHN actor, original event-sourced reservation,
  * matching durable intent and claim witness, and the canonical result hash.
  */
-import fs from "node:fs";
-import path from "node:path";
 import { createHash } from "node:crypto";
 import { isResolvedCallerAuth } from "./cogentia-mcp-auth.js";
 import { currentPacketClaim } from "./continuation-packet-claim.js";
+import {getClaimEpoch,claimEpochs,listClaimIds}
+  from "./continuation-claim-sqlite.mjs";
 import { isClaimExpired } from "../../../inseme/packages/cop-core/src/packet-coordination.js";
 import {
   recoverClaimedResolution, inspectContinuationPacketCoordination, continuationRevision,
@@ -149,19 +149,16 @@ export function reconcileOrphanJohnCopReservation(root,id,{
      !Number.isInteger(witness.epoch) || witness.epoch<1 ||
      witness.packet_ref!=="continuation:"+id)
     return refuse("CLAIM_WITNESS_REQUIRED");
-  const dir=path.join(root,".cogentia","resolvers","claims-v1",id);
-  const file=path.join(dir,String(witness.epoch).padStart(12,"0")+".json");
-  if(!fs.existsSync(file)) return refuse("CLAIM_EPOCH_NOT_FOUND");
-  const original=JSON.parse(fs.readFileSync(file,"utf8"));
+  const original=getClaimEpoch(root,id,witness.epoch);
+  if(!original)return refuse("CLAIM_EPOCH_NOT_FOUND");
   if(original.schema!=="cop.packet-claim/v1" ||
      original.claim_id!==witness.claim_id ||
      original.handler_ref!==witness.handler_ref ||
      original.epoch!==witness.epoch)
     return refuse("CLAIM_WITNESS_MISMATCH");
   if(!isClaimExpired(original,now)) return refuse("CLAIM_STILL_ACTIVE");
-  const epochs=fs.readdirSync(dir).filter(f=>/^\d{12}\.json$/.test(f)).sort();
-  for(const f of epochs) {
-    const item=JSON.parse(fs.readFileSync(path.join(dir,f),"utf8"));
+  const epochs=claimEpochs(root,id);
+  for(const item of epochs) {
     if(item.status==="settlement_prepared" && item.claim_id===witness.claim_id)
       return refuse("TERMINAL_SETTLEMENT_PREPARED");
   }
@@ -208,15 +205,10 @@ export function scanJohnCopReconciliation(root,{
     return refuse("DURABLE_COP_STORE_REQUIRED");
   if(!Number.isInteger(limit) || limit<1 || limit>1000)
     return refuse("INVALID_SCAN_LIMIT");
-  const top=path.join(root,".cogentia","resolvers","claims-v1");
-  if(!fs.existsSync(top)) return {ok:true,candidates:[],count:0,truncated:false};
-  const dirs=fs.readdirSync(top).filter(validId).sort();
+  const dirs=listClaimIds(root).filter(validId);
   const candidates=[];
   for(const id of dirs) {
-    const dir=path.join(top,id);
-    if(!fs.statSync(dir).isDirectory()) continue;
-    const records=fs.readdirSync(dir).filter(f=>/^\d{12}\.json$/.test(f))
-      .sort().map(f=>JSON.parse(fs.readFileSync(path.join(dir,f),"utf8")));
+    const records=claimEpochs(root,id);
     const intent=records.at(-1);
     for(const witness of records) {
       if(witness.schema!=="cop.packet-claim/v1") continue;
