@@ -5,6 +5,10 @@ import {executeJohnCanonicalChatgptTurn} from "./john-cop-chatgpt-turn-execution
 import {createChatgptTurnCapability} from "./browser-chatgpt-turn.js";
 import {openExistingJohnCopStore} from "./john-cop-existing-store.js";
 import {createSqliteCopEventStore} from "../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js";
+import {
+  MCP_TASKS_EXTENSION_ID, MCP_TASKS_MISSING_CLIENT_CAPABILITY,
+  clientSupportsMcpTasks, isMcpTasksAdapterReady, formatMcpTask, validateMcpTaskId,
+} from "./mcp-tasks-2026-contract.mjs";
 import {bindJohnTransportClaims} from "./john-transport-binding.js";
 import { resolveOAuthIdentity } from "./mcp-oauth-identity.js";
 import { listAgentSkills, getAgentSkill, exportSkillAsMethodPackage, resolveRepoRoot } from "./cogentia-agent-skills.js";
@@ -1417,7 +1421,12 @@ export function createMcpCore(env = process.env, extras = {}) {
   }
 
   function serverCapabilities() {
-    return serverCapabilityBlock();
+    const capabilities=serverCapabilityBlock();
+    // Never claim support because this server knows the 2026-07-28 version.
+    // Only a wired, durable, scoped Task adapter can satisfy the extension.
+    if(isMcpTasksAdapterReady(extras.mcpTasksAdapter))
+      capabilities.extensions={...capabilities.extensions,[MCP_TASKS_EXTENSION_ID]:{}};
+    return capabilities;
   }
 
   /** Legacy handshake path (2025-11-25 and earlier). */
@@ -1522,6 +1531,8 @@ export function createMcpCore(env = process.env, extras = {}) {
     const existing = result._meta && typeof result._meta === "object" ? result._meta : {};
     return {
       ...result,
+      // MCP 2026-07-28 requires a polymorphic resultType for every response.
+      resultType:result.resultType||'complete',
       _meta: {
         ...existing,
         [MCP_META.protocolVersion]: protocolVersion,
@@ -1698,6 +1709,55 @@ export function createMcpCore(env = process.env, extras = {}) {
         const result = attachModernMeta(discover(), resolved.protocolVersion || PROTOCOL_VERSION_MODERN);
         return jsonRpcResult(message.id, result);
       }
+      // MCP Tasks is an optional extension, not a consequence of the modern
+      // protocol version or a legacy initialize handshake. Each request MUST
+      // independently advertise the client extension. Access control remains
+      // the responsibility of the explicitly configured persisted adapter.
+      if (["tasks/get", "tasks/update", "tasks/cancel"].includes(message.method)) {
+        const adapter=extras.mcpTasksAdapter;
+        if(resolved.era!=="modern"||!isMcpTasksAdapterReady(adapter))
+          return jsonRpcError(message.id,-32601,"Method not found");
+        if(!clientSupportsMcpTasks(resolved.meta,{protocolEra:resolved.era}))
+          return jsonRpcError(message.id,MCP_TASKS_MISSING_CLIENT_CAPABILITY,
+            "Missing required client capability",{
+              requiredCapabilities:{extensions:{[MCP_TASKS_EXTENSION_ID]:{}}},
+            });
+        const taskId=message.params?.taskId;
+        if(!validateMcpTaskId(taskId))
+          return jsonRpcError(message.id,-32602,"Invalid Task identifier");
+        if(transport.mcpName&&transport.mcpName!==taskId)
+          return jsonRpcError(message.id,-32600,"Mcp-Name header does not match taskId");
+        const context={auth,taskId,correlation:extractCorrelation(resolved.meta||{})};
+        try{
+          if(message.method==="tasks/get"){
+            const task=await adapter.get(context);
+            if(!task)return jsonRpcError(message.id,-32602,"Unknown Task identifier");
+            return jsonRpcResult(message.id,attachModernMeta(
+              formatMcpTask(task,{operation:'get',expectedId:taskId}),resolved.protocolVersion));
+          }
+          if(message.method==="tasks/update"){
+            if(!message.params||!message.params.inputResponses||
+               typeof message.params.inputResponses!=="object"||
+               Array.isArray(message.params.inputResponses))
+              return jsonRpcError(message.id,-32602,"Invalid inputResponses");
+            const answer=await adapter.update({...context,inputResponses:message.params.inputResponses});
+            if(answer?.status==='not_found')
+              return jsonRpcError(message.id,-32602,"Unknown Task identifier");
+            if(answer?.ok!==true)throw Error('mcp_task_update_not_committed');
+          }else{
+            const cancelled=await adapter.cancel(context);
+            if(cancelled?.status==='not_found')
+              return jsonRpcError(message.id,-32602,"Unknown Task identifier");
+            if(cancelled?.ok!==true)throw Error('mcp_task_cancel_not_acknowledged');
+          }
+          return jsonRpcResult(message.id,attachModernMeta({resultType:'complete'},
+            resolved.protocolVersion));
+        }catch(error){
+          if(error?.code==='unknown_task'||error?.code==='not_found')
+            return jsonRpcError(message.id,-32602,"Unknown Task identifier");
+          return jsonRpcError(message.id,-32603,"Task request not confirmed");
+        }
+      }
       if (message.method === "ping") {
         const result = resolved.era === "modern" ? attachModernMeta({}, resolved.protocolVersion) : {};
         return jsonRpcResult(message.id, result);
@@ -1807,6 +1867,39 @@ export function createMcpCore(env = process.env, extras = {}) {
           correlation,
         };
         try {
+          const taskAdapter=extras.mcpTasksAdapter;
+          // Preserve the existing MCP tool visibility/authority boundary
+          // before a task adapter can intercept the call. Task creation is
+          // NEVER a back door into private/mutating or unknown capabilities.
+          const taskableTool=TOOLS.some(tool=>tool.name===name)&&
+            (!MUTATE_TOOLS.has(name)||auth.allowMutate===true)&&
+            (!PRIVATE_READ_TOOLS.has(name)||view==="full"||auth.auth==="jhn")&&
+            (name!=="cogentia_memory_capture"||auth?.lockers?.private?.read===true);
+          if(taskableTool&&resolved.era==="modern"&&
+             isMcpTasksAdapterReady(taskAdapter)&&
+             clientSupportsMcpTasks(resolved.meta,{protocolEra:resolved.era})){
+            // The backing adapter must durably materialize and authorize the
+            // work. Never reissue a tool call if the creation outcome is lost.
+            let handled;
+            try{
+              handled=await taskAdapter.shouldCreate({name,args,auth,correlation});
+              if(handled){
+                const created=await taskAdapter.create({name,args,auth,correlation});
+                if(!validateMcpTaskId(created?.taskId))
+                  throw Error('missing_durable_task_id');
+                // A CreateTaskResult MUST NOT be returned before tasks/get
+                // can resolve the handle with the same caller authority.
+                const observed=await taskAdapter.get({taskId:created.taskId,auth,correlation});
+                const taskResult=formatMcpTask(observed,{
+                  operation:'create',expectedId:created.taskId});
+                return jsonRpcResult(message.id,
+                  attachModernMeta(taskResult,resolved.protocolVersion));
+              }
+            }catch{
+              return jsonRpcError(message.id,-32603,
+                "Task creation outcome uncertain: reconciliation required");
+            }
+          }
           const data = await callTool(name, args, { correlation, auth });
           const envelope = wrapToolResult(name, data, ctx);
           if (auth.auth === "jhn") {

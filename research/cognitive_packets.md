@@ -513,6 +513,15 @@ spécialisé) des descriptions sans exécuteur (script, objectif libre, attente
 de dépendance). La reconnaissance d'un protocole ne donne jamais mandat,
 budget, PacketClaim, autorisation de divulgation ni preuve d'exécution.
 
+**MCP Tasks 2026-07-28 : standardisation des interactions agentiques** — voir
+[la façade Tasks/COP](../docs/mcp-tasks-cop-bridge.md) :
+`server/discover` facultatif pour le client, extension Tasks annoncée et
+déclarée par requête, `taskId` interrogeable via `tasks/get`, retour différé,
+entrées complémentaires via `tasks/update`, annulation coopérative.
+La connaissance du protocole ne constitue ni une autorité COP, ni une
+garantie de résultat. La façade MCP de Cogentia reste non annoncée tant
+qu'un vrai adaptateur persistant n'est pas installé.
+
 **Raccordement aux protocoles d'interaction existants (2026-11-17) :**
 Un protocole de continuation peut utiliser comme adaptateur un protocole
 standard d'invocation (processus Unix, MCP `tools/call`, HTTP/OpenAPI, gRPC,

@@ -92,6 +92,9 @@ En particulier, `return` natif, `call/cc` en mémoire et closures JavaScript
 ordinaires **n'ont aucun besoin** d'un protocole sérialisé ni d'un enregistrement
 COP. Leurs contextes internes ne sont pas transportables tels quels.
 
+Pour l'extension MCP Tasks et son raccordement optionnel à Cogentia, voir
+[**MCP Tasks — façade de continuations COP**](mcp-tasks-cop-bridge.md).
+
 ## Inspirations provenant des protocoles d'interaction existants (17/11/2026)
 
 **Important : invocation, transport, continuation durable et COP ne sont pas
