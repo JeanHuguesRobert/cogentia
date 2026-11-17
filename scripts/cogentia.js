@@ -74,6 +74,7 @@ import { resolveCallerAuth, deriveLockers } from "./lib/cogentia-mcp-auth.js";
 import { checkSemanticMutation, MUTATION_STATUS } from "./lib/semantic-mutation-checker.js";
 import { runConvergenceLoop } from "./lib/convergence-loop.js";
 import { snapshotChunkEmbeddings, restoreChunkEmbeddings } from "./lib/index-embedding-preservation.js";
+import { storeEmbeddingsSafely } from "./lib/embedding-store-safety.js";
 import { createSchedulerRunContext, runFractaCycle, SCHEDULER_CYCLE_MODES, SCHEDULER_STAGE_STATUS } from "./lib/fracta-scheduler.js";
 import { packDocumentToCapsule, verifyCapsule, unpackCapsule } from "./lib/packet-capsule.js";
 import { relatePacket } from "./lib/packet-relate.js";
@@ -13289,12 +13290,14 @@ async function indexEmbeddings(ctx, options = {}) {
       ? `AND NOT EXISTS (
           SELECT 1 FROM embeddings e
           WHERE e.chunk_id = c.id
+            AND e.content_hash = c.content_hash
             AND e.provider = ?
             ${targetModel ? "AND e.model_name = ?" : ""}
+            ${embeddingProfile.dimensions ? "AND e.dimensions = ?" : ""}
         )`
       : "";
     const queryParams = [
-      ...(targetProvider && !force ? [targetProvider, ...(targetModel ? [targetModel] : [])] : []),
+      ...(targetProvider && !force ? [targetProvider, ...(targetModel ? [targetModel] : []), ...(embeddingProfile.dimensions ? [embeddingProfile.dimensions] : [])] : []),
       ...excludedRoles,
       maxChars,
       ...(repoFilter !== "all" ? [repoFilter] : []),
@@ -13392,51 +13395,21 @@ async function storeEmbeddings(ctx, embeddings) {
   const opened = await openIndexDatabase({ create: false });
   if (!opened.ok) return { ok: false, error: opened.code };
   const { db } = opened;
-
   try {
     await ensureEmbeddingsTable(db);
-
-    let stored = 0;
-    for (const item of embeddings) {
-      const chunk = db.prepare("SELECT repo, path, start_line, end_line FROM chunks WHERE id = ?").get(item.chunk_id);
-      if (!chunk) continue;
-
-      const stmt = db.prepare(`
-        INSERT OR REPLACE INTO embeddings
-        (chunk_id, content_hash, provider, repo, path, start_line, end_line, embedding, model_name, dimensions, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
-      `);
-
-      // Infer provider from model_name if not specified
-      let provider = item.provider || "unknown";
-      if (!item.provider) {
-        if (item.model_name?.includes("text-embedding")) {
-          provider = "openai";
-        } else if (item.model_name?.includes("mxbai")) {
-          provider = "magistral";
-        }
-      }
-
-      stmt.run(
-        item.chunk_id,
-        item.content_hash,
-        provider,
-        chunk.repo,
-        chunk.path,
-        chunk.start_line,
-        chunk.end_line,
-        JSON.stringify(item.embedding),
-        item.model_name || "unknown",
-        item.dimensions || item.embedding?.length || 0
-      );
-      stored++;
-    }
-
+    const prepared = embeddings.map(item => ({
+      ...item,
+      provider: item.provider || (
+        item.model_name?.includes("text-embedding") ? "openai" :
+        item.model_name?.includes("mxbai") ? "magistral" : "unknown"
+      ),
+    }));
+    const result = storeEmbeddingsSafely(db, prepared);
+    return { ok: true, ...result };
+  } catch (error) {
+    return { ok: false, error: "store_failed", message: error.message };
+  } finally {
     closeIndexDatabase(db);
-    return { ok: true, stored };
-  } catch (e) {
-    closeIndexDatabase(db);
-    return { ok: false, error: "store_failed", message: e.message };
   }
 }
 
@@ -14398,7 +14371,11 @@ async function semanticSearchWithEmbedding(ctx, queryEmbedding, options = {}) {
   const limit = boundedInteger(options.limit, 10, 1, 50);
   const preferredProvider = options.provider || null;
   const preferredModel = options.modelName || options.model_name || null;
-  const preferredDimensions = Number(options.dimensions || 0) || null;
+  const preferredDimensions = Number(options.dimensions || queryEmbedding?.length || 0) || null;
+  if (!Array.isArray(queryEmbedding) || queryEmbedding.length !== preferredDimensions
+      || !queryEmbedding.every(value => typeof value === "number" && Number.isFinite(value))) {
+    return { ok: false, error: "query_embedding_dimension_mismatch", query: q, mode: "semantic" };
+  }
   let vecWarning = "";
   if (!options.disableVec) {
     const vecResult = await semanticSearchWithVecEmbedding(ctx, queryEmbedding, {
@@ -14426,31 +14403,32 @@ async function semanticSearchWithEmbedding(ctx, queryEmbedding, options = {}) {
     const repoClause = repo === "all" ? "" : "AND c.repo = ?";
     const publicClause = view === FULL_VIEW ? "" : "AND c.searchable_public = 1";
 
-    // Build provider clause
-    let providerClause = "";
-    let providerParams = [];
-    if (preferredProvider) {
-      providerClause = "AND e.provider = ?";
-      providerParams = [preferredProvider];
-    } else {
-      // If no provider specified, prefer the one with the most embeddings
-      const providerCounts = db.prepare(`
-        SELECT provider, COUNT(*) as count
-        FROM embeddings e
-        JOIN chunks c ON e.chunk_id = c.id
-        WHERE 1=1 ${publicClause}
-        GROUP BY provider
-        ORDER BY count DESC
-        LIMIT 1
-      `).get(...(publicClause ? [] : []));
-
-      if (providerCounts) {
-        providerClause = "AND e.provider = ?";
-        providerParams = [providerCounts.provider];
-      }
+    // Select a single compatible embedding space before comparing any vectors.
+    // Equal dimensions do NOT mean that two models share a vector space.
+    const profiles = db.prepare(`
+      SELECT e.provider, e.model_name, e.dimensions
+      FROM embeddings e JOIN chunks c ON e.chunk_id = c.id
+      WHERE e.dimensions = ? AND e.content_hash = c.content_hash
+        ${publicClause} ${repoClause}
+      GROUP BY e.provider, e.model_name, e.dimensions
+    `).all(preferredDimensions, ...(repo !== "all" ? [repo] : []));
+    const compatible = profiles.filter(item =>
+      (!preferredProvider || item.provider === preferredProvider)
+      && (!preferredModel || item.model_name === preferredModel)
+    );
+    if (compatible.length !== 1) {
+      closeIndexDatabase(db);
+      return {
+        ok: false,
+        error: compatible.length ? "ambiguous_embedding_space" : "no_compatible_embedding_space",
+        query: q, mode: "semantic",
+      };
     }
-    const modelClause = preferredModel ? "AND e.model_name = ?" : "";
-    const dimensionsClause = preferredDimensions ? "AND e.dimensions = ?" : "";
+    const selected = compatible[0];
+    const providerClause = "AND e.provider = ?";
+    const modelClause = "AND e.model_name = ?";
+    const dimensionsClause = "AND e.dimensions = ? AND e.content_hash = c.content_hash";
+    const providerParams = [selected.provider];
 
     const embeddings = db.prepare(`
       SELECT e.chunk_id, e.repo, e.path, e.start_line, e.end_line, e.embedding,
@@ -14462,8 +14440,8 @@ async function semanticSearchWithEmbedding(ctx, queryEmbedding, options = {}) {
     `).all(...[
       ...(repo !== "all" ? [repo] : []),
       ...providerParams,
-      ...(preferredModel ? [preferredModel] : []),
-      ...(preferredDimensions ? [preferredDimensions] : []),
+      selected.model_name,
+      preferredDimensions,
     ]);
 
     const similarities = embeddings.map(row => {
@@ -14502,7 +14480,8 @@ async function semanticSearchWithEmbedding(ctx, queryEmbedding, options = {}) {
       mode: "semantic",
       view,
       repo,
-      provider: preferredProvider || providerParams[0] || "unknown",
+      provider: selected.provider,
+      model_name: selected.model_name,
       index_hash: state.index_hash || "",
       count: results.length,
       results: results.map(({ _provider, _model, _dimensions, ...r }) => r),
@@ -14534,6 +14513,16 @@ async function semanticSearchWithVecEmbedding(ctx, queryEmbedding, options = {})
     const tableName = vecEmbeddingTableName(preferredDimensions);
     const table = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name = ?").get(tableName);
     if (!table) return { ok: false, error: "sqlite_vec_index_missing", dimensions: preferredDimensions };
+    // The legacy sqlite-vec table partitions by dimension alone. An ANN search
+    // across distinct models can discard the correct candidates BEFORE the SQL
+    // model filter. Conservatively use exact JS scan until per-space ANN exists.
+    const spaces = db.prepare(
+      "SELECT provider, model_name FROM embeddings WHERE dimensions = ? GROUP BY provider, model_name"
+    ).all(preferredDimensions);
+    if (spaces.length !== 1 || (preferredProvider && spaces[0]?.provider !== preferredProvider)
+        || (preferredModel && spaces[0]?.model_name !== preferredModel)) {
+      return { ok: false, error: "sqlite_vec_mixed_embedding_spaces", dimensions: preferredDimensions };
+    }
     const state = readIndexState(db);
     const meta = db.prepare("SELECT index_hash, row_count FROM vec_embedding_indexes WHERE table_name = ?").get(tableName);
     if (!meta || !meta.row_count) return { ok: false, error: "sqlite_vec_index_missing", dimensions: preferredDimensions };
@@ -14623,6 +14612,8 @@ function formatVecFallbackReason(error) {
       return "index missing";
     case "sqlite_vec_index_stale":
       return "index stale";
+    case "sqlite_vec_mixed_embedding_spaces":
+      return "mixed spaces require model-scoped index";
     case "sqlite_vec_filtered_candidates_insufficient":
       return "candidate window incomplete";
     case "sqlite_vec_search_failed":

@@ -48,6 +48,23 @@ try {
   assert.equal(cached.query_cache.dimensions, 2);
   assert.equal(cached.semantic_result_cache.ok, true);
   assert.equal(cached.semantic_result_cache.count, 2);
+  assert.equal(cached.results[0].path, "alpha.md");
+
+  // Same 2-dimension space, different provider/model: a Cloudflare query must
+  // NOT rank the OpenAI alpha vector, even if its coordinates are identical.
+  const cloudflarePayload = path.join(tempRoot, "cloudflare-query.json");
+  fs.writeFileSync(cloudflarePayload, JSON.stringify({
+    query: "beta topic", provider: "cloudflare",
+    model_name: "qwen3-embedding-test", dimensions: 2,
+    query_embedding: [1, 0],
+  }), "utf8");
+  const isolated = await runCogentia([
+    "embeddings", "search-with", cloudflarePayload, "--query", "beta topic",
+    "--repo", "all", "--limit", "1", "--view", "public", "--json",
+  ]);
+  assert.equal(isolated.ok, true);
+  assert.equal(isolated.results.length, 1);
+  assert.equal(isolated.results[0].path, "beta.md");
 
   const daemon = spawn(process.execPath, ["scripts/cogentia.js", "daemon", "--host", "127.0.0.1", "--port", String(port)], {
     cwd: root,
@@ -177,6 +194,13 @@ function createIndexFixture(dataRoot) {
     `);
     insertEmbedding.run(JSON.stringify([1, 0]), 1);
     insertEmbedding.run(JSON.stringify([0, 1]), 2);
+    db.prepare(`
+      INSERT INTO embeddings
+      (chunk_id, content_hash, provider, repo, path, start_line, end_line, embedding, model_name, dimensions, created_at)
+      SELECT id, content_hash, 'cloudflare', repo, path, start_line, end_line,
+             '[1,0]', 'qwen3-embedding-test', 2, '2026-11-17'
+      FROM chunks WHERE id = 2
+    `).run();
   } finally {
     db.close();
   }
