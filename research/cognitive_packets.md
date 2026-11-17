@@ -417,6 +417,64 @@ packets, or COP EventStore declarations. The old `kind` describes the task,
 not necessarily which concrete program originally emitted it; provenance
 is not reconstructed retroactively from a title or subject.
 
+**Continuation target is independent of producer class (2026-11-17,
+Scheme `call/cc` clarification):** The seven producer families above classify
+*why independently addressable work was externalized*. They are **not** a
+complete taxonomy of control-flow mechanisms. A CPU `ret` often advances the
+instruction pointer from an address saved on a call stack; in ordinary
+pseudocode one can write `IP = *SP++` for a particular calling convention.
+That operation consumes an implicit return context. Scheme's
+`call-with-current-continuation` (`call/cc`) is stronger: the current
+continuation is captured as a first-class procedure, potentially invoked
+more than once. Capturing a machine call stack is not the same as safely
+serializing a closure for a foreign runtime or replaying external side effects.
+See [R7RS §6.10](https://standards.scheme.org/r7rs-html5/index.html)
+and the pre-existing [Agent-Resumable CLI](agent_resumable_cli.md).
+
+The operational abstraction is:
+
+```text
+Continuation = RESUMPTION TARGET + REQUIRED CONTEXT
+               + optional WAKE CONDITIONS + optional RESULT/RETURN CONTRACT
+```
+
+Its *implementation* depends on the execution locality. Three concrete,
+**persistable target-reference forms** are now supported by the effect-free
+P1 proposal validator (none executes code):
+
+| Target | Minimal example | Actual mechanism / boundary |
+|---|---|---|
+| `task_step` | `task_ref`, `step_ref`, optional `packet_ref` | A task-local cursor/step reference; a runner must **implement** selecting and entering that Step. Current `Cop-kerneltasks.js` step storage and `markTaskStepCompleted` do **not** themselves implement this next-step runner. When routing/effects/claim become independent, promote to a Packet rather than making a Step a new authority. |
+| `process_command` | `program_ref`, `argv[]`, optional `cwd_ref`, `env_ref` | New process/script invocation. It is a continuation of the **workflow**, not restoration of the terminated Bash interpreter's execution stack. Requires a real executor and its own effect authorization. |
+| `handler` | `handler_ref` | Resolver dispatch as in `createContinuationDescriptor({resumeTo})` and `executeContinuation`. A handler reference is not proof that the handler is installed or authorized. |
+
+There is also the vastly more common **implicit in-process continuation**:
+a return address, stack frame, local callback, coroutine state or a closure
+captured by `call/cc`. It normally needs **no durable ContinuationIntent,
+Packet or COP entry at all**. A raw `IP` is meaningless outside its runtime
+and is deliberately **not** an allowed serializable target. For an independent
+recoverable subtask, externalize the minimum sufficient state instead of
+trying to transfer a native stack frame. Multi-shot continuations are a
+language-level capability; the default for governed non-idempotent effects
+must remain **one-shot / idempotently committed**, or separately forked with
+new identities and independent effect authorization.
+
+A *wake trigger* (`waitForEvents`, `resumeAfter`, an available dependency) is
+not a resumption target. A *result recipient* is not automatically an
+executable target either: `continuation resolve` deposits a result, but does
+not by itself advance the originating computation.
+
+**P1 correction in code:**
+`prepareContinuationProduction(..., resumption_target)` now validates those
+three explicit address shapes, including script arguments, and retains the
+existing strict external judgment return contract. For **self-directed**
+`checkpoint_resume` or `temporal_recurrence` it permits a deliberately
+absent result recipient *only when an explicit resumption target exists*.
+The legacy preview path remains compatible. The returned proposal is still
+`prepared_only`: it neither changes a COPStep cursor nor invokes a shell,
+handler or provider, nor creates or grants a COP effect. This preserves
+separation of the conceptual control operation from its concrete executor.
+
 **Migration order, not a forced global conversion:** first classify current
 producers and add tests at each actual ingress (CLI/MCP/ACP, frontmatter,
 embeddings, sleep-cycle, composition and conversation bridge). Then make one

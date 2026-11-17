@@ -442,6 +442,34 @@ These report only aggregate metadata or known code locations; neither creates
 nor dispatches work. An unknown producer or unverified result consumer must
 remain explicit rather than being assigned to a provider by guesswork.
 
+### Execution target versus reason for suspension
+
+A Continuation can be as simple as a local function's implicit return
+address (`IP = *SP++`, architecture/calling-convention dependent), or as
+rich as Scheme `call/cc`'s first-class captured continuation. Native return
+addresses and frames are *runtime-local*: do not serialize raw `IP` as a
+Fractanet resume target. The seven producer classes describe why
+independently handled work was externalized, **not** the way control resumes.
+
+The pure P1 preview accepts three **explicit**, reference-based targets:
+`{kind: 'task_step', task_ref, step_ref, packet_ref?}` for a COPTask-local
+next-step cursor; `{kind: 'process_command', program_ref, argv, cwd_ref?,
+env_ref?}` for a new script/program with arguments; and
+`{kind: 'handler', handler_ref}` for an installed handler to resolve. These
+are validated descriptions, **not executors**. An ordinary return does not
+require a packet or an event. A script successor is not a snapshot of a
+running shell. A COPStep is a local projection; independent work remains
+anchored to its Cognitive Packet. Native `call/cc` may allow multi-shot
+re-entry, whereas governed external effects need explicit idempotency and
+separate authorization before each legitimately distinct attempt.
+
+For a self-directed checkpoint or recurrence, an explicit resumption target
+can exist without an awaited result slot. For external judgment, data
+requirements or child-parent composition, retain an explicit return
+contract; a `continuation resolve` command alone stores a result and
+never proves the caller was resumed. See the source-backed explanation in
+[the harmonization audit](../research/cognitive_packets.md).
+
 To prototype a **class-specific production recipe** without creating a
 Continuation, use the pure
 `prepareContinuationProduction` function in

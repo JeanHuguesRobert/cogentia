@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {prepareContinuationProduction} from './continuation-production-recipes.mjs';
+import {prepareContinuationProduction,validateResumptionTarget}
+  from './continuation-production-recipes.mjs';
 const base={producer_ref:'cogentia.local.emit',origin_ref:'mission:one',
   trigger_ref:'fact:wait',idempotency_key:'dedupe:alpha',work_ref:'work:one',
   privacy:'private',resumption_context:{mode:'referential',state_ref:'git:source'},
@@ -73,4 +74,57 @@ test('explicit unknown kind, untrusted date and non-JSON work fail closed',()=>{
  const cyclic={...kinds.judgment_boundary};cyclic.self=cyclic;
  assert.equal(prepareContinuationProduction({...base,producer_class:'judgment_boundary',
    class_input:cyclic}).status,'proposal_not_json_serializable');
+});
+
+
+test('ordinary next COPStep is an address of resumption, not a new COP mandate',()=>{
+ const p=prepareContinuationProduction({...base,producer_class:'checkpoint_resume',
+   class_input:{checkpoint_ref:'checkpoint:step-one'},return_contract:null,
+   resumption_target:{kind:'task_step',task_ref:'task:one',step_ref:'step:two',
+     packet_ref:'packet:source'}});
+ assert.equal(p.ok,true,JSON.stringify(p));
+ assert.equal(p.proposal.return_contract,null);
+ assert.equal(p.proposal.resumption_target.kind,'task_step');
+ assert.equal(p.proposal.cop_authority_granted,false);
+ assert.equal(validateResumptionTarget({kind:'task_step',task_ref:'task:one'}),false);
+});
+
+test('next Bash-style program + argv is a continuation without a recipient reply slot',()=>{
+ const p=prepareContinuationProduction({...base,producer_class:'checkpoint_resume',
+   class_input:{checkpoint_ref:'checkpoint:step-one'},return_contract:null,
+   resumption_target:{kind:'process_command',program_ref:'program:bash',
+     argv:['scripts/continue.sh','--count','7'],cwd_ref:'repo:operium',
+     env_ref:'env:nonsecret-config'}});
+ assert.equal(p.ok,true,JSON.stringify(p));
+ assert.equal(p.proposal.provider_dispatched,false);
+ assert.equal(p.proposal.resumption_target.argv[2],'7');
+ assert.equal(validateResumptionTarget({kind:'process_command',
+   program_ref:'program:bash',argv:'unsafe bash -c command'}),false);
+});
+
+test('a named handler is a third form; result-awaiting classes still require return contract',()=>{
+ const target={kind:'handler',handler_ref:'handler:cop-scheduler'};
+ const p=prepareContinuationProduction({...base,producer_class:'temporal_recurrence',
+   class_input:kinds.temporal_recurrence,return_contract:null,resumption_target:target});
+ assert.equal(p.ok,true,JSON.stringify(p));
+ assert.equal(p.proposal.resumption_target.handler_ref,target.handler_ref);
+ const denied=prepareContinuationProduction({...base,producer_class:'judgment_boundary',
+   class_input:kinds.judgment_boundary,return_contract:null,resumption_target:target});
+ assert.equal(denied.status,'return_contract_incomplete');
+ const invalid=prepareContinuationProduction({...base,producer_class:'checkpoint_resume',
+   class_input:kinds.checkpoint_resume,return_contract:null,
+   resumption_target:{kind:'native_ip',address:12345}});
+ assert.equal(invalid.status,'resumption_target_invalid');
+});
+
+
+test('checkpoint is sufficient with explicit task cursor; missing cursor and handler is not',()=>{
+ const target={kind:'task_step',task_ref:'task:one',step_ref:'step:two'};
+ const p=prepareContinuationProduction({...base,producer_class:'checkpoint_resume',
+   class_input:{checkpoint_ref:'checkpoint:one'},return_contract:null,
+   resumption_target:target});
+ assert.equal(p.ok,true,JSON.stringify(p));
+ const rejected=prepareContinuationProduction({...base,producer_class:'checkpoint_resume',
+   class_input:{checkpoint_ref:'checkpoint:one'}});
+ assert.equal(rejected.status,'class_specific_fields_incomplete');
 });

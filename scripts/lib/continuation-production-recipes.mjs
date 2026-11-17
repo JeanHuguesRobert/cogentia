@@ -15,6 +15,27 @@ const plain=x=>x&&typeof x==='object'&&!Array.isArray(x)&&
 const strings=x=>Array.isArray(x)&&x.length>0&&x.length<=32&&x.every(text)&&
   new Set(x).size===x.length;
 const fail=status=>({ok:false,status});
+/** Orthogonal to why work was suspended: HOW control could resume.
+ * This classifies references; it does not execute or claim them.
+ * Machine return addresses/JS closures are intentionally NOT persistent
+ * JSON targets: they belong to the in-process runtime and are not portable.
+ */
+export const RESUMPTION_TARGET_KINDS=Object.freeze([
+  'task_step','process_command','handler',
+]);
+export function validateResumptionTarget(target){
+  if(!plain(target))return false;
+  if(target.kind==='task_step')return text(target.task_ref)&&
+    text(target.step_ref)&&
+    (target.packet_ref===undefined||text(target.packet_ref));
+  if(target.kind==='process_command')return text(target.program_ref)&&
+    Array.isArray(target.argv)&&target.argv.length<=64&&
+    target.argv.every(v=>typeof v==='string'&&v.length<=4096)&&
+    (target.cwd_ref===undefined||text(target.cwd_ref))&&
+    (target.env_ref===undefined||text(target.env_ref));
+  if(target.kind==='handler')return text(target.handler_ref);
+  return false;
+}
 const digest=value=>createHash('sha256').update(stable(value)).digest('hex');
 // Canonical hashing: JS object insertion order is not task identity.
 function canonical(x){
@@ -31,8 +52,9 @@ const specs=Object.freeze({
     Object.keys(expected_response).length>0,
   external_capability_wait:({required_capabilities,missing_input_ref,question})=>
     (strings(required_capabilities)||text(missing_input_ref))&&bounded(question),
-  checkpoint_resume:({checkpoint_ref,resume_handler_ref})=>
-    text(checkpoint_ref)&&text(resume_handler_ref),
+  checkpoint_resume:({checkpoint_ref,resume_handler_ref},{resumption_target}={})=>
+    text(checkpoint_ref)&&(text(resume_handler_ref)||
+      resumption_target!==null&&validateResumptionTarget(resumption_target)),
   temporal_recurrence:({due_at,mission_ref})=>
     typeof due_at==='string'&&/^\d{4}-\d\d-\d\dT\d\d:\d\d:/.test(due_at)&&
     Number.isFinite(Date.parse(due_at))&&text(mission_ref),
@@ -50,7 +72,7 @@ const specs=Object.freeze({
  */
 export function prepareContinuationProduction({producer_ref,producer_class,
   origin_ref,trigger_ref,idempotency_key,work_ref,privacy='restricted',
-  resumption_context,return_contract,class_input}={}){
+  resumption_context,return_contract,class_input,resumption_target=null}={}){
   if(!text(producer_ref)||!text(origin_ref)||!text(trigger_ref)||
      !text(idempotency_key)||!text(work_ref))return fail('producer_identity_required');
   if(!Object.hasOwn(CONTINUATION_PRODUCTION_CLASSES,producer_class)||
@@ -63,19 +85,29 @@ export function prepareContinuationProduction({producer_ref,producer_class,
      (resumption_context.mode==='inline'&&resumption_context.state===undefined)||
      (['referential','materializable'].includes(resumption_context.mode)&&
        !text(resumption_context.state_ref)))return fail('resumption_context_incomplete');
-  if(!plain(return_contract)||!text(return_contract.owner_ref)||
+  if(resumption_target!==null&&!validateResumptionTarget(resumption_target))
+    return fail('resumption_target_invalid');
+  // A local step cursor or successor program can be a genuine continuation
+  // without a consumer awaiting a result. The original legacy path remains
+  // strict; externally delegated work still needs an explicit result owner.
+  const selfDirected=['checkpoint_resume','temporal_recurrence'].includes(producer_class);
+  if(return_contract==null){
+    if(resumption_target===null||!selfDirected)
+      return fail('return_contract_incomplete');
+  }else if(!plain(return_contract)||!text(return_contract.owner_ref)||
      !text(return_contract.result_slot_ref)||
      !['pull','event','direct'].includes(return_contract.delivery)||
      !['caller_decides','reenter_on_validated_result'].includes(
        return_contract.after_delivery))return fail('return_contract_incomplete');
-  if(!plain(class_input)||!specs[producer_class](class_input))
+  if(!plain(class_input)||!specs[producer_class](class_input,{resumption_target}))
     return fail('class_specific_fields_incomplete');
   let fingerprint;
   try{
     // Reject unportable/cyclic/infinite values rather than hiding them under
     // JSON.stringify's lossy undefined/NaN/special-object normalization.
     const source={producer_ref,producer_class,origin_ref,trigger_ref,
-      idempotency_key,work_ref,privacy,resumption_context,return_contract,class_input};
+      idempotency_key,work_ref,privacy,resumption_context,return_contract,class_input,
+      resumption_target};
     const raw=stable(source);
     if(raw.length>18000||raw.length<10||!JSON.parse(raw))return fail('proposal_size_invalid');
     const isSerializable=(v,seen=new WeakSet())=>{
@@ -97,7 +129,7 @@ export function prepareContinuationProduction({producer_ref,producer_class,
     identity_ref,request_fingerprint:fingerprint,
     producer_ref,producer_class,origin_ref,trigger_ref,idempotency_key,
     work_ref,privacy,resumption_context,return_contract,class_input,
-    carrier_not_chosen:true,source_materialized:false,
+    resumption_target,carrier_not_chosen:true,source_materialized:false,
     provider_dispatched:false,cop_authority_granted:false,
   },external_effects:0};
 }
