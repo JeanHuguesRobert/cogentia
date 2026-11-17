@@ -185,6 +185,17 @@ function providersForContinuation(continuation) {
   const providerName = profile?.provider && profile.provider !== "unknown" ? profile.provider : "";
   if (!providerName) return detectAvailableProviders();
 
+  // Cloudflare is an explicit Magistral-only profile, never auto-selected by
+  // presence of a key. The remote free-plan and budget are checked per batch.
+  if (providerName === "cloudflare") {
+    if (!profile.model_name || !Number.isInteger(Number(profile.dimensions))
+        || !profile.policy) return [];
+    return [{
+      provider: "cloudflare", displayName: "Cloudflare via Magistral",
+      baseUrl: "http://127.0.0.1:8880", profile,
+      models: [{id:profile.model_name,dimensions:Number(profile.dimensions)}],
+    }];
+  }
   const providerConfig = getProvider(providerName);
   if (!providerConfig) {
     console.log(`  ⚠️  Unknown provider in continuation profile: ${providerName}`);
@@ -253,8 +264,16 @@ async function generateEmbeddingsForProvider(providerInfo, chunks, options = {})
   // can reach billable APIs; a provider name or presence of a key is NOT proof
   // of free-tier eligibility or a COP reservation. Until a verified free
   // provider transport is installed, refuse all external requests in this mode.
-  if (process.env.COGENTIA_EMBEDDINGS_MAX_BILLABLE_USD === "0") {
+  const monetaryBudgetZero = process.env.COGENTIA_EMBEDDINGS_MAX_BILLABLE_USD === "0";
+  if (monetaryBudgetZero && provider !== "cloudflare") {
     console.log("    BLOCKED: zero monetary budget; provider/free entitlement not independently verified by this worker.");
+    return null;
+  }
+  if (provider === "cloudflare") {
+    // No deployed COP admission adapter has been connected to this worker yet.
+    // Never equate an environment boolean, an API key or an operator assertion
+    // with an independently verified effect-bound admission.
+    console.log("    BLOCKED: Cloudflare requires separately verified COP effect admission; worker pilot not activated.");
     return null;
   }
   const modelSpec = getModel(provider, modelInfo.id) || {};
