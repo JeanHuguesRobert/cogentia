@@ -688,3 +688,34 @@ After recovery #2, no further recovery is automatically available regardless
 of how the browser responds. A previous attempt with *any* budgeted submit
 is ineligible. This does not apply to the first genuinely ambiguous browser
 click, whose parent remains `Parked` with unknown delivery.
+
+### FBF — expired PacketClaim during certified pre-submit recovery (2026-11-17)
+
+The initial browser `PacketClaim` expires after its original finite lease.
+In a real multi-hour wait, a continuation can remain eligible for a
+*separately proved pre-submit recovery* but cannot execute under that old
+claim: `validateCurrentPacketClaim` correctly returns `STALE_CLAIM`.
+Simply extending the clock or bypassing PacketClaim fencing is forbidden.
+
+The **existing** event-sourced `EventStorePacketClaimCoordinator.tryClaim`
+reclaims an expired packet under SQLite `BEGIN IMMEDIATE`, emitting a new
+monotonically increasing claim epoch. In the exceptionally admitted **second
+and final** pre-submit recovery (two `composer_not_ready` observations,
+independent proof that *no submit reservation* occurred, and a governed
+owned-draft cleanup receipt), the assigned dispatcher may acquire this fresh
+lease. It records a single idempotent causal event
+`cogentia.cps-assigned-recovery-claim/v1` / `recovery_claim_rebound` with the
+old and new claim IDs and epochs. The original continuation declaration is
+immutable. The dispatcher checks this effective, proven claim against
+PacketCoordination before authorizing any effect.
+
+No claim is re-acquired for uncertain UI clicks, blocked/cold parent packets,
+missing recovery proof or tasks with a confirmed result. A second claim loss
+after rebind **halts** rather than looping on repeated reclaims. This is a
+bounded recovery of execution *custody*, never a new provider permission,
+mandate or budget. The existing independently verified John admission and
+budget stay mandatory. Failure to persist the rebind leaves the dispatcher
+fenced; a claim event alone does not authorize a browser call.
+
+A disposable real SQLite regression proves lease expiry, new claim epoch 2,
+sequential fencing, idempotent no-repeat dispatch, and COP audit integrity.

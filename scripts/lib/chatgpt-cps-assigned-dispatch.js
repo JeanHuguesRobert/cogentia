@@ -6,6 +6,7 @@
  * (including historical test packets) must NEVER be sent to ChatGPT.
  */
 import {projectPacketCoordination,validateCurrentPacketClaim} from '../../../inseme/packages/cop-core/src/packet-coordination.js';
+import {EventStorePacketClaimCoordinator} from '../../../inseme/packages/cop-kernel/src/packetCoordination.js';
 import {runMandateToBoundary} from './mandate-continuation.js';
 import {projectPacketTemperature} from '../../../inseme/packages/cop-core/src/packet-temperature.js';
 import {inspectQuarantinedBrowserDelivery} from './chatgpt-cps-delivery-quarantine.js';
@@ -171,6 +172,64 @@ export function listAssignedChatgptCpsContinuations(store,{limit=25}={}){
   });
 }
 
+const CLAIM_REBIND_PROFILE='cogentia.cps-assigned-recovery-claim/v1';
+const claimRebindKey=id=>`chatgpt-browser:${id}:recovery-claim-rebound`;
+/** The old continuation declaration is immutable. A narrowly scoped
+ * recovery can reference a newer fenced PacketClaim only when TWO independent
+ * pre-submit failures have been proven and the previously held lease expired.
+ * The claim is not a new browser effect or an authorization bypass. */
+function effectiveAssignedClaim(store,c){
+  const event=store.eventByIdempotency(claimRebindKey(c.continuation_id));
+  if(!event)return c.claim;
+  if(event.topic?.id!=='continuation:'+c.continuation_id||
+     event.payload?.profile!==CLAIM_REBIND_PROFILE||
+     event.payload?.phase!=='recovery_claim_rebound'||
+     event.payload?.prior_claim_id!==c.claim.claim_id||
+     !Number.isSafeInteger(event.payload?.new_epoch)||
+     event.payload.new_epoch<=c.claim.epoch||
+     typeof event.payload?.new_claim_id!=='string')return null;
+  return {claim_id:event.payload.new_claim_id,epoch:event.payload.new_epoch};
+}
+export async function ensureAssignedRecoveryClaim(store,c,{now=new Date()}={}){
+  if(!store?.transaction||!c?.continuation_id)return {ok:false,status:'invalid_claim_renewal'};
+  const ref='continuation:'+c.continuation_id;
+  const recovery=inspectPreSubmitRecovery(store,c.continuation_id);
+  if(!recovery.eligible||recovery.recovery_attempt!==2)
+    return {ok:false,status:'recovery_claim_renewal_not_admitted'};
+  if(!projectPacketTemperature(store,{packet_ref:ref}).runnable)
+    return {ok:false,status:'packet_temperature_deferred'};
+  const current=effectiveAssignedClaim(store,c);
+  if(!current)return {ok:false,status:'claim_binding_invalid'};
+  const projection=projectPacketCoordination(store.listTopic('packet-coordination:'+c.packet_ref)
+    .map(e=>e.payload?.packet_coordination_event).filter(Boolean));
+  if(validateCurrentPacketClaim(projection,{claimId:current.claim_id,
+    handlerRef:'agent:jhn',epoch:current.epoch,now}).ok)
+    return {ok:true,status:'current_claim',claim:current};
+  // A prior rebind is not extended speculatively. A second loss of custody
+  // requires independent reconciliation rather than another unlimited claim.
+  if(store.eventByIdempotency(claimRebindKey(c.continuation_id)))
+    return {ok:false,status:'rebound_claim_expired'};
+  const coordinator=new EventStorePacketClaimCoordinator({store});
+  const claimed=await coordinator.tryClaim({packetRef:c.packet_ref,
+    handlerRef:'agent:jhn',ttlMs:900000});
+  if(!claimed.ok)return {ok:false,status:'claim_reacquisition_denied'};
+  const recorded=store.append({topic_id:ref,event_type:'cop.event/v1',
+    actor_id:'cop:cps-recovery-claim',subject_ref:ref,
+    visibility:'restricted',epistemic_status:'observed',
+    idempotency_key:claimRebindKey(c.continuation_id),
+    causal_refs:[recovery.original_dispatch_intent_ref,
+      recovery.original_preflight_receipt_ref,
+      recovery.cleanup_receipt_ref],
+    payload:{profile:CLAIM_REBIND_PROFILE,phase:'recovery_claim_rebound',
+      continuation_id:c.continuation_id,prior_claim_id:c.claim.claim_id,
+      prior_epoch:c.claim.epoch,new_claim_id:claimed.claim.claim_id,
+      new_epoch:claimed.claim.epoch,reason:'bounded_proven_pre_submit_recovery',
+      extra_browser_effects:0,max_claim_rebinds:1}});
+  if(!recorded.ok)return {ok:false,status:'claim_rebind_needs_reconciliation'};
+  return {ok:true,status:'recovery_claim_rebound',claim:{
+    claim_id:claimed.claim.claim_id,epoch:claimed.claim.epoch}};
+}
+
 function reservationAndClaimCurrent(store,c,now){
   const events=store.listTopic('execution-budget:budget:mandate:jhn:john-root');
   const matches=events.filter(e=>e.event_type==='ExecutionBudgetReservation'&&
@@ -181,8 +240,9 @@ function reservationAndClaimCurrent(store,c,now){
       e.payload?.reservation_id===c.budget_reservation_id))return false;
   const projection=projectPacketCoordination(store.listTopic('packet-coordination:'+c.packet_ref)
     .map(e=>e.payload?.packet_coordination_event).filter(Boolean));
-  return validateCurrentPacketClaim(projection,{
-    claimId:c.claim.claim_id,handlerRef:'agent:jhn',epoch:c.claim.epoch,now}).ok===true;
+  const bound=effectiveAssignedClaim(store,c);
+  return bound&&validateCurrentPacketClaim(projection,{
+    claimId:bound.claim_id,handlerRef:'agent:jhn',epoch:bound.epoch,now}).ok===true;
 }
 
 /** `admit` verifies the CURRENT signed mandate and provider permission;
@@ -209,6 +269,11 @@ export async function dispatchAssignedChatgptCpsContinuation({
     return {ok:false,status:'needs_reconciliation'};
   if(!projectPacketTemperature(store,{packet_ref:topic}).runnable)
     return {ok:false,status:'packet_temperature_deferred'};
+  if(!reservationAndClaimCurrent(store,c,now)&&isRecovery&&
+     preflight.recovery_attempt===2){
+    const rebound=await ensureAssignedRecoveryClaim(store,c,{now});
+    if(!rebound.ok)return {ok:false,status:rebound.status};
+  }
   if(!reservationAndClaimCurrent(store,c,now))
     return {ok:false,status:'stale_claim_or_budget'};
   let grant;

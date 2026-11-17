@@ -9,7 +9,7 @@ import {declaredContinuationRecord} from '../../../inseme/packages/cop-core/src/
 import {EventStorePacketClaimCoordinator} from '../../../inseme/packages/cop-kernel/src/packetCoordination.js';
 import {runChatgptCpsResidentCycle} from '../ops/ona-chatgpt-cps-reconcile.mjs';
 import {buildAssignedChatgptCpsPrompt,listAssignedChatgptCpsContinuations,dispatchAssignedChatgptCpsContinuation,
-  runAssignedChatgptCpsBatch,inspectPreSubmitRecovery} from './chatgpt-cps-assigned-dispatch.js';
+  runAssignedChatgptCpsBatch,inspectPreSubmitRecovery,ensureAssignedRecoveryClaim} from './chatgpt-cps-assigned-dispatch.js';
 const BUDGET='budget:mandate:jhn:john-root';
 const permit=async()=>({granted:true,provider_permitted:true,budget_admitted:true,
   authorization_ref:'cop:mandate:v4',provider_permission_receipt_ref:'cop:provider:authorized',
@@ -17,7 +17,7 @@ const permit=async()=>({granted:true,provider_permitted:true,budget_admitted:tru
 const decline=async()=>({granted:false});
 const send=async({continuation_id})=>({ok:true,submitted:true,continuation_id,
   execution_receipt_ref:'john:ui-click:'+continuation_id});
-async function assigned(store,id,{mode='cps:assigned-browser-turn/v1',channel='browser'}={}){
+async function assigned(store,id,{mode='cps:assigned-browser-turn/v1',channel='browser',ttlMs=600000}={}){
   const ledger=createEventSourcedExecutionBudgetLedger({store,budget_id:BUDGET,
     limits:{max_steps:20},require_authority_grant:false});
   const reserved=ledger.reserve({idempotency_key:'assigned:'+id,
@@ -26,7 +26,7 @@ async function assigned(store,id,{mode='cps:assigned-browser-turn/v1',channel='b
   const packet_ref='packet:'+id;
   const coordinator=new EventStorePacketClaimCoordinator({store});
   const claim=await coordinator.tryClaim({packetRef:packet_ref,
-    handlerRef:'agent:jhn',ttlMs:600000});
+    handlerRef:'agent:jhn',ttlMs});
   assert.equal(claim.ok,true,JSON.stringify(claim));
   const c={continuation_id:id,packet_ref,version:1,attempt_id:'a1',
     execution_binding_ref:'binding:'+id,lifecycle:'suspended',
@@ -410,6 +410,57 @@ test('a second recovery is forbidden if the first recovery reached John submit r
     expected_version:ledger.snapshot().version,demand:{max_steps:1}}).ok,true);
   assert.equal(inspectPreSubmitRecovery(s,id).eligible,false);
   assert.equal(listAssignedChatgptCpsContinuations(s)[0].status,'needs_reconciliation');
+  assert.equal(s.auditCommitments().ok,true);
+ }finally{s.close()}
+});
+
+
+test('proven second pre-submit recovery reclaims one expired claim without rewriting declaration',async()=>{
+ const s=createSqliteCopEventStore(':memory:');try{
+  const id='ctn_assigned_lease_recovery_01';
+  const declaration=await assigned(s,id,{ttlMs:120});
+  const failed=async()=>({ok:false,error:'composer_not_ready'});
+  for(let i=0;i<2;i++){
+    const attempt=await dispatchAssignedChatgptCpsContinuation({store:s,
+      continuation_id:id,admit:permit,dispatch:failed});
+    assert.equal(attempt.status,'needs_reconciliation',JSON.stringify(attempt));
+  }
+  const other='ctn_chatgpt_browser_1234567890abcdef1234567890abcdef';
+  assert.equal(s.append({topic_id:'continuation:'+other,event_type:'cop.event/v1',
+    actor_id:'cop:test',subject_ref:'continuation:'+other,
+    idempotency_key:'verified-cleanup:claim-test',payload:{
+      profile:'cogentia.cps-browser-owned-draft/v1',phase:'verified_owned_draft_cleared',
+      source_continuation_id:other,confirmed_by_john:true,send_effects:0,
+      source_prompt_sha256:'b'.repeat(64),tab_id:99}}).ok,true);
+  await new Promise(resolve=>setTimeout(resolve,155));
+  assert.equal(inspectPreSubmitRecovery(s,id).recovery_attempt,2);
+  let calls=0;
+  const r=await dispatchAssignedChatgptCpsContinuation({store:s,
+    continuation_id:id,admit:permit,dispatch:async arg=>{
+      calls++;assert.equal(arg.recovery_attempt,2);return send({continuation_id:id});
+    }});
+  assert.equal(r.ok,true,JSON.stringify(r));assert.equal(calls,1);
+  const rebound=s.listTopic('continuation:'+id).filter(e=>
+    e.payload?.phase==='recovery_claim_rebound');
+  assert.equal(rebound.length,1);assert.equal(rebound[0].payload.new_epoch,2);
+  assert.equal(rebound[0].payload.prior_claim_id,declaration.claim.claim_id);
+  const reread=s.listTopic('continuation:'+id).filter(e=>e.payload?.profile==='cop/continuation');
+  assert.equal(reread.length,1);
+  const retry=await dispatchAssignedChatgptCpsContinuation({store:s,
+    continuation_id:id,admit:permit,dispatch:async()=>{calls++;return null}});
+  assert.equal(retry.ok,false);assert.equal(calls,1);
+  assert.equal(s.auditCommitments().ok,true);
+ }finally{s.close()}
+});
+
+test('unproven ambiguity or cold parent cannot reacquire an expired packet claim',async()=>{
+ const s=createSqliteCopEventStore(':memory:');try{
+  const id='ctn_assigned_no_rebound_01';const c=await assigned(s,id,{ttlMs:2});
+  await new Promise(resolve=>setTimeout(resolve,9));
+  const attempt=await ensureAssignedRecoveryClaim(s,c);
+  assert.equal(attempt.ok,false);assert.equal(attempt.status,'recovery_claim_renewal_not_admitted');
+  assert.equal(s.listTopic('continuation:'+id).filter(e=>
+    e.payload?.phase==='recovery_claim_rebound').length,0);
   assert.equal(s.auditCommitments().ok,true);
  }finally{s.close()}
 });
