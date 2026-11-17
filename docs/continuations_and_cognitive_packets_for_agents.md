@@ -463,6 +463,15 @@ anchored to its Cognitive Packet. Native `call/cc` may allow multi-shot
 re-entry, whereas governed external effects need explicit idempotency and
 separate authorization before each legitimately distinct attempt.
 
+The first production-independent `task_step` cursor is implemented in
+[Inseme's packet-task-step-cursor](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/src/packet-task-step-cursor.js).
+It declares an immutable linear plan and atomically records each local Step
+completion plus the **next** cursor on the existing COP Packet topic. The
+cursor is reconstructed by replay after a crash and enforces expected-version
+CAS under SQLite transactions across distinct Node VMs. It does **not**
+execute the step or confer authority for external effects. The legacy
+`createTaskStep` storage APIs are not implicitly migrated.
+
 For a self-directed checkpoint or recurrence, an explicit resumption target
 can exist without an awaited result slot. For external judgment, data
 requirements or child-parent composition, retain an explicit return

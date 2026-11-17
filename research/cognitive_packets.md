@@ -464,6 +464,30 @@ not a resumption target. A *result recipient* is not automatically an
 executable target either: `continuation resolve` deposits a result, but does
 not by itself advance the originating computation.
 
+**First actual Packet-backed `task_step` implementation (Inseme
+2026-11-17, [commit 5b427aa](https://github.com/JeanHuguesRobert/inseme/commit/5b427aa09d2c397ff799d290d89f33842d0e622d)):**
+`packages/cop-core/src/packet-task-step-cursor.js` now stores an immutable
+finite step plan and atomically advances its current COPStep under the
+*existing* canonical Packet topic using COP EventStore's `BEGIN IMMEDIATE`.
+Its `projectPacketTaskSteps` exposes a durable `resumption_target` compatible
+with the P1 `task_step` descriptor. `advancePacketTaskStep` requires the
+expected step and cursor version, is idempotent by transition, and refuses
+to advance under an effective `Parked`/`Suspended`/`Archived` barrier.
+Two separate **Node OS processes** contending on the same SQLite journal
+produce exactly one committed next-step advance; a restart reconstructs the
+same next step. The parent-only `Resume` does not implicitly warm its child.
+The full `@inseme/cop-core` test suite and build pass.
+
+**Scope:** this advances the **persistent pointer** to the next Step,
+not a native JS instruction pointer, not the `createTaskStep` legacy storage
+row and not a remote handler execution. No effect permission follows from
+calling `advancePacketTaskStep`; the executing actor still needs its real
+PacketClaim/mandate/budget at any consequential effect boundary. Existing
+COPTask/COPStep storage APIs remain unchanged, and dynamic branches/loops
+or process-command execution are intentionally out of scope. This is P2's
+first low-level materialization/advancement primitive, **not** complete P2
+migration of all historical producers.
+
 **P1 correction in code:**
 `prepareContinuationProduction(..., resumption_target)` now validates those
 three explicit address shapes, including script arguments, and retains the
