@@ -308,6 +308,109 @@ common store's invariant and identifies adapters/legacy producers requiring
 future convergence. Do not add mandatory return addresses to old packet
 formats just to mimic the common store.
 
+**Continuation producer harmonization — inventory and contract (2026-11-17):** [Tracking: Cogentia #336](https://github.com/JeanHuguesRobert/cogentia/issues/336).
+
+The initial audit above already established several non-equivalent producers.
+The live follow-up adds a **pure, read-only catalog** in
+`scripts/lib/continuation-producer-taxonomy.mjs` and a diagnostic command:
+
+```bash
+node scripts/ops/audit-continuation-producers.mjs
+node scripts/ops/audit-continuation-producers.mjs --catalog
+```
+
+This is **classification before migration**, not another queue or another
+Continuation protocol. Separate three independent dimensions:
+
+1. **Why was work suspended?** Its *production class* (judgment boundary,
+   missing data, unavailable capability/input, computational checkpoint,
+   recurrence, composition/fork/join, or external I/O). This determines the
+   *kind of request and return contract*; it is not a provider name.
+2. **What is being externalized?** A local closure or resumable state, a
+   versioned primitive SQLite record, a portable Cognitive Packet with
+   explicit Packet Closure, or a COP `cop/continuation` declaration. These
+   are optional representations/capabilities, **not** exclusive work kinds.
+3. **Under what authority will a proposed effect run?** A local, effect-free
+   computation may need no COP mandate; a consequential or external provider
+   dispatch must independently pass COP admission, claim and budget. Merely
+   producing a continuation never confers this authority.
+
+The earlier informal "C0/C1/C2/C3" description corresponds roughly to:
+
+| View | Concrete implementation | What it guarantees / does not |
+|---|---|---|
+| C0 — execution continuation/descriptor | `inseme/cop-kernel/src/continuation.js` | Suspended location/state; **not** by itself a durable independently executable runtime |
+| C1 — durable primitive | `scripts/lib/primitive-continuations.mjs` | CAS, journal, memo, snapshots and portable state, **without** COP or automatic provider effects |
+| C2 — packetized | `research/cognitive_packets.md` envelope/payload; Packet Closure; `cop/continuation` | Routable work, lineage, handler-relative closure and result delivery; does not imply mandate |
+| C3 — governed | existing COP event store, PacketClaim, budget, admitted provider and receipts | Authority-bound execution; optional composition with a continuation, not a replacement for the substrate |
+
+**C0–C3 are explanatory viewpoints, not formal product versions, a mandatory
+ladder, or a replacement for the distinct Scheduler Levels 1/2/3.** A
+`createContinuationDescriptor` explicitly has a COP-shaped descriptor despite
+being only in memory; a `cogentia.continuation.v2` is already stored atop the
+*primitive* SQLite engine. Some work is packetized without being governed.
+
+Seven *production classes* (with one reusable mechanism per class, not one
+engine per repository or website):
+
+| Class | Production mechanism | Completion / parent responsibility |
+|---|---|---|
+| `judgment_boundary` | Typed decision question, allowed decisions, evidence and origin reply slot | Deposit typed judgment, reconcile into caller/parent; do not silently modify source |
+| `data_dependency` | Requested data schema, input fingerprint, provider-independent dependency reference | Validate data, then actually re-enter the suspended computation (not merely store a result) |
+| `external_capability_wait` | Missing capability/input and bounded request, potentially human | Resume when evidence/capability is accessible; avoid provider-specific fallback baked into issuer |
+| `checkpoint_resume` | Checkpoint + code/version and memo slots + resumption conditions | Replay or resume the same computation, preserve previous effects and original sources |
+| `temporal_recurrence` | Due time and successor mission relation | Run one mission and record receipt; a date/cron task alone is not necessarily a Continuation |
+| `composition` | Child packet, parent link, join/combinator and explicit return target | Child returns a result; original parent owns join and onward work |
+| `external_io` | Effect intent, request correlation and response/uncertainty slot | Verify external receipt; unknown outcome stays uncertain and is never blindly re-sent |
+
+Common **proposal-to-effect boundary** across the seven classes:
+
+```text
+source / trigger
+  → classify reason for suspension (or explicitly unknown)
+  → prepare typed ContinuationIntent + stable identity/dedupe
+  → validate closure, return contract, parent lineage, confidentiality
+  → materialize in chosen local store or packet (no implicit dispatch)
+  → optional governed admission for actual semantic effect
+  → handler executes; event/receipt/result returned to original owner
+  → reconcile/advance via CAS and causal references
+```
+
+A minimal intended interface is
+`prepare({producer_ref, producer_class, origin_ref, triggering_fact_ref,
+ idempotency_key, work_ref, closure, return_contract, constraints}) → proposal`,
+followed by distinct `materialize(proposal, store)` and **only where needed**
+`admitAndDispatch(packet_ref, mandate, provider, budget, claim)`.
+The shape is a **design target**, not an API already implemented everywhere.
+Class-specific preparation validates required fields; the common materializer
+records identity and ancestry, it does not try to understand each domain.
+In particular `return_contract` must not be mistaken for a runnable handler;
+`resume.command = "continuation resolve ..."` only writes an answer slot.
+The source owner must still be notified or re-entered under its own contract.
+
+**Reality snapshot (Fracta2 local registry, 2026-11-17):** 473 stored records:
+274 `index.document_role_judgment`, 123 `semantic-search`, 63
+`guide_answer_judgment`, 11 `embeddings-index`, and 2 `routing`. Aggregating
+known legacy `kind`s yields 337 judgment boundaries, 134 data-dependency
+records and **2 unclassified routing** records (intentionally not guessed).
+Statuses: 393 active, 76 resolved, 4 cancelled. **All 473 advertise only a
+`continuation resolve` return-slot command, not a verified `resumeTo`
+handler.** This is the concrete missing link in a general scheduler, not
+proof of 473 runnable jobs. Counts are point-in-time and apply only to the
+local continuation registry, not all primitive conversation turns, fork
+packets, or COP EventStore declarations. The old `kind` describes the task,
+not necessarily which concrete program originally emitted it; provenance
+is not reconstructed retroactively from a title or subject.
+
+**Migration order, not a forced global conversion:** first classify current
+producers and add tests at each actual ingress (CLI/MCP/ACP, frontmatter,
+embeddings, sleep-cycle, composition and conversation bridge). Then make one
+class factory at a time emit a typed `ContinuationIntent` with a *working*
+return/re-entry contract, reusing its existing store. Only promote a packet
+to COP when that particular effect needs COP admission. Never auto-dispatch
+all old rows merely because a class is recognized. Leave ambiguous source
+provenance and `routing` rows as `needs_producer_evidence` until inspected.
+
 **Scheduler drain-loop invariant and starvation audit (2026-11-08):**
 
 The previously agreed operational goal is **not merely to monitor** the

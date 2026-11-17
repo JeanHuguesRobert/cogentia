@@ -3,7 +3,7 @@ title: Continuations and Cognitive Packets — early agent briefing
 author: "Jean Hugues Noël Robert"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: 2026-08-12
-last_modified_at: 2026-11-15
+last_modified_at: 2026-11-17
 status: working-paper
 license: CC BY-SA 4.0
 document_role: operational
@@ -403,3 +403,41 @@ after process restart. Prefer packet id / continuation id / hop log / files —
 | 4 | [`research/agent_resumable_cli.md`](../research/agent_resumable_cli.md) |
 | 5 | [`research/cognitive_packet_switching.md`](../research/cognitive_packet_switching.md) |
 | 6 | [`docs/resumable_github_issues.md`](resumable_github_issues.md) — GitHub Issues as cold-handler-resumable by-reference packets |
+
+
+## Producer taxonomy, primitive execution and COP governance (2026-11-17)
+
+A `Continuation` is not a synonym for a pending task, a Cognitive Packet, a
+queue entry or a COP permission. Its most primitive meaning is the *rest of a
+computation*, with a resumption point and relevant state. Cogentia also has
+`primitive-continuations.mjs`: a durable, versioned SQLite substrate with
+memoized slots and portable snapshots, usable without COP, MCP or network.
+The legacy `cogentia.continuation.v2` repository is implemented **on top of
+this primitive substrate**; its `resume.command` `continuation resolve` only
+stores a result, it does not establish an executable resume handler.
+
+A Cognitive Packet can carry a continuation with a complete handler-relative
+Packet Closure, provenance, lineage and return slot. COP adds optional
+governance for execution/effects (mandate, claim, provider permission, budget,
+receipts); do not require COP for primitive computation. The **COP Scheduler
+Levels 1/2/3** (wake/exploration/reasoning) are a *different classification*
+from the above continuation representation/authority views.
+
+For newly produced work, classify the **cause of suspension**, separately
+from its `kind`, store, payload format or provider. The class determines the
+production/return contract: `judgment_boundary`, `data_dependency`,
+`external_capability_wait`, `checkpoint_resume`, `temporal_recurrence`,
+`composition` or `external_io`. See the existing producer audit plus
+[its 2026-11-17 harmonization](../research/cognitive_packets.md), and the
+read-only source inventory in
+`scripts/lib/continuation-producer-taxonomy.mjs` (tracked in
+[Cogentia #336](https://github.com/JeanHuguesRobert/cogentia/issues/336)).
+
+```bash
+node scripts/ops/audit-continuation-producers.mjs
+node scripts/ops/audit-continuation-producers.mjs --catalog
+```
+
+These report only aggregate metadata or known code locations; neither creates
+nor dispatches work. An unknown producer or unverified result consumer must
+remain explicit rather than being assigned to a provider by guesswork.
