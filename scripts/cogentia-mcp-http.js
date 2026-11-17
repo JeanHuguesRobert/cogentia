@@ -1322,7 +1322,21 @@ async function handleGuideChatStream(res, question, locale, history = [], payloa
     emit("guide_status", guideProgress(locale, "received"));
     const requestedSurface = resolvePublicChatSurface(payload, { surface: "fractavolta-public-guide" });
     const surface = profile?.bindsSurface ? profile.surfaceId : requestedSurface;
+    // Same COP treatment/accounting boundary as the JSON Guide path.
+    // A streaming transport must not silently bypass provider-spend recording.
+    const turnAcct = await openSurfaceTurnPacket({
+      surface: surface.startsWith("jhn") ? "jhn-openai" : "guide",
+      question,
+      locale,
+      instance_id: surface.startsWith("jhn") ? "agent:jhn:openai-surface" : "agent:jhn:guide",
+      ...(profile?.mandate?.instance_id ? {
+        mandate_id: `mandate:${profile.mandate.instance_id}:readonly`,
+      } : {}),
+    });
+    const rootPacket = turnAcct.ok ? turnAcct.packet : null;
+    const cop = turnAcct.ok ? turnAcct.cop : null;
     trace("turn.admitted", { surface, locale });
+    trace("cop.packet.opened", { accounting_available: Boolean(rootPacket && cop) });
     if (!chatCap.available) {
       emit("guide_status", {
         stage: "chat_unavailable",
@@ -1392,6 +1406,7 @@ async function handleGuideChatStream(res, question, locale, history = [], payloa
         ].filter(Boolean);
         fallback.body.chat = { available: false, reason: chatCap.reason };
       }
+      attachCopAccountingToBody(fallback.body, rootPacket, cop);
       decorateGuideProfile(fallback.body, profile, requestedSurface);
       emit(fallback.body?.ok === false ? "guide_error" : "guide_answer", fallback.body);
       const turnOk = fallback.body?.ok === true;
@@ -1455,17 +1470,22 @@ async function handleGuideChatStream(res, question, locale, history = [], payloa
     }
     let turnOk = true;
     if (routed.ok) {
+      await recordGuideSynthesisSpend({
+        rootPacket, cop, completion: routed.body, surface, step: "synthesis",
+      });
       trace("synthesis.completed", {
         model: routed.body?.model || guideModel,
         provider: routed.body?._cogentia_guide_synthesis || "magistral",
         usage: routed.body?.usage || null,
       });
       const answer = guideChatResponse(question, locale, routed.body, retrieval, web, profile);
+      attachCopAccountingToBody(answer, rootPacket, cop);
       decorateGuideProfile(answer, profile, requestedSurface);
       emit("guide_answer", answer);
     } else {
       trace("synthesis.failed", { error: routed.error || "routing_failed" });
       const fallback = await guideFallback(question, locale, routed, retrieval, web);
+      attachCopAccountingToBody(fallback.body, rootPacket, cop);
       decorateGuideProfile(fallback.body, profile, requestedSurface);
       emit(fallback.body?.ok === false ? "guide_error" : "guide_answer", fallback.body);
       turnOk = fallback.body?.ok === true;

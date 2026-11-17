@@ -458,6 +458,9 @@ try {
   assert.ok(stream.some(event => event.name === "guide_status" && event.data.stage === "planning"));
   assert.ok(stream.some(event => event.name === "guide_retrieval_query"));
   assert.ok(stream.some(event => event.name === "guide_trace" && event.data.step === "turn.admitted"));
+  const copOpened = stream.find(event => event.name === "guide_trace" && event.data.step === "cop.packet.opened");
+  assert.ok(copOpened, "SSE Guide must open same COP boundary as JSON");
+  assert.equal(typeof copOpened.data.accounting_available, "boolean");
   assert.ok(stream.some(event => event.name === "guide_trace" && event.data.step === "synthesis.requested"));
   assert.ok(stream.some(event => event.name === "guide_trace" && event.data.step === "synthesis.completed"));
   assert.ok(
@@ -468,6 +471,8 @@ try {
   assert.ok(stream.some(event => event.name === "guide_web_search"));
   const streamedAnswer = stream.find(event => event.name === "guide_answer")?.data;
   assert.equal(streamedAnswer.ok, true);
+  assert.equal(Boolean(streamedAnswer.cognitive_packet), copOpened.data.accounting_available,
+    "SSE response must report COP only if actually opened");
   assert.equal(streamedAnswer.mode, "conversational");
   assert.match(streamedAnswer.answer, /\[mock:README\.md#L1-L4\]/);
 
