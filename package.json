@@ -150,6 +150,7 @@
     "test:agent-jhn-reasoning-loop-v2": "node scripts/check-agent-jhn-reasoning-loop-v2.js",
     "test:guide-reasoning-loop": "node scripts/check-guide-reasoning-loop.js",
     "test:whatsapp-reasoning-loop": "node scripts/check-whatsapp-reasoning-loop-v2.js",
+    "test:agent-corpus-prior-art": "node scripts/check-agent-corpus-prior-art.js",
     "test:agent-jhn-f1": "node scripts/check-agent-jhn-f1-required-events.js",
     "test:resolver-registry": "node scripts/check-resolver-registry.js",
     "sandbox:mcp-packet": "node sandbox/mcp-2026-cognitive-packet/index.js run all",

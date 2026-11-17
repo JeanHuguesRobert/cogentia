@@ -9,7 +9,9 @@ export const REQUIRED_EVENT_POLICY = "packet_required_events";
 export function classifyNeed(text) {
   const raw = String(text || "");
   return {
-    corpusLike: /corpus|concept|mandate|agent|packet|kudos|vote|orient|doctrine|cogentia/i.test(raw),
+    // Familiar French / Fractanet wording must also trigger orientation.
+    // Without this, "CPS sans circuit fixe" bypasses mandatory prior art.
+    corpusLike: /corpus|concept|mandate|agent|packet|kudos|vote|orient|doctrine|cogentia|\bcps\b|\bfractanet\b|\bmagistral\b|continuation|commutation de paquets|store[ -]*(?:(?:and|et|&)[ -]*)?forward|antériorit|anteriorit|\bprincipe\b/i.test(raw),
     livingLike:
       /state of the art|current law|current price|leave the corpus|external research|latest/i.test(raw),
     exploratory: /possible|should we|architecture|design|strategy|could|what if/i.test(raw),

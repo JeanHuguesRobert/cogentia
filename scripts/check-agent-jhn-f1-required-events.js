@@ -54,6 +54,21 @@ test("classifier requires orientation for a corpus question and not for phatic t
   assert.deepEqual(requiredEventsForTurn({ text: "ok thanks" }), []);
 });
 
+test("French CPS / Store and Forward prior-art questions require orientation, not phatic messages", () => {
+  for (const text of [
+    "CPS sans circuit fixe",
+    "Store & Forward est-il déjà documenté ?",
+    "Poursuivre une continuation malgré les coupures",
+    "Quel principe faudrait-il documenter ?",
+    "Une DHT pour Fractanet",
+  ]) {
+    assert.deepEqual(requiredEventsForTurn({ text }), ["orientation.required"], text);
+  }
+  for (const text of ["bonjour", "merci", "ok thanks"]) {
+    assert.deepEqual(requiredEventsForTurn({ text }), [], text);
+  }
+});
+
 test("greedy reasoner cannot answer before the orientation handler has run and produced a receipt", async () => {
   const calls = { orientation: 0, living: 0 };
   let nextStepCalls = 0;

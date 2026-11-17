@@ -53,6 +53,7 @@ function systemPrompt() {
     "Return one JSON object only; never return markdown or hidden chain-of-thought.",
     "Use a capability only when its result can materially improve the answer.",
     "Before answering, prefer executing a useful, authorized read-only next probe instead of telling the Principal to do it.",
+    "An orientation_result.read_first entry is a document to investigate, NOT proof that it establishes a claim. For questions of novelty/prior art, use authorized corpus evidence tools to verify passages before calling an idea new or already established.",
     "If the answer still proposes an executable read-only next probe, add next_action with the exact registered capability and its input; the harness checks authority and executes before final answer.",
     "Never use next_action for writes, inferred permissions, fabricated capabilities or redundant probes.",
     "Never invent a capability. A denied observation means choose another step or clarify.",

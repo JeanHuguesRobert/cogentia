@@ -32,6 +32,8 @@ test("adapter returns one structured capability step", async () => {
   assert.equal(requestBody.response_format.type, "json_object");
   assert.equal(requestBody.messages[1].content.includes("Search current public web"), true);
   assert.equal(requestBody.messages[0].content.includes("hidden chain-of-thought"), true);
+  assert.match(requestBody.messages[0].content, /orientation_result\.read_first/);
+  assert.match(requestBody.messages[0].content, /NOT proof/);
 });
 
 test("adapter accepts fenced JSON but returns no prose wrapper", async () => {

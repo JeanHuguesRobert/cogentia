@@ -24,6 +24,7 @@ import { compareMandateAttenuation } from "./mandate-attenuation.js";
 import { assessProportionateRisk } from "./proportionate-risk.js";
 import {normalizeJohnReadArguments} from "./john-read-argument-gate.js";
 import { runJohnRequest } from "./john-run.js";
+import { projectOrientationForAgent } from "./corpus-orient.js";
 import {admissibleJohnContinuationReadHop} from "./john-continuity-next-read.js";
 import { createAgentJhnWorkspaceCapabilities } from "./agent-jhn-workspace.js";
 import { createHostedBrowserCapabilities } from "./hosted-browser-capabilities.js";
@@ -1406,7 +1407,7 @@ export function createMcpCore(env = process.env, extras = {}) {
   const instructions =
     "Playbook: (1) cogentia_agent_start and/or cogentia_views_snapshot — situation and load.mode_recommendation. " +
     "(2) cogentia_skill_list then cogentia_skill_get id=continuation-handling when work may suspend or resume. " +
-    "(3) cogentia_context_pack or cogentia_search for evidence; cogentia_get_lines before asserting a passage; always cite source_id. " +
+    "(3) for a Cogentia/CPS/Fractanet prior-art or novelty question, cogentia_orient BEFORE claiming a new doctrine; then cogentia_context_pack or cogentia_search for evidence; cogentia_get_lines before asserting a passage; always cite source_id. " +
     "(4) cogentia_continuation_schema if preparing a step_result; list → inspect → prepare; resolve/emit only if mutate tools are listed and mandate allows. " +
     "Continuations are non-blocking judgment boundaries, not crashes. Skills recommend methods and never grant authority. " +
     "Discover the maximum capability set via server/discover, resources/list, skills/list (SEP-2640 experimental), and cogentia_cli_catalog / cogentia_pattern_list — not tools/list alone. " +
@@ -2540,11 +2541,7 @@ export function createMcpCore(env = process.env, extras = {}) {
                     const query=String(input?.text||input?.prompt||"").trim();
                     if(!query)return {ok:false,reason:"empty_orientation_query"};
                     const orientation=await daemonGet("/api/context/orient",{q:query});
-                    if(orientation?.ok!==true||orientation.schema!=="cogentia.orientation.v1")
-                      return {ok:false,reason:"orientation_unavailable"};
-                    return {ok:true,source:"corpus.orient",schema:orientation.schema,
-                      terminal_state:orientation.terminal_state||null,
-                      resolved_concept_count:orientation.resolved_concepts?.length||0};
+                    return projectOrientationForAgent(orientation);
                   },
                 },
               })});
@@ -2583,16 +2580,7 @@ export function createMcpCore(env = process.env, extras = {}) {
               const query = String(input?.text || input?.prompt || "").trim();
               if (!query) return { ok: false, reason: "empty_orientation_query" };
               const orientation = await daemonGet("/api/context/orient", { q: query });
-              if (orientation?.ok !== true || orientation?.schema !== "cogentia.orientation.v1") {
-                return { ok: false, reason: "orientation_unavailable" };
-              }
-              return {
-                ok: true,
-                source: "corpus.orient",
-                schema: orientation.schema,
-                terminal_state: orientation.terminal_state || null,
-                resolved_concept_count: orientation.resolved_concepts?.length || 0,
-              };
+              return projectOrientationForAgent(orientation);
             },
           },
         });

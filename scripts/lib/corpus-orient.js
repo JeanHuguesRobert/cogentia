@@ -33,6 +33,60 @@ export const TRACE_INFLUENCE = Object.freeze({
   corroborated: "corroborated",
 });
 
+/**
+ * Bounded orientation receipt for an agent reasoner.
+ *
+ * The orientation engine already found these paths; passing only a concept
+ * count to the reasoner made the mandatory orientation operationally inert.
+ * Source candidates are navigation hints, NOT verified textual evidence.
+ * All returned fields are intentionally bounded and public-corpus-only.
+ */
+export function projectOrientationForAgent(orientation) {
+  if (orientation?.ok !== true || orientation?.schema !== ORIENT_SCHEMA) {
+    return { ok: false, reason: "orientation_unavailable" };
+  }
+  const isPublicPath = (value) =>
+    typeof value === "string" && value.length < 280 &&
+    !value.startsWith("/") && !value.includes("..") &&
+    /^[A-Za-z0-9_./-]+$/.test(value);
+  const candidates = (Array.isArray(orientation.read_first) ? orientation.read_first : [])
+    .filter((item) =>
+      item && isPublicPath(item.repo) && isPublicPath(item.path)
+    );
+  // "Explicit" describes the relationship in the concept registry, not proof
+  // that the text makes a given claim. The reasoner still needs search/lines.
+  const sorted = [
+    ...candidates.filter((item) => item.provenance === "explicit"),
+    ...candidates.filter((item) => item.provenance !== "explicit"),
+  ];
+  const read_first = [];
+  const seen = new Set();
+  for (const item of sorted) {
+    const id = item.repo + "/" + item.path;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    read_first.push({
+      repo: item.repo,
+      path: item.path,
+      title: String(item.title || item.path).replace(/[\r\n\t]+/g, " ").slice(0, 140),
+      provenance: item.provenance === "explicit" ? "explicit" : "derived_structurally",
+    });
+    if (read_first.length >= 3) break;
+  }
+  return {
+    ok: true,
+    type: "orientation_result",
+    source: "corpus.orient",
+    schema: ORIENT_SCHEMA,
+    terminal_state: orientation.terminal_state || null,
+    resolved_concept_count: Array.isArray(orientation.resolved_concepts)
+      ? orientation.resolved_concepts.length : 0,
+    read_first,
+    evidence_status: "unverified_navigation_hints",
+    next_action: "Verify a candidate passage with corpus search/get_lines before asserting prior art or novelty.",
+  };
+}
+
 const STOPWORDS = new Set([
   "a", "an", "the", "of", "for", "to", "in", "on", "and", "or", "as",
   "what", "how", "does", "do", "did", "mean", "this", "that", "these",
