@@ -63,6 +63,7 @@ import { aiRouterHealth, createAiRouterClient } from "./lib/ai-router-client.js"
 import { retrievalSupabaseConfigured, retrievalSupabaseStatus } from "./lib/retrieval-supabase.js";
 import { emitStaticProjection, publishRegistry, guideResolve, runNavigationBenchmark } from "./lib/navigation.js";
 import { orientCorpus, runOrientationBenchmark, DEFAULT_ORIENT_POLICY } from "./lib/corpus-orient.js";
+import { sourceBoundDomainSeeds } from "./lib/corpus-orient-domain-signals.js";
 import { ORIENT_REALITY_FIXTURES } from "./lib/corpus-orient-fixtures.js";
 import { runWeeklyConsolidation } from "./lib/consolidation.js";
 import { buildConsolidateSession } from "./lib/consolidate-session.js";
@@ -1709,8 +1710,14 @@ async function runCorpusOrient(ctx, { query, view, max_seeds, max_hops, max_node
   const concepts = flattenVisibleConcepts(ctx, effectiveView);
   const documents = inventoryDocsForOrient(ctx, effectiveView);
   let residualHits = [];
+  // #105: Progressive recovery, not compulsory AND-FTS. A corroborated
+  // source-bound bilingual cue already gives an actionable first reading;
+  // do not pay for a slow broad FTS pass merely to append noisy results.
+  // The fallback is retained for all questions without a bounded route.
+  const sourceRoute = sourceBoundDomainSeeds(q, documents, 2);
   try {
-    const search = await indexSearch(ctx, q, { repo: "all", limit: policy.residual_limit, view: effectiveView });
+    const search = sourceRoute.length ? { ok: true, results: [] }
+      : await indexSearch(ctx, q, { repo: "all", limit: policy.residual_limit, view: effectiveView });
     if (search.ok) {
       residualHits = (search.results || []).map((r) => ({
         repo: r.repo,

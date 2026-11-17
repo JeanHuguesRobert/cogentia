@@ -9,6 +9,7 @@
  * Attractors, a new relation ontology, or an LLM sufficiency judge.
  */
 import { resolveConceptAlias, guideResolve, SEED_CONCEPT_ALIASES } from "./navigation.js";
+import { sourceBoundDomainSeeds } from "./corpus-orient-domain-signals.js";
 
 export const ORIENT_SCHEMA = "cogentia.orientation.v1";
 
@@ -55,9 +56,14 @@ export function projectOrientationForAgent(orientation) {
     );
   // "Explicit" describes the relationship in the concept registry, not proof
   // that the text makes a given claim. The reasoner still needs search/lines.
+  // Source-bound cross-domain routing already found a public canonical
+  // source under two independent cues. An unrelated explicit alias (e.g.
+  // "Capable" political party versus "capable" technical permission) must
+  // not overtake that source merely because the alias relationship is explicit.
   const sorted = [
-    ...candidates.filter((item) => item.provenance === "explicit"),
-    ...candidates.filter((item) => item.provenance !== "explicit"),
+    ...candidates.filter((item) => item.routing_signal === "source_bound_domain"),
+    ...candidates.filter((item) => item.routing_signal !== "source_bound_domain" && item.provenance === "explicit"),
+    ...candidates.filter((item) => item.routing_signal !== "source_bound_domain" && item.provenance !== "explicit"),
   ];
   const read_first = [];
   const seen = new Set();
@@ -69,7 +75,9 @@ export function projectOrientationForAgent(orientation) {
       repo: item.repo,
       path: item.path,
       title: String(item.title || item.path).replace(/[\r\n\t]+/g, " ").slice(0, 140),
-      provenance: item.provenance === "explicit" ? "explicit" : "derived_structurally",
+      provenance: item.provenance === "explicit" ? "explicit" :
+        item.provenance === "derived_structurally" ? "derived_structurally" : "semantic_candidate",
+      ...(item.routing_signal === "source_bound_domain" ? { routing_signal: "source_bound_domain" } : {}),
     });
     if (read_first.length >= 3) break;
   }
@@ -221,6 +229,23 @@ export function selectSeedConcepts(query, concepts = [], documents = [], policy 
   const tokens = tokenize(q);
   const maxSeeds = Number(policy.max_seeds) > 0 ? Number(policy.max_seeds) : DEFAULT_ORIENT_POLICY.max_seeds;
   const scored = [];
+
+  // Source-bound bilingual cues are bounded and only emitted when two
+  // independent domain facets match an already visible canonical source.
+  // They are navigation hypotheses, not quoted evidence.
+  for (const hit of sourceBoundDomainSeeds(q, documents, maxSeeds)) {
+    scored.push({
+      concept: {
+        name: hit.name, repo: hit.repo,
+        documents: [hit.repo + ":" + hit.rel],
+        parents: [], children: [], related: [],
+        short_definition: "", synthetic: true,
+      },
+      score: hit.score,
+      provenance: EVIDENCE_CLASS.semantic_candidate,
+      reason: "source_bound_domain:" + hit.domain + ":" + hit.matched_facets,
+    });
+  }
 
   // A source whose title directly answers the request is stronger structural
   // evidence than an alias inferred from a secondary document basename.
@@ -423,8 +448,11 @@ function lookupInventory(documents, repo, rel) {
 function classifyPath(rel, role) {
   const path = String(rel || "");
   if (CHECKPOINT_RE.test(path)) return "checkpoint";
-  if (IMPLEMENTATION_RE.test(path) || role === "operational") return "implementation";
+  if (IMPLEMENTATION_RE.test(path)) return "implementation";
+  // An architecture paper in research/ may legitimately have operational
+  // frontmatter. It is still a document to READ, not merely executable code.
   if (role === "source" || path.includes("research/") || path.includes("instructions/")) return "source";
+  if (role === "operational") return "implementation";
   return "other";
 }
 
@@ -450,17 +478,18 @@ function collectEvidence(route, nodes, documents, residualHits, policy) {
     for (const raw of refs) {
       const parsed = parseDocRef(raw, concept.repo);
       if (!parsed) continue;
-      const found = lookupInventory(documents, parsed.repo, parsed.rel) || {
-        repo: parsed.repo,
-        rel: parsed.rel,
-        title: parsed.rel,
-      };
+      const found = lookupInventory(documents, parsed.repo, parsed.rel);
+      // Concept "Used in" sections sometimes contain plain prose or partial
+      // citations. Do not invent a readable document when no view-filtered
+      // inventory entry actually exists: source routing is NOT source proof.
+      if (!found) continue;
       const kind = classifyPath(found.rel, found.document_role);
       const entry = {
         repo: found.repo,
         path: found.rel,
         title: found.title || found.rel,
         via_concept: concept.name,
+        ...(concept.synthetic ? { routing_signal: "source_bound_domain" } : {}),
         provenance: concept.synthetic
           ? EVIDENCE_CLASS.semantic_candidate
           : routeStep?.provenance || EVIDENCE_CLASS.explicit,
@@ -699,7 +728,19 @@ export function orientCorpus({
     };
     const id = docId({ repo: entry.repo, rel: entry.path });
     const known = [...evidence.readFirst, ...evidence.thenRead].some((d) => docId({ repo: d.repo, rel: d.path }) === id);
-    if (!known) evidence.readFirst.unshift(entry);
+    // Low-confidence similarity must not displace a stronger source.
+    if (!known) {
+      const corroboratedRoute = seeds.some(seed =>
+        String(seed.reason || "").startsWith("source_bound_domain:")
+      );
+      // Literal lookup into an unrelated project name must not override a
+      // multi-facet technical route (Capable vs technical capability).
+      if ((guide.layer === 1 && !corroboratedRoute) || evidence.readFirst.length === 0) {
+        evidence.readFirst.unshift(entry);
+      } else {
+        evidence.thenRead.push(entry);
+      }
+    }
     pushTrace(`guide_resolve:layer${guide.layer}`, `${entry.repo}/${entry.path}`, entry.provenance);
   }
 

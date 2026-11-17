@@ -1,0 +1,45 @@
+{
+  "schema": "cogentia.prior-art-holdout/v1",
+  "cases": [
+    {
+      "id": "session-cold",
+      "question": "Un traitement peut-il attendre le retour d’un nœud disparu sans conserver une session ouverte ?"
+    },
+    {
+      "id": "relay-contact",
+      "question": "Une requête peut-elle rester stockée sur un relais et repartir au prochain contact réseau ?"
+    },
+    {
+      "id": "data-move",
+      "question": "Comment choisir entre déplacer l'exécution vers les données et transporter les données vers le calcul ?"
+    },
+    {
+      "id": "parallel-edit",
+      "question": "Deux rédacteurs travaillent simultanément : comment réconcilier leurs changements sans verrou initial ?"
+    },
+    {
+      "id": "technical-rights",
+      "question": "Pourquoi la possibilité technique d'agir ne suffit-elle pas à donner la permission correspondante ?"
+    },
+    {
+      "id": "packet-container",
+      "question": "Pourquoi un paquet cognitif distingue-t-il son enveloppe des données utiles qu'il transporte ?"
+    },
+    {
+      "id": "living-publication",
+      "question": "Un numéro de Livre Vivant publié doit-il rester stable lorsque la version de travail change ?"
+    },
+    {
+      "id": "binary-replicas",
+      "question": "Si une pièce binaire est conservée sur plusieurs appareils, comment maintenir une identité unique ?"
+    },
+    {
+      "id": "noise-clock",
+      "question": "Le volume sonore environnant déclenche-t-il la synchronisation automatique des caches Fractanet ?"
+    },
+    {
+      "id": "weather-hash",
+      "question": "La météo sert-elle à modifier les empreintes SHA256 des objets de mémoire ?"
+    }
+  ]
+}

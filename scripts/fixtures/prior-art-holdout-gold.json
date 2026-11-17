@@ -1,0 +1,95 @@
+{
+  "schema": "cogentia.prior-art-holdout-gold/v1",
+  "cases": [
+    {
+      "id": "session-cold",
+      "status": "established",
+      "references": [
+        {
+          "repo": "cogentia",
+          "path": "research/cognitive_packet_switching.md"
+        }
+      ]
+    },
+    {
+      "id": "relay-contact",
+      "status": "established",
+      "references": [
+        {
+          "repo": "cogentia",
+          "path": "research/calculette_of_the_mind.md"
+        }
+      ]
+    },
+    {
+      "id": "data-move",
+      "status": "established",
+      "references": [
+        {
+          "repo": "cogentia",
+          "path": "research/locality_principle.md"
+        }
+      ]
+    },
+    {
+      "id": "parallel-edit",
+      "status": "established",
+      "references": [
+        {
+          "repo": "cogentia",
+          "path": "research/optimistic_mainline_governance.md"
+        }
+      ]
+    },
+    {
+      "id": "technical-rights",
+      "status": "established",
+      "references": [
+        {
+          "repo": "cogentia",
+          "path": "research/capability_authority_control_data_planes_2026-11-10.md"
+        }
+      ]
+    },
+    {
+      "id": "packet-container",
+      "status": "established",
+      "references": [
+        {
+          "repo": "cogentia",
+          "path": "research/cognitive_packets.md"
+        }
+      ]
+    },
+    {
+      "id": "living-publication",
+      "status": "established",
+      "references": [
+        {
+          "repo": "cogentia",
+          "path": "research/living_book_press_architecture.md"
+        }
+      ]
+    },
+    {
+      "id": "binary-replicas",
+      "status": "established",
+      "references": [
+        {
+          "repo": "inseme",
+          "path": "packages/magistral/docs/object-memory-v0.md"
+        }
+      ]
+    },
+    {
+      "id": "noise-clock",
+      "status": "undetermined",
+      "references": []
+    },
+    {
+      "id": "weather-hash",
+      "status": "undetermined",
+      "references": []
+    }
+  ]
+}

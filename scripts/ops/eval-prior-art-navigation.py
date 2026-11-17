@@ -11,10 +11,16 @@ import hashlib,json,os,re,subprocess,sys,time
 
 ROOT=Path(__file__).resolve().parents[2]
 REPOS=Path('/srv/cogentia/repos')
-QFILE=ROOT/'scripts/fixtures/prior-art-navigation-questions.json'
-GFILE=ROOT/'scripts/fixtures/prior-art-navigation-gold.json'
+SUITE=os.getenv('COGENTIA_PRIOR_ART_SUITE','original')
+if SUITE not in ('original','holdout'):
+ raise ValueError('invalid fixture suite')
+QFILE=ROOT/('scripts/fixtures/prior-art-holdout-questions.json' if SUITE=='holdout' else 'scripts/fixtures/prior-art-navigation-questions.json')
+GFILE=ROOT/('scripts/fixtures/prior-art-holdout-gold.json' if SUITE=='holdout' else 'scripts/fixtures/prior-art-navigation-gold.json')
+ORIENT_ONLY=os.getenv('COGENTIA_EVAL_ORIENT_ONLY','0')=='1'
 REG=os.getenv('COGENTIA_REGISTRY','/srv/cogentia/repos/JeanHuguesRobert/.cogentia.json')
-ENDPOINT='http://127.0.0.1:8790'
+ENDPOINT=os.getenv('COGENTIA_EVAL_ENDPOINT','http://127.0.0.1:8790').rstrip('/')
+if not re.fullmatch(r'http://127[.]0[.]0[.]1:[0-9]{2,5}',ENDPOINT):
+ raise ValueError('eval endpoint must be loopback')
 STOP=set('une pour quel quelle quand sans avec dans leurs elles entre doit elle ils leur etre avoir faire mais alors est les des deux tout qui que pas plus par sur ses son cette comme quelles dont fois nous peut chez jour meme deja sont etait cela faut'.split())
 
 def load(path):return json.loads(path.read_text())
@@ -25,7 +31,7 @@ def route(query):
  u=ENDPOINT+'/api/context/orient?'+parse.urlencode({
   'q':query,'max_seeds':'5','max_hops':'2','max_nodes':'28'})
  try:
-  with request.urlopen(u,timeout=12) as response:data=json.load(response)
+  with request.urlopen(u,timeout=30) as response:data=json.load(response)
   return {'ok':data.get('ok') is True,
    'sources':[{'repo':x['repo'],'path':x['path'],'provenance':x.get('provenance')}
              for x in data.get('read_first',[])[:10] if x.get('repo') and x.get('path')],
@@ -37,7 +43,7 @@ def search(query):
  if not query:return {'ok':False,'results':[],'error':'empty_query'}
  u=ENDPOINT+'/api/context/search?'+parse.urlencode({'q':query,'limit':'12','mode':'keyword'})
  try:
-  with request.urlopen(u,timeout=12) as response:data=json.load(response)
+  with request.urlopen(u,timeout=18) as response:data=json.load(response)
   return {'ok':data.get('ok') is True,
    'results':[{'id':x.get('id'),'repo':x.get('repo'),'path':x.get('path'),
       'start_line':x.get('start_line'),'end_line':x.get('end_line')}
@@ -71,9 +77,13 @@ def run(destination):
   began=time.monotonic()
   sys.stderr.write('[prior-art] {}/10 {}\n'.format(i+1,x['id']))
   orient=route(x['question'])
-  raw=search(x['question'])
   short=focus(x['question'])
-  focused=search(short)
+  if ORIENT_ONLY:
+   raw={'ok':True,'results':[],'error':'not_measured'}
+   focused={'ok':True,'results':[],'error':'not_measured'}
+  else:
+   raw=search(x['question'])
+   focused=search(short)
   results.append({'id':x['id'],'question':x['question'],
     'orientation':orient,'keyword_raw':raw,'keyword_focus':focused,
     'focused_query':short,'elapsed_ms':round((time.monotonic()-began)*1000)})
@@ -94,7 +104,7 @@ def run(destination):
   rec['gold_references']=[x['repo']+'/'+x['path'] for x in expected['references']]
   for g in expected['references']:
    f=safe_document(g['repo'],g['path'])
-   if f is None or g['needle'].lower() not in f.read_text().lower():
+   if f is None or ('needle' in g and g['needle'].lower() not in f.read_text().lower()):
     raise ValueError('broken gold anchor: '+rec['id'])
   if expected['status']=='undetermined':
    rec['score']={'novelty_judgment':'unmeasured','no_gold_by_design':True}
@@ -107,15 +117,15 @@ def run(destination):
   found=[]
   for match in rec['keyword_raw']['results']+rec['keyword_focus']['results']:
    for gold_entry in expected['references']:
-    if match['repo']==gold_entry['repo'] and match['path']==gold_entry['path'] and interval_contains(match,gold_entry['needle']):
+    if match['repo']==gold_entry['repo'] and match['path']==gold_entry['path'] and gold_entry.get('needle') and interval_contains(match,gold_entry['needle']):
      found.append(match.get('id'))
   rec['score']={
    'orient_top1':bool(orient and orient[0] in targets),
    'orient_top8':bool(set(orient[:8]) & targets),
-   'keyword_raw_top8':bool(set(raw[:8]) & targets),
-   'keyword_focus_top8':bool(set(focused[:8]) & targets),
-   'combined_top8':bool(set(orient[:8]+raw[:8]+focused[:8]) & targets),
-   'passage_verified':bool(found),
+   'keyword_raw_top8':None if ORIENT_ONLY else bool(set(raw[:8]) & targets),
+   'keyword_focus_top8':None if ORIENT_ONLY else bool(set(focused[:8]) & targets),
+   'combined_top8':None if ORIENT_ONLY else bool(set(orient[:8]+raw[:8]+focused[:8]) & targets),
+   'passage_verified':None if ORIENT_ONLY else bool(found),
    'verified_source_ids':list(dict.fromkeys(found))[:3],
   }
  established=[r for r in results if r['gold_status']=='established']
@@ -123,20 +133,25 @@ def run(destination):
  summary={'questions':len(results),'known_prior_art':len(established),
   'undetermined_controls':len(results)-len(established),
   'orient_top1':count('orient_top1'),'orient_top8':count('orient_top8'),
-  'keyword_raw_top8':count('keyword_raw_top8'),
-  'keyword_focus_top8':count('keyword_focus_top8'),
-  'combined_source_top8':count('combined_top8'),'verified_passage':count('passage_verified'),
+  'keyword_raw_top8':None if ORIENT_ONLY else count('keyword_raw_top8'),
+  'keyword_focus_top8':None if ORIENT_ONLY else count('keyword_focus_top8'),
+  'combined_source_top8':None if ORIENT_ONLY else count('combined_top8'),
+  'verified_passage':None if ORIENT_ONLY else count('passage_verified'),
   'autonomous_reasoner_qa_evaluated':0,
   'false_novelty_claims':'not measured: no LLM used'}
  out={'schema':'cogentia.prior-art-navigation-blind-eval/v1',
   'generated_at':datetime.now(timezone.utc).isoformat(),
+  'fixture_set':SUITE,
   'input_sha256':digest(QFILE),'gold_sha256':digest(GFILE),
   'gold_exposed_to_retrievers':False,
   'source_commit':subprocess.check_output(['git','-C',str(ROOT),'rev-parse','HEAD'],text=True).strip(),
-  'inference_provider':'none; actual local orientation and keyword retrieval',
+  'inference_provider':'none; actual local orientation' if ORIENT_ONLY else 'none; actual local orientation and keyword retrieval',
+  'evaluation_mode':'orient_only' if ORIENT_ONLY else 'full',
   'summary':summary,'cases':results,
   'limitations':['No LLM was used: navigation only, not autonomous answer quality.',
+   'Keyword retrieval and passages were not measured in this run.' if ORIENT_ONLY else 'Keyword retrieval and passages were measured in this run.',
    'An orientation path is a candidate, not a verified passage.',
+   'The holdout fixture has file-level gold but no passage anchors: passage_verified is not scored for that suite.',
    'The two undetermined controls cannot establish global novelty.',
    'The lexical focus is only a deterministic three-token heuristic.']}
  destination.parent.mkdir(parents=True,exist_ok=True)
