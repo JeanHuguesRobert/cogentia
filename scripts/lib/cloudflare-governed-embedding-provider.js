@@ -5,14 +5,18 @@
  * obtains a public chunk only through trusted indexed content lookup and
  * persists its vector before returning a redacted receipt.
  *
- * Composition must inject an independently verifying authorize/settle pair
- * into createGovernedProviderSecretUse. This factory is a descriptor, NOT an
- * authorization service or a separately deployed scheduler.
+ * The already-signed JHN v5 mandate covers the general host.process.run
+ * operation on node:fracta2. Cloudflare is a selected implementation of a
+ * permitted task, not another capability, mandate, or autonomous entitlement.
+ * Composition injects the existing independently verified host-process COP
+ * admission/settlement and obtains a token only after an admitted effect.
+ * This is a handler descriptor, NOT an authorization or scheduling service.
  */
 import {storeEmbeddingsSafely} from './embedding-store-safety.js';
 
 export const CF_FREE_EMBEDDING_PROVIDER = 'cloudflare_workers_free';
-export const CF_PUBLIC_EMBEDDING_CAPABILITY = 'embedding.public.persist';
+// Generic signed Fractanet host power, NOT a Cloudflare/embedding micro-capability.
+export const HOST_PROCESS_RUN_CAPABILITY = 'host.process.run';
 export const CF_EMBEDDING_MODEL = '@cf/google/embeddinggemma-2';
 export const CF_EMBEDDING_DIMENSIONS = 768;
 const API='https://api.cloudflare.com/client/v4';
@@ -29,10 +33,12 @@ export function createCloudflareFreeEmbeddingProvider({
     throw new TypeError('cloudflare_trusted_provider_dependencies_required');
   const descriptor = {
     credential_ref:'jhn-vault:cloudflare_api_key',
-    capability:CF_PUBLIC_EMBEDDING_CAPABILITY,
+    capability:HOST_PROCESS_RUN_CAPABILITY,
     async invoke({secret,input,grant}) {
       if(typeof secret!=='string'||!secret.trim()||!grant?.effect_authorization_id||
-         !grant?.budget_reservation_id||String(grant.max_billable_usd)!=='0'||
+         !grant?.budget_reservation_id||grant?.capability!==HOST_PROCESS_RUN_CAPABILITY||
+         grant?.target!=='node:fracta2'||grant?.execution_mode!=='normal'||
+         String(grant.max_billable_usd)!=='0'||
          !Array.isArray(input?.chunk_refs)||
          input.chunk_refs.length<1||input.chunk_refs.length>8||
          input.chunk_refs.some(ref=>!safeChunkId(ref?.chunk_id)||!safeHash(ref?.content_hash)))

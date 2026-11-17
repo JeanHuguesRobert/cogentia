@@ -2,7 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createGovernedProviderSecretUse} from './governed-provider-secret-use.js';
 import {createCloudflareFreeEmbeddingProvider,CF_FREE_EMBEDDING_PROVIDER,
-  CF_PUBLIC_EMBEDDING_CAPABILITY,CF_EMBEDDING_MODEL} from './cloudflare-governed-embedding-provider.js';
+  HOST_PROCESS_RUN_CAPABILITY,CF_EMBEDDING_MODEL} from './cloudflare-governed-embedding-provider.js';
 const token='PRIVATE_TOKEN_NOT_FOR_OUTPUT';
 const account='0123456789abcdef0123456789abcdef';
 const ref={chunk_id:1,content_hash:'hash_abc123'};
@@ -43,12 +43,13 @@ function fixture({authorized=true,publicChunk=true,paid=false}={}) {
       mandate_ref:'mandate:jhn:john-root',issuer_ref:'issuer:trusted',
       effect_authorization_id:'effect:test',budget_reservation_id:'budget:reserved',
       provider,capability,credential_ref,max_billable_usd:'0',
+      target:'node:fracta2',execution_mode:'normal',
     }),
     settle:async evidence=>{settlements.push(evidence);},
   });
   return {driver,calls,settlements,saved};
 }
-const req={provider:CF_FREE_EMBEDDING_PROVIDER,capability:CF_PUBLIC_EMBEDDING_CAPABILITY,
+const req={provider:CF_FREE_EMBEDDING_PROVIDER,capability:HOST_PROCESS_RUN_CAPABILITY,
   input:{chunk_refs:[ref]},context:{packet_ref:'cogentia#338'}};
 test('governed Free provider consumes Vault secrets in-process, persists once, only returns redacted receipt',async()=>{
   const f=fixture();
@@ -56,7 +57,7 @@ test('governed Free provider consumes Vault secrets in-process, persists once, o
   assert.equal(result.ok,true);
   assert.equal(result.values_exposed,false);
   assert.equal(JSON.stringify(result).includes(token),false);
-  assert.equal(JSON.stringify(result).includes('embedding'),true); // only capability name, no numbers
+  assert.equal(result.capability,'host.process.run'); // generic capability, no vector data
   assert.equal(f.saved.length,1);
   assert.equal(f.saved[0].embedding.length,768);
   assert.equal(f.settlements[0].outcome,'completed');
@@ -124,6 +125,7 @@ test('SQLite replay keeps OpenAI vectors and does not repeat Cloudflare inferenc
         effect_authorization_id:'effect:test:'+ ++seq,
         budget_reservation_id:'budget:'+seq,max_billable_usd:'0',
         provider,capability,credential_ref,
+        target:'node:fracta2',execution_mode:'normal',
       }),settle:async()=>{},
     });
     assert.equal((await driver.invoke(req)).ok,true);
@@ -155,8 +157,20 @@ test('missing monetary zero reservation stops before Cloudflare account lookup',
       effect_authorization_id:'effect:already-verified',
       budget_reservation_id:'reserve:already-verified',
       max_billable_usd:'0.001',
+      capability:HOST_PROCESS_RUN_CAPABILITY,
+      target:'node:fracta2',execution_mode:'normal',
     },
   });
   assert.equal(result.ok,false);
   assert.deepEqual(calls,[]);
+});
+
+
+test('generic host-process capability is reused; no embedding-specific capability is registered',()=>{
+  assert.equal(HOST_PROCESS_RUN_CAPABILITY,'host.process.run');
+  const f=fixture();
+  assert.deepEqual(f.driver.available(),[{
+    name:CF_FREE_EMBEDDING_PROVIDER,capability:'host.process.run',
+    credential_ref:'jhn-vault:cloudflare_api_key',
+  }]);
 });
