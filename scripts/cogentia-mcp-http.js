@@ -1031,6 +1031,7 @@ async function produceGuideTurn(question, history, payload = {}, options = {}) {
   const turnAcct = await openSurfaceTurnPacket({
     surface: surface.startsWith("jhn") ? "jhn-openai" : "guide",
     question,
+    redact_question: true,
     locale: defaultLocale,
     instance_id: surface.startsWith("jhn") ? "agent:jhn:openai-surface" : "agent:jhn:guide",
     ...(profile?.mandate?.instance_id ? { mandate_id: `mandate:${profile.mandate.instance_id}:readonly` } : {}),
@@ -1327,6 +1328,7 @@ async function handleGuideChatStream(res, question, locale, history = [], payloa
     const turnAcct = await openSurfaceTurnPacket({
       surface: surface.startsWith("jhn") ? "jhn-openai" : "guide",
       question,
+      redact_question: true,
       locale,
       instance_id: surface.startsWith("jhn") ? "agent:jhn:openai-surface" : "agent:jhn:guide",
       ...(profile?.mandate?.instance_id ? {

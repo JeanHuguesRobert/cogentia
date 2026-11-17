@@ -26,6 +26,23 @@ assert.ok(opened.packet.packet_id.startsWith("urn:cop:packet:"));
 assert.equal(opened.packet.mandate_id.includes("guide") || opened.packet.mandate_id.length > 0, true);
 assert.equal(opened.packet.monetary_unit_default, "USD");
 
+const secretQuestion = "AUDIT_GUIDE_QUESTION_MUST_NOT_BE_RETAINED_337";
+const redacted = await openSurfaceTurnPacket({
+  surface: "guide",
+  question: secretQuestion,
+  locale: "fr",
+  redact_question: true,
+  payload: { question: "OVERRIDE_MUST_NOT_SURVIVE" },
+});
+assert.equal(redacted.ok, true, redacted.reason);
+assert.equal(redacted.packet.payload.question, null);
+assert.equal(redacted.packet.payload.question_char_count, secretQuestion.length);
+assert.equal(JSON.stringify(resolvePacketById(redacted.packet.packet_id)).includes(secretQuestion), false);
+assert.equal(JSON.stringify(resolvePacketById(redacted.packet.packet_id)).includes("OVERRIDE_MUST_NOT_SURVIVE"), false);
+const redactedProjection = projectTurnAccounting(redacted.packet, redacted.cop);
+assert.equal(redactedProjection.kind, "cop_surface_turn_accounting/v1");
+assert.equal(redactedProjection.packet_id, redacted.packet.packet_id);
+
 const { packet: synth } = await spawnSurfaceDownstream(opened.packet, opened.cop, {
   spawn_reason: "synthesis",
   step: "synthesis",

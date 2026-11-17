@@ -168,6 +168,13 @@ export async function openSurfaceTurnPacket(options = {}) {
       opened_at: new Date().toISOString(),
       kind: "surface_turn",
       ...(options.payload && typeof options.payload === "object" ? options.payload : {}),
+      // Keep accounting evidence without retaining a visitor's question in
+      // the long-lived in-memory packet registry. Late override also prevents
+      // untrusted options.payload.question from reintroducing the plaintext.
+      ...(options.redact_question === true ? {
+        question: null,
+        question_char_count: String(options.question || "").length,
+      } : {}),
     },
   });
 
