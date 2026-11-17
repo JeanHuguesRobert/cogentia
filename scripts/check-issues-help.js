@@ -19,6 +19,7 @@ for (const args of [["issues", "--help"], ["issues", "export", "--help"]]) {
   assert.equal(result.status, 0, result.stderr || result.stdout);
   assert.match(result.stdout, /Issue commands:/);
   assert.match(result.stdout, /issues export \[repo\|all\]/);
+  assert.match(result.stdout, /issues taxonomy plan/);
   assert.doesNotMatch(result.stderr, /No \.cogentia\.json found/);
 }
 

@@ -30,6 +30,7 @@ import { createGunzip, createGzip } from "node:zlib";
 import * as js_yaml from "js-yaml";
 import { DAEMON_PLUGINS, DAEMON_PLUGIN_ROUTES, loadDaemonPlugins, dispatchPluginRoute } from "./daemon_plugins/registry.js";
 import { buildIssueGraph, renderIssueGraph } from "./lib/issue-graph.js";
+import { runIssuesTaxonomy } from "./ops/issues-taxonomy-cli.js";
 import {
   LATENT_SOVEREIGN_KIND,
   explicitRoleIsSource,
@@ -1204,6 +1205,9 @@ Continuation commands:
  Calculette commands:
   calculette orient <owner/repo#N>   Read-only orientation over Issue audit.\n                           Flags: --body-file <path> --root <dir> --json.\n\n Issue commands:
   issues list <repo>       List GitHub issues for a registered repo using gh.
+  issues taxonomy plan     Plan additive labels on core repositories (or --all / --repo).
+  issues taxonomy apply    Apply a fresh plan with --from <plan.json> and live preflight.
+  issues taxonomy verify   Verify a fresh plan against GitHub without writes.
                            Flags: --state open|closed|all --limit <n>
   resume <GitHub Issue URL> [--prepare [--handlers-file <manifest.json>]] [--json] [--root <dir>]
                                   Inspect or prepare external Cognitive Packet handling; no execution.
@@ -6302,6 +6306,7 @@ function cmdIssues(sub) {
   if (["help", "-h", "--help"].includes(sub) || hasFlag("-h") || hasFlag("--help")) {
     return cmdHelp();
   }
+  if (sub === "taxonomy") return runIssuesTaxonomy(argv);
   if (sub === "handoff-preflight") return cmdIssuesHandoffPreflight();
   if (sub === "resumable-audit") return cmdIssuesResumableAudit();
   if (sub === "resumable-plan") return cmdIssuesResumablePlan();
