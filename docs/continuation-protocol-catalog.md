@@ -95,6 +95,12 @@ COP. Leurs contextes internes ne sont pas transportables tels quels.
 Pour l'extension MCP Tasks et son raccordement optionnel à Cogentia, voir
 [**MCP Tasks — façade de continuations COP**](mcp-tasks-cop-bridge.md).
 
+Pour élargir cette interopérabilité aux dialogues entre agents, aux dossiers
+ouverts et à la taxonomie de découverte, consulter
+[**Agentproto, CMMN et OASF : trois couches complémentaires**](../research/integration/agentproto-cmmn-oasf-interop.md).
+Cette étude distingue explicitement protocole de transport, modèle de travail
+et description des capacités, sans inventer de nouvelle entité COP.
+
 ## Inspirations provenant des protocoles d'interaction existants (17/11/2026)
 
 **Important : invocation, transport, continuation durable et COP ne sont pas

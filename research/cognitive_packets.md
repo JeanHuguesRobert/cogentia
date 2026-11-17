@@ -534,6 +534,15 @@ modèles de continuations directement pertinents, mais non prouvés comme
 pris en charge dans notre MCP actuel. Les providers Unix et MCP existants
 sont à réutiliser : pas de deuxième serveur ni d'exécuteur fictif.
 
+**Agentproto / CMMN / OASF (2026-11-17) :** une étude croisée
+[de leurs frontières conceptuelles et points d'intégration](integration/agentproto-cmmn-oasf-interop.md)
+distingue la filiation des dialogues inter-Hops (agentproto, encore I-D),
+les dossiers à planification adaptative et tâches facultatives (OMG CMMN 1.1),
+et la description/discovery des agents et skills (OASF 1.1). Aucune de ces
+notions n'est l'identité canonique d'un Cognitive Packet ni une source de
+mandat COP. Documenter les projections sans construire trois systèmes de
+stockage concurrents.
+
 **Migration order, not a forced global conversion:** first classify current
 producers and add tests at each actual ingress (CLI/MCP/ACP, frontmatter,
 embeddings, sleep-cycle, composition and conversation bridge). Then make one
