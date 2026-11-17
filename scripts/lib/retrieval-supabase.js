@@ -430,7 +430,9 @@ async function requestEmbeddingEndpoint(url, apiKey, model, dimensions, query, o
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
     const status = Number(response.status || 0);
-    const code = status === 401 || status === 403 ? "embedding_auth_failed" : status === 429 ? "embedding_rate_limited" : "embedding_provider_http_error";
+    const code = status === 401 || status === 403 ? "embedding_auth_failed"
+      : status === 402 ? "embedding_payment_required"
+      : status === 429 ? "embedding_rate_limited" : "embedding_provider_http_error";
     return {
       ok: false,
       error: "query_embedding_failed",
@@ -438,7 +440,9 @@ async function requestEmbeddingEndpoint(url, apiKey, model, dimensions, query, o
       diagnostic: embeddingDiagnostic(code, options, {
         upstream_status: status || null,
         retryable: status === 408 || status === 409 || status === 429 || status >= 500,
-        next_action: status === 401 || status === 403 ? "check_embedding_credentials" : "retry_or_check_embedding_provider",
+        next_action: status === 401 || status === 403 ? "check_embedding_credentials"
+          : status === 402 ? "check_provider_billing_or_choose_compatible_fulfiller"
+          : "retry_or_check_embedding_provider",
       }),
       warnings: [`Query embedding provider returned HTTP ${status || "error"}.`],
     };

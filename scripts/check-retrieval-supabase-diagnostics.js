@@ -84,4 +84,40 @@ const baseOptions = {
   }
 }
 
+// HTTP 402 is a non-retryable commercial/entitlement boundary, not an
+// intermittent network failure. The fallback remains read-only FTS.
+{
+  const originalFetch = globalThis.fetch;
+  const calls = [];
+  globalThis.fetch = async url => {
+    calls.push(String(url));
+    if (String(url).includes("/embeddings")) {
+      return new Response(JSON.stringify({ error: { message: "payment required" } }), {
+        status: 402, headers: { "Content-Type": "application/json" },
+      });
+    }
+    return new Response(JSON.stringify([]), {
+      status: 200, headers: { "Content-Type": "application/json" },
+    });
+  };
+  try {
+    const batch = await retrievalSupabasePackBatch(["public autonomy"], {
+      ...baseOptions,
+      allowInlineEmbedFulfill: true,
+      env: { ...baseOptions.env, OPENROUTER_API_KEY: "test-only-key" },
+    });
+    const pack = batch.packs[0];
+    assert.equal(pack.ok, true);
+    assert.equal(pack.mode, "hybrid");
+    assert.equal(pack.diagnostic.code, "embedding_payment_required");
+    assert.equal(pack.diagnostic.provider, "openrouter");
+    assert.equal(pack.diagnostic.upstream_status, 402);
+    assert.equal(pack.diagnostic.retryable, false);
+    assert.equal(pack.diagnostic.next_action, "check_provider_billing_or_choose_compatible_fulfiller");
+    assert.equal(calls.length, 2, "one failed paid embedding call, then FTS; no repeat charge");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+}
+
 console.log(JSON.stringify({ ok: true, test: "retrieval_supabase_diagnostics" }, null, 2));
