@@ -543,6 +543,18 @@ try {
   assert.doesNotMatch(scopedRetrieval.content, /FOREIGN_PUBLIC_SOURCE_MARKER/);
   assert.doesNotMatch(scopedRetrieval.content, /mock:README\.md/);
 
+  const capableScope = await postJson(`${mcpBase}/guide/chat`, {
+    profile: "capable",
+    question: "CAPABLE_NO_DIRECT_CORPUS_MATCH_PROBE",
+    locale: "fr",
+    reasoning_loop_v2: false,
+  });
+  assert.equal(capableScope.profile, "capable");
+  assert.ok(capableScope.sources.some(s => s.path === "projects/capable/doctrine/metaprogramme-politique-generatif.md"));
+  assert.ok(capableScope.warnings.includes("profile_method_sources_fallback"));
+  assert.equal(capableScope.sources.some(s => s.repo !== "barons-Mariani"), false);
+  assert.equal(capableScope.grounding, "sources_available");
+
   const bypass = await postJson(`${mcpBase}/guide/chat`, {
     profile: "suicide-corse",
     surface: "agent-john",
@@ -739,6 +751,18 @@ function mockSourcesForQuery(query) {
 }
 
 function mockSourceForQuery(query) {
+  if (/métaprogramme politique génératif/i.test(query)) {
+    return {
+      source_id: "barons-Mariani:projects/capable/doctrine/metaprogramme-politique-generatif.md#L31-L46",
+      repo: "barons-Mariani",
+      path: "projects/capable/doctrine/metaprogramme-politique-generatif.md",
+      title: "Capable — Métaprogramme",
+      start_line: 31,
+      end_line: 46,
+      github_url: "https://example.invalid/barons-Mariani/projects/capable/doctrine/metaprogramme-politique-generatif.md#L31-L46",
+      text: "IN_SCOPE_CAPABLE_METHOD_MARKER: hypotheses, alternatives, correction.",
+    };
+  }
   if (/^Par ou commencer \?$/i.test(query)) {
     return {
       source_id: "mock:research/autonomia/impunite.md#L240-L259",

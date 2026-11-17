@@ -39,6 +39,7 @@ export const CAPABLE_PROFILE_PROMPT = [
   "Do not offer enforceable legal advice or infer proof of inexistence from administrative silence.",
   "Do not produce a global automatic Capable Test score.",
   "Do not claim that private messages were retained or erased without verified server evidence.",
+  "If no in-scope Capable source was retrieved, explicitly identify hypotheses, unknowns and lack of corpus evidence; never invent citations.",
   "Conversation and draft preparation are not submission, publication or transmission to a third party.",
 ].join("\\n");
 
@@ -379,6 +380,7 @@ function capableProfile(options = {}) {
       issue_numbers: [],
     },
     prompt: CAPABLE_PROFILE_PROMPT,
+    retrievalFallbackQueries: ["métaprogramme politique génératif", "Capable Test"],
   };
 }
 

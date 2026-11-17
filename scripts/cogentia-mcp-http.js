@@ -1745,7 +1745,7 @@ async function guideRetrievalRun(question, plan = guideHeuristicPlan(question), 
   });
 
   const batchStartedAt = performance.now();
-  const packs = await fetchGuideRetrievalPacks(queries, packOptions);
+  const packs = await fetchGuideRetrievalPacks(queries, packOptions, options.profile);
   timings_ms.retrieval_batch = Math.round(performance.now() - batchStartedAt);
 
   // If S7 resolved a canonical file, pull a bounded public excerpt via MCP get_lines.
@@ -1804,7 +1804,7 @@ async function guideRetrievalRun(question, plan = guideHeuristicPlan(question), 
       const FALLBACK_RETRIEVAL_TIMEOUT_MS = 15_000;
       const fallbackResult = await Promise.race([
         (async () => {
-          const fallbackPacks = await fetchGuideRetrievalPacks([fallbackQuery], fallbackPackOptions);
+          const fallbackPacks = await fetchGuideRetrievalPacks([fallbackQuery], fallbackPackOptions, options.profile);
           return mergeGuideRetrievalFromPacks({
             question,
             plan,
@@ -1847,6 +1847,39 @@ async function guideRetrievalRun(question, plan = guideHeuristicPlan(question), 
           warnings: [...new Set([...(result.warnings || []), ...(fallbackResult.warnings || []), attemptedMarker])],
         };
       }
+    }
+  }
+
+  // A profile may specify public method anchors, not evidence for the visitor's
+  // particular case. Search those only when no admissible source was recovered.
+  if (result.sources.length === 0 && options.profile?.retrievalFallbackQueries?.length) {
+    const scopeQueries = options.profile.retrievalFallbackQueries.slice(0, 2);
+    const scopePacks = await fetchGuideRetrievalPacks(scopeQueries, {
+      mode: "keyword", limit: perQueryLimit, budget: perQueryBudget,
+    }, options.profile);
+    const scopeResult = mergeGuideRetrievalFromPacks({
+      question, plan, queries: scopeQueries, packs: scopePacks,
+      guideLimit, guideBudget, guideQueryLimit, options,
+      helpers: {
+        emitGuideProgress, guideProgress, safeSources, summarizePackRetrieval,
+        estimateGuideTokens, truncateGuideText,
+        rankGuideSources: (q, qs, sources, context, sourceRanks) =>
+          rankGuideSources(q, qs, sources, context, sourceRanks, s7),
+      },
+    });
+    if (scopeResult.sources.length) {
+      result = {
+        ...scopeResult,
+        attempts: [...(result.attempts || []), ...(scopeResult.attempts || [])],
+        queries: [...(result.queries || []), ...scopeQueries],
+        warnings: [...new Set([...(result.warnings || []), ...(scopeResult.warnings || []), "profile_method_sources_fallback"])],
+      };
+    } else {
+      result = {
+        ...result,
+        attempts: [...(result.attempts || []), ...(scopeResult.attempts || [])],
+        warnings: [...new Set([...(result.warnings || []), ...(scopeResult.warnings || []), "profile_no_admissible_sources"])],
+      };
     }
   }
 
@@ -2112,28 +2145,33 @@ async function guideS7FetchAnchorExcerpt(s7) {
   }
 }
 
-async function fetchGuideRetrievalPacks(queries, packOptions) {
+async function fetchGuideRetrievalPacks(queries, packOptions, profile = null) {
   const packs = new Map();
+  // Filter before guideLimit: off-profile hits must not displace valid ones.
+  // A wholly off-profile Supabase response must not prevent daemon fallback.
+  const scoped = pack => filterRetrievalForProfile(pack, profile);
   if (guideRetrievalBackend === "supabase") {
     try {
       const batch = await retrievalSupabasePackBatch(queries, packOptions);
-      if (batch?.ok && Array.isArray(batch.packs) && batch.packs.some(p => p.sources?.length > 0)) {
-        for (const item of batch.packs) {
-          packs.set(item.query, item);
+      if (batch?.ok && Array.isArray(batch.packs)) {
+        const scopedBatch = batch.packs.map(scoped);
+        if (scopedBatch.some(p => p.sources?.length > 0)) {
+          for (const item of scopedBatch) packs.set(item.query, item);
+          return packs;
         }
-        return packs;
       }
     } catch {
       // Fall through to local daemon SQLite batch
     }
   }
 
+  const localOptions = profile?.sourceScope
+    ? { ...packOptions, repo: "barons-Mariani" }
+    : packOptions;
   if (guideBatchEnabled) {
     try {
-      const batch = await core.callPackBatch(queries, packOptions);
-      for (const item of batch.packs || []) {
-        packs.set(item.query, item);
-      }
+      const batch = await core.callPackBatch(queries, localOptions);
+      for (const item of batch.packs || []) packs.set(item.query, scoped(item));
       return packs;
     } catch (error) {
       for (const query of queries) packs.set(query, { ok: false, error: error.message, query });
@@ -2144,11 +2182,9 @@ async function fetchGuideRetrievalPacks(queries, packOptions) {
   for (const query of queries) {
     try {
       const pack = await core.callTool("cogentia_context_pack", {
-        query,
-        ...packOptions,
-        format: "json",
+        query, ...localOptions, format: "json",
       });
-      packs.set(query, pack);
+      packs.set(query, scoped(pack));
     } catch (error) {
       packs.set(query, { ok: false, error: error.message, query });
     }
@@ -2834,6 +2870,7 @@ function guideChatResponse(question, locale, completion, retrieval = null, web =
   const finalAnswer = sanitizeSurfaceAnswer(answer || guideFallbackText(locale));
   const isOpenRouterFreeFallback = completion?._cogentia_guide_synthesis === "openrouter_free_fallback";
   const claimCheck = verifyOperationalClaims(finalAnswer, retrieval?.context, web?.sources);
+  const profileUnanchored = Boolean(profile?.sourceScope && retrieval?.attempts?.length && !sources.length);
   return {
     ok: true,
     service: "fractavolta-guide",
@@ -2843,6 +2880,7 @@ function guideChatResponse(question, locale, completion, retrieval = null, web =
     locale,
     answer: finalAnswer,
     sources,
+    grounding: profileUnanchored ? "no_profile_sources" : sources.length ? "sources_available" : "not_applicable",
     context: summarizeGuideContext(context, retrieval, web),
     s7: retrieval?.s7 || null,
     // cogentia#209: heuristic-only, fail-soft flag for operational detail
@@ -2854,6 +2892,7 @@ function guideChatResponse(question, locale, completion, retrieval = null, web =
       ...(retrieval?.warnings || []),
       ...(web?.warnings || []),
       ...claimCheck.warnings,
+      ...(profileUnanchored ? ["profile_no_admissible_sources"] : []),
       ...(isOpenRouterFreeFallback ? ["guide_synthesis_openrouter_free_fallback"] : []),
     ])],
     // Strict estimated spend accounting (quality-first: measure even when not optimizing).
