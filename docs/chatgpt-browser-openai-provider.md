@@ -1,6 +1,7 @@
 ---
 title: Conversational adapters — primitive SQLite continuations and ChatGPT OpenAI provider
 date: 2026-11-16
+last_modified_at: 2026-11-17
 document_role: operational
 document_kind: runbook
 visibility: public
@@ -294,3 +295,81 @@ two **different physical hosts and operating systems**. Cross-host
 *exclusive execution custody*, distributed irreversible effects,
 network-partition convergence and automatic `uncertain`-state repair
 remain to be implemented and tested.
+
+## Operational checkpoint — 17 November 2026 (#335 under #330)
+
+This is an evidence checkpoint, **not a production activation**. The dated
+execution plan is recorded at [Cogentia #335](https://github.com/JeanHuguesRobert/cogentia/issues/335#issuecomment-6948046557),
+coordinated by [#330](https://github.com/JeanHuguesRobert/cogentia/issues/330).
+
+### Architecture and authority boundary (P0)
+
+- An **ordinary completion** is an OpenAI-shaped, text-only request to a
+  provider-neutral adapter and a **primitive local SQLite continuation**.
+  It does not automatically create a COP packet or submit an MCP result.
+- A governed **CPS Judgment** is separately assigned under a current COP
+  mandate/budget/channel and returns via the existing correlated **MCP result
+  receipt** under #330. A successful browser click does not prove a returned
+  Judgment result. These mechanisms must not be conflated.
+- The existing ChatGPT ordinary-completion runner currently uses browser
+  `observe` with the assistant answer to project HTTP content. It is **not**
+  the direct-MCP result path used by the governed CPS test. Neither an active
+  browser tab nor the signed JHN v5 mandate proves third-party permission.
+- The [European OpenAI Terms of Use](https://openai.com/policies/eu-terms-of-use/)
+  (updated 16 January 2026, verified 17 November 2026) prohibit automatic or
+  programmatic extraction of data or Output. The existing
+  [Fair Usage doctrine](../research/integration/conversational_agents_fair_usage_cop_2026-11-13.md)
+  already identifies this restriction. No express applicable exception for
+  this ChatGPT consumer-browser-to-HTTP-provider use has been established.
+  **Do not activate the real consumer-browser extraction path or conduct a
+  live automated extraction test in the absence of such permission.**
+  Low volume, Principal approval and COP accounting do not themselves grant
+  provider permission; do not bypass channel restrictions.
+
+### Verified on Fracta2 (17 November 2026)
+
+| Check | Evidence and state |
+| --- | --- |
+| Existing runtime | `magistral.service`, `mcp-cogentia.service` and `cogentia.service` active at inspection |
+| Active Magistral command | `--map local-codex-acp`; `chatgpt-browser` not enabled in that active map |
+| Source locality | Cogentia `main`; dirty/untracked work from other tasks preserved, no reset or forced pull |
+| Provider port | No resident listener on `127.0.0.1:8898` at inspection |
+| Node tests | 25/25 Cogentia primitive/adapter/provider tests PASS, 10/10 Magistral router tests PASS |
+| Isolated actual-port smoke | Real provider process listened on loopback `8898` against injected **fake** browser action and disposable SQLite; health, models and text completion passed |
+| Restart/idempotence | Process restarted on the same disposable SQLite; same `X-Client-Request-Id` returned cached answer with **one** synthetic submit in total; changed payload with same key returned HTTP 409 |
+| Cleanup | Disposable provider stopped and temporary fixture/state deleted; no real ChatGPT invocation and no real MCP result submission |
+
+### Four independently assessed gates
+
+| Dimension | Ordinary ChatGPT-browser completion | Governed CPS Judgment (#330) |
+| --- | --- | --- |
+| Advertised | Source adapter and opt-in node descriptor exist | Existing canonical browser/COP/MCP worker exists |
+| Reachable | Fake local transport smoke passed; real provider not resident | Previous real MCP-return CPS chain documented under #330, **not** a #335 HTTP E2E test |
+| Authorized | JHN mandate is not a provider license; **consumer-browser output extraction not cleared** | JHN v5 capability/COP evidence exists; separate provider/channel permission still required |
+| Tested | Unit tests and fake local end-to-end provider smoke only | Three-continuation CPS chain reported with real receipts under #330; unrelated to ordinary Chat Completions acceptance |
+
+### Next admissible execution steps (P1–P5)
+
+1. **P1:** preserve current code/runtime and monitor local preflight. Only after
+   independently verified permission for the actual channel, recheck Principal,
+   signed mandate, budget, origin, tab, existing browser transport, loopback
+   authentication, and SQLite state before a resident startup.
+2. **P2:** install only an opt-in **additive** Magistral map after that gate;
+   retain `local-codex-acp`, embeddings, client request ID/call chain,
+   `no_fallback_on_error=true`, and a tested rollback. Source node descriptor
+   is not proof of an installed effective process map.
+3. **P3:** require one genuinely authorized client → Magistral → 8898 →
+   browser → correlated result → client trace, then same-key replay and
+   timeout/ambiguity test with no duplicate send; a synthetic HTTP response
+   is insufficient to close this acceptance criterion.
+4. **P4:** expose only verified four-dimensional capability statuses. Ordinary
+   HTTP response and governed MCP receipt remain distinct, with measured
+   latency, rate and accounting evidence where available.
+5. **P5:** re-run `research/evaluations/prior-art-navigation-blind.md` only
+   **after** the genuine permitted E2E succeeds. Do not invent a reasoning
+   benchmark result from fake responses.
+
+Until the permission gate changes, #335 remains **source-tested and locally
+smoke-tested but blocked for live browser activation**. A separately permitted
+API or a provider-authorized integration is an alternative channel, not a
+silent substitution for the browser provider requested in this issue.
