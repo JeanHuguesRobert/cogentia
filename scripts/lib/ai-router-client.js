@@ -39,9 +39,19 @@ export function createAiRouterClient(options = {}) {
     }
 
     const contentType = response.headers.get("content-type") || "";
-    const body = contentType.includes("application/json")
-      ? await response.json().catch(() => null)
-      : await response.text().catch(() => "");
+    const textBody = await response.text().catch(() => "");
+    // Magistral's current reference pilot emits JSON on /service-info,
+    // /v1/models and completion routes with Content-Type: text/plain.
+    // Parse only bounded, JSON-shaped payloads, preserving real text/SSE.
+    let body = textBody;
+    const maybeJson = textBody.trimStart();
+    if ((contentType.includes("json") || (
+      textBody.length <= 2_000_000 &&
+      (maybeJson.startsWith("{") || maybeJson.startsWith("[")))) &&
+      textBody.length <= 2_000_000) {
+      try { body = JSON.parse(textBody); }
+      catch { body = contentType.includes("json") ? null : textBody; }
+    }
 
     if (!response.ok) {
       // A local ChatGPT provider must not recursively invoke itself. Its
@@ -79,7 +89,48 @@ export function createAiRouterClient(options = {}) {
   return {
     baseUrl,
     publicInfo: () => publicRouterInfo(baseUrl),
-    health: () => request("/health"),
+    health: async () => {
+      const legacy = await request("/health");
+      // The current Magistral reference pilot advertises /service-info
+      // instead of /health. A 404 is a protocol mismatch, not a dead router.
+      if (legacy.status !== 404) return legacy;
+      const identity = await request("/service-info");
+      if (!identity.ok) return identity;
+      const body = identity.body;
+      // Never treat arbitrary JSON or a proxy 200 as proof of a router.
+      if (!body || body.protocol !== "cogentia.service-identity/v1" ||
+          body.service?.id !== "magistral" ||
+          body.service?.role !== "capability-router" ||
+          !Array.isArray(body.interfaces) || !Array.isArray(body.capabilities)) {
+        return {
+          ok: false,
+          status: 502,
+          error: "ai_router_identity_unverified",
+          router: publicRouterInfo(baseUrl),
+        };
+      }
+      const routes = new Set(body.interfaces
+        .map(item => typeof item?.href === "string" ? item.href : ""));
+      const advertisedChat = body.capabilities.some(item =>
+        item && typeof item === "object" && item.id !== "embeddings" &&
+        typeof item.adapter === "string" && item.adapter !== "openai-embeddings");
+      const advertisedEmbeddings = body.capabilities.some(item =>
+        item && item.id === "embeddings" && item.enabled === true);
+      return {
+        ok: true,
+        status: 200,
+        router: publicRouterInfo(baseUrl),
+        body: {
+          service: "magistral",
+          status: "ok",
+          mode: "service_info_fallback",
+          capabilities: {
+            chat_completions: routes.has("/v1/chat/completions") && advertisedChat,
+            embeddings: routes.has("/v1/embeddings") && advertisedEmbeddings,
+          },
+        },
+      };
+    },
     models: () => request("/v1/models"),
     chatCompletions: payload => request("/v1/chat/completions", {
       method: "POST", body: payload,
