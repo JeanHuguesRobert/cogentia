@@ -253,7 +253,7 @@ function selectBestModel(criteria = {}) {
       if (criteria.minDimensions && model.dimensions < criteria.minDimensions) {
         continue;
       }
-      if (criteria.maxPrice && model.pricePerMillion > criteria.maxPrice) {
+      if (criteria.maxPrice != null && model.pricePerMillion > criteria.maxPrice) {
         continue;
       }
       if (criteria.minSpeed && model.speed < criteria.minSpeed) {

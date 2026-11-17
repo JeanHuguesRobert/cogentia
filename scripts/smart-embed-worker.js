@@ -249,6 +249,14 @@ async function generateEmbeddingsForProvider(providerInfo, chunks, options = {})
   }
 
   const profile = providerInfo.profile || {};
+  // The user's #338 monetary ceiling is absolute. Existing router/URL fallbacks
+  // can reach billable APIs; a provider name or presence of a key is NOT proof
+  // of free-tier eligibility or a COP reservation. Until a verified free
+  // provider transport is installed, refuse all external requests in this mode.
+  if (process.env.COGENTIA_EMBEDDINGS_MAX_BILLABLE_USD === "0") {
+    console.log("    BLOCKED: zero monetary budget; provider/free entitlement not independently verified by this worker.");
+    return null;
+  }
   const modelSpec = getModel(provider, modelInfo.id) || {};
   const dimensions = Number(profile.dimensions || modelInfo.dimensions || modelSpec.dimensions || 0) || null;
 
@@ -542,6 +550,7 @@ async function run(options = {}) {
   }
 
   console.log(`\n📊 Summary: ✅ ${successCount} | ❌ ${failCount}`);
+  if (failCount > 0) process.exitCode = 1;
 }
 
 function parseArgs() {
