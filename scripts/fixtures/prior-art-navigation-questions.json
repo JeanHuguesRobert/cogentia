@@ -1,0 +1,45 @@
+{
+  "schema": "cogentia.prior-art-questions/v1",
+  "cases": [
+    {
+      "id": "no-live-circuit",
+      "question": "Si un exécuteur s'éteint pendant plusieurs jours, faut-il maintenir une liaison continue pour que sa tâche aboutisse ?"
+    },
+    {
+      "id": "delayed-delivery",
+      "question": "Un message de travail peut-il progresser via un appareil qui ne sera connecté que le lendemain ?"
+    },
+    {
+      "id": "move-computation",
+      "question": "Pour minimiser les transferts faut-il parfois rapprocher le calcul de la donnée plutôt que l'inverse ?"
+    },
+    {
+      "id": "concurrent-authors",
+      "question": "Quand deux agents modifient le même fichier sans coordination initiale, doit-on interdire leur travail simultané ?"
+    },
+    {
+      "id": "capability-is-not-authority",
+      "question": "Une machine techniquement capable d'effectuer une opération a-t-elle nécessairement le droit de la faire ?"
+    },
+    {
+      "id": "packet-outer-inner",
+      "question": "Pourquoi séparer les métadonnées de circulation d'une idée du travail intellectuel qu'elle transporte ?"
+    },
+    {
+      "id": "frozen-living-book",
+      "question": "Une correction nouvelle du Livre Vivant doit-elle réécrire une édition déjà gelée ?"
+    },
+    {
+      "id": "object-identity-two-disks",
+      "question": "Les mêmes octets enregistrés sur deux disques distincts deviennent-ils deux objets différents dans la mémoire ?"
+    },
+    {
+      "id": "ultrasound-wake",
+      "question": "Fractanet a-t-il déjà déployé un réveil des nœuds dormants par émission ultrasonique ?"
+    },
+    {
+      "id": "step-count-risk",
+      "question": "Le nombre quotidien de pas du propriétaire règle-t-il automatiquement le nombre de copies d'archives conservées sur son téléphone ?"
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "schema": "cogentia.prior-art-gold/v1",
+  "policy": "gold not exposed to orientation/retrieval; no retrieval failure proves novelty",
+  "cases": [
+    {
+      "id": "no-live-circuit",
+      "status": "established",
+      "references": [
+        {
+          "repo": "cogentia",
+          "path": "research/cognitive_packet_switching.md",
+          "needle": "continuations make them resumable"
+        },
+        {
+          "repo": "cogentia",
+          "path": "research/cogentia_continuation_packet_routing.md",
+          "needle": "without requiring a dedicated end-to-end circuit"
+        }
+      ]
+    },
+    {
+      "id": "delayed-delivery",
+      "status": "established",
+      "references": [
+        {
+          "repo": "cogentia",
+          "path": "research/calculette_of_the_mind.md",
+          "needle": "Store-and-forward may let the work outlive"
+        }
+      ]
+    },
+    {
+      "id": "move-computation",
+      "status": "established",
+      "references": [
+        {
+          "repo": "cogentia",
+          "path": "research/locality_principle.md",
+          "needle": "locality"
+        }
+      ]
+    },
+    {
+      "id": "concurrent-authors",
+      "status": "established",
+      "references": [
+        {
+          "repo": "cogentia",
+          "path": "research/optimistic_mainline_governance.md",
+          "needle": "optimistic locking"
+        }
+      ]
+    },
+    {
+      "id": "capability-is-not-authority",
+      "status": "established",
+      "references": [
+        {
+          "repo": "cogentia",
+          "path": "research/capability_authority_control_data_planes_2026-11-10.md",
+          "needle": "not permissions"
+        }
+      ]
+    },
+    {
+      "id": "packet-outer-inner",
+      "status": "established",
+      "references": [
+        {
+          "repo": "cogentia",
+          "path": "research/cognitive_packets.md",
+          "needle": "envelope and payload"
+        }
+      ]
+    },
+    {
+      "id": "frozen-living-book",
+      "status": "established",
+      "references": [
+        {
+          "repo": "cogentia",
+          "path": "research/living_book_press_architecture.md",
+          "needle": "never mutates the frozen edition"
+        }
+      ]
+    },
+    {
+      "id": "object-identity-two-disks",
+      "status": "established",
+      "references": [
+        {
+          "repo": "inseme",
+          "path": "packages/magistral/docs/object-memory-v0.md",
+          "needle": "independent of provider location"
+        }
+      ]
+    },
+    {
+      "id": "ultrasound-wake",
+      "status": "undetermined",
+      "references": []
+    },
+    {
+      "id": "step-count-risk",
+      "status": "undetermined",
+      "references": []
+    }
+  ]
+}
