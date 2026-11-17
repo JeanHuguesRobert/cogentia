@@ -174,3 +174,25 @@ test('generic host-process capability is reused; no embedding-specific capabilit
     credential_ref:'jhn-vault:cloudflare_api_key',
   }]);
 });
+
+
+test('generic host-process grant is restricted to the actual node and normal mode',async()=>{
+  const calls=[];
+  const vault={async withSecret(ref,callback){calls.push(ref);return callback(token)}};
+  const descriptor=createCloudflareFreeEmbeddingProvider({
+    vault,loadPublicChunks:async()=>chunks,persist:async()=>({ok:true}),
+    fetchImpl:async()=>{throw Error('no Cloudflare request expected');},
+  });
+  const grant={effect_authorization_id:'effect:1',budget_reservation_id:'reserve:1',
+    max_billable_usd:'0',capability:'host.process.run',target:'node:fracta2',
+    execution_mode:'normal'};
+  for(const change of [
+    {target:'node:elsewhere'},{execution_mode:'super'},
+    {capability:'embedding.public.persist'},
+  ]){
+    const result=await descriptor.invoke({secret:token,input:{chunk_refs:[ref]},
+      grant:{...grant,...change}});
+    assert.equal(result.ok,false);
+  }
+  assert.deepEqual(calls,[]);
+});
