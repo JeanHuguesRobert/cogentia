@@ -280,7 +280,7 @@ const child = spawn(process.execPath, ["scripts/cogentia-mcp-http.js"], {
     COGENTIA_GUIDE_AGENT_GATEWAY: "0",
     COGENTIA_GUIDE_SYNTHESIS_PROVIDER: "",
     COGENTIA_MCP_VIEW: "public",
-    COGENTIA_CORS_ORIGIN: "https://fractavolta.com",
+    COGENTIA_CORS_ORIGIN: "https://fractavolta.com,https://capable.acorsica.org,https://privai.acorsica.org",
     COGENTIA_GUIDE_ENV_FILE: envFile,
     COGENTIA_GUIDE_WEB_SEARCH_URL: `${daemonBase}/brave`,
     COGENTIA_GUIDE_S7_ANCHOR: "0",
@@ -316,6 +316,27 @@ try {
     headers: { Origin: "https://fractavolta.com" },
   });
   assert.equal(healthResponse.headers.get("access-control-allow-origin"), "https://fractavolta.com");
+  for (const origin of ["https://capable.acorsica.org","https://privai.acorsica.org"]) {
+    const preflight = await fetch(`${mcpBase}/guide/chat`, {
+      method: "OPTIONS",
+      headers: {
+        Origin: origin,
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "content-type,accept",
+      },
+    });
+    assert.equal(preflight.status, 204);
+    assert.equal(preflight.headers.get("access-control-allow-origin"), origin);
+    assert.match(preflight.headers.get("access-control-allow-methods") || "", /POST/);
+    assert.match(preflight.headers.get("access-control-allow-headers") || "", /Content-Type/i);
+    assert.match(preflight.headers.get("vary") || "", /Origin/i);
+  }
+  const forbiddenOrigin = await fetch(`${mcpBase}/guide/chat`, {
+    method: "OPTIONS", headers: { Origin: "https://untrusted.invalid", "Access-Control-Request-Method": "POST" },
+  });
+  assert.equal(forbiddenOrigin.status, 204);
+  assert.equal(forbiddenOrigin.headers.get("access-control-allow-origin"), null);
+  assert.match(forbiddenOrigin.headers.get("vary") || "", /Origin/i);
   const health = await healthResponse.json();
   assert.equal(health.service, "fractavolta-guide");
   assert.equal(health.mandate.instance_id, "fractavolta-public-guide");

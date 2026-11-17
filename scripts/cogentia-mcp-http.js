@@ -3777,6 +3777,9 @@ function suppressResponseBody(res) {
 
 function applyCors(req, res) {
   const origin = req.headers.origin || "";
+  // CORS is origin-specific: shared intermediary caches must not reuse an
+  // allowed or rejected preflight for another site's Origin.
+  if (origin) res.setHeader("Vary", "Origin");
   const allowed = allowedOrigins.some(value => value === "*" || (value.endsWith("*") ? origin.startsWith(value.slice(0, -1)) : origin === value));
   if (!allowed) return;
   res.setHeader("Access-Control-Allow-Origin", origin || "*");
