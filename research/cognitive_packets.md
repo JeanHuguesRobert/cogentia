@@ -381,9 +381,24 @@ A minimal intended interface is
  idempotency_key, work_ref, closure, return_contract, constraints}) → proposal`,
 followed by distinct `materialize(proposal, store)` and **only where needed**
 `admitAndDispatch(packet_ref, mandate, provider, budget, claim)`.
-The shape is a **design target**, not an API already implemented everywhere.
-Class-specific preparation validates required fields; the common materializer
-records identity and ancestry, it does not try to understand each domain.
+The production shape is now implemented as a **pure, preview-only
+factory** `prepareContinuationProduction` in
+`scripts/lib/continuation-production-recipes.mjs` (P1 of Cogentia #336).
+Each of the seven families validates its own minimal fields, sharing one
+identity/provenance/resumption/return shell. Stable `identity_ref` hashes the
+producer/class/origin/idempotency key; an independent `request_fingerprint`
+detects changed proposed work under the same identity. A missing return owner
+or result slot, missing resumption context, unknown class or cyclic/non-JSON
+input is rejected. Privacy defaults to `restricted`, never public.
+
+**This is not yet the public wire protocol, a materializer, an actual scheduler
+or an existing emitter adapter.** The factory deliberately returns
+`status: prepared_only`, `source_materialized: false`,
+`provider_dispatched: false`, `cop_authority_granted: false` and
+`external_effects: 0`. All old producers continue to work unchanged until
+individual adapters exercise this gate in production. The class-specific
+shape is an empirical starting point, not a mandate to retrofit arbitrary
+existing records or invent missing inputs.
 In particular `return_contract` must not be mistaken for a runnable handler;
 `resume.command = "continuation resolve ..."` only writes an answer slot.
 The source owner must still be notified or re-entered under its own contract.

@@ -441,3 +441,13 @@ node scripts/ops/audit-continuation-producers.mjs --catalog
 These report only aggregate metadata or known code locations; neither creates
 nor dispatches work. An unknown producer or unverified result consumer must
 remain explicit rather than being assigned to a provider by guesswork.
+
+To prototype a **class-specific production recipe** without creating a
+Continuation, use the pure
+`prepareContinuationProduction` function in
+`scripts/lib/continuation-production-recipes.mjs`. It requires a stable
+producer/origin/deduplication identity, a declared resumption context, an
+owner and reply slot, plus the particular class's fields. It returns only a
+fingerprinted proposal, with no provider execution, queue entry, COP mandate
+or inferred executable handler. Existing producers do **not** automatically
+invoke this new preparer yet; integration is intentionally incremental.
