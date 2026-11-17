@@ -87,6 +87,8 @@ export function createContinuationSqliteRepository({registryRoot,dbPath=null}={}
   function inspect(id){return store.get(id)}
   return {path:filename,registry_root:root,host:hostname(),load,save,list,
     inspect,snapshot:id=>store.snapshot(id),sources:id=>store.sources(id),
+    remember:(id,slot,inputHash,result)=>store.remember(id,slot,inputHash,result),
+    attachSource:(id,sourceRef,sourceHash,payload)=>store.attachSource(id,sourceRef,sourceHash,payload),
     close:()=>store.close()};
 }
 export function continuationRepository(registryRoot){

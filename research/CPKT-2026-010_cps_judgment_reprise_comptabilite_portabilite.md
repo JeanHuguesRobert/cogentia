@@ -201,3 +201,114 @@ Ne jamais publier dans ce document public un prompt privé, un jeton, une donné
 > Lis `JeanHuguesRobert/cogentia/research/CPKT-2026-010_cps_judgment_reprise_comptabilite_portabilite.md`, les instructions canoniques et `skills/continuation-handling/SKILL.md`. Reconstitue les états réels dans GitHub et sur les FractaNodes disponibles. Commence par H0, poursuis H1 sans créer de moteur parallèle, puis exécute H2–H4 dans les limites des mandats applicables. Exige preuves de reprise effective, accounting propre/consolidé, traces fractales, localité et sortie vers un autre fournisseur. Ne déduis jamais l'autorisation d'une capacité technique. Lorsque le traitement s'arrête, consigne la prochaine action vérifiable, les références causales et l'état exact des tests.
 
 **Critère d'achèvement global :** *le fournisseur habituel disparaît, mais le traitement d'origine peut continuer ailleurs avec son histoire, ses coûts et ses contrôles intacts.*
+
+## 9. Point de contrôle d'exécution — 17 novembre 2026 (Cogentia #336)
+
+**Statut : OPEN, acceptance globale non démontrée.** Ces essais ont été
+réalisés sur Fracta2 avec des fichiers publics et bases SQLite jetables.
+Ils ne prouvent ni que les services de production chargent cette version,
+ni qu'un fournisseur réel a été appelé. Aucun email, publication de Corpus
+ou autre communication externe n'a été produit par les essais.
+
+### H0 — Premier défaut reproduit : PASS
+
+Le producteur réel index.document_role_judgment suspendait l'indexeur
+pour un document public de rôle indéterminé. Avant la correction,
+cmdContinuationResolve marquait la continuation resolved avec
+result_available=true et delivered=false, sans cible de réentrée,
+sans exécution métier ni slot de résultat. La batterie préexistante de
+continuations, SQLite, production et retour donnait 27/27 PASS sans
+couvrir la réentrée métier.
+
+### H1 — Réentrée effective : PASS sur Fracta2 isolé
+
+Sources modifiées : scripts/cogentia.js et
+scripts/lib/continuation-sqlite-repository.mjs.
+Source créée : scripts/lib/public-index-judgment-reentry.mjs.
+Tests créés : scripts/lib/public-index-judgment-reentry.test.mjs.
+
+Le producteur porte désormais un resumption_target de type handler et
+l'empreinte SHA-256 du document public. Le retour Judgment validé déclenche
+le découpage réel du document par la fonction chunkMarkdown de l'indexeur
+initial, conserve un artefact de fragments dans le slot SQLite originel
+et produit une référence de reçu. L'index update suivant consomme
+cet artefact, construit des fragments recherchables, débloque le document
+et ne recrée pas le Judgment initial. La source documentaire n'est
+pas automatiquement modifiée.
+
+Reprise sur nouveau processus après crash entre résolution et consommation :
+PASS. Deux retours identiques, même concurrents : une seule réentrée.
+Deux retours divergents, même concurrents : conflit CAS et alternative
+conservée localement avec statut reconciliation_required ; jamais de
+last-write-wins. Handler absent et source altérée : refus. Décision
+needs_more_context : nouvelle continuation causale active, sans fausse
+conclusion. Onze tests sur onze PASS. Le verdict public, limité à la visibilité,
+ne fabrique pas un rôle source : il ouvre une demande plus précise. Une
+source modifiée crée une demande épinglée à la nouvelle version plutôt que
+de réutiliser une continuation active devenue obsolète.
+
+L'adaptateur est volontairement limité à index.document_role_judgment
+et à des sources publiques. Il ne convertit pas automatiquement les
+continuations historiques dépourvues d'exécuteur.
+
+### H2 — Substituabilité : PASS avec fixtures ; live NON PROUVÉ
+
+Les voies explicitement simulées magistral-api-fixture et
+chatgpt-cps-fixture respectent un même contrat indépendant du fournisseur.
+Elles produisent les mêmes fragments depuis le même document. Après
+import dans une autre localité, human-copy-fixture satisfait également
+ce contrat, sans session ou jeton du fournisseur initial.
+
+Aucun appel réel à Magistral API ni au navigateur ChatGPT CPS n'a été
+effectué dans cet essai. Disponibilité, acteur, mandat, PacketClaim,
+autorisation d'effet, budgets et reçus du canal réel restent à vérifier.
+Le coût d'un fournisseur non sollicité est NON APPLICABLE à cette fixture,
+et non une consommation physique enregistrée comme zéro.
+
+### H3 — Accounting et traçabilité : noyau PASS, intégration EN ATTENTE
+
+Les tests ciblés Inseme COP kernel existants donnent 55/55 PASS :
+packetAccounting.test.js, strict-accounting-adversarial.test.js et
+accounting.test.js. Ils vérifient dépenses propres/consolidées,
+non-double-comptage, événements équilibrés, conflits et réconciliation.
+
+Ce parcours de reprise n'a produit aucune invocation fournisseur
+physique. Ses reçus et artefacts sont dans la primitive SQLite, sans
+second ledger. Il reste à prouver que des dépenses physiques réellement
+engagées sont réservées et réglées une seule fois sur le Packet propriétaire,
+puis reconstituables depuis le journal COP et FractaLog. La réussite
+des tests unitaires du noyau n'est PAS cette preuve d'intégration.
+
+### H4 — Portabilité : PASS local ; autorité COP inter-nœuds EN ATTENTE
+
+La primitive snapshot / importSnapshot transporte les identités,
+révisions, historiques, sources, résultats et slots avec vérification
+des empreintes. Sur deux bases SQLite indépendantes, une continuation
+résolue ailleurs reprend réellement son calcul ; un paquet encore suspendu
+peut recevoir un Judgment human-copy-fixture après suppression des
+variables de fournisseur. L'original n'est pas réécrit silencieusement.
+
+Non démontrés : réadmission du mandat et du PacketClaim dans la nouvelle
+localité, export des dépenses COP réelles et des reçus FractaLog, gestion
+des résultats tardifs lors d'un transfert de responsabilité.
+
+### Capacités observées
+
+| Voie | Source | Accessible | Autorité COP de cet effet | Reality Test |
+|---|---|---|---|---|
+| Indexeur / SQLite local | présente | oui Fracta2 | fixture non admise COP | reprise + index update |
+| Accounting Inseme | présente | tests exécutables | fixture, sans fournisseur live | 55 tests |
+| API Magistral | présente | service indiqué actif, endpoint non exercé | non vérifiée | fixture seulement |
+| ChatGPT navigateur CPS | présente | navigateur non exercé | non vérifiée | fixture seulement |
+| Snapshot inter-localité | présente | oui, SQLite jetable | autorité non transportée | import + réentrée |
+
+**Bilan : 27 tests préexistants + 11 tests de ce parcours + 55 tests COP =
+93 succès ciblés.** Pas de schéma, Scheduler, ledger ni moteur workflow
+concurrent ajouté.
+
+**Prochain travail utile :** faire parvenir un Judgment réellement admis par
+COP au même handler de réentrée ; prouver réservation, consommation
+physique connue ou explicitement inconnue, règlement et reçu unique ;
+reconstituer les événements locaux et leur projection fractale, puis
+rejouer une migration avec réadmission du mandat et gestion du retour tardif.
+Conserver le paquet et le chantier #336 ouverts jusque-là.

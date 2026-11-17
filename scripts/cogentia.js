@@ -12,6 +12,7 @@
 
 import fs from "node:fs";
 import {continuationRepository} from "./lib/continuation-sqlite-repository.mjs";
+import {PUBLIC_INDEX_REENTRY_HANDLER,resumePublicIndexJudgment} from "./lib/public-index-judgment-reentry.mjs";
 import { wipInventory, wipCompare } from "./lib/wip-inventory.js";
 import { wipMergeInventories } from "./lib/wip-merge.js";
 import {createAgentMail} from "./lib/agent-mail.js";
@@ -668,6 +669,8 @@ function buildResolvedRoleIndex(ctx) {
   const index = new Map();
   for (const c of loadContinuations(ctx)) {
     if (c.status !== "resolved") continue;
+    if (c.resumption_target?.handler_ref === PUBLIC_INDEX_REENTRY_HANDLER &&
+        c.resolution?.return_state?.resumed !== true) continue;
     if (!RESOLVED_ROLE_CONTINUATION_KINDS.includes(c.kind)) continue;
     const repo = c.subject?.repo;
     const relPath = c.subject?.path;
@@ -1191,6 +1194,7 @@ Continuation commands:
                            Liveness filters: alive|open|awake, hibernating|dormant, closed|all
   continuation inspect <id>
   continuation resolve <id> [result.json] --decision <text> --reason <text>
+  continuation reenter <id>             Retry a durable, pre-approved local handler after process loss.
   continuation resume <id> [result.json]   Alias for resolve.
   continuation cancel <id> --reason <text>
   continuation audit-backfill [<id>|all]  Append missing durable audit events for resolved/cancelled records.
@@ -6730,6 +6734,8 @@ function cmdContinuation(sub) {
       return cmdContinuationList(ctx);
     case "inspect":
       return cmdContinuationInspect(ctx, argv.shift());
+    case "reenter":
+      return cmdContinuationReenter(ctx,argv.shift());
     case "resolve":
     case "resume":
       return cmdContinuationResolve(ctx, argv.shift());
@@ -6743,7 +6749,7 @@ function cmdContinuation(sub) {
     case "schema":
       return output(continuationSchema(), formatContinuationSchema());
     default:
-      throw new Error(`Unknown continuation subcommand "${sub}". Use emit, placement, list, export, inspect, resolve, cancel, audit-backfill, or schema.`);
+      throw new Error(`Unknown continuation subcommand "${sub}". Use emit, placement, list, export, inspect, resolve, reenter, cancel, audit-backfill, or schema.`);
   }
 }
 
@@ -6857,12 +6863,70 @@ function writeLatentSovereignMaterialization(ctx, continuation) {
   return { repo: repoName, path: rel, wrote: ["sovereign_status", "document_role"], preserved: ["derived_from"] };
 }
 
+function attemptContinuationReentry(ctx, continuation) {
+  if (!continuation.resumption_target) return {ok:true,status:"legacy_pull_slot_only"};
+  const target=continuation.resumption_target;
+  if (target.kind!=="handler"||target.handler_ref!==PUBLIC_INDEX_REENTRY_HANDLER)
+    return {ok:false,status:"unavailable_reentry_handler"};
+  const repo=continuationRepository(ctx.registryRoot || path.dirname(ctx.configPath));
+  const sourceRepo=ctx.repos.find(r=>r.name===continuation.subject?.repo);
+  if (!sourceRepo||!canSeeRepo(sourceRepo,PUBLIC_VIEW))
+    return {ok:false,status:"source_repo_not_public"};
+  return resumePublicIndexJudgment({
+    continuation,repository:repo,repoRoot:sourceRepo.path,
+    chunkMarkdown,
+    emitFollowup:req=>emitContinuation(ctx,req),
+  });
+}
+
+function cmdContinuationReenter(ctx,id) {
+  if (!id) throw new Error("Usage: continuation reenter <id>");
+  const continuation=loadContinuation(ctx,id);
+  const reentry=attemptContinuationReentry(ctx,continuation);
+  if (!reentry.ok) process.exitCode=1;
+  output({ok:reentry.ok,continuation_id:id,reentry},
+    JSON.stringify({continuation_id:id,reentry},null,2));
+}
+
+function retainCompetingJudgment(ctx,continuation,alternate){
+  // Retain divergent candidates where the continuation lives. Do not treat a
+  // collision as permission to replace the winning Judgment (no last-writer-
+  // wins), or publish an alternate answer to another locality.
+  const repo=continuationRepository(ctx.registryRoot || path.dirname(ctx.configPath));
+  const content={profile:"cogentia.competing-judgment/v1",
+    continuation_id:continuation.id,
+    competing_result:alternate,
+    accepted_resolution_ref:"continuation:"+continuation.id+"/resolution",
+    status:"reconciliation_required"};
+  const digest=sha256(JSON.stringify(content));
+  const ref="competing-judgment:sha256:"+digest;
+  const kept=repo.attachSource(continuation.id,ref,digest,content);
+  if(!kept.ok)throw new Error("competing_judgment_preservation_failed: "+kept.code);
+  return ref;
+}
+
 function cmdContinuationResolve(ctx, id) {
   if (!id) throw new Error("Usage: continuation resolve <id> [result.json] --decision <text> --reason <text>");
   const continuation = loadContinuation(ctx, id);
+  const payload = readContinuationPayload();
+  if (continuation.status === "resolved" && continuation.resumption_target) {
+    const requestedDecision=valueFlag("--decision") || payload.decision || payload.chosen_alternative || payload.status || "";
+    const requestedReason=valueFlag("--reason") || payload.reason || payload.summary || "";
+    if (continuation.resolution?.decision !== requestedDecision ||
+        continuation.resolution?.reason !== requestedReason ||
+        JSON.stringify(continuation.resolution?.payload||{}) !== JSON.stringify(payload)) {
+      const competingRef=retainCompetingJudgment(ctx,continuation,{
+        decision:requestedDecision,reason:requestedReason,payload});
+      throw new Error("continuation_result_conflict: reconciliation_required: "+competingRef);
+    }
+    const reentry=attemptContinuationReentry(ctx,continuation);
+    if(!reentry.ok) process.exitCode=1;
+    return output({ok:reentry.ok,duplicate:true,reentry,
+      continuation:stripContinuationBody(loadContinuation(ctx,id))},
+      JSON.stringify({duplicate:true,reentry},null,2));
+  }
   if (continuation.status !== "active") throw new Error(`Continuation ${id} is not active (status=${continuation.status}).`);
   assertNoClaimedContinuationTerminalBypass(ctx, id);
-  const payload = readContinuationPayload();
   if (payload.continuation_id && payload.continuation_id !== id) {
     throw new Error(`continuation_id mismatch: got ${payload.continuation_id}, expected ${id}`);
   }
@@ -6885,9 +6949,31 @@ function cmdContinuationResolve(ctx, id) {
     return_state: {result_available: true, delivered: false, result_ref: continuation.return_contract?.result_ref ?? null},
   };
   continuation.history.push({ at: now, event: "resolved", decision, reason });
-  saveContinuation(ctx, continuation);
+  try{
+    saveContinuation(ctx, continuation);
+  }catch(e){
+    if(e.message!=="continuation_revision_conflict")throw e;
+    const latest=loadContinuation(ctx,id);
+    if(latest.status==="resolved") {
+      if(latest.resolution?.decision===decision&&latest.resolution?.reason===reason&&
+         JSON.stringify(latest.resolution?.payload||{})===JSON.stringify(payload)){
+        const reentry=attemptContinuationReentry(ctx,latest);
+        if(!reentry.ok)process.exitCode=1;
+        return output({ok:reentry.ok,duplicate:true,reentry,
+          continuation:stripContinuationBody(loadContinuation(ctx,id))},
+          JSON.stringify({duplicate:true,reentry},null,2));
+      }
+      const competingRef=retainCompetingJudgment(ctx,latest,{decision,reason,payload});
+      throw new Error("continuation_revision_conflict: reconciliation_required: "+competingRef);
+    }
+    throw e;
+  }
   appendContinuationAudit(ctx, continuation, "resolved");
-  output({ ok: true, continuation: stripContinuationBody(continuation) }, formatContinuationResolved(continuation));
+  const reentry=attemptContinuationReentry(ctx,continuation);
+  if(!reentry.ok) process.exitCode=1;
+  output({ok:reentry.ok,continuation:stripContinuationBody(loadContinuation(ctx,id)),
+    reentry},formatContinuationResolved(continuation) +
+    "\nReentry: " + reentry.status + (reentry.artifact_ref ? " ("+reentry.artifact_ref+")" : ""));
 }
 
 function cancelContinuationRecord(ctx, continuation, reason) {
@@ -9031,6 +9117,9 @@ async function indexRebuild(ctx, options = {}) {
       limit: 100,
     }) : null;
     const inventory = buildInventory(ctx);
+    // Consume accepted, source-pinned local re-entry artifacts before finding
+    // new boundaries. No external provider dispatch or silent source writes.
+    const resumedIndexJudgments = applyResumedPublicIndexJudgments(ctx, inventory);
     const boundaries = indexJudgmentBoundaries(ctx, inventory);
     const continuations = emitIndexContinuations(ctx, boundaries);
     const boundaryKeys = new Set(boundaries.filter(b => b.blocks_index).map(b => `${b.repo}/${b.path}`));
@@ -9163,6 +9252,7 @@ async function indexRebuild(ctx, options = {}) {
         edges: inventory.edges.length,
         searchable_public: scalar(db, "SELECT count(*) FROM chunks WHERE searchable_public = 1"),
         partial: boundaries.some(b => b.blocks_index),
+        resumed_index_judgments: resumedIndexJudgments,
         continuations: continuations.map(c => stripContinuationBody(c.continuation)),
         boundary_count: boundaries.length,
         vector_cache: vectorCache,
@@ -9404,6 +9494,52 @@ function canIndexDocForPublic(repo, doc) {
     && (doc.visibility?.public_presence || "full") === "full";
 }
 
+function applyResumedPublicIndexJudgments(ctx, inventory) {
+  const repo = continuationRepository(ctx.registryRoot || path.dirname(ctx.configPath));
+  const bySubject = new Map();
+  for (const c of loadContinuations(ctx)) {
+    if (c.kind!=="index.document_role_judgment"||c.status!=="resolved"||
+        c.resumption_target?.handler_ref!==PUBLIC_INDEX_REENTRY_HANDLER||
+        c.resolution?.return_state?.resumed!==true) continue;
+    const key=c.subject?.repo+"::"+c.subject?.path;
+    const previous=bySubject.get(key);
+    if (!previous||String(previous.resolution?.resolved_at||"")<
+        String(c.resolution?.resolved_at||"")) bySubject.set(key,c);
+  }
+  let applied=0,invalid=0;
+  const repoByName=new Map(ctx.repos.map(r=>[r.name,r]));
+  const positive=new Set(["index","source","derived"]);
+  for(const doc of inventory.documents){
+    const c=bySubject.get(doc.repo+"::"+doc.rel);
+    if(!c||!canIndexDocForPublic(repoByName.get(doc.repo),doc))continue;
+    const state=c.resolution.return_state;
+    const original=readFileIfExists(doc.full_path);
+    const digest=sha256(original);
+    const slot=repo.snapshot(c.id)?.slots?.find(s=>s.slot==="reentry:public-document-index");
+    const a=slot?.result;
+    if(digest!==c.context?.source_sha256||a?.source_sha256!==digest||
+       a?.continuation_id!==c.id||
+       state?.output_artifact_ref!=="continuation:"+c.id+"/slot:reentry:public-document-index"||
+       state?.resume_receipt_ref!==state.output_artifact_ref+
+         "#sha256:"+sha256(JSON.stringify(a))||
+       a?.decision!==undefined&&a.decision!==c.resolution.decision||
+       a?.judgment?.decision!==undefined&&a.judgment.decision!==c.resolution.decision){
+      invalid++;continue;
+    }
+    const decision=c.resolution.decision;
+    if(decision==="needs_more_context"||a.status!=="computed")continue;
+    if(positive.has(decision)){
+      doc.role=decision;
+      doc.role_confidence="strong";
+      doc.role_source="accepted_continuation_reentry";
+    }else if(["skip","archive","private"].includes(decision)){
+      doc.index={...doc.index,ignored:true};
+    }else{invalid++;continue}
+    applied++;
+  }
+  return {applied,invalid,source:"accepted_sqlite_reentry_slot"};
+}
+
 function indexJudgmentBoundaries(ctx, inventory) {
   const repoByName = new Map(ctx.repos.map(repo => [repo.name, repo]));
   const boundaries = [];
@@ -9413,6 +9549,7 @@ function indexJudgmentBoundaries(ctx, inventory) {
     if (!repo || !canIndexDocForPublic(repo, doc)) continue;
     if (doc.role === "unknown" || doc.role_confidence === "weak") {
       boundaries.push({
+        source_sha256: sha256(readFileIfExists(doc.full_path)),
         kind: "index.document_role_judgment",
         repo: doc.repo,
         path: doc.rel,
@@ -9427,19 +9564,31 @@ function indexJudgmentBoundaries(ctx, inventory) {
 
 function emitIndexContinuations(ctx, boundaries) {
   const emitted = [];
+  const followups = loadContinuations(ctx).filter(c=>c.status==="active"&&
+    c.kind==="index.document_role_judgment"&&
+    typeof c.context?.parent_continuation_ref==="string");
   for (const b of boundaries) {
+    const existing = followups.find(c=>c.subject?.repo===b.repo&&
+      c.subject?.path===b.path&&c.context?.source_sha256===b.source_sha256);
+    if(existing){
+      emitted.push({ok:true,created:false,continuation:existing});
+      continue;
+    }
     const result = emitContinuation(ctx, {
       kind: b.kind,
       title: b.title || b.kind,
       question: b.reason,
       priority: b.blocks_index ? 2 : 1,
-      dedupe_key: `index:${b.kind}:${b.repo}:${b.path}`,
+      // A changed source is a new Judgment question; never reuse a stale
+      // active continuation that was pinned to a different document version.
+      dedupe_key: `index:${b.kind}:${b.repo}:${b.path}:${b.source_sha256}`,
       subject: { repo: b.repo, path: b.path },
       context: {
         boundary: b.kind,
         title: b.title,
         reason: b.reason,
         blocks_index: b.blocks_index,
+        source_sha256: b.source_sha256,
         expected_action: "Resolve with a structured decision before relying on indexed exposure for this document.",
       },
       expected_response: {
@@ -9447,6 +9596,7 @@ function emitIndexContinuations(ctx, boundaries) {
         required: ["decision", "reason"],
         allowed_decisions: ["index", "skip", "public", "private", "derived", "source", "archive", "needs_more_context"],
       },
+      resumption_target: {kind:"handler",handler_ref:PUBLIC_INDEX_REENTRY_HANDLER},
     });
     emitted.push(result);
   }
@@ -12185,6 +12335,7 @@ function emitContinuation(ctx, request) {
     // of relying on whoever picks up the continuation to guess.
     required_capabilities: Array.isArray(request.required_capabilities) ? request.required_capabilities : [],
     ...(request.result_recipient ? { result_recipient: request.result_recipient } : {}),
+    ...(request.resumption_target ? { resumption_target: request.resumption_target } : {}),
     ...(request.delegation ? { delegation: request.delegation } : {}),
     return_contract: deriveContinuationReturn({ id, subject: request.subject || {}, context: request.context || {}, result_recipient: request.result_recipient || null }),
     expected_response: request.expected_response || {
