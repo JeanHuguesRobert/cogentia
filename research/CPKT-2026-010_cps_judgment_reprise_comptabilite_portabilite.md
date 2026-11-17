@@ -312,3 +312,112 @@ physique connue ou explicitement inconnue, règlement et reçu unique ;
 reconstituer les événements locaux et leur projection fractale, puis
 rejouer une migration avec réadmission du mandat et gestion du retour tardif.
 Conserver le paquet et le chantier #336 ouverts jusque-là.
+
+
+## 10. Deuxième passe — retour COP admis vers la réentrée métier (17 novembre 2026)
+
+**État maintenu : OPEN, avec nouveaux résultats de réalité sur des bases jetables.**
+Cette passe corrige un défaut sur le pont ONA/CPS déjà existant :
+`legacy-public-judgment-resident.js` et
+`legacy-public-judgment-settlement.js`. Elle ne déploie pas de nouveau
+Scheduler et ne lance aucune requête vers un navigateur ou fournisseur réel.
+
+### H1/H3 — Rejet du faux succès et reprise récupérable
+
+**Défaut reproduit par deux tests rouges avant correction.**
+
+1. Le résident déclarait `local_resolution_confirmed` dans le journal COP
+   si un adaptateur local se contentait de retourner `{ok:true}`, même
+   sans modification du SQLite local ni exécution du handler métier.
+2. Après résolution dans SQLite mais avant la réentrée, un redémarrage
+   pouvait enregistrer `local_resolution_confirmed` et cesser de surveiller
+   le travail, sans aucun artefact calculé.
+
+**Correction, sans schéma ni registre supplémentaire :**
+- pour une continuation dotée d'une cible handler, le résident relit le
+  même SQLite local et vérifie le statut `resolved`, `resumed=true`,
+  `delivered=true`, le slot mémorisé, l'empreinte SHA-256 de la source et
+  la concordance du reçu et de l'artefact ;
+- le reçu COP final porte maintenant `local_work_status=resumed`,
+  `local_output_artifact_ref` et `local_resume_receipt_ref`, avec
+  causalité explicite vers le reçu `returned` déjà enregistré ;
+- un résultat COP seulement `returned`, mais non `accepted` et non
+  achevé par le handler/parent-join, ne suffit pas ;
+- dans l'intervalle de crash, le résident réévalue l'admission COP avant
+  de relancer le même CLI de reprise : l'opération est idempotente et
+  sa consommation locale est revérifiée ;
+- un ancien reçu COP qui prétendrait confirmer une continuation ciblée
+  sans reprise vérifiée est signalé, et non considéré comme un succès ;
+- une collision sur le même identifiant de reçu COP avec un contenu
+  incompatible est explicitement refusée.
+
+### H2/H3 — Réalité du contrat MCP/COP, sans prétendre à un fournisseur live
+
+La suite `scripts/lib/public-index-cop-resident-reentry.test.mjs`
+fait suivre un document public par l'indexeur réel jusqu'à sa continuation,
+puis parcourt l'architecture **réelle de code** :
+
+`COP/continuation → MCP continuation_result_submit → COP validation →
+acceptation/réconciliation → résident ONA → CLI continuation resolve →
+handler de réentrée → slot SQLite → index update → fragments recherchables`.
+
+Un test utilise réellement les fonctions de noyau pour émettre une
+**MandateDeclaration signée par une clé de fixture**, vérifier sa signature
+par un acteur de test, réserver `max_steps=1` dans le budget d'exécution
+COP, obtenir un `PacketClaim`, puis faire recevoir et traiter un
+`step_result` par le véritable hôte MCP local, sans navigateur ni fournisseur
+externe. La réservation est réglée **une seule fois**, y compris après
+soumission répétée. L'historique COP, son engagement de topic et le reçu de
+réentrée locale sont vérifiés. L'indexation reprend dans un processus
+distinct : ce n'est ni un accusé de réception ni un simple passage à
+`resolved`.
+
+**Limite majeure :** le mandat de fixture est signé par une clé de
+test, pas par le Principal. Le Judgment est simulé en amont du MCP
+(notamment le texte `answer`). Cette vérification prouve le contrat
+d'admission et la comptabilité de l'unité `max_steps`, **pas** la dépense
+monétaire d'une invocation physique, la livraison du navigateur hébergé
+ou le fonctionnement du service de production. Les dépenses monétaires
+réelles restent inconnues et ne sont pas enregistrées comme zéro.
+
+### Suites, observabilité et limites
+
+- Tests de résistance : résultat accepté sans effet local, crash après
+  résolution, reprise réelle sur nouveau processus, refus de reçu local
+  altéré, soumission MCP répétée, règlement budgétaire unique, causalité
+  entre reçu COP et artefact local.
+- Les deux suites de réentrée sont ajoutées au contrôle
+  `pnpm test:continuation-routing-core` pour éviter les régressions
+  lors des modifications futures.
+- **H4 testé plus loin :** snapshot de la continuation locale importé dans
+  une seconde base SQLite, source publique identique, et journal COP neuf.
+  Sans autorité locale, `preparePublicLegacyJudgmentCps` refuse la
+  délégation et ne crée aucun événement. Avec une **nouvelle signature
+  indépendante de fixture**, un budget de destination et un nouveau
+  PacketClaim, le canal MCP de fixture accepte le Judgment, règle une seule
+  unité, le résident reprend l'indexeur **dans cette nouvelle localité**,
+  et le SQLite d'origine conserve son statut antérieur. Aucun jeton ou
+  pouvoir de la source n'a été transféré. Ce test porte sur deux localités
+  isolées sur Fracta2, **pas** encore sur un transfert réel inter-nœuds.
+- Une vérification négative additionnelle refuse de confirmer dans COP une
+  continuation localement reprise lorsque son événement `returned` n'a
+  pas été accepté par le système CPS.
+- Fracta2 : services Cogentia, MCP Cogentia et Magistral déclarés actifs
+  lors du diagnostic ; inspection en lecture seule du *work frontier* :
+  412 continuations locales actives, 26 CPS déclarées, 0 affectation prête
+  à être dispatchée, 0 wake prêt et 1 livraison incertaine préservée.
+  Ce tableau ne confère aucune admission COP à une opération nouvelle.
+- La mise à jour de sources **ne constitue pas le déploiement** :
+  vérifier les révisions effectivement chargées avant tout redémarrage
+  ou envoi et passer par le contrôle opérationnel existant.
+- Reste ouvert : essai véritable ChatGPT via le navigateur CPS autorisé
+  et/ou Magistral sous mandat admis ; ventilation de chaque consommation
+  fournisseur réelle vers un unique Packet propriétaire, propre/consolidé,
+  trace FractaLog fédérée ; export/import du contrôle COP et réadmission
+  de l'autorité dans une autre FractaLocality ; retours tardifs après
+  transfert entre localités.
+
+**Prochaine action :** inspecter les contrats de mandats et les budgets
+de l'environnement cible, puis effectuer une seule exécution fournisseur
+réelle et bornée lorsque la chaîne complète de reçus est disponible.
+Ne pas fermer le paquet ni l'Issue #336 sur les seuls résultats de fixtures.

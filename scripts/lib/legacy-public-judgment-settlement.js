@@ -58,29 +58,52 @@ export function inspectPublicLegacyJudgmentResult({store,continuation,repository
  * fact AFTER the local writer confirms the effect. A failed COP append can
  * be retried without repeating the local resolution. */
 function recordCanonicalLocalResolution(store,{continuation_id,decision,
-  return_receipt_ref,source_digest}){
+  return_receipt_ref,source_digest,local_reentry=null}){
   const original=store.eventByIdempotency(return_receipt_ref);
   if(!original||original.payload?.profile!=='cop.continuation-result/v1'||
      original.payload?.phase!=='returned')return {ok:false,status:'source_receipt_missing'};
   const topic='continuation:'+continuation_id;
   const id='legacy-role-resolution:'+createHash('sha256')
     .update(continuation_id+'\0'+return_receipt_ref).digest('hex').slice(0,36);
+  const payload={profile:'cogentia.legacy-continuation-settlement/v1',
+    phase:'local_resolution_confirmed',continuation_id,decision,
+    source_digest,source_return_receipt_ref:return_receipt_ref,
+    local_work_status:local_reentry?'resumed':'resolved',
+    ...(local_reentry?{
+      local_output_artifact_ref:local_reentry.artifact_ref,
+      local_resume_receipt_ref:local_reentry.receipt_ref,
+    }:{}),
+    local_journal:'host-local-continuations'};
   const r=store.append({topic_id:topic,event_type:'cop.event/v1',
     actor_id:'cop:legacy-local-cas-bridge',subject_ref:topic,
     visibility:'restricted',epistemic_status:'observed',
-    idempotency_key:id,causal_refs:[return_receipt_ref],
-    payload:{profile:'cogentia.legacy-continuation-settlement/v1',
-      phase:'local_resolution_confirmed',continuation_id,decision,
-      source_digest,source_return_receipt_ref:return_receipt_ref,
-      local_work_status:'resolved',local_journal:'host-local-continuations'},
-  });
+    idempotency_key:id,causal_refs:[return_receipt_ref],payload});
+  if(r.ok&&r.duplicate&&
+     (r.event?.topic?.id!==topic||
+      JSON.stringify(r.event.payload)!==JSON.stringify(payload)||
+      !r.event.parent_event_ids?.includes(return_receipt_ref)))
+    return {ok:false,status:'canonical_resolution_receipt_conflict'};
   return r.ok?{ok:true,status:'canonical_resolution_observed',receipt_ref:id,
     duplicate:r.duplicate}:{ok:false,status:'canonical_resolution_needs_reconciliation'};
 }
 
 export async function settlePublicLegacyJudgment({store,continuation,
-  repositoryRoot,publicRepo='cogentia',apply,requirePublishedSource=true}={}){
+  repositoryRoot,publicRepo='cogentia',apply,
+  verifyLocalReentry=null,requirePublishedSource=true}={}){
   if(typeof apply!=='function')return {ok:false,status:'missing_legacy_cas_writer'};
+  const reentryRequired=continuation?.resumption_target?.kind==='handler';
+  const verifyResumed=async()=>{
+    if(!reentryRequired)return {ok:true,local_reentry:null};
+    if(typeof verifyLocalReentry!=='function')
+      return {ok:false,status:'local_reentry_verifier_missing'};
+    // Caller must observe the actual local SQLite state, not trust a
+    // resolver's promise, process exit code or an LLM's assertion.
+    const proof=await verifyLocalReentry({continuation_id:continuation.id});
+    if(proof?.ok!==true||!proof.artifact_ref||!proof.receipt_ref)
+      return {ok:false,status:proof?.status||'local_reentry_not_verified'};
+    return {ok:true,local_reentry:{artifact_ref:proof.artifact_ref,
+      receipt_ref:proof.receipt_ref}};
+  };
   if(continuation?.status==='resolved'){
     const ref=continuation.resolution?.payload?.cps_return_receipt_ref;
     const child='continuation:ctn_chatgpt_browser_'+
@@ -89,11 +112,28 @@ export async function settlePublicLegacyJudgment({store,continuation,
     if(recorded?.topic?.id===child&&
        recorded.payload?.profile==='cop.continuation-result/v1'&&
        recorded.payload?.phase==='returned'){
+      // A returned event is not yet an accepted or completed Judgment.
+      // Recheck the ORIGINAL COP acceptance, parent join and temperature
+      // even if the local SQLite row is already marked resolved.
+      const admitted=inspectPublicLegacyJudgmentResult({
+        store,continuation:{...continuation,status:'active'},
+        repositoryRoot,publicRepo,requirePublishedSource});
+      if(!admitted.ok||!admitted.ready)return {ok:false,
+        status:'legacy_resolved_cop_acceptance_not_verified',
+        cause:admitted.status};
+      if(admitted.decision!==continuation.resolution?.decision||
+         admitted.reason!==continuation.resolution?.reason||
+         admitted.cps_return_receipt_ref!==ref||
+         admitted.source_digest!==continuation.resolution?.payload?.source_digest)
+        return {ok:false,status:'legacy_resolved_return_mismatch'};
+      const checked=await verifyResumed();
+      if(!checked.ok)return checked;
       const registered=recordCanonicalLocalResolution(store,{
         continuation_id:continuation.id,
         decision:continuation.resolution?.decision,
         return_receipt_ref:ref,
-        source_digest:continuation.resolution?.payload?.source_digest});
+        source_digest:continuation.resolution?.payload?.source_digest,
+        local_reentry:checked.local_reentry});
       if(!registered.ok)return registered;
       return {ok:true,status:'already_resolved',duplicate:true,
         canonical_resolution_ref:registered.receipt_ref};
@@ -109,11 +149,15 @@ export async function settlePublicLegacyJudgment({store,continuation,
       cps_return_receipt_ref:p.cps_return_receipt_ref,
       source_digest:p.source_digest}});
   if(result?.ok!==true)return {ok:false,status:'legacy_write_not_confirmed'};
+  const checked=await verifyResumed();
+  if(!checked.ok)return checked;
   const observed=recordCanonicalLocalResolution(store,{
     continuation_id:p.legacy_id,decision:p.decision,
-    return_receipt_ref:p.cps_return_receipt_ref,source_digest:p.source_digest});
+    return_receipt_ref:p.cps_return_receipt_ref,source_digest:p.source_digest,
+    local_reentry:checked.local_reentry});
   if(!observed.ok)return observed;
   return {ok:true,status:'legacy_resolved',continuation_id:p.legacy_id,
     decision:p.decision,cps_return_receipt_ref:p.cps_return_receipt_ref,
-    canonical_resolution_ref:observed.receipt_ref};
+    canonical_resolution_ref:observed.receipt_ref,
+    local_reentry:checked.local_reentry};
 }
