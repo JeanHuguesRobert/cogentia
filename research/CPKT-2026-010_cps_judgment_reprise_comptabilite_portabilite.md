@@ -421,3 +421,37 @@ réelles restent inconnues et ne sont pas enregistrées comme zéro.
 de l'environnement cible, puis effectuer une seule exécution fournisseur
 réelle et bornée lorsque la chaîne complète de reçus est disponible.
 Ne pas fermer le paquet ni l'Issue #336 sur les seuls résultats de fixtures.
+
+## 11. H4 — Reconstitution du journal COP dans une seconde localité (17 novembre 2026)
+
+**Nouvelle preuve publiée dans Inseme** :
+[commit `ff5ac68`](https://github.com/JeanHuguesRobert/inseme/commit/ff5ac68fa17e13cee0a079a9cd4540abec0b7b9b),
+`packages/cop-core/test/sqlite-cop-journal-portability.node-test.mjs`.
+Ce test ne crée ni ledger, ni Scheduler, ni nouveau format d'export :
+il réemploie le `SqliteCopEventStore`, son `replay`/`appendBatch`,
+ses engagements de topics et la projection budgétaire COP déjà existants.
+
+- **Historique et causalité : PASS, fixture.** Événements historiques
+  transférés par valeur entre deux bases SQLite distinctes, conservation
+  vérifiée des identités, `parent_event_ids`, états de continuation et
+  engagements cryptographiques par topic (`auditCommitments`).
+- **Budget historique : PASS, fixture.** Grant, réservation puis règlement
+  `max_steps=1` reconstitués dans la seconde base. Réimport du même journal
+  idempotent sans deuxième règlement ; événement altéré avec hash périmé
+  rejeté sans modifier les engagements.
+- **Autorité : préservation du refus, pas transfert.** Un budget de
+  destination nouveau et dépourvu de grant local refuse sa réservation.
+  Le grant historique exporté n'est **pas** une habilitation démontrée
+  à accomplir de nouveaux actes dans la nouvelle localité.
+- **Validation :** 15/15 tests PASS dans les suites SQLite ciblées Inseme,
+  dont le nouveau test ; `pnpm test:continuation-routing-core` Cogentia
+  sur sources committées : **23/23 PASS**. Cela prolonge les tests COP→
+  réentrée du commit Cogentia `4b1009fe` sans les assimiler à un essai live.
+
+**Limite persistante :** ce transfert de journal est une reconstruction
+historique, non une migration atomique des mandats, PacketClaims, dépenses
+physiques ou effets externes entre FractaNodes. Il reste à prouver une
+réadmission locale indépendante, le règlement des coûts fournisseurs réels,
+la traçabilité FractaLog de ces actes, la réconciliation des retours tardifs
+et une nouvelle exécution autorisée avec fournisseur substitué.
+**CPKT-2026-010 et #336 demeurent ouverts.**
