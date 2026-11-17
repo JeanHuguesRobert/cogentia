@@ -57,7 +57,7 @@ export function classifyIssue(issue) {
 }
 export function buildTaxonomyPlan({owner='JeanHuguesRobert',repositories,at=new Date().toISOString()}){
   if(owner!=='JeanHuguesRobert') throw Error('Unexpected owner');
-  const result={schema:'cogentia.github-issues-taxonomy.plan/v1',taxonomy_version:TAXONOMY_VERSION,created_at:at,repositories:[],summary:{open:0,unlabelled:0,older60:0,labels_to_create:0,issues_to_label:0,label_additions:0,closure_candidates:0,private_repositories:0}};
+  const result={schema:'cogentia.github-issues-taxonomy.plan/v1',taxonomy_version:TAXONOMY_VERSION,created_at:at,repositories:[],summary:{open:0,unlabelled:0,older60:0,labels_to_create:0,issues_to_label:0,label_additions:0,closure_candidates:0,needs_judgment:0,private_repositories:0}};
   const now=iso(at);
   for(const repo of repositories){
     checkRepoName(repo.full_name);
@@ -65,7 +65,7 @@ export function buildTaxonomyPlan({owner='JeanHuguesRobert',repositories,at=new 
     if(privateRepo)result.summary.private_repositories++;
     const present=new Map(repo.labels.map(l=>[l.name,l]));
     const drift=Object.entries(COMMON_LABELS).filter(([name])=>present.has(name) && (clean(present.get(name).description)!==clean(COMMON_LABELS[name].description) || present.get(name).color?.toLowerCase()!==COMMON_LABELS[name].color)).map(([name,desired])=>({name,expected:{color:present.get(name).color,description:present.get(name).description ?? null},desired}));
-    const changes=[],closureCandidates=[];
+    const changes=[],closureCandidates=[],judgmentQueue=[];
     for(const raw of repo.issues){
       if(raw.pull_request || raw.state!=='open')continue;
       const existing=uniq((raw.labels||[]).map(x=>typeof x==='string'?x:x.name));
@@ -73,6 +73,10 @@ export function buildTaxonomyPlan({owner='JeanHuguesRobert',repositories,at=new 
       const row={number:raw.number, expected_updated_at:raw.updated_at, expected_title_digest:digest(raw.title),expected_labels:existing,add:inference.labels};
       result.summary.open++;
       if(!existing.length)result.summary.unlabelled++;
+      if(!existing.length&&!inference.labels.length){
+        judgmentQueue.push({number:raw.number,updated_at:raw.updated_at,reason:'no_explicit_classification_signal',...(privateRepo?{}:{title:raw.title})});
+        result.summary.needs_judgment++;
+      }
       if(now-iso(raw.updated_at)>=60*86400000)result.summary.older60++;
       if(inference.labels.length){changes.push(row); result.summary.issues_to_label++;result.summary.label_additions+=inference.labels.length;}
       if(inference.review.length) {closureCandidates.push({number:raw.number,signals:inference.review,...(privateRepo?{}:{title:raw.title})});result.summary.closure_candidates++;}
@@ -83,7 +87,8 @@ export function buildTaxonomyPlan({owner='JeanHuguesRobert',repositories,at=new 
     const core=CORE_REPOS.includes(repo.full_name.split('/')[1]);
     const definitions=Object.entries(COMMON_LABELS).filter(([name])=>!present.has(name)&&(core||needed.has(name))).map(([name,def])=>({name,...def}));
     result.summary.labels_to_create+=definitions.length;
-    result.repositories.push({name:repo.full_name,private:privateRepo,missing_definitions:definitions,definition_drift:drift,changes,closure_candidates:closureCandidates,open_count:repo.issues.filter(x=>!x.pull_request&&x.state==='open').length});
+    judgmentQueue.sort((a,b)=>String(a.updated_at).localeCompare(String(b.updated_at)));
+    result.repositories.push({name:repo.full_name,private:privateRepo,missing_definitions:definitions,definition_drift:drift,changes,closure_candidates:closureCandidates,judgment_queue:judgmentQueue,open_count:repo.issues.filter(x=>!x.pull_request&&x.state==='open').length});
   }
   result.plan_hash=digest({...result,plan_hash:undefined});
   return result;

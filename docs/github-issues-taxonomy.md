@@ -109,8 +109,11 @@ closure within mandate. This rule preserves "memory without false activity".
 The existing Cogentia issues sync/export and Fix Bugs First dashboard should
 consume normalized labels as derived views. Run `plan --all` periodically
 under an existing authorized maintenance schedule; only apply when there is
-verified drift and a live mandate. Report unlabelled issues as an **evidence
-queue**, not an agent-quality failure to be eliminated by fabricated labels.
+verified drift and a live mandate. The plan exposes a per-repository `judgment_queue` of issues with no labels and
+no explicit classification signal; private-repository titles are omitted. Its
+order is oldest update first for inspection, **not** a priority ranking.
+Report unlabelled issues as an **evidence queue**, not an agent-quality failure
+to be eliminated by fabricated labels.
 
 Work owner: [Cogentia #339](https://github.com/JeanHuguesRobert/cogentia/issues/339).
 Related specialized research triage:
