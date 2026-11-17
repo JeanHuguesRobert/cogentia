@@ -513,6 +513,18 @@ spécialisé) des descriptions sans exécuteur (script, objectif libre, attente
 de dépendance). La reconnaissance d'un protocole ne donne jamais mandat,
 budget, PacketClaim, autorisation de divulgation ni preuve d'exécution.
 
+**Raccordement aux protocoles d'interaction existants (2026-11-17) :**
+Un protocole de continuation peut utiliser comme adaptateur un protocole
+standard d'invocation (processus Unix, MCP `tools/call`, HTTP/OpenAPI, gRPC,
+webhook) ; il ne doit **pas** être assimilé à ce seul transport. La nouvelle
+[annexe d'interopérabilité](../docs/continuation-protocol-catalog.md)
+compare arguments, flux, état de retour, résultat différé, correlation,
+reprises et incertitudes. L'extension **MCP Tasks 2026-07-28** (handle durable
+et `tasks/get`) et **MCP MRTR** (besoin d'entrées complémentaires) sont des
+modèles de continuations directement pertinents, mais non prouvés comme
+pris en charge dans notre MCP actuel. Les providers Unix et MCP existants
+sont à réutiliser : pas de deuxième serveur ni d'exécuteur fictif.
+
 **Migration order, not a forced global conversion:** first classify current
 producers and add tests at each actual ingress (CLI/MCP/ACP, frontmatter,
 embeddings, sleep-cycle, composition and conversation bridge). Then make one
