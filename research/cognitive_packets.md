@@ -534,6 +534,12 @@ modèles de continuations directement pertinents, mais non prouvés comme
 pris en charge dans notre MCP actuel. Les providers Unix et MCP existants
 sont à réutiliser : pas de deuxième serveur ni d'exécuteur fictif.
 
+**Paquet de démonstration CPS/Judgment (2026-11-17) :**
+[CPKT-2026-010 — Reprise, accounting strict, traces fractales et liberté de sortie](CPKT-2026-010_cps_judgment_reprise_comptabilite_portabilite.md)
+porte le mandat de vérification *emit → stop → Judgment → réentrée réelle*,
+avec remplacement de provider, localité minimale et exit test. Il reste
+**ouvert** : sa rédaction ne prouve pas le fonctionnement de bout en bout.
+
 **Agentproto / CMMN / OASF (2026-11-17) :** une étude croisée
 [de leurs frontières conceptuelles et points d'intégration](integration/agentproto-cmmn-oasf-interop.md)
 distingue la filiation des dialogues inter-Hops (agentproto, encore I-D),
