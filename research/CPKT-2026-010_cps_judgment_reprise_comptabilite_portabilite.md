@@ -455,3 +455,116 @@ réadmission locale indépendante, le règlement des coûts fournisseurs réels,
 la traçabilité FractaLog de ces actes, la réconciliation des retours tardifs
 et une nouvelle exécution autorisée avec fournisseur substitué.
 **CPKT-2026-010 et #336 demeurent ouverts.**
+
+## 12. Troisième passe — reprise effective d'un Judgment **réel** déjà retourné (17 novembre 2026)
+
+**Statut du chantier : toujours OPEN.** Ce contrôle utilise les reçus du
+navigateur ChatGPT effectivement enregistrés en production, sans feindre
+qu'un nouveau prompt aurait été émis pendant cette passe.
+
+### 12.1 Prévol du canal et blocage de la nouvelle émission
+
+- Fracta2 : le mandat signé JHN **v5** accorde
+  `browser.chatgpt.turn` et `cogentia.continuation.result.submit`.
+  Le worker ONA, avec son fichier secret **propre au job**, confirme
+  `granted=true`, `provider_permitted=true`,
+  `budget_admitted=true`. Aucun jeton n'a été extrait ou affiché.
+- Le vieux tab historique échoue avec la cause diagnostiquée
+  `chatgpt_target_changed`. La commande John/COP `ensure_tab`
+  a trouvé le tab `94450717` ; une seconde lecture gouvernée a établi
+  un composeur **stable, vide et sans génération en cours**.
+  Les deux opérations disposaient de reçus COP et n'ont soumis
+  **aucun message au modèle**.
+- Le journal recense un enfant legacy
+  `ctn_chatgpt_browser_3c19231e839be86362855e6cd87e7dc8`
+  avec **un clic UI confirmé à 04:30:40 UTC** mais toujours **aucun**
+  résultat MCP `returned`. Il ne peut être assimilé à un échec
+  `pre_submit`, ni être réémis, libéré ou déclaré terminé sur une
+  simple supposition. L'autre attente
+  `ctn_chatgpt_browser_41f023c6f0492e434557a7d638fcc075`
+  reste en quarantaine conservatrice. Le *single-flight* CPS interdit
+  donc à juste titre un nouveau dispatch tant que l'envoi confirmé
+  non retourné n'a pas reçu de disposition gouvernée. Le résultat
+  peut encore revenir tardivement : aucune donnée n'a été effacée.
+
+### 12.2 Réparation ciblée d'un ancien contrat, plutôt qu'un deuxième envoi
+
+Les Judgments documentaires hérités ne possédaient pas le nouveau
+`resumption_target`. Le prévol réel de l'historique COP a trouvé cinq
+résultats legacy acceptés dont les sources restent publiées et dont les
+empreintes correspondent encore au résultat reçu. **Un seul** a été
+choisi pour cette démonstration.
+
+Le nouvel adaptateur
+`scripts/lib/legacy-public-index-reentry-backfill.mjs` et sa CLI
+`scripts/ops/backfill-accepted-public-judgment-reentry.mjs` :
+
+1. Vérifient conjointement le résultat MCP retourné, l'acceptation COP,
+   la clôture du handler CPS, la jonction enfant/parent, le reçu de
+   résolution COP, la décision et sa raison, la version publique
+   `origin/main` du fichier, l'empreinte source et l'identité du
+   document local déjà `resolved`.
+2. Refusent sans mutation un reçu manquant, une divergence de source
+   ou de décision, ou une autre cible de handler.
+3. Ajoutent au **même SQLite local** le contrat du handler déjà existant
+   `handler:public-document-index-judgment/v1` et l'empreinte approuvée,
+   sous compare-and-swap. L'historique de décision original est conservé.
+4. Lancent la véritable commande `continuation reenter`, qui utilise
+   l'ancien `chunkMarkdown`, et vérifient son résultat mémorisé.
+5. Écrivent un **reçu complémentaire** COP
+   `local_reentry_verified`, causalement rattaché au résultat et à
+   l'accusé d'origine. Le reçu ancien `local_resolution_confirmed`
+   demeure immuable ; le résident sait reconnaître les deux faits.
+6. Produisent une observation réelle
+   `fractalog.act-record/v1` vérifiée, avec acteur, localité,
+   source, référence de l'artefact, causalité et effets locaux.
+   Son champ `provider_effects=0` porte **uniquement sur la nouvelle
+   réentrée locale**, pas sur l'appel ChatGPT historique.
+
+**Exécution en production :**
+
+- Paquet : `ctn_2639cf2d`.
+- Document : `cogentia/patterns/packet-backed-projection/PRIOR_ART.md`.
+- Source SHA-256 : `7d53d1a27e3a09d6e7a19c11fcadc0b1464b47682810d27f836b17716b8fb3f8`.
+- Décision : `source`, reçue du vrai enfant CPS
+  `ctn_chatgpt_browser_fcc43114a47ea2a1c4bd63dc82ce3de5`.
+- **Reprise réelle : PASS** ; 15 fragments calculés et mémorisés dans
+  `reentry:public-document-index` ; `return_state.resumed=true` et
+  `delivered=true`.
+- Reçu complémentaire :
+  `legacy-role-late-reentry:722fe5c787035cfd774456804761941c0d96`.
+- FractaLog :
+  `fractalog:legacy-index-reentry:722fe5c787035cfd774456804761941c0d96`,
+  `act_phase=observed`; document et journal COP validés.
+- Rejeu de la même commande : `already_resumed`, 15 fragments
+  inchangés, mêmes reçus, **aucune nouvelle dépense fournisseur**.
+
+**Accounting COP d'origine constaté (source canonique) :**
+un clic navigateur confirmé ; un `returned`, un `accepted`,
+un `handler_completed` ; une réservation de budget `max_steps=1`,
+un règlement `max_steps=1`, aucun release. Le nouveau travail local
+ne réserve ni ne facture une deuxième exécution de ce Judgment.
+Le coût financier fournisseur (en USD/EUR) **n'est pas connu** :
+un budget `max_steps` est un quota d'exécution, non une facture ;
+ne surtout pas l'interpréter comme montant nul. Le FractaLog
+historique fournisseur n'a pas été reconstruit artificiellement.
+
+### 12.3 Acceptation de cette passe et limites restantes
+
+Les tests comprennent le vrai handler dans un processus séparé,
+un reçu de test COP avec historique ancien, une réparation conditionnelle,
+le rejet d'une résolution sans reçu original, l'idempotence et le
+FractaLog vérifiable. Un seul paquet de production a été modifié ;
+aucun fichier source public, aucun mandat COP, aucun fournisseur,
+aucun compte de tiers n'a été modifié.
+
+**Reste à faire pour H2/H3/H4 complets :** une **nouvelle** émission
+fournisseur distincte quand le paquet cliqué/attendant sera réconcilié
+sans effacement de preuve ni seconde soumission ; une imputation
+monétaire réelle si les métriques de fournisseur le permettent ;
+la remontée FractaLog du Hop fournisseur puis la vue agrégée
+propre/consolidée ; enfin migration effective entre deux hôtes
+avec nouvelle admission locale et traitement des retours tardifs.
+Les 15 fragments sont vérifiés dans l'artefact de continuation :
+**leur publication dans l'index global n'est pas revendiquée**,
+afin de ne pas perturber les chantiers concurrents d'indexation.

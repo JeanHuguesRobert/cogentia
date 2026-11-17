@@ -23,6 +23,31 @@ const publicSourceFor=(continuation,sourceRoot,baronsSourceRoot)=>{
   return null;
 };
 
+/**
+ * Read-only proof: observed local SQLite CAS + SHA256 memo + return receipt.
+ * Used by the resident and by audited late backfill of accepted COP results.
+ */
+export function inspectLocalPublicIndexReentry(local,{continuation_id}={}){
+  const current=local.load(continuation_id);
+  const state=current?.resolution?.return_state;
+  if(current?.status!=='resolved'||state?.resumed!==true||
+     state?.delivered!==true)
+    return {ok:false,status:'local_reentry_pending'};
+  const expected='continuation:'+continuation_id+'/slot:reentry:public-document-index';
+  if(state.output_artifact_ref!==expected)
+    return {ok:false,status:'local_reentry_artifact_mismatch'};
+  const slot=local.snapshot(continuation_id)?.slots?.find(s=>
+    s.slot==='reentry:public-document-index');
+  if(!slot?.result||slot.result.continuation_id!==continuation_id||
+     slot.result.source_sha256!==current.context?.source_sha256)
+    return {ok:false,status:'local_reentry_slot_invalid'};
+  const digest=createHash('sha256').update(JSON.stringify(slot.result)).digest('hex');
+  const receipt_ref=expected+'#sha256:'+digest;
+  if(state.resume_receipt_ref!==receipt_ref)
+    return {ok:false,status:'local_reentry_receipt_mismatch'};
+  return {ok:true,artifact_ref:expected,receipt_ref};
+}
+
 export async function runResidentPublicLegacyJudgmentSettlement({store,
   registryRoot=DEFAULT_ROOT,sourceRoot=DEFAULT_SOURCE,
   baronsSourceRoot=BARONS_SOURCE,
@@ -40,29 +65,9 @@ export async function runResidentPublicLegacyJudgmentSettlement({store,
       /^legacy:ctn_[A-Za-z0-9_-]{5,120}$/.test(c.state.assignment_ref));
   const local=createContinuationSqliteRepository({registryRoot,
     ...(localDbPath?{dbPath:localDbPath}:{})});
-  // Independent local read-back: a CLI JSON response is not evidence of
-  // return-to-work. Preserve the existing SQLite memo as the only local
-  // post-Judgment result store.
-  const verifyLocalReentry=({continuation_id})=>{
-    const current=local.load(continuation_id);
-    const state=current?.resolution?.return_state;
-    if(current?.status!=='resolved'||state?.resumed!==true||
-       state?.delivered!==true)
-      return {ok:false,status:'local_reentry_pending'};
-    const expected='continuation:'+continuation_id+'/slot:reentry:public-document-index';
-    if(state.output_artifact_ref!==expected)
-      return {ok:false,status:'local_reentry_artifact_mismatch'};
-    const slot=local.snapshot(continuation_id)?.slots?.find(s=>
-      s.slot==='reentry:public-document-index');
-    if(!slot?.result||slot.result.continuation_id!==continuation_id||
-       slot.result.source_sha256!==current.context?.source_sha256)
-      return {ok:false,status:'local_reentry_slot_invalid'};
-    const digest=createHash('sha256').update(JSON.stringify(slot.result)).digest('hex');
-    const receipt_ref=expected+'#sha256:'+digest;
-    if(state.resume_receipt_ref!==receipt_ref)
-      return {ok:false,status:'local_reentry_receipt_mismatch'};
-    return {ok:true,artifact_ref:expected,receipt_ref};
-  };
+  // The same verifier is also used for COP acceptance repair of previously
+  // settled legacy continuations, without adding another local store.
+  const verifyLocalReentry=args=>inspectLocalPublicIndexReentry(local,args);
   const cliResolver=resolveCli|| (async({continuation_id,payload})=>{
     const stdout=execFileSync(process.execPath,[
       'scripts/cogentia.js','continuation','resolve',continuation_id,
@@ -86,10 +91,21 @@ export async function runResidentPublicLegacyJudgmentSettlement({store,
       // An old COP acknowledgment without a local resume receipt must not
       // mask a stranded post-Judgment computation.
       if(confirmation){
-        if(continuation?.resumption_target?.kind==='handler'&&
-           (confirmation.payload.local_work_status!=='resumed'||
-            verifyLocalReentry({continuation_id:id}).ok!==true)){
-          needs_review++;findings.push({id,status:'cop_confirmation_without_verified_reentry'});
+        if(continuation?.resumption_target?.kind==='handler'){
+          const proof=verifyLocalReentry({continuation_id:id});
+          const recovered=store.listTopic('continuation:'+id).find(e=>
+            e.payload?.profile===
+              'cogentia.legacy-public-index-reentry-backfill/v1'&&
+            e.payload?.phase==='local_reentry_verified'&&
+            e.payload?.original_cop_settlement_ref===confirmation.idempotency_key&&
+            e.payload?.source_return_receipt_ref===
+              confirmation.payload.source_return_receipt_ref&&
+            e.payload?.local_resume_receipt_ref===proof.receipt_ref&&
+            e.payload?.local_output_artifact_ref===proof.artifact_ref);
+          if(!proof.ok||
+             (confirmation.payload.local_work_status!=='resumed'&&!recovered)){
+            needs_review++;findings.push({id,status:'cop_confirmation_without_verified_reentry'});
+          }
         }
         continue;
       }

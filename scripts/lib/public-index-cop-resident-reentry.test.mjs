@@ -13,6 +13,9 @@ import {generateKeyPairSync,sign} from 'node:crypto';
 import {createSqliteCopEventStore} from '../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js';
 import {createContinuationSqliteRepository} from './continuation-sqlite-repository.mjs';
 import {createPrimitiveContinuationStore} from './primitive-continuations.mjs';
+import {inspectAcceptedLegacyPublicIndex,bindAcceptedLegacyPublicIndex,
+  recordAcceptedLegacyPublicReentry}
+  from './legacy-public-index-reentry-backfill.mjs';
 import {previewPublicLegacyJudgment} from './legacy-public-judgment-cps.js';
 import {linkPacketChild,registerParentJoin,reconcilePacketParentContinuations}
   from '../../../inseme/packages/cop-core/src/packet-parent-continuations.js';
@@ -463,4 +466,94 @@ test('H4: imported local packet is NOT authorized by source-locality COP credent
   original.close();
  }finally{second?.close();c.cleanup();
   rmSync(destination,{recursive:true,force:true})}
+});
+
+
+test('real accepted historical COP judgment can backfill ONE legacy handler and resume, without re-sending',async()=>{
+ const c=setup();
+ try{
+  assert.ok((await reconcilePacketParentContinuations(c.store)).notified>0);
+  const local=c.repo(),record=local.load(c.id);
+  // Same legacy schema emitted before H1 existed. Keep original CPS proof.
+  record.status='resolved';
+  delete record.resumption_target;
+  delete record.context.source_sha256;
+  record.resolution={decision:'source',reason,
+   payload:{continuation_id:c.id,decision:'source',reason,
+    cps_child_ref:c.child,cps_return_receipt_ref:'returned:cpkt010',
+    source_digest:c.p.source_digest},
+   return_state:{result_available:true,delivered:false}};
+  record.history.push({event:'resolved'});
+  local.save(record);
+  local.close();
+  const append=c.store.append({topic_id:c.parent,event_type:'cop.event/v1',
+   actor_id:'cop:fixture',subject_ref:c.parent,
+   idempotency_key:'legacy:historic-settled',epistemic_status:'observed',
+   causal_refs:['returned:cpkt010'],
+   payload:{profile:'cogentia.legacy-continuation-settlement/v1',
+    phase:'local_resolution_confirmed',continuation_id:c.id,decision:'source',
+    source_digest:c.p.source_digest,source_return_receipt_ref:'returned:cpkt010',
+    local_work_status:'resolved'}});
+  assert.equal(append.ok,true);
+  const args={store:c.store,continuation_id:c.id,
+    repoRoots:{cogentia:join(c.root,'docs')}};
+  const reader=c.repo();
+  try{
+   const preview=inspectAcceptedLegacyPublicIndex({...args,local:reader});
+   assert.equal(preview.ok,true,JSON.stringify(preview));
+   assert.equal(preview.status,'eligible_for_backfill');
+   const bound=bindAcceptedLegacyPublicIndex({...args,local:reader});
+   assert.equal(bound.status,'bound_ready_for_reentry');
+   assert.equal(bindAcceptedLegacyPublicIndex({...args,local:reader}).duplicate,true);
+   const notYet=recordAcceptedLegacyPublicReentry({...args,local:reader});
+   assert.equal(notYet.ok,false,'no COP receipt before actual handler execution');
+   assert.equal(notYet.status,'local_reentry_pending');
+   const done=c.run('continuation','reenter',c.id);
+   assert.equal(done.status,0,JSON.stringify(done.data));
+   assert.equal(done.data.reentry.status,'resumed');
+   const observed=recordAcceptedLegacyPublicReentry({...args,local:reader});
+   assert.equal(observed.ok,true,JSON.stringify(observed));
+   assert.equal(recordAcceptedLegacyPublicReentry({...args,local:reader}).duplicate,true);
+   const auto=await c.settle();
+   assert.equal(auto.needs_review,0,JSON.stringify(auto));
+   assert.equal(auto.settled,0);
+   assert.equal(c.run('index','update').data.partial,false);
+   const historical=c.store.listTopic(c.parent).find(e=>
+    e.idempotency_key==='legacy:historic-settled');
+   assert.equal(historical.payload.local_work_status,'resolved',
+    'historical COP receipt MUST remain unchanged');
+   const addendum=c.store.eventByIdempotency(observed.receipt_ref);
+   assert.equal(addendum.payload.local_work_status,'resumed');
+   assert.ok(addendum.parent_event_ids.includes('legacy:historic-settled'));
+   const fractalog=c.store.eventByIdempotency(observed.fractalog_receipt_ref);
+   assert.ok(fractalog);
+   assert.equal(fractalog.payload.schema,'fractalog.act-record/v1');
+   assert.equal(fractalog.payload.trace.local_resume_receipt_ref,
+     addendum.payload.local_resume_receipt_ref);
+   assert.equal(fractalog.payload.effect.provider_effects,0);
+   assert.equal(c.store.replay().filter(e=>
+    e.event_type==='fractalog.act-record/v1').length,1);
+   assert.equal(c.store.auditCommitments().ok,true);
+  }finally{reader.close()}
+ }finally{c.cleanup()}
+});
+
+test('legacy handler backfill refuses a historical result without COP settlement',async()=>{
+ const c=setup();
+ try{
+  assert.ok((await reconcilePacketParentContinuations(c.store)).notified>0);
+  const local=c.repo(),record=local.load(c.id);
+  record.status='resolved';
+  delete record.resumption_target;
+  delete record.context.source_sha256;
+  record.resolution={decision:'source',reason,
+    payload:{cps_child_ref:c.child,cps_return_receipt_ref:'returned:cpkt010',
+      source_digest:c.p.source_digest},return_state:{result_available:true,delivered:false}};
+  local.save(record);
+  const result=bindAcceptedLegacyPublicIndex({store:c.store,local,continuation_id:c.id,
+    repoRoots:{cogentia:join(c.root,'docs')}});
+  assert.equal(result.status,'canonical_legacy_settlement_not_verified');
+  assert.equal(local.load(c.id).resumption_target,undefined);
+  local.close();
+ }finally{c.cleanup()}
 });
