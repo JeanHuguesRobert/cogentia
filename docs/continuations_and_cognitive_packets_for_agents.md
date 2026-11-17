@@ -442,6 +442,18 @@ These report only aggregate metadata or known code locations; neither creates
 nor dispatches work. An unknown producer or unverified result consumer must
 remain explicit rather than being assigned to a provider by guesswork.
 
+### Catalogue facultatif des protocoles connus
+
+Pour faciliter des usages répétés sans fermer la généralité de `call/cc` ou
+du travail humain, voir le
+[catalogue des protocoles de continuation](continuation-protocol-catalog.md).
+Il distingue une convention d'interprétation (par exemple curseur de Step,
+script avec paramètres, prompt à un LLM ou objectif ouvert) de son
+implémentation, du support de stockage et de l'autorisation des effets.
+`list-continuation-protocols.mjs` fournit une exploration locale sans
+création ni exécution de travaux. Les continuations sans protocole connu
+restent valides et peuvent se décrire elles-mêmes.
+
 ### Execution target versus reason for suspension
 
 A Continuation can be as simple as a local function's implicit return

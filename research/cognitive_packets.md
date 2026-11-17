@@ -499,6 +499,20 @@ The legacy preview path remains compatible. The returned proposal is still
 handler or provider, nor creates or grants a COP effect. This preserves
 separation of the conceptual control operation from its concrete executor.
 
+**Catalogue optionnel des protocoles connus (2026-11-17) :** un protocole
+de continuation est une convention versionnée d'interprétation et de retour,
+**pas** une classe de producteur, ni une représentation obligatoire, ni un
+contrat d'autorité. Un catalogue utile peut donc coexister avec la diffusion
+par copie sans registre requise dans §7.3.
+[Catalogue documenté](../docs/continuation-protocol-catalog.md) et
+`scripts/lib/continuation-protocol-catalog.mjs` : huit protocoles recensés,
+recherche/inspection pure, extensions auto-décrites non exécutables, protocole
+inconnu conservé comme interprétable. Les fiches séparent les implémentations
+réelles (curseur COP, parent-join, observateur de résultats, Judgment CPS
+spécialisé) des descriptions sans exécuteur (script, objectif libre, attente
+de dépendance). La reconnaissance d'un protocole ne donne jamais mandat,
+budget, PacketClaim, autorisation de divulgation ni preuve d'exécution.
+
 **Migration order, not a forced global conversion:** first classify current
 producers and add tests at each actual ingress (CLI/MCP/ACP, frontmatter,
 embeddings, sleep-cycle, composition and conversation bridge). Then make one
