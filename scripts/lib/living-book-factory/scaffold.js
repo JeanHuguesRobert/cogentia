@@ -369,7 +369,8 @@ description: >
 invariants:
   non_substitution: "Ne se substitue jamais au jugement ni aux décisions de l'utilisateur."
   strict_grounding: "Cite systématiquement ses sources parmi les fichiers listés dans le manifeste de corpus."
-  no_user_retention: "N'enregistre aucune mémoire de conversation ni de profil privé sur le serveur."
+  server_retention_unverified: "La conservation des requêtes par Cogentia et ses fournisseurs n'est pas vérifiée ; ne jamais promettre zéro rétention."
+  local_opt_in: "La conversation n'est conservée dans le navigateur que sur consentement volontaire ; export, import et effacement locaux n'impliquent pas de purge distante."
   institutional_frame: "Rappelle le cadre institutionnel (${research_unit} / ${publisher}) sans confusion de personnes."
 corpus_manifest: "projects/${id}/corpus.yml"
 sources:
@@ -778,28 +779,28 @@ ${footerHtml}
 </html>
 `);
 
-  if (guideEnabled) writeFile('site/guide.html', `<!doctype html>
-<html lang="${language}">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${title} — Guide interactif</title>
-<link rel="stylesheet" href="styles.css">
-</head>
-<body>
-<a class="skip" href="#contenu">Aller au contenu</a>
-${navHtml.replace('href="guide.html">Guide<', 'href="guide.html" aria-current="page">Guide<')}
-<main id="contenu">
-  <h1>Guide interactif Cogentia</h1>
-  <p class="lede">Assistance à l'exploration du Corpus sous contrainte stricte de vérifiabilité.</p>
-  <div class="call">
-    <p>Le Guide s'appuie sur le profil <code>projects/${id}/guide-profile.yml</code>. Il cite systématiquement ses sources et refuse toute inférence non étayée.</p>
-  </div>
-</main>
-${footerHtml}
-</body>
-</html>
-`);
+  if (guideEnabled) {
+    // The Factory emits one audited, offline-buildable browser asset.
+    // It does not activate any remote profile or deploy a site.
+    const htmlTemplate=fs.readFileSync(new URL("./assets/guide-page.html",import.meta.url),"utf8");
+    const client=fs.readFileSync(new URL("./assets/guide-client.js",import.meta.url),"utf8");
+    const escapeAttribute=value=>String(value??"").replace(/&/g,"&amp;")
+      .replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    const tokens={
+      BOOK_LANG:escapeAttribute(language),
+      BOOK_NAME:escapeAttribute(title),
+      BOOK_ID:escapeAttribute(id),
+      GUIDE_RUBRIC:escapeAttribute("Étudiez plusieurs options plausibles, leurs preuves manquantes, coûts, objections, conditions de décision et de révision. Les hypothèses ne sont pas des décisions adoptées."),
+      NAV_HTML:navHtml.replace('href="guide.html">Guide<','href="guide.html" aria-current="page">Guide<'),
+      FOOTER_HTML:footerHtml,
+    };
+    const html=htmlTemplate.replace(/\{\{([A-Z_]+)\}\}/g,(match,key)=>{
+      if(!(key in tokens))throw new Error("Unknown Guide scaffold token: "+key);
+      return tokens[key];
+    });
+    writeFile('site/guide.html',html);
+    writeFile('site/guide.js',client);
+  }
 
   writeFile('site/mentions.html', `<!doctype html>
 <html lang="${language}">

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="{{BOOK_LANG}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{BOOK_NAME}} — Guide public interactif</title>
+<meta name="description" content="Guide public du Livre Vivant avec continuité locale facultative, sources et agent choisi par le lecteur.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body data-guide-base="https://cogentia.fractavolta.com" data-guide-profile="{{BOOK_ID}}" data-guide-title="{{BOOK_NAME}}" data-guide-explore-rubric="{{GUIDE_RUBRIC}}">
+<a class="skip" href="#contenu">Aller au contenu</a>
+{{NAV_HTML}}
+<main id="contenu">
+<h1>Guide public — {{BOOK_NAME}}</h1>
+<p class="lede">Ce Guide est préparé pour le Livre Vivant. Sa disponibilité dépend de l'enregistrement effectif du profil public auprès de Cogentia. Chaque question envoyée est transmise au service distant ; la durée de conservation par Cogentia et ses fournisseurs reste à vérifier. Aucune publication ou contribution automatique.</p>
+<div class="call"><p>Les réponses doivent distinguer sources publiques, hypothèses et faits inconnus. Le Guide ne remplace ni votre jugement ni une décision humaine.</p></div>
+<fieldset aria-label="Mode de conversation">
+<legend>Mode</legend>
+<label><input type="radio" name="guide-mode" value="documentary" checked> Interroger le Livre</label>
+<label><input type="radio" name="guide-mode" value="explore"> Explorer un problème — hypothèses non adoptées</label>
+</fieldset>
+<section class="card" aria-labelledby="continuity-title">
+<h2 id="continuity-title">Continuité locale facultative</h2>
+<label><input type="checkbox" id="retain-local"> Conserver cette conversation dans ce navigateur</label>
+<p>Sur un appareil partagé, la mémoire locale peut être visible par un autre utilisateur. Un effacement local ne supprime ni les exports ni les éventuelles traces conservées par le serveur ou le fournisseur.</p>
+<button type="button" id="export-text">Exporter en texte</button>
+<button type="button" id="export-json">Exporter en JSON</button>
+<label for="import-json">Importer une conversation JSON</label>
+<input id="import-json" type="file" accept=".json,application/json">
+<button type="button" id="erase-local">Effacer cette conversation</button>
+<p id="continuity-status" role="status"></p>
+</section>
+<div id="log" class="log" aria-live="polite"></div>
+<label><input type="checkbox" id="send-guide-history"> Transmettre volontairement les messages précédents lors de la prochaine question</label>
+<form id="ask">
+<label for="question">Votre question :</label>
+<textarea id="question" rows="3" maxlength="1200" required></textarea>
+<button type="submit">Interroger le Guide</button>
+<button type="button" id="cancel-guide">Annuler la réponse en cours</button>
+</form>
+<p id="guide-status" role="status" aria-live="polite"></p>
+<div id="guide-stream" style="white-space:pre-wrap"></div>
+<section class="card" aria-labelledby="agent-title">
+<h2 id="agent-title">Poursuivre avec mon agent personnel — facultatif</h2>
+<p>Choisissez les éléments à copier dans votre propre agent. Le Guide ne contacte pas cet agent. Une réponse collée reste non vérifiée.</p>
+<label><input type="checkbox" id="include-guide"> Inclure la dernière réponse du Guide et ses sources</label>
+<label><input type="checkbox" id="include-history"> Inclure l'historique</label>
+<button type="button" id="compose-agent">Composer le prompt</button>
+<label for="agent-prompt">Prompt modifiable</label>
+<textarea id="agent-prompt" rows="8"></textarea>
+<button type="button" id="copy-agent">Copier le prompt</button>
+<label for="agent-name">Nom de l'agent choisi</label>
+<input id="agent-name" type="text" maxlength="80">
+<label for="agent-reply">Réponse externe, non vérifiée</label>
+<textarea id="agent-reply" rows="6" maxlength="15000"></textarea>
+<label for="agent-note">Annotation du lecteur</label>
+<textarea id="agent-note" rows="3" maxlength="2000"></textarea>
+<button type="button" id="add-agent-reply">Conserver cette réponse localement</button>
+<label><input type="checkbox" id="include-agent"> Inclure la dernière réponse externe dans ma prochaine question au Guide</label>
+<p id="agent-status" role="status"></p>
+</section>
+<section class="card" aria-labelledby="draft-title">
+<h2 id="draft-title">Brouillon modifiable — non envoyé</h2>
+<p>La préparation du brouillon peut transmettre le contexte au Guide, mais ne contacte aucun destinataire tiers automatiquement.</p>
+<button type="button" id="prepare-contribution">Préparer une contribution</button>
+<button type="button" id="prepare-correction">Préparer une correction</button>
+<label for="draft-to">Destinataire suggéré</label>
+<input id="draft-to" type="text" readonly>
+<label for="draft-subject">Objet</label>
+<input id="draft-subject" type="text">
+<label for="draft-body">Corps du brouillon</label>
+<textarea id="draft-body" rows="8"></textarea>
+<button type="button" id="copy-draft">Copier le brouillon</button>
+<p id="draft-status" role="status"></p>
+</section>
+</main>
+{{FOOTER_HTML}}
+<script src="guide.js"></script>
+</body>
+</html>

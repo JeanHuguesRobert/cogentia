@@ -104,6 +104,22 @@ try {
   assert.ok(fs.existsSync(path.join(bookDir, 'architecture.md')), 'architecture.md must exist');
   assert.ok(fs.existsSync(path.join(bookDir, 'editions', 'index.md')), 'editions/index.md must exist');
   assert.ok(fs.existsSync(path.join(bookDir, 'guide-profile.yml')), 'guide-profile.yml must exist');
+  const scaffoldProfile=fs.readFileSync(path.join(bookDir,'guide-profile.yml'),'utf8');
+  assert(!scaffoldProfile.includes('no_user_retention'), 'Do not claim unverified server non-retention');
+  assert(scaffoldProfile.includes('server_retention_unverified'));
+  const generatedGuide=fs.readFileSync(path.join(bookDir,'site','guide.html'),'utf8');
+  const generatedClient=fs.readFileSync(path.join(bookDir,'site','guide.js'),'utf8');
+  const guideAsset=fs.readFileSync(new URL('./lib/living-book-factory/assets/guide-client.js',import.meta.url),'utf8');
+  assert.equal(generatedClient,guideAsset,'Factory Guide runtime must be a deterministic projection');
+  assert(generatedGuide.includes('data-guide-profile="test-book"'));
+  assert(generatedGuide.includes('id="compose-agent"'));
+  assert(generatedGuide.includes('id="erase-local"'));
+  assert(generatedGuide.includes('id="cancel-guide"'));
+  assert(generatedGuide.includes('id="send-guide-history"'));
+  assert(generatedGuide.includes('<script src="guide.js"></script>'));
+  assert(!generatedGuide.includes("n'enregistre rien sur un serveur"),
+    'Scaffold must not promise unverified remote retention');
+  assert(!generatedGuide.includes('{{'), 'All generic tokens must be substituted');
   assert.ok(fs.existsSync(path.join(bookDir, 'site', 'index.html')), 'site/index.html must exist');
   assert.ok(fs.existsSync(path.join(bookDir, 'site', 'styles.css')), 'site/styles.css must exist');
   assert.ok(fs.existsSync(path.join(bookDir, 'site', 'magazine.html')), 'site/magazine.html must exist');
@@ -147,6 +163,12 @@ try {
   const reScaffold = scaffoldLivingBook(validManifest, bookDir, { force: false });
   assert.ok(reScaffold.skippedFiles.includes('README.md'), 'Existing README.md must be skipped when force is false');
   assert.equal(fs.readFileSync(path.join(bookDir, 'README.md'), 'utf8'), customNote, 'Manual edits must NOT be overwritten');
+  const guideCustomization="PERSONAL BOOK GUIDE CUSTOMIZATION";
+  fs.writeFileSync(path.join(bookDir,'site','guide.js'),guideCustomization,'utf8');
+  const keepGuide=scaffoldLivingBook(validManifest,bookDir,{force:false});
+  assert(keepGuide.skippedFiles.includes('site/guide.js'));
+  assert.equal(fs.readFileSync(path.join(bookDir,'site','guide.js'),'utf8'),guideCustomization,
+    'Factory must preserve custom Guide on subsequent scaffolds');
 
   console.log('   ✓ Scaffolding engine verified with non-destructive preservation.');
 
