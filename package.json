@@ -20,7 +20,7 @@
     "test:memsync-reality": "node scripts/check-memsync-reality.js",
     "test:resume-prepare": "node --test scripts/lib/resume-prepare.test.js",
     "test:kys-services": "node scripts/check-kys-services.mjs",
-    "test:continuation-routing-core": "node scripts/check-continuation-routing.js && node scripts/check-continuation-packet-claim.js && node --test scripts/lib/continuation-placement.test.js scripts/lib/public-index-judgment-reentry.test.mjs scripts/lib/public-index-cop-resident-reentry.test.mjs scripts/lib/cps-effective-result-claim.test.mjs",
+    "test:continuation-routing-core": "node scripts/check-continuation-routing.js && node scripts/check-continuation-packet-claim.js && node --test scripts/lib/continuation-placement.test.js scripts/lib/public-index-judgment-reentry.test.mjs scripts/lib/public-index-cop-resident-reentry.test.mjs scripts/lib/cps-effective-result-claim.test.mjs scripts/lib/cps-browser-return-fractalog.test.mjs",
     "test:janus-dependency": "node scripts/check-dependency-janus.js",
     "test:janus-importers": "node scripts/check-calculette-bootstrap.js && node scripts/check-calculette-continuation-import.js && node scripts/check-calculette-corpus-bootstrap.js && node scripts/check-calculette-github-issues-import.js && node scripts/check-calculette-janus-seed.js && node scripts/check-calculette-open-issues-bootstrap.js && node scripts/check-calculette-registry-prefill.js && node scripts/check-agent-jhn-dependency-step.js && node scripts/check-mcp-dependency-janus.js && node scripts/calculette-janus-bootstrap.js --as-of 2026-10-09T23:00:00Z",
     "test:living-book-press": "node scripts/check-living-book-press.js",

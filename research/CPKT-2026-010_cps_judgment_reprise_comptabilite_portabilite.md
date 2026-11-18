@@ -759,3 +759,74 @@ pour les événements constatés, mais **comptabilité monétaire
 du fournisseur historique non mesurée** ;
 H4 migration inter-hôtes encore non testée.
 Ne pas fermer le CPKT ni l'Issue #336.
+
+## 15. Cinquième passe — nouveau Judgment ChatGPT réel, COP et FractaLog (18 novembre 2026)
+
+**H2 — essai neuf et distinct : PASS en production.** Après
+récupération de la livraison antérieure, le prévol du worker
+CPS/ONA Fracta2 confirme le mandat JHN signé, la permission du
+canal fournisseur et le budget COP disponibles. Aucune livraison
+active n'était restée non réconciliée ; un paquet ancien demeure
+en quarantaine sans rejeu autorisé.
+
+L'essai autonome et explicitement commandé portait sur le
+`task_ref=cpkt:CPKT-2026-010:accounting-judgment:20261118`.
+Question : le règlement COP `max_steps=1` démontre-t-il un coût
+monétaire exact imputable au Cognitive Packet, et quelles
+preuves exiger en cas de tarif à l'invocation ou d'abonnement
+forfaitaire ? Ce test indépendant n'augmente pas les quotas
+des cohortes documentaires automatiques, n'expose aucun secret
+et ne sollicite aucun tiers par courrier.
+
+L'affectation a utilisé les capacités signées existantes
+`prepareAssignedChatgptCpsContinuation`,
+`createCpsDefaultAssignedWorker` et
+`dispatchAssignedChatgptCpsContinuation`, dans un seul
+processus, avec PacketClaim et réservation du budget COP.
+
+**Résultat vérifié sur les registres canoniques de Fracta2 :**
+
+- Child : `ctn_chatgpt_browser_5e63a111bd7f84287ac125c08143240b`.
+- Un clic navigateur réellement confirmé par le reçu CPS ;
+  **un** retour MCP avec phases
+  `observed → correlated → accepted → returned`.
+- `step_result.status=answered`,
+  `result.packet_status=completed`,
+  `COPScheduler.handler_completed`,
+  `parent_packet_status=completed`.
+- Réservation COP d'origine réglée **une seule fois** à
+  `usage.max_steps=1`, journal `auditCommitments().ok=true`.
+- Le modèle conclut à juste titre : **unité de quota COP
+  prouvée, montant financier exact par paquet non prouvé**.
+  Un prix USD/EUR demande une preuve d'usage/billing,
+  un tarif/contrat applicable et un rapprochement ;
+  un abonnement non ventilé reste coût de période ou
+  allocation analytique *estimée* selon une clé explicite,
+  pas prix fournisseur par Judgment.
+- FractaLog nouveau :
+  `fractalog:cps-browser-judgment:ctn_chatgpt_browser_5e63a111bd7f84287ac125c08143240b`,
+  liant le clic, l'observation MCP, l'acceptation, le handler,
+  la réservation et son règlement. L'acte a
+  `provider_monetary_cost=not_measured` ; un rejeu rend
+  `duplicate=true` sans seconde écriture.
+- La file finale contient zéro dispatch prêt et zéro wake
+  non consommé ; l'ancienne quarantaine reste conservée.
+
+Le nouveau module
+`scripts/lib/cps-browser-return-fractalog.mjs` utilise
+**le FractaLog COP déjà existant**, sans nouveau ledger :
+reçu direct distinct d'un retour reconstruit depuis le navigateur.
+Tests : succès, idempotence, refus sans clic/règlement et
+refus de relabelliser un résultat reconstruit en soumission
+directe. Le contrôle `pnpm test:continuation-routing-core`
+intègre dorénavant cette suite.
+
+**Limites persistantes :** le service MCP HTTP n'a pas été
+redémarré malgré la publication du correctif de récupération
+de PacketClaim ; ce nouvel essai a réussi avec son claim
+d'origine encore valide. Le retour *historique* a été
+récupéré via le host canonique ponctuel. Le coût monétaire
+effectivement facturé au fournisseur n'est pas mesuré :
+ne pas confondre quota et facture. Le déploiement de la
+correction dans le service permanent et la migration réelle
+entre deux FractaNodes restent à démontrer.
