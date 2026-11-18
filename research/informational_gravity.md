@@ -5,7 +5,7 @@ author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A. / Cogentia"
 license: "CC BY-SA 4.0"
 date: "2026-07-20"
-last_modified_at: "2026-07-20"
+last_modified_at: "2026-11-18"
 published_at: "2026-07-20"
 version: "1.0"
 status: "published — human validated"
@@ -550,3 +550,98 @@ Provisional correspondences to test:
 
 Cross-links: [FractaXXXX](fractaxxxx.md), [Locality Principle / FractaCache](locality_principle.md), [Corpus Sleep Cycle](memory_and_corpus_sleep_cycle.md), [FractaCognition](fractacognition_principles.md).
 
+
+
+## Local path stigmergy for a Mesh Network Learning Computer (2026-11-18)
+
+**Research addendum, not a revision of the human-validated v1.0 doctrine.**
+The conceptual setting is [The Network is the Learning Computer](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/the_network_is_the_learning_computer.md),
+[Packet Attractor](https://github.com/JeanHuguesRobert/inseme/blob/main/research/packet_attractor_fractanet.md),
+[Locality Principle](locality_principle.md) and
+[Cognitive Packet Switching](cognitive_packet_switching.md).
+
+The mesh must not merely **transport** information: a Cognitive Packet may
+**undergo computation** at a node, an interchangeable handler, or a transient
+RAIX capability array. The meaning of *destination* is the useful result
+returned to Ithaca; intermediate processors are hops. The node holding the
+packet should decide whether to work locally, postpone, or transfer it through
+one of its known admissible paths to a mobilizable capability.
+
+A packet-relative routing decision requires **two separate classes of evidence**:
+
+1. **Capacity:** declared capability, measured throughput for this class of
+   packet, queue/backlog, available resources, budget/cost, operating regime,
+   identity and validity. An `operium.node.v1` ONA attractor is evidence of
+   *observability*, not proof of Cognitive Packet processing capability.
+2. **Path experience:** direct and multi-hop transport/processing experience
+   for (packet class, required capability, intended destination, path), with
+   independent forward, service and return observations. The best destination
+   can differ by packet, deadline and governing mandate. One link's
+   reachability does not prove an end-to-end path.
+
+### Trace projection; retain causal sources near their origins
+
+A *stigmergic path trace* SHOULD be a derived, expiring **guidance view** over
+already-existing source-local, append-only COP FractaLog events and verified
+effect receipts, **not** another global history database. A minimum candidate
+record contains:
+
+- `trace_ref`, `event_ref`, `effect_receipt_ref`; `observer_node`, `source_node`,
+  `packet_class` (or appropriately private packet reference),
+  `capability_ref`, `destination_ref`, `path_ref` and bounded ordered `hop_refs`;
+- `observed_at`, `valid_until`, `evidence_kind` (measured/reported/inferred),
+  scope/operating regime, capability and path versions, confidence and
+  source-local provenance;
+- measurable forwarding/return latency, time queued and processed, failures,
+  refusal/retry, power, bandwidth and money/Kudos cost *when actually known*;
+- independently observed semantic progress, packet lineage, custody and the
+  result eventually assimilated at Ithaca; applicable mandate/budget **refs**,
+  but no credentials or unnecessary private payload.
+
+A successful handoff is not successful cognition. An end-to-end result may
+reinforce, contradict or cool earlier guidance only after bounded, attributable
+observation, ideally including the return-to-Ithaca outcome. Guidance expires
+or loses influence; historical receipts and imputation do not. Reactivation
+requires new evidence under present authority. Loop detection, hop limits,
+packet fencing, local custody and idempotent handoff remain essential.
+
+### Selection and stigmergic learning
+
+Informational Gravity remains a **vector of evidence and a versioned,
+packet-relative policy**, not an unexplained universal scalar. Compare
+`T_local = local_queue + local_service` with observed or bounded estimates of
+`T_remote = handoff + path_transport + remote_queue + remote_service + return`
+plus uncertainty and resource costs. A general CPU load average is **not**
+packet-specific throughput or queue delay. Missing observations remain
+unknown; do not invent attractiveness to fill a dashboard.
+
+Routes that delivered verified progress can be reinforced; poor or expensive
+paths must become less attractive; evidence must decay and be revisited after
+conditions change. Anti-capture and bounded exploration preserve alternate
+paths. An expired attractor can remain in local historical memory, but cannot
+be a current forwarding authorization. Mandate, consent, privacy and budget
+are **independent hard admissibility checks**, not adjustable attraction
+weights. The node retains path evidence near its own locality and propagates
+bounded references/projections to its neighbors as needed.
+
+### Reality test and current status
+
+1. On Fracta2 and a reachable ThinkPad, compare a bounded real packet handled
+   locally and remotely; measure queue, processing, transfer, return, useful
+   progress, and COP receipts using the same budget.
+2. Repeat with artificial load, stale attractors and blackboard loss. Ensure
+   expiration removes routing influence without erasing history, and no
+   duplicate effect or packet identity is lost.
+3. Introduce a third node, competing direct and two-hop paths, and a
+   temporarily unavailable hop. Compare locality-first and learned path
+   routing, while auditing all candidates and rejected alternatives.
+4. Replay source receipts and replace the router. Demonstrate that learned
+   guidance actually changes future route choices and survives handler
+   replacement without becoming a new authoritative registry.
+
+**Verified as of 2026-11-18:** Operium ONA exposes local peer records
+with TTL and SOMA CPU/memory observations; the Fracta2 NASA can derive a
+Principal-only view. The current ONA event sample is dominated by probe/job
+events, not measured cognitive-packet route outcomes. A path-stigmergy
+projection backed by packet-specific effect receipts, multi-hop selection,
+resource reservations and Ithaca assimilation is **not yet deployed**.
