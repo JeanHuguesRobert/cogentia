@@ -4,7 +4,7 @@
 import { createServer } from 'node:http';
 import { DatabaseSync } from 'node:sqlite';
 import { randomBytes, randomUUID, createHash, timingSafeEqual } from 'node:crypto';
-import { mkdirSync, readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, chmodSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import QRCode from 'qrcode';
@@ -37,8 +37,11 @@ function authorize(provided, digest) {
   return a.length===b.length && timingSafeEqual(a,b);
 }
 function init(dbPath) {
+  process.umask(0o077); // SQLite DB, WAL and SHM must never be world-readable.
   mkdirSync(dirname(dbPath),{recursive:true,mode:0o700});
+  chmodSync(dirname(dbPath),0o700);
   const db=new DatabaseSync(dbPath);
+  chmodSync(dbPath,0o600);
   db.exec('PRAGMA journal_mode=WAL; PRAGMA busy_timeout=3000; PRAGMA foreign_keys=ON;');
   db.exec([
     'CREATE TABLE IF NOT EXISTS campaigns(id TEXT PRIMARY KEY,title TEXT NOT NULL,goal TEXT NOT NULL,status TEXT NOT NULL,secret_hash TEXT NOT NULL,created_at TEXT NOT NULL)',

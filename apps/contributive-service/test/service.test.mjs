@@ -1,6 +1,6 @@
 import test,{before,after} from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync,rmSync} from 'node:fs';
+import {mkdtempSync,rmSync,statSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {makeServer,code,generate} from '../server.mjs';
@@ -28,6 +28,10 @@ test('3Code format, normalization, collisions permitted',()=>{
   const a=new Set();for(let i=0;i<1000;i++)a.add(generate());
   assert.equal(a.size,1000);
   for(const c of a)assert.match(c,/^3[A-Z0-9]{2}-[A-Z0-9]{3}-[A-Z0-9]{3}$/);
+});
+test('private SQLite file mode',()=>{
+  assert.equal(statSync(join(dir,'db.sqlite')).mode & 0o777,0o600);
+  assert.equal(statSync(dir).mode & 0o777,0o700);
 });
 test('health, user-facing static and SVG QR',async()=>{
   let r=await call('/api/health');assert.equal(r.status,200);assert.equal(r.body.db,true);

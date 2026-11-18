@@ -34,6 +34,7 @@ Environment=CAMPAIGNS_DB=/srv/cogentia/data/contributive/campaigns.sqlite
 ExecStart=/usr/local/bin/node /srv/cogentia/services/contributive/current/server.mjs
 Restart=always
 RestartSec=3
+UMask=0077
 NoNewPrivileges=true
 ProtectSystem=strict
 ReadWritePaths=/srv/cogentia/data/contributive
