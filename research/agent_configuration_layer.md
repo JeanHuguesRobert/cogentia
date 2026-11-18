@@ -1,14 +1,15 @@
 ---
 title: Agent Configuration Layer
 subtitle: From AGENTS.md to governed corpus projections
-version: '0.3'
+version: '0.4'
 status: working-paper — method note
 date: '2026-06-13'
+last_modified_at: '2026-11-18'
 author: Jean Hugues Noël Robert
+affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: CC BY-SA 4.0
 language: en
-repository: cogentia
-canonical_path: cogentia/research/agent_configuration_layer.md
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/agent_configuration_layer.md
 tags:
   - cogentia
   - agent-configuration
@@ -69,7 +70,7 @@ update_policy: UP-DEFAULT-REVIEWED
 
 ## From AGENTS.md to governed corpus projections
 
-**Version 0.3 — 2026-08-27**  
+**Version 0.4 — 2026-11-18**
 **Repository:** `JeanHuguesRobert/cogentia`  
 **Path:** `research/agent_configuration_layer.md`
 
@@ -331,6 +332,48 @@ Report blocked tools, preserve partial work, and ask for manual intervention whe
 
 These are not stylistic preferences. They are anti-capture rules.
 
+### 6.1 Mandate-first security and responsibility
+
+**Principal decision, 18 November 2026:** the safety model for an admitted,
+cooperating agent is centered on *the mandate it is expected to honor*.
+Its general technical capacity is not a permission, but neither is it evidence
+that the agent must be technically disabled in advance. Deliberate
+noncompliance is treated as an **infraction** to detect, attribute, interrupt,
+investigate and remedy. It is not the baseline assumption of every coding
+workflow.
+
+The design priority is a loop:
+
+```text
+effective mandate -> autonomous Act -> attributable observation
+                   -> mandate comparison
+                      -> compliant: continue
+                      -> suspicious: inspect and preserve evidence
+                      -> confirmed infraction: suspend/revoke, alert, repair
+```
+
+Observability, early detection, attributable results, revocation and recovery
+deserve engineering effort. Detection is not guaranteed to precede irreversible
+harm; make residual exposure explicit. A malicious outsider, stolen credential
+or externally imposed platform restriction is **not** an agent that accepted
+a mandate, and may warrant separate proportionate controls.
+
+For implementation/coding, first prove the end-to-end *authorized success
+path*. An extra Unix identity, ACL, sandbox, shell broker, per-operation
+signature, or token mediation layer is **not** justified by an abstract fear
+that a future disobedient agent might misuse a general capability. Require a
+specific real threat or binding mandate/provider boundary, measured net
+benefit, and tests showing authorized work remains possible. Avoid moving the
+problem from an authorized GitHub command to a proliferating chain of
+credential brokers and special capabilities. Preserve protected information
+and actual third-party authority boundaries; the mandate never authorizes
+secret publication or the evasion of a provider prohibition.
+
+This principle specializes **Mandate — Reasonable Agency**, **Optimistic
+Locking**, and **Fix Bugs First**, and is operationalized in the canonical
+[`AGENTS.shared.md`](../instructions/AGENTS.shared.md#mandate-first-security-trust-observability-and-response-to-infractions-principal-decision-2026-11-18).
+It does not change a deployed signed mandate merely by being written.
+
 ### 6.2 Language is a governed derivation constraint
 
 Language is not a corpus-wide default to apply mechanically. It is a property of the intended audience, document function, and target scene.
@@ -352,7 +395,7 @@ The actual language of every consequential document must be declared in frontmat
 
 No agent may translate or draft unlike products as one homogeneous linguistic set merely because they originate from the same source. A technical specification and a brief for Corsican grand electors are separate derived products, with separate linguistic obligations.
 
-### 6.1 Blocked-tool invariant
+### 6.3 Blocked-tool invariant
 
 A blocked tool, connector, permission denial, API limit, repository access problem, policy check, or failed GitHub operation is a first-class operational signal.
 

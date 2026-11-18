@@ -4,8 +4,8 @@ subtitle: "Operational guidance and local mandates for JeanHuguesRobert/cogentia
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-07-12"
-last_modified_at: "2026-09-16"
-version: "1.1"
+last_modified_at: "2026-11-18"
+version: "1.2"
 status: "stable — active"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -27,10 +27,8 @@ provenance:
   origin_date: "2026-07-12"
   derived_from: []
 review:
-  status: "verified"
-  reviewed_by:
-    - "Jean Hugues Noël Robert"
-  reviewed_at: "2026-09-16"
+  status: "unreviewed"
+  reviewed_by: []
 ---
 
 # Cogentia local specialization
@@ -62,6 +60,23 @@ Cogentia is the cognitive-infrastructure tooling of the multi-repository corpus:
 - Run `node scripts/agent-instructions-audit.js` to inventory instruction artefacts and detect drift between shared and local layers.
 - Use `node scripts/cogentia.js agent mandates plan|apply|verify` to create missing minimal mandates and verify their shared reference. `apply` preflights every target directory and does not attempt any creation if one is not writable.
 - Multi-file local writes (`agent mandates apply`, `corpus apply`, `classify apply`, `corpus-state export`, and `issues sync`) must preflight every planned target and refuse the entire batch when one target is not writable.
+
+## Coding-agent mandate-first security rule
+
+Every Cogentia coding or implementation handler MUST apply the canonical
+[mandate-first security and infraction-response rule](instructions/AGENTS.shared.md#mandate-first-security-trust-observability-and-response-to-infractions-principal-decision-2026-11-18).
+**Do not treat hypothetical agent disobedience as the default threat model.**
+Implement the shortest general route that lets a currently mandated agent
+perform real work, then verify attribution, real effects, observability,
+revocation capability and recovery. Avoid retaining an isolated Unix UID,
+unused permission brokers, duplicate credential stores or one-capability-per-
+chore controls solely as prophylactic restrictions. Cite concrete counter-
+evidence when any additional technical boundary is necessary.
+
+This is an instruction to **evaluate and repair such debt**, not authority
+to rewrite the live COP mandate, disable an actual third-party protection,
+publish secrets, or change a production executor without its own test and
+deployment evidence. Keep the current source and deployed states distinct.
 
 ## Operational routing
 
