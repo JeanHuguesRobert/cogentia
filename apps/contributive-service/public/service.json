@@ -1,0 +1,47 @@
+{
+  "schema": "org.cogentia.kys.contributive-service.v0.1",
+  "id": "org.cogentia.kys.contributive",
+  "name": "3Code et Bouteilles à la Mer",
+  "language": "fr",
+  "status": "experimental",
+  "provider": "C.O.R.S.I.C.A. / KYS Services",
+  "license": "CC BY-SA 4.0",
+  "pricing": "free",
+  "public_interest": true,
+  "political_neutrality": "open-to-all-candidates-and-nonpolitical-campaigns",
+  "entry": {
+    "web": "https://services.acorsica.org/3code",
+    "guide": "https://services.acorsica.org/3code/guide",
+    "assistant_prompt": "https://services.acorsica.org/3code/assistant.fr.txt",
+    "print_designer": "https://services.acorsica.org/3code/print"
+  },
+  "capabilities": [
+    "generate 3Code locally without registration",
+    "create contributive campaigns and missions",
+    "declare physical object or photocopy with claimed lineage",
+    "resolve ambiguous public codes without assuming uniqueness",
+    "request an email-receipt-based registration when a mailbox is configured",
+    "review voluntary contributions without identifying holders",
+    "print a customized tract with QR and optional handwritten child and parent code"
+  ],
+  "public_api": {
+    "health": "/3code/api/health",
+    "generate": "/3code/api/generate",
+    "resolve": "/3code/api/resolve?code=3XX-XXX-XXX",
+    "mail_registration_config": "/3code/api/registrations/config",
+    "mail_registration_request": "/3code/api/registrations",
+    "campaigns": "/3code/api/campaigns"
+  },
+  "data_policy": {
+    "account_required_for_discovery": false,
+    "original_ai_conversation_transmitted": false,
+    "automatic_sending_of_email": false,
+    "email_proof": "An independently trusted mailbox adapter must confirm an actually received email. A typed address does not count.",
+    "limitations": "Email receipt is not proof of civil identity, political endorsement, or physical ownership. Email intake may not be configured."
+  },
+  "authority": {
+    "assistant_may_explain_and_prepare": true,
+    "assistant_must_not_contact_third_parties_without_specific_approval": true,
+    "3code_is_not_a_secret_or_ownership_token": true
+  }
+}

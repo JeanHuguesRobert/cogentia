@@ -24,20 +24,71 @@ function code(){
 }
 const section=(title,body)=>'<section class="panel"><h2>'+title+'</h2>'+body+'</section>';
 function home(){
-  app.innerHTML='<h1>Une référence, une mission, des exemplaires uniques</h1><p class="lead">Générez un 3Code gratuitement, créez une campagne contributive, individualisez un tract photocopié ou un objet et faites revenir une contribution. Accessible à toutes les initiatives, y compris aux différents candidats, sans adhésion politique.</p><div class="grid">'+
+  app.innerHTML='<h1>3Code et Bouteilles à la Mer</h1><p class="lead">Un tract photocopié, un Livre Vivant ou un Bleu de Chine peut porter une mission, devenir un exemplaire singulier et recevoir des contributions. Chaque personne reste libre de participer.</p><p><a class="button" href="/3code/guide">Comprendre le fonctionnement et utiliser mon assistant IA</a></p><h2>Outils disponibles</h2><p class="lead">Générez un 3Code gratuitement, créez une campagne contributive, individualisez un tract photocopié ou un objet et faites revenir une contribution. Accessible à toutes les initiatives, y compris aux différents candidats, sans adhésion politique.</p><div class="grid">'+
   section('Générateur 3Code','<p>3 + huit caractères Crockford, générés localement. Les collisions sont permises. Un code non enregistré ne pointe vers rien.</p><button id="gen">Générer</button><div id="generated" class="output mono">—</div>')+
   section('Retrouver une référence','<label for="lookup">3Code manuscrit ou imprimé</label><input id="lookup" placeholder="3XY-Z89-P2K" autocomplete="off"><button id="lookup-btn">Rechercher</button><div id="found"></div>')+
   section('Créer une campagne','<p>Sans compte obligatoire. Vous recevrez une clé de gestion privée : conservez-la.</p><label for="newtitle">Titre</label><input id="newtitle" maxlength="120" placeholder="Inventaire des moulins"><label for="newgoal">Objectif et méthode</label><textarea id="newgoal" maxlength="1200"></textarea><button id="create">Créer ma campagne</button><div id="created"></div>')+
+  section('Enregistrement d’un 3Code par courriel','<p>Générer un code ou déclarer une photocopie ne l’enregistre pas. Il faut préparer un message que vous expédiez vous-même, puis attendre la réception effective par le service.</p><div id="reg-config" class="note" role="status">Vérification de la boîte de réception…</div><label for="reg-code">3Code</label><input id="reg-code" placeholder="3XX-XXX-XXX"><label for="reg-title">Description de la référence</label><input id="reg-title" placeholder="Mon tract, mon objet" maxlength="160"><div id="reg-for-copy"></div><button id="reg-start" disabled>Préparer mon courriel</button><button class="secondary" id="reg-check">Vérifier une demande précédente</button><div id="reg-result" role="status"></div>')+
   section('Tracts, affiches et photocopies','<p>Personnalisez texte, logo, QR commun et cartouche manuscrit pour chaque exemplaire. Un QR du document maître ne désigne jamais automatiquement un enfant.</p><a class="button" href="/3code/print">Ouvrir le compositeur</a><p class="note">Les exemplaires peuvent être des feuilles, textiles, livres ou objets. Le porteur n’est pas identifié.</p>')+'</div><p class="note">Projet de service d’intérêt général. Toute campagne est sous la responsabilité de son initiateur ; les engagements et résultats ne se déduisent jamais d’un scan.</p>';
-  el('gen').onclick=()=>el('generated').textContent=code()+' — non enregistré';
+  el('gen').onclick=()=>{const v=code();el('generated').textContent=v+' — non enregistré';el('reg-code').value=v;};
   el('lookup-btn').onclick=lookup;
   el('create').onclick=createCampaign;
+  el('reg-start').onclick=startRegistration;
+  el('reg-check').onclick=checkRegistration;
+  const params=new URLSearchParams(location.search);
+  const copyId=params.get('copy_id');
+  if(copyId&&/^[a-f0-9-]{36}$/.test(copyId)){
+    el('reg-code').value=params.get('three_code')||'';
+    el('reg-title').value='Exemplaire singulier';
+    el('reg-for-copy').textContent='Association à la fiche existante : '+copyId+'. Il faut sa clé de gestion.';
+    const token=localStorage.getItem('copy-edit-'+copyId)||'';
+    el('reg-for-copy').insertAdjacentHTML('beforeend','<label for="reg-edit">Clé de modification de l’exemplaire</label><input type="password" id="reg-edit">');
+    el('reg-edit').value=token;
+  }
+  showRegistrationConfig();
 }
 async function lookup(){
   try{
     const d=await api('/resolve?code='+encodeURIComponent(val('lookup')));
-    const found=el('found');found.innerHTML='<p>'+d.results.length+' enregistrement(s) ; ambiguïté : '+(d.ambiguous?'oui':'non')+'.</p>'+d.results.map(x=>row('<a href="'+ROOT+'/e/'+encodeURIComponent(x.id)+'">'+esc(x.title)+'</a> — '+esc(x.three_code)+' (déclaration non vérifiée)')).join('');
+    const found=el('found');
+    found.innerHTML='<p>'+d.results.length+' déclaration(s) d’exemplaire, '+(d.registrations||[]).length+' référence(s) autonomes ayant un courriel reçu ; ambiguïté : '+(d.ambiguous?'oui':'non')+'.</p>'+
+      d.results.map(x=>row('<a href="'+ROOT+'/e/'+encodeURIComponent(x.id)+'">'+esc(x.title)+'</a> — '+esc(x.three_code)+' ('+(x.registration_status==='mail_received'?'courriel reçu':'déclaration non vérifiée')+')')).join('')+
+      (d.registrations||[]).map(x=>row('<strong>'+esc(x.title)+'</strong> — '+esc(x.three_code)+' (courriel reçu, pas d’identité civile vérifiée)')).join('');
   }catch(e){msg('found',e.message,true);}
+}
+async function showRegistrationConfig(){
+  try{
+    const d=await api('/registrations/config');
+    el('reg-start').disabled=!d.enabled;
+    el('reg-config').textContent=d.enabled
+      ? 'Boîte de réception configurée : '+d.inbox+'. Une adresse saisie ne suffit pas, vous devrez expédier le courriel.'
+      : 'Le contrôle par courriel n’est pas encore ouvert : aucune boîte de réception dédiée n’est configurée. Générer un code reste libre.';
+  }catch(e){el('reg-config').textContent='Vérification du service indisponible : '+e.message;}
+}
+async function startRegistration(){
+  try{
+    const p=new URLSearchParams(location.search);
+    const copyId=/^[a-f0-9-]{36}$/.test(p.get('copy_id')||'')?p.get('copy_id'):null;
+    const data=await api('/registrations',{method:'POST',body:JSON.stringify({
+      three_code:val('reg-code'),title:val('reg-title'),copy_id:copyId,edit_token:copyId?val('reg-edit'):''
+    })});
+    localStorage.setItem('registration-last',data.id);
+    localStorage.setItem('registration-view-'+data.id,data.view_token);
+    el('reg-result').innerHTML='<div class="output"><strong>Demande préparée : en attente de votre courriel.</strong><p>Adresse : '+esc(data.email_to)+'</p><label for="reg-subject">Objet du courriel (à conserver exactement)</label><textarea id="reg-subject" readonly></textarea><p><a href="'+esc(data.mailto)+'">Ouvrir mon application de messagerie</a> — vous devez envoyer vous-même le message.</p><p>Expiration : '+esc(data.expires_at)+'. Le statut ne sera confirmé qu’après réception dans la boîte configurée.</p></div>';
+    el('reg-subject').value=data.email_subject;
+  }catch(e){msg('reg-result',e.message,true);}
+}
+async function checkRegistration(){
+  const id=localStorage.getItem('registration-last');
+  const view=id?localStorage.getItem('registration-view-'+id):null;
+  if(!id||!view){msg('reg-result','Aucune demande de référence retrouvée dans ce navigateur.',true);return;}
+  try{
+    const d=await api('/registrations/'+encodeURIComponent(id),{headers:{'x-registration-view':view}});
+    msg('reg-result','Demande '+d.three_code+' : '+(
+      d.status==='mail_received'?'courriel reçu dans la boîte configurée (identité et propriété non vérifiées)':
+      d.status==='expired'?'expirée': 'en attente de réception du courriel'
+    )+'.');
+  }catch(e){msg('reg-result',e.message,true);}
 }
 async function createCampaign(){
   try{
@@ -80,7 +131,8 @@ async function addMission(id){
 async function addCopy(id){
   try{
     const d=await api('/copies',{method:'POST',headers:{'x-management-token':localToken(id)},body:JSON.stringify({campaign_id:id,title:val('copy-title'),three_code:val('copy-code'),parent_code:val('parent-code'),mission_id:val('mission-select')})});
-    el('copy-msg').innerHTML='<div class="output"><strong>Exemplaire enregistré.</strong><p>3Code : <strong class="mono">'+esc(d.three_code)+'</strong></p><p>Parent : '+esc(d.parent_code||'aucun')+'</p><p><a href="'+ROOT+'/e/'+d.id+'">Fiche de cet exemplaire</a></p><p>La clé de modification n’est présentée qu’une fois :</p><textarea readonly id="edit-token"></textarea></div>';
+    localStorage.setItem('copy-edit-'+d.id,d.edit_token);
+    el('copy-msg').innerHTML='<div class="output"><strong>Exemplaire déclaré (pas encore enregistré par courriel).</strong><p>3Code : <strong class="mono">'+esc(d.three_code)+'</strong></p><p>Parent : '+esc(d.parent_code||'aucun')+'</p><p><a href="'+ROOT+'/e/'+d.id+'">Fiche de cet exemplaire</a></p><p>La clé de modification n’est présentée qu’une fois :</p><textarea readonly id="edit-token"></textarea></div>';
     el('edit-token').value=d.edit_token;
   }catch(e){msg('copy-msg',e.message,true);}
 }
@@ -95,6 +147,7 @@ async function copyPage(id){
   try{
     const d=await api('/copies/'+id),c=d.copy;
     app.innerHTML='<h1>Exemplaire singulier</h1><section class="panel"><p class="big-code mono">'+esc(c.three_code)+'</p><p>'+esc(c.title)+'</p><p><strong>Parent déclaré :</strong> '+esc(c.parent_code||'aucun')+'</p><p><strong>Statut :</strong> '+esc(c.relation_status)+'</p><img class="qr" src="'+qr(link(id))+'" alt="QR individuel de l’exemplaire"><p class="mono">'+esc(link(id))+'</p><p class="note">Ce QR peut être photocopié mais continue à désigner ce même exemplaire. Il ne prouve ni la possession ni un soutien politique.</p><p><a class="button" href="'+ROOT+'/campaign/'+encodeURIComponent(c.campaign_id)+'?parent_code='+encodeURIComponent(c.three_code)+'">J’ai photocopié cet exemplaire : déclarer un enfant</a></p></section>'+
+      section('Enregistrer cette association 3Code','<p>Pour obtenir le statut « courriel reçu », ouvrez le formulaire et envoyez vous-même le message proposé.</p><p><a class="button" href="'+ROOT+'/?copy_id='+encodeURIComponent(id)+'&three_code='+encodeURIComponent(c.three_code)+'">Préparer mon courriel de référence</a></p>')+
       section('Contribuer librement','<p>Les contributions ne sont pas publiées sans validation de l’organisateur. Ne transmettez pas de données personnelles ou sensibles.</p><label for="contribution">Information, correction, témoignage ou résultat</label><textarea id="contribution" maxlength="1000"></textarea><button id="contribute">Soumettre une contribution</button><div id="contrib-msg"></div>')+
       section('Contributions publiées',d.contributions.map(x=>'<p>'+esc(x.message)+'</p>').join('')||'<p>Pas encore de contribution publiée.</p>');
     el('contribute').onclick=async()=>{try{await api('/contributions',{method:'POST',body:JSON.stringify({copy_id:id,message:val('contribution')})});msg('contrib-msg','Contribution reçue, en attente de qualification.');el('contribution').value='';}catch(e){msg('contrib-msg',e.message,true);}};
@@ -102,7 +155,7 @@ async function copyPage(id){
 }
 function printPage(){
   app.innerHTML='<div class="no-print"><h1>Compositeur de tract / affiche</h1><p>Le modèle reste reproductible par photocopie. Ajoutez ensuite un 3Code unique manuscrit à chaque nouvelle copie.</p><div class="grid">'+
-  section('Texte et format','<label for="ptitle">Titre</label><input id="ptitle" value="Campagne contributive"><label for="pbody">Texte principal</label><textarea id="pbody">Un objet, une mission, une contribution volontaire. Découvrez la campagne et créez votre propre exemplaire.</textarea><label for="pformat">Cartouche</label><select id="pformat"><option value="blank">Manuscrit vierge</option><option value="child">3Code individuel</option><option value="fork">Photocopie / fork</option></select><label for="pchild">3Code enfant</label><input id="pchild" placeholder="3XX-XXX-XXX"><label for="pparent">3Code parent</label><input id="pparent" placeholder="3XX-XXX-XXX"></label>')+
+  section('Texte et format','<label for="ptitle">Titre</label><input id="ptitle" value="Campagne contributive"><label for="pbody">Texte principal</label><textarea id="pbody">Un objet, une mission, une contribution volontaire. Découvrez la campagne et créez votre propre exemplaire.</textarea><label for="pformat">Cartouche</label><select id="pformat"><option value="blank">Manuscrit vierge</option><option value="child">3Code individuel</option><option value="fork">Photocopie / fork</option></select><label for="pchild">3Code enfant</label><input id="pchild" placeholder="3XX-XXX-XXX"><label for="pparent">3Code parent</label><input id="pparent" placeholder="3XX-XXX-XXX">')+
   section('Logo et QR commun','<label for="plogo">Logo (fichier local, sans transfert)</label><input type="file" id="plogo" accept="image/*"><label for="pcampaign">Identifiant de campagne (facultatif)</label><input id="pcampaign" placeholder="UUID de campagne"><p class="note">Le QR commun ouvre la campagne ou l’accueil. Il ne désigne pas un exemplaire.</p><button id="refresh">Actualiser</button><button id="printer">Imprimer / enregistrer en PDF</button>')+'</div></div><article class="print-design" id="preview"><img id="p-logo" class="mark" alt=""><h1 id="p-title"></h1><p id="p-body"></p><div class="cartridge"><div><strong>EXEMPLAIRE SINGULIER</strong><p>3Code : <span id="p-code" class="mono"></span></p><div class="code-line"></div><p id="p-parent-line">Parent : <span class="mono" id="p-parent-code"></span></p><p class="note">Inscrire un nouveau 3Code pour chaque photocopie. La filiation est déclarative.</p></div><img id="p-qr" alt="QR commun d’enregistrement"></div></article>';
   const refresh=()=>{
     el('p-title').textContent=val('ptitle');

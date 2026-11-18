@@ -10,7 +10,7 @@ release="$stable/releases/$sha"
 mkdir -p "$stable/releases" /srv/cogentia/data/contributive
 if [ ! -e "$release/server.mjs" ]; then
   mkdir -p "$release"
-  cp -a "$REPO/$APP"/server.mjs "$REPO/$APP"/package.json "$REPO/$APP"/package-lock.json "$REPO/$APP"/public "$release/"
+  cp -a "$REPO/$APP"/server.mjs "$REPO/$APP"/registrations.mjs "$REPO/$APP"/mail-receive.mjs "$REPO/$APP"/package.json "$REPO/$APP"/package-lock.json "$REPO/$APP"/public "$release/"
   cd "$release"
   /usr/local/bin/npm ci --omit=dev --ignore-scripts --no-audit --no-fund --silent
   chown -R root:root "$release"
@@ -31,6 +31,8 @@ WorkingDirectory=/srv/cogentia/services/contributive/current
 Environment=HOST=127.0.0.1
 Environment=PORT=8879
 Environment=CAMPAIGNS_DB=/srv/cogentia/data/contributive/campaigns.sqlite
+# Optional operator-configured dedicated inbound address; never assume a mailbox exists.
+EnvironmentFile=-/etc/cogentia/contributive.env
 ExecStart=/usr/local/bin/node /srv/cogentia/services/contributive/current/server.mjs
 Restart=always
 RestartSec=3

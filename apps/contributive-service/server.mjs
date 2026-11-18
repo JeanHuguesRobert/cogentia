@@ -8,6 +8,7 @@ import { mkdirSync, readFileSync, chmodSync, existsSync, realpathSync } from 'no
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import QRCode from 'qrcode';
+import { initRegistrations, validateInbox, createRegistration, getRegistration, resolvedRegistrations } from './registrations.mjs';
 
 const ROOT = '/3code';
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -87,8 +88,12 @@ function rateGate(map,req,pathname) {
   if(rec.n>30)fail('Trop de requêtes; réessayez dans une minute',429);
   if(map.size>5000)for(const [k,v] of map)if(t-v.t>120000)map.delete(k);
 }
-export function makeServer({dbPath=process.env.CAMPAIGNS_DB||'/srv/cogentia/data/contributive/campaigns.sqlite'}={}) {
-  const db=init(dbPath), rates=new Map();
+export function makeServer({
+  dbPath=process.env.CAMPAIGNS_DB||'/srv/cogentia/data/contributive/campaigns.sqlite',
+  mailInbox=process.env.CAMPAIGNS_INBOX||''
+}={}) {
+  const db=init(dbPath), rates=new Map(), inbox=validateInbox(mailInbox);
+  initRegistrations(db);
   const server=createServer(async(req,res)=>{
     res.setHeader('X-Content-Type-Options','nosniff');
     res.setHeader('Referrer-Policy','no-referrer');
@@ -99,9 +104,23 @@ export function makeServer({dbPath=process.env.CAMPAIGNS_DB||'/srv/cogentia/data
       if(!p.startsWith(ROOT))return json(res,404,{error:'Hors service'});
       rateGate(rates,req,p);
       if(req.method==='GET'&&p===ROOT+'/api/health'){
-        return json(res,200,{ok:true,service:'contributive-campaigns',schema:'campaigns-mvp-v1',db:!!db.prepare('SELECT 1 AS ok').get(),time:now()});
+        return json(res,200,{ok:true,service:'contributive-campaigns',schema:'campaigns-mvp-v2',db:!!db.prepare('SELECT 1 AS ok').get(),time:now()});
       }
       if(req.method==='GET'&&p===ROOT+'/api/generate') return json(res,200,{code:generate(),registered:false});
+      if(req.method==='GET'&&p===ROOT+'/api/registrations/config') {
+        return json(res,200,{enabled:!!inbox,inbox:inbox||null,method:'inbound-email-only',
+          notice:inbox?'Un courriel doit effectivement arriver dans cette boîte.':'Aucune boîte de réception vérifiée et configurée pour le moment.'});
+      }
+      if(req.method==='POST'&&p===ROOT+'/api/registrations') {
+        const b=await load(req);
+        const r=createRegistration(db,{three_code:code(b.three_code),copy_id:b.copy_id||null,
+          edit_token:b.edit_token||'',title:b.title||'',inbox});
+        return json(res,201,r);
+      }
+      const registrationMatch=p.match(/^\/3code\/api\/registrations\/([a-f0-9-]{36})$/);
+      if(req.method==='GET'&&registrationMatch){
+        return json(res,200,getRegistration(db,registrationMatch[1],req.headers['x-registration-view']));
+      }
       if(req.method==='GET'&&p===ROOT+'/api/campaigns'){
         return json(res,200,{campaigns:db.prepare('SELECT '+colCampaign+' FROM campaigns WHERE status=? ORDER BY created_at DESC LIMIT 100').all('active')});
       }
@@ -138,7 +157,16 @@ export function makeServer({dbPath=process.env.CAMPAIGNS_DB||'/srv/cogentia/data
       if(req.method==='GET'&&p===ROOT+'/api/resolve'){
         const value=code(u.searchParams.get('code')||'');
         const rows=db.prepare('SELECT '+colCopy+' FROM copies WHERE three_code=? ORDER BY created_at DESC LIMIT 100').all(value);
-        return json(res,200,{code:value,ambiguous:rows.length>1,results:rows,more_possible:rows.length===100,notice:'Le 3Code n’est ni unique globalement ni preuve de propriété.'});
+        const registrations=resolvedRegistrations(db,value);
+        const verifiedCopyIds=new Map(registrations.filter(x=>x.copy_id).map(x=>[x.copy_id,x.id]));
+        const results=rows.map(x=>({...x,
+          registration_status:verifiedCopyIds.has(x.id)?'mail_received':'unverified_declaration',
+          registry_record_id:verifiedCopyIds.get(x.id)||null
+        }));
+        return json(res,200,{code:value,ambiguous:results.length+registrations.filter(x=>!x.copy_id).length>1,
+          results,registrations:registrations.filter(x=>!x.copy_id),
+          more_possible:rows.length===100||registrations.length===100,
+          notice:'Les fiches d’exemplaire sont déclaratives. Seules les associations marquées « courriel reçu » ont passé le contrôle de contact; celui-ci ne prouve ni identité ni possession.'});
       }
       if(req.method==='POST'&&p===ROOT+'/api/copies'){
         const b=await load(req);
@@ -192,8 +220,14 @@ export function makeServer({dbPath=process.env.CAMPAIGNS_DB||'/srv/cogentia/data
         res.writeHead(200,{'Content-Type':'image/svg+xml','Cache-Control':'public,max-age=1800'});
         return res.end(svg);
       }
-      const pub={'/3code/app.js':['public/app.js','text/javascript; charset=utf-8'],'/3code/style.css':['public/style.css','text/css; charset=utf-8']};
-      const entry=pub[p]||(req.method==='GET'&&(p===ROOT||p===ROOT+'/'||p===ROOT+'/print'||p.startsWith(ROOT+'/e/')||p.startsWith(ROOT+'/campaign/'))?['public/index.html','text/html; charset=utf-8']:null);
+      const pub={
+        '/3code/app.js':['public/app.js','text/javascript; charset=utf-8'],
+        '/3code/guide.js':['public/guide.js','text/javascript; charset=utf-8'],
+        '/3code/assistant.fr.txt':['public/assistant.fr.txt','text/plain; charset=utf-8'],
+        '/3code/service.json':['public/service.json','application/json; charset=utf-8'],
+        '/3code/style.css':['public/style.css','text/css; charset=utf-8']
+      };
+      const entry=pub[p]||(req.method==='GET'&&p===ROOT+'/guide'?['public/guide.html','text/html; charset=utf-8']:null)||(req.method==='GET'&&(p===ROOT||p===ROOT+'/'||p===ROOT+'/print'||p.startsWith(ROOT+'/e/')||p.startsWith(ROOT+'/campaign/'))?['public/index.html','text/html; charset=utf-8']:null);
       if(req.method==='GET'&&entry){
         const body=readFileSync(join(HERE,entry[0]));
         res.writeHead(200,{'Content-Type':entry[1],'Cache-Control':'no-cache'});
