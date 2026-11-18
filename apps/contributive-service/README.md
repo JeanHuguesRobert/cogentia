@@ -1,18 +1,22 @@
 ---
 title: "Contributive Campaigns — 3Code and physical incarnations service"
+author: unknown
+affiliation: "Institut Mariani / C.O.R.S.I.C.A."
 language: en
 date: 2026-11-18
 last_modified_at: 2026-11-18
 license: CC BY-SA 4.0
-status: "MVP implementation — deployment evidence separate"
-document_role: implementation
+status: "working-paper — experimental MVP; deployment evidence separate"
+document_role: operational
 document_kind: application
 visibility: public
 lifecycle_state: working
 update_policy: UP-DEFAULT-REVIEWED
 provenance:
-  origin_type: derived
+  origin_type: conversation
   origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: "50948e08ef6c58df00b800d1bb1e49401571f697"
+  origin_date: "2026-11-18"
   derived_from:
     - research/contributive_campaign_service.md
     - research/3code.md
@@ -89,8 +93,12 @@ reçu en provenance de l'usager. Une adresse saisie, un mailto, un brouillon,
 un envoi non livré ou une simple déclaration ne suffisent pas.
 
 1. L'opérateur vérifie qu'une **boîte dédiée existe réellement**, reçoit
-   des messages et peut être consultée. La seule présence des MX Gandi sur
-   acorsica.org ne démontre pas l'existence d'un alias ou d'une boîte.
+   des messages et peut être consultée. Le fournisseur de réception dépend du domaine et non de ses
+   seuls serveurs DNS : contrôle du 18 novembre 2026, baronsmariani.org
+   reçoit par les MX Cloudflare Email Routing, acorsica.org conserve
+   des MX Gandi malgré sa gestion DNS Cloudflare, et fractavolta.com
+   conserve également les MX Gandi. Les MX ne prouvent ni une règle de
+   redirection individuelle ni la livraison réelle à son destinataire.
 2. L'opérateur renseigne CAMPAIGNS_INBOX avec cette adresse vérifiée dans
    /etc/cogentia/contributive.env, lu facultativement par systemd.
    **Sans cette configuration**, l'API refuse toute demande de confirmation
@@ -131,7 +139,7 @@ API supplémentaire : GET /3code/api/registrations/config, POST
 l'en-tête privé x-registration-view, et GET /3code/api/resolve.
 Aucune confirmation de courriel n'est autorisée par une requête publique.
 
-**Non encore installé :** boîte dédiée, réception Gandi/IMAP automatisée,
+**Non encore installé :** boîte dédiée, adaptateur automatisé pour le fournisseur de réception réellement utilisé (Cloudflare Email Routing ou Gandi selon le domaine),
 vérification SPF/DKIM/DMARC, politique complète de conservation, récupération
 des clés, courriels de notification, répertoire fédéré. Ne pas annoncer ces
 fonctions comme disponibles. Les tests utilisent des messages synthétiques.
