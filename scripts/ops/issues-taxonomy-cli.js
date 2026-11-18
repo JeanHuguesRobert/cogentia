@@ -125,7 +125,9 @@ export function runIssuesTaxonomy(args){
  const sub=args[0]||'plan';
  if(sub==='plan'){
   const names=repoNames(scopeArgs(args));
-  const plan=buildTaxonomyPlan({repositories:names.map(gitHubRepo)});
+  const reviewPath=argValue(args,'--reviewed');
+  const reviewedDecisions=reviewPath?JSON.parse(fs.readFileSync(reviewPath,'utf8')):[];
+  const plan=buildTaxonomyPlan({repositories:names.map(gitHubRepo),reviewedDecisions});
   writeJson(plan,argValue(args,'--output'));
   return {ok:true,plan_hash:plan.plan_hash,summary:plan.summary,scope:names,output:argValue(args,'--output')||'stdout'};
  }
@@ -137,5 +139,5 @@ export function runIssuesTaxonomy(args){
   if(sub==='verify'&&!result.complete)process.exitCode=2;
   return result;
  }
- throw Error('Usage: issues taxonomy plan [--repo cogentia,inseme|--all] [--output plan.json] | apply --from plan.json [--dry-run] | verify --from plan.json');
+ throw Error('Usage: issues taxonomy plan [--repo cogentia,inseme|--all] [--reviewed reviewed.json] [--output plan.json] | apply --from plan.json [--dry-run] | verify --from plan.json');
 }

@@ -4,7 +4,7 @@ author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A."
 date: "2026-11-17"
 last_modified_at: "2026-11-18"
-version: "0.2"
+version: "0.3"
 status: "working-paper — operational first increment"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -59,11 +59,22 @@ node scripts/cogentia.js issues taxonomy plan --output /tmp/issues-taxonomy.json
 node scripts/cogentia.js issues taxonomy apply --from /tmp/issues-taxonomy.json --dry-run
 node scripts/cogentia.js issues taxonomy apply --from /tmp/issues-taxonomy.json
 node scripts/cogentia.js issues taxonomy verify --from /tmp/issues-taxonomy.json
+# Additional evidence-reviewed judgments (local JSON, never committed):
+node scripts/cogentia.js issues taxonomy plan --repo cogentia,inseme --reviewed /tmp/issue-judgments.json --output /tmp/judged-plan.json
 
 # Optional scopes:
 node scripts/cogentia.js issues taxonomy plan --repo cogentia,inseme --output /tmp/scoped.json
 node scripts/cogentia.js issues taxonomy plan --all --output /tmp/all.json
 ```
+
+A `--reviewed` JSON array may supply bounded judgments `{repo, number, labels, evidence}`.
+Each `evidence` must be an exact 12–400 character excerpt of the current
+Issue title or body. The resulting plan records only a digest of the excerpt
+(not the quoted text); the Issue's timestamp/title and label set are still
+checked optimistically before any write. A quoted excerpt does **not** prove
+the reviewer's interpretation: this is a Judgment input, not an autonomous
+inference nor an authority grant. Maximum 100 issues per review batch.
+Do not commit private excerpts or a plan containing private references.
 
 `plan` never writes to GitHub. A default run covers the four active core
 repositories: Cogentia, barons-Mariani, Inseme and Operium. `--all` discovers

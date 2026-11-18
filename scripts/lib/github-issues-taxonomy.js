@@ -5,7 +5,7 @@
  */
 import { createHash } from 'node:crypto';
 
-export const TAXONOMY_VERSION = 2;
+export const TAXONOMY_VERSION = 3;
 export const CORE_REPOS = Object.freeze(['cogentia', 'barons-Mariani', 'inseme', 'operium']);
 const NATIVE_LABELS = Object.freeze({
   'bug': {color:'d73a4a',description:"Something isn't working"},
@@ -67,9 +67,22 @@ export function classifyIssue(issue) {
   if (duplicate) review.push({action:'consider_duplicate',reason:'Explicit possible duplicate reference #'+duplicate[1],confidence:'review_required'});
   return {labels:proposed,review,checked:done,unchecked:remaining};
 }
-export function buildTaxonomyPlan({owner='JeanHuguesRobert',repositories,at=new Date().toISOString()}){
+export function buildTaxonomyPlan({owner='JeanHuguesRobert',repositories,at=new Date().toISOString(),reviewedDecisions=[]}){
   if(owner!=='JeanHuguesRobert') throw Error('Unexpected owner');
-  const result={schema:'cogentia.github-issues-taxonomy.plan/v1',taxonomy_version:TAXONOMY_VERSION,created_at:at,repositories:[],summary:{open:0,unlabelled:0,older60:0,labels_to_create:0,issues_to_label:0,label_additions:0,closure_candidates:0,needs_judgment:0,private_repositories:0}};
+  if(!Array.isArray(reviewedDecisions)||reviewedDecisions.length>100)throw Error('Reviewed decisions must be a bounded array (max 100)');
+  const reviews=new Map();
+  const supported=new Set([...Object.keys(COMMON_LABELS),...Object.keys(NATIVE_LABELS)]);
+  for(const decision of reviewedDecisions){
+    const repoName=checkRepoName(decision?.repo);
+    if(!Number.isInteger(decision.number)||decision.number<1||
+       !Array.isArray(decision.labels)||!decision.labels.length||decision.labels.length>3||
+       decision.labels.some(label=>!supported.has(label))||
+       typeof decision.evidence!=='string'||decision.evidence.trim().length<12||decision.evidence.length>400)throw Error('Invalid reviewed decision');
+    const key=repoName+'#'+decision.number;
+    if(reviews.has(key))throw Error('Duplicate reviewed decision');
+    reviews.set(key,decision);
+  }
+  const result={schema:'cogentia.github-issues-taxonomy.plan/v1',taxonomy_version:TAXONOMY_VERSION,created_at:at,repositories:[],summary:{open:0,unlabelled:0,older60:0,labels_to_create:0,issues_to_label:0,label_additions:0,closure_candidates:0,needs_judgment:0,reviewed_decisions:0,reviewed_label_additions:0,private_repositories:0}};
   const now=iso(at);
   for(const repo of repositories){
     checkRepoName(repo.full_name);
@@ -82,6 +95,22 @@ export function buildTaxonomyPlan({owner='JeanHuguesRobert',repositories,at=new 
       if(raw.pull_request || raw.state!=='open')continue;
       const existing=uniq((raw.labels||[]).map(x=>typeof x==='string'?x:x.name));
       const inference=classifyIssue(raw);
+      const reviewKey=repo.full_name+'#'+raw.number;
+      const decision=reviews.get(reviewKey);
+      if(decision){
+        // Never treat the reviewer's opinion as proof: require an exact, current
+        // quote from the Issue snapshot and bind it to the resulting plan hash.
+        if(!(String(raw.title||'')+'\n'+String(raw.body||'')).includes(decision.evidence))throw Error('Reviewed evidence not found for '+reviewKey);
+        const evidenceHash=digest(decision.evidence);
+        for(const label of decision.labels){
+          if(!existing.includes(label)&&!inference.labels.some(item=>item.label===label)){
+            inference.labels.push({label,confidence:'reviewed',reason:'Scoped human/agent judgment grounded in current issue text',evidence_digest:evidenceHash});
+            result.summary.reviewed_label_additions++;
+          }
+        }
+        result.summary.reviewed_decisions++;
+        reviews.delete(reviewKey);
+      }
       const row={number:raw.number, expected_updated_at:raw.updated_at, expected_title_digest:digest(raw.title),expected_labels:existing,add:inference.labels};
       result.summary.open++;
       if(!existing.length)result.summary.unlabelled++;
@@ -105,6 +134,7 @@ export function buildTaxonomyPlan({owner='JeanHuguesRobert',repositories,at=new 
     judgmentQueue.sort((a,b)=>String(a.updated_at).localeCompare(String(b.updated_at)));
     result.repositories.push({name:repo.full_name,private:privateRepo,missing_definitions:definitions,definition_drift:drift,changes,closure_candidates:closureCandidates,judgment_queue:judgmentQueue,open_count:repo.issues.filter(x=>!x.pull_request&&x.state==='open').length});
   }
+  if(reviews.size)throw Error('Reviewed decision targets unavailable or not open: '+[...reviews.keys()].join(', '));
   result.plan_hash=digest({...result,plan_hash:undefined});
   return result;
 }

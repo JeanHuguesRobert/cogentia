@@ -41,6 +41,16 @@ const ambiguous=buildTaxonomyPlan({repositories:[{full_name:'JeanHuguesRobert/re
 assert.equal(ambiguous.summary.needs_judgment,1);
 assert.equal(ambiguous.repositories[0].judgment_queue.length,1);
 assert.equal(Object.hasOwn(ambiguous.repositories[0].judgment_queue[0],'title'),false);
+const evidence='Bounded implementation plan and safe resumption conditions';
+const reviewed=buildTaxonomyPlan({repositories:[{full_name:'JeanHuguesRobert/cogentia',private:false,issues:[t('Working method',evidence)],labels:[]}],reviewedDecisions:[{repo:'JeanHuguesRobert/cogentia',number:1,labels:['research'],evidence}],at:'2026-11-17T12:00:00Z'});
+assert.equal(reviewed.summary.reviewed_decisions,1);
+assert.equal(reviewed.summary.reviewed_label_additions,1);
+assert.equal(reviewed.repositories[0].changes[0].add[0].label,'research');
+assert.equal(reviewed.repositories[0].changes[0].add[0].confidence,'reviewed');
+assert.ok(!JSON.stringify(reviewed).includes(evidence));
+assert.throws(()=>buildTaxonomyPlan({repositories:[{full_name:'JeanHuguesRobert/cogentia',private:false,issues:[t('A',evidence)],labels:[]}],reviewedDecisions:[{repo:'JeanHuguesRobert/cogentia',number:1,labels:['research'],evidence:'nonexistent 20 characters'}]}),/evidence not found/);
+assert.throws(()=>buildTaxonomyPlan({repositories:[{full_name:'JeanHuguesRobert/cogentia',private:false,issues:[t('A',evidence)],labels:[]}],reviewedDecisions:[{repo:'JeanHuguesRobert/cogentia',number:2,labels:['research'],evidence}]}),/targets unavailable/);
+
 assert.equal(plan.repositories[0].changes[0].add[0].label,'cpkt');
 assert.ok(plan.repositories[0].definition_drift.some(x=>x.name==='parked'));
 assert.ok(plan.repositories[0].missing_definitions.some(x=>x.name==='ready'));
