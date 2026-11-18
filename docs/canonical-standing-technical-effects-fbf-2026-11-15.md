@@ -1,13 +1,25 @@
 ---
 title: "FBF #299 — délégation permanente JHN, séparation de l'exécuteur Unix et effets techniques sémantiques"
 date: "2026-11-15"
-last_modified_at: "2026-11-15"
+author: "unknown"
+affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
+license: CC BY-SA 4.0
+last_modified_at: "2026-11-18"
 document_role: operational
 document_kind: integration-runbook
 visibility: public
 language: fr
-status: "historical — Museum-specific MCP tools removed; general host-process route retained"
+status: "deprecated — historical implementation superseded by mandate-first security"
 update_policy: UP-DEFAULT-REVIEWED
+provenance:
+  origin_type: unknown
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
 related_documents:
   - "instructions/AGENTS.shared.md"
   - "research/optimistic_mainline_governance.md"
@@ -90,6 +102,15 @@ nouveau mandat humain par commande. Les reçus sont attribués à la déclaratio
 v4 et à l'idempotence du journal COP.
 
 ## 1. Correction Unix, effective
+
+> **Historical implementation, superseded 2026-11-18 (FBF).**
+> The original custody gate and `cogentia-effect` UID split described in
+> this section were removed from the runtime implementation after the
+> Principal's mandate-first security decision. This passage remains as
+> historical evidence, **not current operational instructions**.
+> See [AGENTS.shared.md](../instructions/AGENTS.shared.md#mandate-first-security-trust-observability-and-response-to-infractions-principal-decision-2026-11-18).
+> The previous installer and custody modules remain available in Git history.
+
 
 Avant : `mcp-cogentia.service` (`ubuntu`) et journal canonique COP
 (`ubuntu:ubuntu 0600`) étaient sous le même UID. Le garde

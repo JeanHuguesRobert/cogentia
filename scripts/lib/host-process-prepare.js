@@ -1,6 +1,5 @@
 /** Core EXPOSE preparation for the semantic host.process.run capability. */
 import { attachExposePacket, buildEffectPayload } from './side-effect-authorization.js';
-import { inspectUnixProcessCopCustody, inspectIsolatedUnixProcessCopCustody } from './unix-process-cop-custody.js';
 
 export function prepareHostProcessRun({ command, timeout_ms, target, provider, execution_mode = "normal" } = {}) {
   if (typeof command !== 'string' || !command.trim() || command.length > 32768) {
@@ -22,14 +21,13 @@ export function prepareHostProcessRun({ command, timeout_ms, target, provider, e
     phase: 'EXPOSE',
     note: 'Preparation only; no execution or authorization. A verified standing mandate or exact COP effect grant is required for dispatch.',
   });
-  // Local public-metadata diagnostic only: this does not grant authority or
-  // prove complete OS isolation, and cannot execute the prepared command.
+  // Execution identity is deliberately not a substitute for the COP mandate.
+  // Keep the previous diagnostic field for clients, without asserting an
+  // imaginary isolation/permission boundary or checking the journal owner.
   return {
     ...exposed,
-    executor_custody: provider === 'unix-process' && execution_mode === 'normal'
-      ? (process.env.COGENTIA_HOST_UNIX_ISOLATED_USER
-        ? inspectIsolatedUnixProcessCopCustody()
-        : inspectUnixProcessCopCustody())
-      : { blocked: null, checked: false, reason: 'not_a_local_normal_unix_executor' },
+    executor_custody: { blocked: null, checked: false,
+      reason: provider === 'unix-process' && execution_mode === 'normal'
+        ? 'mandate_first_same_service_identity' : 'not_a_local_normal_unix_executor' },
   };
 }

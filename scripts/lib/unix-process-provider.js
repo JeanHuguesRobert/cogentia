@@ -4,13 +4,24 @@
 import { execFile } from 'node:child_process';
 import { hostname, userInfo } from 'node:os';
 import { extractShellJudgment } from './shell-judgment-signal.js';
-import { ISOLATED_UNIX_EXECUTOR_USER } from './unix-process-cop-custody.js';
+
+// MCP is a long-lived service with service-specific GitHub credentials and
+// web proxy settings. Do not carry that polluted process environment into a
+// normal *operator shell*: gh must use the operator's existing hosts.yml,
+// and direct network calls should not inherit an unrelated service proxy.
+// The MCP service itself retains all of its own environment and credentials.
+export function operatorShellEnvironment(env = process.env) {
+  const child = { ...env };
+  for (const name of [
+    'GH_TOKEN', 'GITHUB_TOKEN', 'GH_ENTERPRISE_TOKEN', 'GITHUB_ENTERPRISE_TOKEN',
+    'HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY',
+    'http_proxy', 'https_proxy', 'all_proxy',
+  ]) delete child[name];
+  return child;
+}
 
 export class UnixProcessProvider {
-  constructor({ cwd = process.cwd(), timeoutMs = 120000, maxBuffer = 262144, maxConcurrent = 1, maxQueued = 32, isolatedUser = null } = {}) {
-    if (isolatedUser !== null && isolatedUser !== ISOLATED_UNIX_EXECUTOR_USER)
-      throw new TypeError('unsupported_isolated_unix_executor');
-    this.isolatedUser = isolatedUser;
+  constructor({ cwd = process.cwd(), timeoutMs = 120000, maxBuffer = 262144, maxConcurrent = 1, maxQueued = 32 } = {}) {
     this.cwd = cwd;
     this.timeoutMs = timeoutMs;
     this.maxBuffer = maxBuffer;
@@ -51,14 +62,13 @@ export class UnixProcessProvider {
     return this.enqueue(() => new Promise(resolve => {
       let timedOut = false;
       let timer;
-      // Build a new session BEFORE sudo so the timeout can kill the whole
-      // sudo + lower-privileged subprocess group. The MCP server retains
-      // COP authority; only this shell runs as the isolated user.
-      const commandArgs = this.isolatedUser
-        ? ['sudo','-n','-u',this.isolatedUser,'--','/bin/sh','-c',args.command]
-        : ['/bin/sh','-c',args.command];
+      // Act as the authenticated service operator; the effective COP
+      // mandate governs *which acts* are lawful, not a prophylactic UID split.
+      // Keep the timeout process group so descendants cannot outlive the Act.
+      const commandArgs = ['/bin/sh','-c',args.command];
       const child = execFile('setsid', commandArgs, {
         cwd: this.cwd, timeout: 0, maxBuffer: this.maxBuffer,
+        env: operatorShellEnvironment(),
         encoding: 'utf8', windowsHide: true,
       }, (error, stdout, stderr) => {
         clearTimeout(timer);
@@ -75,10 +85,8 @@ export class UnixProcessProvider {
           signal: error?.signal || null,
           timeout: timedOut,
           output_truncated: error?.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER', stdout, stderr,
-          identity: { user: this.isolatedUser || user.username,
-            uid: this.isolatedUser ? null : user.uid,
-            gid: this.isolatedUser ? null : user.gid,
-            hostname: hostname(), isolation: this.isolatedUser ? 'sudo-unprivileged' : 'none' },
+          identity: { user: user.username, uid: user.uid, gid: user.gid,
+            hostname: hostname(), isolation: 'none' },
           error: error?.message || null,
           ...(judgment ? { judgment } : {}),
         });

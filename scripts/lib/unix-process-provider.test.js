@@ -1,7 +1,23 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { UnixProcessProvider } from './unix-process-provider.js';
+import { UnixProcessProvider, operatorShellEnvironment } from './unix-process-provider.js';
 import { createHostCapabilityRouter } from './host-capability-router.js';
+
+test('normal operator shell ignores unrelated MCP GitHub token and broken proxy, keeps gh HOME', () => {
+  const serviceEnv = {HOME:'/home/ubuntu', PATH:'/usr/bin',
+    GITHUB_TOKEN:'wrong-service-token', GH_TOKEN:'overriding-token',
+    HTTP_PROXY:'http://127.0.0.1:8889', HTTPS_PROXY:'http://127.0.0.1:8889',
+    COGENTIA_MCP_VIEW:'public'};
+  const normalized = operatorShellEnvironment(serviceEnv);
+  assert.equal(normalized.HOME, '/home/ubuntu');
+  assert.equal(normalized.PATH, '/usr/bin');
+  assert.equal(normalized.GITHUB_TOKEN, undefined);
+  assert.equal(normalized.GH_TOKEN, undefined);
+  assert.equal(normalized.HTTP_PROXY, undefined);
+  assert.equal(normalized.HTTPS_PROXY, undefined);
+  assert.equal(normalized.COGENTIA_MCP_VIEW, 'public');
+  assert.equal(serviceEnv.GITHUB_TOKEN, 'wrong-service-token', 'must not modify parent service');
+});
 
 test('native Unix provider executes bounded command with identity', async () => {
   const p = new UnixProcessProvider({ timeoutMs: 3000 });
@@ -18,7 +34,7 @@ test('router denies execution without identity and mandate', async () => {
   await assert.rejects(router.invoke('host.process.run', { command: 'printf forbidden' }, { actor: 'test' }), /mandate_required/);
   await assert.rejects(router.invoke('host.process.run', { command: 'printf forbidden' }, {
     actor: 'test', mandate: 'test-mandate',
-  }), /authorization_missing|authorization|unix_process_cop_store_writable_by_executor/);
+  }), /authorization_missing|authorization/);
 });
 
 test('Unix provider does not expose host filesystem capabilities', async () => {
@@ -138,7 +154,7 @@ test('FBF #318: local execution still requires independent effect authorization'
       router.invoke('host.process.run', {command:'printf MUST_NOT_RUN'}, {
         actor:'actor:test', mandate:'mandate:test', target:'node:local',
       }),
-      e => e.error_class === 'authorization_missing' || e.error_class === 'unix_process_cop_store_writable_by_executor',
+      e => e.error_class === 'authorization_missing',
     );
   } finally { await router.stop(); }
 });

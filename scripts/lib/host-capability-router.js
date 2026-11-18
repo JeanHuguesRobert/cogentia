@@ -9,7 +9,6 @@
 import fs from "node:fs";
 import { UnixProcessProvider } from "./unix-process-provider.js";
 import { WindowsSshProcessProvider } from "./windows-ssh-process-provider.js";
-import { inspectUnixProcessCopCustody, inspectIsolatedUnixProcessCopCustody, ISOLATED_UNIX_EXECUTOR_USER } from "./unix-process-cop-custody.js";
 import { resolveHostMissionAuthority } from "./host-mission-authority.js";
 import { maybeRecordCopEffectSpend } from "./cop-surface-accounting.js";
 import { createHash, randomUUID } from "node:crypto";
@@ -198,9 +197,7 @@ export function createHostCapabilityRouter(options = {}) {
       return spawned;
     }
     if (providerName === "unix-process") {
-      const spawned = new UnixProcessProvider({ cwd: options.cwd, timeoutMs: options.timeoutMs,
-        isolatedUser: env.COGENTIA_HOST_UNIX_ISOLATED_USER === ISOLATED_UNIX_EXECUTOR_USER
-          ? ISOLATED_UNIX_EXECUTOR_USER : null });
+      const spawned = new UnixProcessProvider({ cwd: options.cwd, timeoutMs: options.timeoutMs });
       providers.set(key, spawned);
       await spawned.start();
       return spawned;
@@ -336,20 +333,11 @@ export function createHostCapabilityRouter(options = {}) {
         throw err;
       }
 
-      // The canonical COP store must be protected from the Unix identity that
-      // executes an agent-supplied script. Filesystem roots for host.fs.* do
-      // not confine /bin/sh. Trusted injected providers retain their own
-      // custody contract; the built-in Unix effecter is checked on every call.
-      if (!isSuper && providerName === "unix-process" && !providerFactory && !ctx.providerInstance) {
-        const custody = env.COGENTIA_HOST_UNIX_ISOLATED_USER
-          ? inspectIsolatedUnixProcessCopCustody({ env })
-          : inspectUnixProcessCopCustody({ env });
-        if (custody.blocked) {
-          const err = new Error(custody.reason);
-          err.error_class = custody.reason;
-          throw err;
-        }
-      }
+      // FBF 2026-11-18: normal Unix Acts run as the authenticated service
+      // operator. Do not deny a mandated Act solely because this account can
+      // also write the COP journal. Actual identity/mandate/effect/budget
+      // checks, trace and settlement below still apply. Infractions are
+      // handled by observation and revocation, not hypothetical UID distrust.
 
       // Cogentia #192 Finding D: Bounded COP budget enforcement / seam
       if (budget) {
