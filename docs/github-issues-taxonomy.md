@@ -3,8 +3,8 @@ title: "GitHub Issues taxonomy — shared classification and controlled reconcil
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A."
 date: "2026-11-17"
-last_modified_at: "2026-11-17"
-version: "0.1"
+last_modified_at: "2026-11-18"
+version: "0.2"
 status: "working-paper — operational first increment"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -37,7 +37,8 @@ of [CPKT-2026-006](../research/CPKT-2026-006_fix_bugs_first_dashboard_handoff.md
 ## Independent dimensions
 
 - **Kind:** native `bug`, `enhancement`, `documentation`; `research`,
-  `idea-to-explore` and `cpkt` supplement GitHub's categories.
+  `idea-to-explore` and `cpkt` supplement GitHub's categories. A `continuation`
+  marks a follow-up thread without asserting it meets cold-resume requirements.
 - **Work state:** GitHub open/closed is authoritative; `blocked`, `parked`,
   `ready` are optional, evidence-dependent qualifiers, not synonyms.
 - **Urgency:** `urgency:now`, `urgency:soon`, `urgency:deferred`.
@@ -48,7 +49,8 @@ of [CPKT-2026-006](../research/CPKT-2026-006_fix_bugs_first_dashboard_handoff.md
 
 Never infer urgency from severity, importance from recency, or `parked` from
 inactivity. Do not convert every research idea into a delivery obligation.
-A `cpkt` must remain resumable by reference with an accessible first step.
+A `cpkt` should be tested for resumability by reference with an accessible first step.
+The `continuation` label does not claim that such a test passed.
 
 ## Commands
 
@@ -93,8 +95,10 @@ after complete reconciliation proposes zero additions.
 
 ## Judgment and closure
 
-The first classifier uses only **explicit title markers** for automatic
-labels. It does not guess the intended type from broad prose. All existing
+The classifier uses only **explicit title signals** for automatic
+labels, including conventional `fix(scope):`, `feat(scope):`, `docs(scope):`,
+numbered `M0–M12` implementation slices, `Epic`, `Continuation`, and
+exploratory verbs (`Explore`, `Study`, `Enquête`, `Benchmark`). It does not guess the intended type from broad prose. All existing
 labels are retained. It raises `consider_close` candidates when there is
 explicit completion evidence or multiple checked tasks and no unchecked
 task. It may flag an explicit duplicate reference.

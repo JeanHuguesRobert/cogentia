@@ -5,10 +5,16 @@
  */
 import { createHash } from 'node:crypto';
 
-export const TAXONOMY_VERSION = 1;
+export const TAXONOMY_VERSION = 2;
 export const CORE_REPOS = Object.freeze(['cogentia', 'barons-Mariani', 'inseme', 'operium']);
+const NATIVE_LABELS = Object.freeze({
+  'bug': {color:'d73a4a',description:"Something isn't working"},
+  'enhancement': {color:'a2eeef',description:'New feature or request'},
+  'documentation': {color:'0075ca',description:'Improvements or additions to documentation'},
+});
 export const COMMON_LABELS = Object.freeze({
-  'cpkt': { color: '0e8a16', description: 'Cold-resumable Cognitive Packet or continuation' },
+  'cpkt': { color: '0e8a16', description: 'Cold-resumable Cognitive Packet, not any ordinary continuation' },
+  'continuation': { color: '1d76db', description: 'Explicit continuation or suspended work; cold-resumability is not implied' },
   'umbrella': { color: '0052cc', description: 'Coordinates linked issues; not a substitute for their work' },
   'idea-to-explore': { color: 'c2e0c6', description: 'Unstarted possibility worthy of preservation' },
   'research': { color: 'bfdadc', description: 'Research and exploratory work' },
@@ -36,11 +42,17 @@ export function classifyIssue(issue) {
   const proposed = [], review = [];
   const add = (name, reason) => { if (!labels.has(name) && !proposed.some(x=>x.label===name)) proposed.push({label:name,reason,confidence:'strong'}); };
   if (/^\s*\[(?:CPKT|Cognitive Packet)\]/i.test(title) || /^\s*Cognitive Packet\b/i.test(title)) add('cpkt','Explicit title marker');
+  if (/^\s*(?:\[continuation\]|continuation\s*[—:\-])/i.test(title)) add('continuation','Explicit continuation title, without claiming cold-resumability');
   if (/^\s*\[(?:umbrella)\]/i.test(title) || /\bumbrella (?:packet|issue|work)\b/i.test(title.slice(0,90))) add('umbrella','Explicit umbrella title');
+  if (/^\s*epic\s*[-—:]\s*/i.test(title) || /^\s*super ACP\s*\(umbrella\)/i.test(title)) add('umbrella','Explicit epic or umbrella title');
   if (/^\s*\[(?:idea to explore|idea|product idea)\]/i.test(title)) add('idea-to-explore','Explicit idea marker in title');
   if (/^\s*(?:\[(?:bug|P0 bug)\]|bug:|OP-BUG-\d+\b)/i.test(title)) add('bug','Explicit bug marker in title');
+  if (/^\s*fix(?:\([^)]+\))?:/i.test(title)) add('bug','Explicit conventional fix: title prefix');
+  if (/^\s*(?:feat(?:\([^)]+\))?:|M\d{1,2}\s*[-—])/i.test(title)) add('enhancement','Explicit feature or bounded implementation milestone prefix');
   if (/^\s*(?:\[(?:docs|documentation)\]|docs:)/i.test(title)) add('documentation','Explicit documentation marker in title');
+  if (/^\s*docs\([^)]+\):/i.test(title)) add('documentation','Explicit conventional docs: title prefix');
   if (/^\s*(?:\[research\]|research:)/i.test(title)) add('research','Explicit research marker in title');
+  if (/^\s*(?:explore|study|investigate|benchmark|case study|enqu[eê]te|[eé]tudier|[eé]valuer)\b/i.test(title)) add('research','Explicit exploratory/research action in title');
   if (/^\s*(?:\[parked\]|parked:)/i.test(title)) add('parked','Explicit parked marker in title');
   if (/^\s*(?:\[blocked\]|blocked:)/i.test(title)) add('blocked','Explicit blocked marker in title');
   if (/^\s*(?:\[P0\]|P0[: -])/i.test(title)) add('urgency:now','Explicit priority-0 marker in title');
@@ -85,7 +97,10 @@ export function buildTaxonomyPlan({owner='JeanHuguesRobert',repositories,at=new 
     // fully provision the four core repos; elsewhere create only labels justified by an issue.
     const needed=new Set(changes.flatMap(c=>c.add.map(l=>l.label)));
     const core=CORE_REPOS.includes(repo.full_name.split('/')[1]);
-    const definitions=Object.entries(COMMON_LABELS).filter(([name])=>!present.has(name)&&(core||needed.has(name))).map(([name,def])=>({name,...def}));
+    const definitions=[
+      ...Object.entries(COMMON_LABELS).filter(([name])=>!present.has(name)&&(core||needed.has(name))).map(([name,def])=>({name,...def})),
+      ...Object.entries(NATIVE_LABELS).filter(([name])=>!present.has(name)&&needed.has(name)).map(([name,def])=>({name,...def})),
+    ];
     result.summary.labels_to_create+=definitions.length;
     judgmentQueue.sort((a,b)=>String(a.updated_at).localeCompare(String(b.updated_at)));
     result.repositories.push({name:repo.full_name,private:privateRepo,missing_definitions:definitions,definition_drift:drift,changes,closure_candidates:closureCandidates,judgment_queue:judgmentQueue,open_count:repo.issues.filter(x=>!x.pull_request&&x.state==='open').length});
@@ -113,9 +128,9 @@ export function assertPlan(plan){
     checkRepoName(r.name);
     if(seen.has(r.name))throw Error('Duplicate repo');
     seen.add(r.name);
-    for(const l of r.missing_definitions)if(!Object.hasOwn(COMMON_LABELS,l.name)||JSON.stringify(COMMON_LABELS[l.name])!==JSON.stringify({color:l.color,description:l.description}))throw Error('Untrusted label definition');
+    for(const l of r.missing_definitions)if(!Object.hasOwn(COMMON_LABELS,l.name)&&!Object.hasOwn(NATIVE_LABELS,l.name)||JSON.stringify(COMMON_LABELS[l.name]||NATIVE_LABELS[l.name])!==JSON.stringify({color:l.color,description:l.description}))throw Error('Untrusted label definition');
     for(const l of r.definition_drift)if(!Object.hasOwn(COMMON_LABELS,l.name)||JSON.stringify(l.desired)!==JSON.stringify(COMMON_LABELS[l.name]))throw Error('Untrusted label drift');
-    for(const c of r.changes){if(!Number.isInteger(c.number)||c.number<1||!Array.isArray(c.add)||c.add.some(a=>!Object.hasOwn(COMMON_LABELS,a.label) && !['bug','documentation'].includes(a.label)))throw Error('Invalid issue change');}
+    for(const c of r.changes){if(!Number.isInteger(c.number)||c.number<1||!Array.isArray(c.add)||c.add.some(a=>!Object.hasOwn(COMMON_LABELS,a.label) && !Object.hasOwn(NATIVE_LABELS,a.label)))throw Error('Invalid issue change');}
   }
   return true;
 }

@@ -7,6 +7,25 @@ assert.deepEqual(classifyIssue(t('[Idea to explore] Nouveau concept')).labels.ma
 assert.deepEqual(classifyIssue(t('P0: Security bug')).labels.map(x=>x.label),['urgency:now']);
 assert.deepEqual(classifyIssue(t('Bug: error')).labels.map(x=>x.label),['bug']);
 assert.deepEqual(classifyIssue(t('Research: study')).labels.map(x=>x.label),['research']);
+assert.deepEqual(classifyIssue(t('Continuation — A live thread')).labels.map(x=>x.label),['continuation']);
+assert.deepEqual(classifyIssue(t('Epic — Parent of multiple issues')).labels.map(x=>x.label),['umbrella']);
+assert.deepEqual(classifyIssue(t('Super ACP (umbrella): runtime grouping')).labels.map(x=>x.label),['umbrella']);
+assert.deepEqual(classifyIssue(t('feat(calculette): new agent surface')).labels.map(x=>x.label),['enhancement']);
+assert.deepEqual(classifyIssue(t('fix(web): Title metadata')).labels.map(x=>x.label),['bug']);
+assert.deepEqual(classifyIssue(t('docs(pub): Published tutorial')).labels.map(x=>x.label),['documentation']);
+assert.deepEqual(classifyIssue(t('M0 — Scaffold package')).labels.map(x=>x.label),['enhancement']);
+const nativeNeeded=buildTaxonomyPlan({repositories:[{full_name:'JeanHuguesRobert/simpli',private:false,issues:[t('M0 — Prototype')],labels:[]}],at:'2026-11-17T12:00:00Z'});
+assert.equal(nativeNeeded.repositories[0].missing_definitions[0].name,'enhancement');
+
+assert.deepEqual(classifyIssue(t('M12 — Final package')).labels.map(x=>x.label),['enhancement']);
+assert.deepEqual(classifyIssue(t('Explore COP and n8n adapter')).labels.map(x=>x.label),['research']);
+assert.deepEqual(classifyIssue(t('Enquête Corse — logement')).labels.map(x=>x.label),['research']);
+assert.deepEqual(classifyIssue(t('Study and implement corpus registry')).labels.map(x=>x.label),['research']);
+assert.deepEqual(classifyIssue(t('Update documentation')).labels,[]);
+assert.deepEqual(classifyIssue(t('Incident — Real outage')).labels,[]);
+assert.deepEqual(classifyIssue(t('Continuation — A live thread','',['continuation'])).labels,[]);
+assert.deepEqual(classifyIssue(t('No activity in 180 days')).labels,[]);
+
 assert.deepEqual(classifyIssue(t('Une idée ancienne, récemment bloquée')).labels,[]);
 assert.deepEqual(classifyIssue(t('[CPKT] Poursuivre','', ['cpkt'])).labels,[]);
 assert.equal(classifyIssue(t('Chantier ancien','- [x] A\n- [x] B\n- [x] C\n- [ ] D')).review.length,0);
@@ -34,8 +53,12 @@ try{
  assert.equal(preflightIssueChange(plan.repositories[0].changes[0],{...issue,labels:[{name:'other'}]}),'labels_changed');
  const changed=structuredClone(plan);changed.repositories[0].changes[0].add[0].label='dangerous';
  assert.throws(()=>assertPlan(changed),/hash mismatch/);
+ const obsolete=structuredClone(plan);obsolete.taxonomy_version=1;
+ const {plan_hash:obsoleteHash,...other}=obsolete;obsolete.plan_hash=digest({...other,plan_hash:undefined});
+ assert.throws(()=>assertPlan(obsolete),/Invalid taxonomy plan/);
+
  const expired=structuredClone(plan);expired.created_at='2026-11-10T12:00:00Z';const {plan_hash,...rest}=expired;expired.plan_hash=digest({...rest,plan_hash:undefined});
  assert.throws(()=>assertPlan(expired),/expired/);
 }finally{Date.now=savedDate;}
 assert.ok(Object.keys(COMMON_LABELS).every(x=>/^[a-z][\w:-]+$/.test(x)));
-console.log('ok - taxonomy: 17 assertions, idempotence, drift, privacy and conservative closure');
+console.log('ok - taxonomy: deterministic title evidence, idempotence, drift, privacy and conservative closure');
