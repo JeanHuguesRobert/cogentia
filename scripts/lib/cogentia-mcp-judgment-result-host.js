@@ -12,8 +12,7 @@ import { continuationContextFromRecords, observeContinuationResult } from
   "../../../inseme/packages/cop-core/src/continuation-result.js";
 import { createSqliteMcpResultReceiptStore } from
   "../../../inseme/packages/cop-core/src/sqlite-mcp-result-receipt-store.js";
-import { projectPacketCoordination, validateCurrentPacketClaim } from
-  "../../../inseme/packages/cop-core/src/packet-coordination.js";
+import {projectCpsResultClaim} from "./cps-effective-result-claim.mjs";
 import { assessJohnCopAuthority } from "./john-cop-authority-preflight.js";
 import { resolveMandate } from "../../../inseme/packages/cop-core/src/governed-act.js";
 import { isResolvedCallerAuth } from "./cogentia-mcp-auth.js";
@@ -208,17 +207,8 @@ export function createCanonicalMcpJudgmentResultHost({
         const canRead = auth?.allowMutate === true && auth?.auth === "jhn";
         const budgetReservation = continuation.budget_reservation_id;
         const packetRef = continuation.packet_ref;
-        const witness = continuation.claim;
-        const projection = packetRef
-          ? projectPacketCoordination(
-              store.listTopic("packet-coordination:" + packetRef)
-                .map(e => e.payload?.packet_coordination_event).filter(Boolean)
-            ) : null;
-        const valid = witness && projection
-          ? validateCurrentPacketClaim(projection, {
-              claimId: witness.claim_id, handlerRef: actor,
-              epoch: witness.epoch, now: new Date(),
-            }) : { ok: false };
+        const effective = projectCpsResultClaim({store,continuation,actor});
+        const witness = effective.ok?effective.claim:null;
         const channelAllowed = await channelPermission({
           continuation, auth, provider: continuation.provider,
           channel: continuation.channel,
@@ -230,7 +220,7 @@ export function createCanonicalMcpJudgmentResultHost({
           mandate_valid: preflight.preflight_ok === true,
           budget_admitted: preflight.preflight_ok === true &&
             hasActiveBudgetReservation(store, budget_id, budgetReservation),
-          claim_valid: valid.ok === true,
+          claim_valid: effective.ok === true,
           continuation,
           claim: witness ? {
             packet_ref: packetRef, claim_id: witness.claim_id,

@@ -32,6 +32,14 @@ import {ROOT_MANDATE_KIND,RESERVED_ACTIONS,canonicalProposalBytes,
 import {createEventSourcedExecutionBudgetLedger}
   from '../../../inseme/packages/cop-core/src/execution-budget.js';
 import {hashPayload} from '../../../inseme/packages/cop-core/src/cop-event-envelope.js';
+import {declaredContinuationRecord}
+  from '../../../inseme/packages/cop-core/src/continuation-result.js';
+import {EventStorePacketClaimCoordinator}
+  from '../../../inseme/packages/cop-kernel/src/packetCoordination.js';
+import {parseCpsVisibleJudgment,bindCpsVisibleRecovery,
+  recordCpsVisibleRecoveryFractalog}
+  from './cps-visible-result-recovery.mjs';
+import {projectCpsResultClaim} from './cps-effective-result-claim.mjs';
 import {preparePublicLegacyJudgmentCps} from './legacy-public-judgment-cps.js';
 
 
@@ -555,5 +563,204 @@ test('legacy handler backfill refuses a historical result without COP settlement
   assert.equal(result.status,'canonical_legacy_settlement_not_verified');
   assert.equal(local.load(c.id).resumption_target,undefined);
   local.close();
+ }finally{c.cleanup()}
+});
+
+
+function visibleReply(child){
+ return {assistant_reply_visible:true,composer_present:true,
+  composer_blank:true,generating:false,
+  current_path:'/c/12345678-1234-1234-1234-123456789012',
+  reply_tail:'CPS '+child+' completed a browser prompt.',
+  transcript_answer:'Livraison Cogentia refusée : claim_not_valid.\n'+
+   'JSON\n'+JSON.stringify({decision:'source',reason})+
+   '\nStatut de soumission : blocked'};
+}
+
+test('visible result parser keeps the model answer distinct from failed MCP delivery',()=>{
+ const id='ctn_chatgpt_browser_0123456789abcdef0123456789abcdef';
+ const p=parseCpsVisibleJudgment(visibleReply(id),{continuation_id:id});
+ assert.equal(p.ok,true);
+ assert.equal(p.decision,'source');
+ assert.equal(p.delivery_status,'observed_in_browser_not_received_by_mcp');
+ assert.equal(parseCpsVisibleJudgment({...visibleReply(id),reply_tail:'other'},
+  {continuation_id:id}).ok,false);
+ assert.equal(parseCpsVisibleJudgment({...visibleReply(id),generating:true},
+  {continuation_id:id}).ok,false);
+});
+
+test('clicked browser answer: recover new real PacketClaim, not initial expired claim',async()=>{
+ const c=setup({seedAccepted:false});
+ try{
+  const packet='packet:'+c.child;
+  let clock=Date.now();
+  const coord=new EventStorePacketClaimCoordinator({store:c.store,now:()=>clock});
+  const first=await coord.tryClaim({packetRef:packet,handlerRef:'agent:jhn',
+    ttlMs:60000});
+  assert.equal(first.ok,true);
+  const keys=generateKeyPairSync('ed25519');
+  const pem=keys.publicKey.export({type:'spki',format:'pem'});
+  const now=new Date('2026-11-18T07:00:00Z');
+  const mandate='mandate:jhn:john-root',budgetId='budget:'+mandate;
+  const proposal={kind:ROOT_MANDATE_KIND,mandate_id:mandate,version:'v1',
+   principal_ref:'principal:jhn',logical_agent_ref:'agent:jhn',
+   valid_from:'2026-01-01T00:00:00Z',valid_until:'2027-01-01T00:00:00Z',
+   scope:{allowed_actions:[RESULT_RETURN_CAPABILITY,'browser.chatgpt.turn'],
+    forbidden_actions:[...RESERVED_ACTIONS],
+    chatgpt_turn_policy:{max_consecutive_turns:2}},
+   max_delegation_depth:1,budget_limits:{max_steps:5}};
+  const approval={kind:'cogentia.principal-signature/v1',
+    principal_ref:'principal:jhn',payload_hash:proposalHash(proposal),
+    key_fingerprint:publicKeyFingerprint(pem),
+    signature_base64:sign(null,canonicalProposalBytes(proposal),keys.privateKey)
+      .toString('base64')};
+  assert.equal(issueVerifiedJohnRoot({store:c.store,proposal,approval,
+    trustedPublicKeyPem:pem,now}).ok,true);
+  const ledger=createEventSourcedExecutionBudgetLedger({
+    store:c.store,budget_id:budgetId,limits:{max_steps:5},
+    require_authority_grant:true});
+  const reserve=ledger.reserve({idempotency_key:'visible:fixture:budget',
+    expected_version:ledger.snapshot().version,demand:{max_steps:1}});
+  assert.equal(reserve.ok,true);
+  const reserveId=reserve.reservation.reservation_id;
+  const child=c.child.slice('continuation:'.length);
+  const declaration={continuation_id:child,
+    packet_ref:packet,version:1,attempt_id:'a1',
+    execution_binding_ref:'binding:'+child,
+    lifecycle:'suspended',correlation:{challenge:'test-browser-challenge'},
+    budget_reservation_id:reserveId,
+    claim:{claim_id:first.claim.claim_id,epoch:first.claim.epoch,
+      expected_generation:coord.inspect(packet).generation},
+    provider:'chatgpt',channel:'browser',
+    resumeTo:'handler:chatgpt-browser-result-observer',
+    state:{assignment_ref:'legacy:'+c.id,
+      dispatch_mode:'cps:assigned-browser-turn/v1',question:c.p.question}};
+  assert.equal(c.store.append(declaredContinuationRecord(declaration)).ok,true);
+  const click='chatgpt-browser:'+child+':first-dispatch-receipt';
+  assert.equal(c.store.append({topic_id:c.child,event_type:'cop.event/v1',
+   actor_id:'cop:fixture',subject_ref:c.child,epistemic_status:'observed',
+   idempotency_key:click,payload:{
+    profile:'cop.continuation-browser-dispatch/v1',
+    phase:'ui_click_dispatched_not_model_result',continuation_id:child
+   }}).ok,true);
+  clock+=65000;
+  const rebound=await coord.tryClaim({packetRef:packet,
+    handlerRef:'agent:jhn',ttlMs:60000});
+  assert.equal(rebound.ok,true);
+  assert.equal(c.store.append({topic_id:c.child,event_type:'cop.event/v1',
+    actor_id:'cop:fixture',subject_ref:c.child,epistemic_status:'observed',
+    idempotency_key:'pre-submit-claim:fixture',payload:{
+    profile:'cogentia.cps-assigned-recovery-claim/v1',
+    phase:'recovery_claim_rebound',continuation_id:child,
+    prior_claim_id:first.claim.claim_id,prior_epoch:1,
+    new_claim_id:rebound.claim.claim_id,new_epoch:2
+   }}).ok,true);
+  // A fresh, independently confirmed claim after both earlier claims expired.
+  // The library's real coordinator uses the actual now (not the fake clock).
+  // Advance the existing timeline only through an event whose expiry is
+  // in the past, then run the actual code at the real current time.
+  const fakeExpiry=new Date(Date.now()-1000).toISOString();
+  const finalClaimRows=c.store.listTopic('packet-coordination:'+packet);
+  assert.ok(finalClaimRows.length>=3);
+  // First and second claims were granted in the past; present time is
+  // simulated as further in the future by using an offset backwards.
+  // In this fixture replace the rebound claim with an expired one using
+  // an authorized synthetic RENEWED packet event (never production).
+  const expired={...rebound.claim,expires_at:fakeExpiry};
+  assert.equal(c.store.append({
+   topic_id:'packet-coordination:'+packet,event_type:'PACKET_CLAIM_RENEWED',
+   actor_id:'cop:fixture',subject_ref:packet,epistemic_status:'observed',
+   payload:{kind:'PacketClaimEvent',packet_ref:packet,
+    packet_coordination_event:{type:'PACKET_CLAIM_RENEWED',
+      packet_ref:packet,claim:expired}}
+  }).ok,true);
+  const local=c.repo();
+  try{
+   const admission={granted:true,provider_permitted:true,budget_admitted:true,
+    authorization_ref:'mandate:jhn:john-root@v5',
+    provider_permission_receipt_ref:'fixture:browser-provider-permission',
+    budget_authorization_ref:'fixture:budget-grant'};
+   const johnReadId='jhn-cps-observe-ctn_fixture_123456';
+   const johnBudget=ledger.reserve({idempotency_key:'chatgpt-turn:'+johnReadId,
+     expected_version:ledger.snapshot().version,demand:{max_steps:2}});
+   assert.equal(johnBudget.ok,true);
+   assert.equal(ledger.settle({
+     reservation_id:johnBudget.reservation.reservation_id,
+     expected_version:ledger.snapshot().version,
+     usage:{max_steps:2}
+   }).ok,true);
+   const out=await bindCpsVisibleRecovery({store:c.store,local,
+    continuation_id:child,repoRoots:{cogentia:join(c.root,'docs')},
+    observed:visibleReply(child),john_request_id:johnReadId,
+    tab_id:94450708,admission});
+   assert.equal(out.ok,true,JSON.stringify(out));
+   assert.equal(out.decision,'source');
+   assert.equal(out.submission.step_result.result.source_provenance,
+    'governed_browser_observation_after_mcp_rejection');
+   assert.equal(out.submission.usage_observation.direct_model_tool_submission,false);
+   assert.equal(out.submission.step_result.challenge,'test-browser-challenge');
+   const projection=projectCpsResultClaim({store:c.store,
+    continuation:declaration,actor:'agent:jhn'});
+   assert.equal(projection.ok,true,JSON.stringify(projection));
+   assert.equal(projection.source,'late_observed_return');
+   assert.equal(projection.claim.epoch,3);
+   const repeated=await bindCpsVisibleRecovery({store:c.store,local,
+    continuation_id:child,repoRoots:{cogentia:join(c.root,'docs')},
+    observed:visibleReply(child),john_request_id:johnReadId,
+    tab_id:94450708,admission});
+   assert.equal(repeated.ok,true,JSON.stringify(repeated));
+   assert.equal(repeated.submission.idempotency_key,out.submission.idempotency_key);
+   assert.equal(c.store.listTopic(c.child).filter(e=>
+    e.payload?.phase==='late_return_claim_rebound').length,1);
+   assert.equal(linkPacketChild(c.store,{parent_ref:c.parent,child_ref:c.child}).ok,true);
+   assert.equal(registerParentJoin(c.store,{parent_ref:c.parent,
+    join_id:'public-document-role-judgment',mode:'all'}).ok,true);
+   const core=createMcpCore({
+     COGENTIA_MCP_VIEW:'public',COGENTIA_MCP_JHN_MUTATE:'1',
+     COGENTIA_MCP_JHN_TOKEN:'fixture-token',
+   },{mcpContinuationResultHost:createCanonicalMcpJudgmentResultHost({
+      store:c.store,mandate_ref:mandate,budget_id:budgetId,
+      transport_mandate_label:'mandate:chatgpt-corpus-coding',
+      verifyIssuer:createOfflineJohnIssuerVerifier({
+        trustedPublicKeyPem:pem,now:()=>now}),
+      channelPermission:({provider,channel})=>
+       provider==='chatgpt'&&channel==='browser',
+      autoProcess:true,
+   })});
+   const auth=resolveCallerAuth({COGENTIA_MCP_JHN_MUTATE:'1',
+     COGENTIA_MCP_JHN_TOKEN:'fixture-token'},{
+      headers:{authorization:'Bearer fixture-token'},
+      meta:{'cogentia.actor':'agent:jhn',
+        'cogentia.mandate_ref':'mandate:chatgpt-corpus-coding'}});
+   const returned=await core.callTool('cogentia_continuation_result_submit',
+     out.submission,{auth});
+   assert.equal(returned.ok,true,JSON.stringify(returned));
+   assert.equal(returned.continuation_status,'returned');
+   // Two actual John observation steps + ONE admitted CPS Judgment, not
+   // two charges for duplicate result ingress.
+   assert.equal(ledger.snapshot().settled.max_steps,3);
+   const repeatedMcp=await core.callTool('cogentia_continuation_result_submit',
+     out.submission,{auth});
+   assert.equal(repeatedMcp.ok,true);
+   assert.equal(repeatedMcp.duplicate,true);
+   assert.equal(ledger.snapshot().settled.max_steps,3);
+   const logged=recordCpsVisibleRecoveryFractalog({store:c.store,
+     continuation_id:child});
+   assert.equal(logged.ok,true,JSON.stringify(logged));
+   assert.equal(recordCpsVisibleRecoveryFractalog({store:c.store,
+     continuation_id:child}).duplicate,true);
+   const fl=c.store.eventByIdempotency(logged.receipt_ref);
+   assert.equal(fl.payload.schema,'fractalog.act-record/v1');
+   assert.equal(fl.payload.effect.new_browser_submissions,0);
+   assert.ok((await reconcilePacketParentContinuations(c.store)).notified>=1);
+   const settled=await c.settle({resolveCli:async({continuation_id,payload})=>{
+    const x=c.run('continuation','resolve',continuation_id,
+     '--payload-json',JSON.stringify(payload));
+    return {ok:x.status===0&&x.data.ok===true};
+   }});
+   assert.equal(settled.settled,1,JSON.stringify(settled));
+   assert.equal(c.run('index','update').data.partial,false);
+   assert.equal(c.store.auditCommitments().ok,true);
+  }finally{local.close()}
  }finally{c.cleanup()}
 });

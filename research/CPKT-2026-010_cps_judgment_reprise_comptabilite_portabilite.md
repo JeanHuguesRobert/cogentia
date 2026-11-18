@@ -568,3 +568,81 @@ avec nouvelle admission locale et traitement des retours tardifs.
 Les 15 fragments sont vérifiés dans l'artefact de continuation :
 **leur publication dans l'index global n'est pas revendiquée**,
 afin de ne pas perturber les chantiers concurrents d'indexation.
+
+## 13. Quatrième passe — cause du retour manquant et récupération du claim (18 novembre 2026)
+
+### Diagnostic réel avant nouvelle émission
+
+Le navigateur gouverné John/COP a énuméré les onglets hébergés en
+lecture seule, puis inspecté uniquement les trois conversations marquées
+comme Judgments. L'onglet `94450708` contient bien le paquet
+`ctn_chatgpt_browser_3c19231e839be86362855e6cd87e7dc8`.
+Son assistant a généré une réponse documentaire structurée
+(`decision=index` et justification sur un article public du magazine
+1755), mais l'appel de l'outil Cogentia a échoué :
+
+> `claim_not_valid` — aucun reçu MCP de livraison réussie.
+
+La vraie continuation enfant est reliée au parent
+`ctn_20989422` (`barons-Mariani/projects/1755/magazine/2026-10-09-une-cote-pour-la-constitution.md`).
+Sa source publique publiée est inchangée (SHA-256
+`f9c9646b71b8dfc7404af584fb0e0cf3af6a9420b0eb2383f1878edb2494e941`).
+
+**Cause FBF :** le `PacketClaim` déclaré à l'époque **1** a expiré
+le 16/11/2026 à 21:54 UTC. Le dispatcher a correctement récupéré
+un claim époque **2** avant le clic John confirmé du
+17/11 à **04:30:40 UTC**, mais le récepteur MCP
+`cogentia-mcp-judgment-result-host.js` vérifiait
+**exclusivement le claim original époque 1** de la déclaration immuable.
+Le claim époque 2 a lui aussi expiré depuis. Ni un nouveau prompt ni
+une mise à zéro de l'historique ne sont des corrections légitimes.
+
+### Correction générique sous contrôle COP
+
+- `scripts/lib/cps-effective-result-claim.mjs` projette la chaîne
+  exacte `declared claim → recovery_claim_rebound → éventuelle
+  late_return_claim_rebound` depuis le **même journal COP** ;
+  vérifie la génération, l'acteur, les époques, le claim actuellement
+  détenu, son expiration et les références causales. Le récepteur MCP
+  utilise cette projection au lieu d'un claim obsolète.
+  Aucune expiration n'est ignorée, aucun grant n'est inventé.
+- `scripts/lib/cps-visible-result-recovery.mjs` récupère uniquement
+  une **réponse déjà émise** après un clic confirmé, dans la conversation
+  propriétaire. Il vérifie le paquet, sa source publique inchangée,
+  la réservation initiale, une réponse unique au format attendu,
+  et **un reçu de lecture John réellement réglé dans COP**.
+  Il conserve l'empreinte du texte visible, sans transcrire
+  l'ensemble de la conversation. Sous admission signée et permission
+  fournisseur indépendantes, il réclame **un nouvel et unique
+  PacketClaim**, puis lie ce claim à l'ancienne livraison et à
+  l'observation par un événement causal distinct.
+- `scripts/ops/reconcile-cps-visible-browser-result.mjs` est une
+  recette opératoire réutilisable `--preview / --apply` :
+  `--apply` exécute uniquement une observation John du navigateur,
+  **jamais un nouveau clic Send**, puis présente le Judgment
+  reconstruit au **vrai canal MCP** avec l'authentification JHN,
+  sa corrélation d'origine et une `usage_observation` indiquant
+  explicitement `direct_model_tool_submission=false`.
+  L'issue `returned` doit être vérifiée avant tout succès revendiqué.
+  Un résultat sans reçu reste bloqué, même si le modèle « a répondu ».
+- Un FractaLog idempotent `fractalog.act-record/v1` représente le
+  **retour reconstruit** : références du clic historique, de la lecture
+  John, du nouveau claim, du reçu MCP `returned` et du règlement
+  `max_steps=1`, sans imputer artificiellement une dépense fournisseur
+  nouvelle ou inventer son coût monétaire d'origine.
+
+**Tests :** le contrôleur effectif refuse un claim expiré, un acteur
+étranger, un faux événement sans causalité et une génération différente.
+Le scénario complet en SQLite jetable utilise une vraie délégation
+signée de fixture, une lecture John avec reçu budgétaire, un claim
+repris à l'époque suivante, le vrai récepteur MCP, la clôture du COP
+Scheduler, le retour au vrai handler d'indexation, le FractaLog et
+l'idempotence du règlement COP. Les coûts `max_steps` distincts de
+la lecture John et du Judgment sont comptés séparément.
+
+**État à ce stade de publication du code :** prévisualisation
+*production* `eligible_for_visible_recovery` confirmée **sans mutation**.
+Le correctif du récepteur doit être chargé par le serveur MCP avant
+toute soumission du résultat de production. Une simple suite verte
+ne doit pas être confondue avec cette admission réelle ; consignation
+des reçus du nouvel essai à suivre si le déploiement est possible.
