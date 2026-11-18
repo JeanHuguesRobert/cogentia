@@ -45,6 +45,17 @@ UNIT
 systemctl daemon-reload
 systemctl enable --now cogentia-contributive.service
 systemctl restart cogentia-contributive.service
+# FBF: never accept an HTTP 200 from a leftover standalone process as proof
+# that the new systemd unit actually started the pinned release.
+sleep 1
+systemctl is-active --quiet cogentia-contributive.service || {
+  echo "Installed service is not active: $(systemctl is-active cogentia-contributive.service)" >&2
+  exit 80
+}
+test "$(systemctl show cogentia-contributive.service -p MainPID --value)" -gt 0 || {
+  echo "No live service main PID" >&2
+  exit 81
+}
 curl -fsS --max-time 8 http://127.0.0.1:8879/3code/api/health > /dev/null
 site=/etc/caddy/fracta2-edge-https/services.caddy
 candidate="$(mktemp)"

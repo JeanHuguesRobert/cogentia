@@ -4,7 +4,7 @@
 import { createServer } from 'node:http';
 import { DatabaseSync } from 'node:sqlite';
 import { randomBytes, randomUUID, createHash, timingSafeEqual } from 'node:crypto';
-import { mkdirSync, readFileSync, chmodSync } from 'node:fs';
+import { mkdirSync, readFileSync, chmodSync, existsSync, realpathSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import QRCode from 'qrcode';
@@ -38,8 +38,12 @@ function authorize(provided, digest) {
 }
 function init(dbPath) {
   process.umask(0o077); // SQLite DB, WAL and SHM must never be world-readable.
-  mkdirSync(dirname(dbPath),{recursive:true,mode:0o700});
-  chmodSync(dirname(dbPath),0o700);
+  const dbDir = dirname(dbPath);
+  // Only tighten a directory created by this service; never chmod /tmp or
+  // another caller-owned shared parent supplied in CAMPAIGNS_DB.
+  const newDir = !existsSync(dbDir);
+  mkdirSync(dbDir,{recursive:true,mode:0o700});
+  if(newDir) chmodSync(dbDir,0o700);
   const db=new DatabaseSync(dbPath);
   chmodSync(dbPath,0o600);
   db.exec('PRAGMA journal_mode=WAL; PRAGMA busy_timeout=3000; PRAGMA foreign_keys=ON;');
@@ -202,7 +206,7 @@ export function makeServer({dbPath=process.env.CAMPAIGNS_DB||'/srv/cogentia/data
   return server;
 }
 function failError(s){const e=new Error(s);e.status=400;return e;}
-if(process.argv[1]&&fileURLToPath(import.meta.url)===process.argv[1]) {
+if(process.argv[1]&&realpathSync(fileURLToPath(import.meta.url))===realpathSync(process.argv[1])) {
   const port=Number(process.env.PORT||8879),host=process.env.HOST||'127.0.0.1';
   makeServer().listen(port,host,()=>process.stdout.write('contributive-service listening '+host+':'+port+'\n'));
 }

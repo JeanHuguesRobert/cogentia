@@ -1,6 +1,8 @@
 import test,{before,after} from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync,rmSync,statSync} from 'node:fs';
+import {mkdtempSync,rmSync,statSync,symlinkSync} from 'node:fs';
+import {spawn} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {makeServer,code,generate} from '../server.mjs';
@@ -29,6 +31,33 @@ test('3Code format, normalization, collisions permitted',()=>{
   assert.equal(a.size,1000);
   for(const c of a)assert.match(c,/^3[A-Z0-9]{2}-[A-Z0-9]{3}-[A-Z0-9]{3}$/);
 });
+
+test('regression: executable entrypoint starts through deployed symlink',async()=>{
+  const sandbox=mkdtempSync(join(tmpdir(),'contributive-link-'));
+  const linked=join(sandbox,'server.mjs');
+  symlinkSync(fileURLToPath(new URL('../server.mjs',import.meta.url)),linked);
+  const proc=spawn(process.execPath,[linked],{
+    env:{...process.env,PORT:'0',HOST:'127.0.0.1',CAMPAIGNS_DB:join(sandbox,'db.sqlite')},
+    stdio:['ignore','pipe','pipe']
+  });
+  try {
+    const started=await Promise.race([
+      new Promise((resolve,reject)=>{
+        proc.stdout.on('data',data=>{if(String(data).includes('contributive-service listening'))resolve(true);});
+        proc.once('exit',(code,signal)=>reject(new Error('server exited before listen: '+code+'/'+signal)));
+        proc.once('error',reject);
+      }),
+      new Promise((_,reject)=>setTimeout(()=>reject(new Error('timed out waiting for listener')),4000))
+    ]);
+    assert.equal(started,true);
+    assert.equal(statSync(sandbox).mode&0o777,0o700); // A caller-owned shared parent never chmod.
+  } finally {
+    proc.kill('SIGTERM');
+    await new Promise(resolve=>proc.once('exit',resolve));
+    rmSync(sandbox,{recursive:true,force:true});
+  }
+});
+
 test('private SQLite file mode',()=>{
   assert.equal(statSync(join(dir,'db.sqlite')).mode & 0o777,0o600);
   assert.equal(statSync(dir).mode & 0o777,0o700);
