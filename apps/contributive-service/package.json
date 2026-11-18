@@ -1,0 +1,9 @@
+{
+  "name": "@cogentia/contributive-service",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {"start": "node server.mjs", "test": "node --test test/*.test.mjs"},
+  "dependencies": {"qrcode": "1.5.4"},
+  "engines": {"node": ">=24"}
+}
