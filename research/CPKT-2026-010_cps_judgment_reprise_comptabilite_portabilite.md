@@ -646,3 +646,116 @@ Le correctif du récepteur doit être chargé par le serveur MCP avant
 toute soumission du résultat de production. Une simple suite verte
 ne doit pas être confondue avec cette admission réelle ; consignation
 des reçus du nouvel essai à suivre si le déploiement est possible.
+
+## 14. Quatrième passe — réponse du vrai navigateur récupérée, nouveau claim local et réentrée accomplie (18 novembre 2026)
+
+**Preuve H1/H2/H3 sur Fracta2 : PASS, sans nouvelle génération fournisseur.**
+Le code de base de cette passe est le commit Cogentia
+[`ce4a23fd`](https://github.com/JeanHuguesRobert/cogentia/commit/ce4a23fd20bc24fffdff40ed77785519da7131fa).
+
+### 14.1 Réception d'un véritable résultat préalablement refusé
+
+Un examen en lecture seule du navigateur hébergé via John/COP
+(`browser.hosted.inspect` puis `browser.chatgpt.turn observe`)
+a retrouvé l'onglet marqué **94450708** contenant la continuation
+`ctn_chatgpt_browser_3c19231e839be86362855e6cd87e7dc8`.
+Le modèle avait déjà répondu à la question documentaire (`decision=index`).
+Son retour automatique à Cogentia échouait avec `claim_not_valid`,
+car le récepteur MCP contrôlait le PacketClaim original d'époque 1,
+périmé et remplacé par le claim d'époque 2 lors de la dernière
+récupération `pre_submit`. Le clic UI du 17 novembre à 04:30:40 UTC
+est une preuve de soumission navigateur, pas de réception MCP.
+
+La CLI `scripts/ops/reconcile-cps-visible-browser-result.mjs`
+a été exécutée uniquement pour cet ID et cet onglet
+(`--apply --source-host-recovery`) : le mode explicite
+`source-host-recovery` permet d'instancier le **même véritable host
+MCP canonique dans un processus local à usage unique**, avec token
+JHN secret non affiché, issuer signé vérifié, permission du canal,
+COP, PacketClaim et budget réels. Il ne modifie aucune permission
+et ne simule aucun reçu ; il n'est **pas** le service HTTP permanent.
+Ce choix a évité un second appel ChatGPT et n'a créé aucune copie
+de registre.
+
+**Les reçus de production réellement vérifiés :**
+
+- Nouveau claim d'époque **3**, obtenu via
+  `EventStorePacketClaimCoordinator.tryClaim` après vérification
+  de la chaîne epochs 1→2, du clic et de l'observation John.
+- Observation du navigateur :
+  `cps-visible-result:ctn_chatgpt_browser_3c19231e839be86362855e6cd87e7dc8`.
+  Texte réel conservé sous empreinte, pas comme fausse soumission MCP
+  originale.
+- Résultat accepté et normalisé par le vrai
+  `cogentia_continuation_result_submit` :
+  `cop:event:5cc26432-2183-4ea0-b935-8ad5e95e19f8`;
+  **un** `returned`, **un** `accepted`, **un**
+  `handler_completed`, **un** règlement de l'ancienne réservation
+  `max_steps=1`.
+- FractaLog réel :
+  `fractalog:cps-visible-recovery:ctn_chatgpt_browser_3c19231e839be86362855e6cd87e7dc8`.
+  Il associe réponse observée, clic original, nouveau claim,
+  reçu MCP et règlement. `auditCommitments().ok=true`.
+- **Zéro nouvelle soumission navigateur, zéro nouveau Judgment modèle**
+  pour cette récupération. Les seules lectures du navigateur
+  constituent leurs propres actes John comptabilisés ; la dépense
+  financière historique du fournisseur n'est **pas mesurée**.
+
+### 14.2 Reprise métier constatée après le COPScheduler
+
+Le résident ONA a ultérieurement assimilé le résultat dans le parent
+`ctn_20989422` (`barons-Mariani/projects/1755/magazine/2026-10-09-une-cote-pour-la-constitution.md`),
+décision locale `index`, et a émis le reçu historique
+`legacy-role-resolution:248679a92d5a4cb475d555fdc9c897a892dc`.
+
+Le prévol du correctif historique H1
+`backfill-accepted-public-judgment-reentry.mjs` est passé ;
+`--apply` a attaché le handler déjà existant sous CAS et exécuté
+la vraie réentrée par le même `chunkMarkdown` d'origine. Constat
+indépendant sur les bases de production :
+
+- `status=resolved` ; `return_state.resumed=true` et
+  `delivered=true` ;
+- **4 fragments calculés** dans l'unique slot SQLite
+  `reentry:public-document-index` ;
+- reçu COP complémentaire
+  `legacy-role-late-reentry:248679a92d5a4cb475d555fdc9c897a892dc`,
+  sans réécriture de l'accusé ancien ;
+- FractaLog métier
+  `fractalog:legacy-index-reentry:248679a92d5a4cb475d555fdc9c897a892dc`,
+  engagement canonique valide.
+
+**Limite :** les fragments existent dans l'artefact de continuation,
+mais leur publication dans le moteur de recherche global n'a pas
+été demandée ni vérifiée, pour éviter un `index update` global
+pendant d'autres travaux concurrents.
+
+### 14.3 Déploiement permanent différé et état des files
+
+Le redémarrage ciblé `mcp-cogentia.service` a été préparé via
+`cogentia_host_process_prepare` et octroi d'effet sous JHN
+pour la commande `sudo -n systemctl restart mcp-cogentia.service`.
+**Les deux voies super ont refusé l'exécution avec
+`cop_authorization_denied`.** Aucun redémarrage privilégié
+n'a été obtenu, et cette limite n'a pas été contournée par SSH
+ou sudo direct. Les sources nouvelles ne doivent donc **pas**
+être prétendues chargées dans le MCP HTTP permanent. La
+récupération ponctuelle est une exécution réelle du code source,
+avec les véritables contrôles COP, et **non une installation**.
+
+Contrôle final en lecture seule : aucune affectation CPS
+prête, aucun wake en attente, aucune réconciliation active ;
+une ancienne continuation `ctn_chatgpt_browser_41f023c6f0492e434557a7d638fcc075`
+reste explicitement `parked` pour livraison inconnue :
+ni effacement ni rejeu automatique. Les cohortes publiques
+préapprouvées ont consommé leurs quotas historiques ;
+un nouvel essai ne doit pas dépasser silencieusement ce cadre.
+
+**Acceptation :** H1 reprise réelle après fournisseur :
+PASS ; H2 retour réel ChatGPT via navigateur et réadmission
+sous nouvelle epoch : PASS, sans nouveau modèle ;
+H3 budget COP et FractaLog propres au parcours : PASS
+pour les événements constatés, mais **comptabilité monétaire
+du fournisseur historique non mesurée** ;
+H4 migration inter-hôtes encore non testée.
+Ne pas fermer le CPKT ni l'Issue #336.
