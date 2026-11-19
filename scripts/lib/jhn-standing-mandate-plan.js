@@ -8,6 +8,8 @@ import {isMandateActive,resolveMandate} from
   "../../../inseme/packages/cop-core/src/governed-act.js";
 import {createEventSourcedExecutionBudgetLedger} from
   "../../../inseme/packages/cop-core/src/execution-budget.js";
+import {JHN_VAULT_INSTANCE_ID} from
+  "../../../inseme/apps/platform/scripts/lib/vault-catalog.js";
 import {STANDING_DIAGNOSTIC_PROFILE,STANDING_GENERAL_HOST_PROFILE,
   STANDING_MANDATE_REF} from "./john-standing-mission-authority.js";
 const REF=STANDING_MANDATE_REF;
@@ -16,6 +18,22 @@ export const STANDING_CAPABILITIES=Object.freeze([
   "continuation.resolve","host.process.run","host.fs.write",
   "dns.record.ensure","site.static.release",
 ]);
+// Provider-neutral logical capabilities; one reusable Core projects to CLI/MCP.
+// No raw secret value is returned to a reasoner or external tool response.
+export const STANDING_VAULT_CAPABILITIES=Object.freeze([
+  "vault.list","vault.describe","vault.config.read","vault.config.write",
+  "vault.secret.use","vault.secret.ensure","vault.secret.promote",
+  "vault.secret.rotate","vault.secret.revoke",
+]);
+const VAULT_SCOPE=Object.freeze({
+  instance_id:JHN_VAULT_INSTANCE_ID,
+  instance_ref:"instance:jhn",
+  material_handling:"trusted_executor_only",
+  agent_visible_values:false,
+  versioned_conditional_write:true,
+  external_provider_credential_change_authorized:false,
+  third_party_commitment_authorized:false,
+});
 const forbid=Object.freeze([
   "communication.send","gmail.send","whatsapp.send","publish",
   "legal.commit","financial.commit","payment.execute","formal.submit",
@@ -92,11 +110,45 @@ export function johnStandingMandatePlan({store,at_time=new Date()}={}) {
         reason:"Correction FBF : une capacité générale host.process.run sur les nœuds Fractanet existants sous mandat permanent, avec budget COP et reçus ; suppression des outils spécialisés au Musée. Restrictions externes et durée inchangées."},
       mandate_amended:false};
   }
-  if (existing.version!=="v3"&&existing.version!=="v5")
+  // Existing v5 is signed and already enables general technical host access.
+  // Add permissions for *JHN's own Vault*, not third-party credential changes.
+  if(existing.version==="v5") {
+    const ops=existing.scope.standing_operations;
+    if(!Array.isArray(ops)||ops.length!==2 ||
+      ops.some(op=>op.profile!==STANDING_GENERAL_HOST_PROFILE ||
+        op.capability!=="host.process.run") ||
+      !existing.scope.allowed_actions.includes("host.process.run") ||
+      existing.scope.allowed_actions.some(action=>action.startsWith("vault.")) ||
+      existing.scope.vault_policy)
+      return fail("standing_v5_lineage_untrusted");
+    const scope=structuredClone(existing.scope);
+    scope.allowed_actions=[...scope.allowed_actions,...STANDING_VAULT_CAPABILITIES];
+    scope.vault_policy={...VAULT_SCOPE};
+    return {ok:true,ready_for_issuance:true,requires_owner_consent:true,
+      mandate_ref:REF,previous_version:"v5",next_version:"v6",
+      added_capabilities:[...STANDING_VAULT_CAPABILITIES],
+      forbidden_actions_unchanged:true,budget_ceiling_unchanged:true,
+      budget_snapshot_for_review:{budget_id:ids[0],limits:budget.limits,
+        available:budget.available,observed_version:budget.version},
+      mandate:{mandate_ref:REF,principal_ref:"principal:jhn",
+        expected_version:"v5",scope,valid_from:existing.valid_from,
+        valid_until:existing.valid_until,
+        reason:"Mandat permanent : opérations génériques sur le Vault de l'Instance JHN (Core, CLI et MCP). Valeurs secrètes utilisables seulement dans l'exécuteur de confiance ; aucune divulgation à l'agent ni changement d'identifiants chez un fournisseur. Les interdictions et budgets COP restent inchangés."},
+      mandate_amended:false};
+  }
+  if(existing.version==="v6") {
+    const scope=existing.scope;
+    if(STANDING_VAULT_CAPABILITIES.some(c=>!scope.allowed_actions.includes(c)) ||
+      scope.vault_policy?.instance_id!==JHN_VAULT_INSTANCE_ID ||
+      scope.vault_policy?.agent_visible_values!==false ||
+      scope.vault_policy?.external_provider_credential_change_authorized!==false ||
+      scope.vault_policy?.material_handling!=="trusted_executor_only")
+      return fail("standing_v6_vault_scope_untrusted");
+    return {ok:true,already_authorized_in_scope:true,
+      mandate_ref:REF,version:"v6",mandate_amended:false};
+  }
+  if (existing.version!=="v3")
     return fail("standing_plan_version_unsupported");
-  if (existing.version==="v5")return {ok:true,
-    already_authorized_in_scope:true,mandate_ref:REF,version:"v5",
-    mandate_amended:false};
   const scope=structuredClone(existing.scope);
   const added=STANDING_CAPABILITIES.filter(x=>!scope.allowed_actions.includes(x));
   if(added.some(x=>scope.forbidden_actions.includes(x)))

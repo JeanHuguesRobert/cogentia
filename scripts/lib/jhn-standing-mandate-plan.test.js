@@ -11,7 +11,7 @@ import {JHN_VAULT_INSTANCE_ID} from
 import {ROOT_MANDATE_KIND,RESERVED_ACTIONS} from "./john-root-mandate.js";
 import {createJhnCanonicalConsentWorkflow} from "./jhn-canonical-consent-workflow.js";
 import {createJhnConsentHttpHandler} from "./jhn-consent-http-handler.js";
-import {johnStandingMandatePlan,STANDING_CAPABILITIES} from "./jhn-standing-mandate-plan.js";
+import {johnStandingMandatePlan,STANDING_CAPABILITIES,STANDING_VAULT_CAPABILITIES} from "./jhn-standing-mandate-plan.js";
 
 const NOW=new Date("2026-11-15T12:00:00Z");
 const origin="https://jhn.baronsmariani.org",ref="mandate:jhn:john-root";
@@ -169,6 +169,34 @@ test("FBF: one v4→v5 permanent amendment enables general existing host executi
       store:f.store,budget_id:"budget:"+ref,require_authority_grant:true
     }).snapshot();
     assert.equal(budget.available.max_steps,2048);
+    const v6=f.plan();
+    assert.equal(v6.ok,true);
+    assert.equal(v6.previous_version,"v5");
+    assert.equal(v6.next_version,"v6");
+    assert.deepEqual(v6.added_capabilities,[...STANDING_VAULT_CAPABILITIES]);
+    assert.deepEqual(v6.mandate.scope.forbidden_actions,[...RESERVED_ACTIONS]);
+    assert.equal(v6.mandate.scope.vault_policy.instance_ref,"instance:jhn");
+    assert.equal(v6.mandate.scope.vault_policy.agent_visible_values,false);
+    assert.equal(v6.mandate.scope.budget_ceiling.max_steps,2048);
+    assert.equal(resolveMandate(f.store,ref).version,"v5");
+    const challenge6=f.workflow.request({mandate:v6.mandate,ttl_ms:600000});
+    assert.equal(challenge6.ok,true);
+    assert.equal((await f.http("/api/cop/principal-consent/"+challenge6.challenge_id,
+      "untrusted-user",{decision:"approve",payload_hash:challenge6.payload_hash})).status,403);
+    assert.equal(resolveMandate(f.store,ref).version,"v5");
+    const approval6=await f.http("/api/cop/principal-consent/"+challenge6.challenge_id,
+      "owner-session",{decision:"approve",payload_hash:challenge6.payload_hash});
+    assert.equal(approval6.status,200,await approval6.clone().text());
+    assert.equal(resolveMandate(f.store,ref).version,"v6");
+    for(const action of STANDING_VAULT_CAPABILITIES) {
+      assert.equal(evaluateMandate(f.store,{mandate_ref:ref,version_pin:"v6",
+        capability:action,at_time:NOW}).granted,true,action);
+    }
+    for(const action of ["private.disclose","sensitive.disclose","gmail.send",
+      "security.credentials.change","irreversible.delete"]) {
+      assert.equal(evaluateMandate(f.store,{mandate_ref:ref,version_pin:"v6",
+        capability:action,at_time:NOW}).granted,false,action);
+    }
     assert.equal(f.plan().already_authorized_in_scope,true);
   }finally{f.store.close();}
 });
@@ -190,12 +218,15 @@ test("Supabase-linked Principal activates standing mandate in one authenticated 
     assert.equal((await again.json()).mandate_version,"v5");
     assert.equal(resolveMandate(f.store,ref).version,"v5");
     const third=await f.http(endpoint,"owner-session",{});
-    assert.equal(third.status,200);
-    assert.equal((await third.json()).already_authorized_in_scope,true);
+    assert.equal(third.status,200,await third.clone().text());
+    assert.equal((await third.json()).mandate_version,"v6");
+    const fourth=await f.http(endpoint,"owner-session",{});
+    assert.equal(fourth.status,200);
+    assert.equal((await fourth.json()).already_authorized_in_scope,true);
     const events=f.store.replay();
     assert.equal(events.filter(e=>e.payload?.kind==="PrincipalConsentRequested").length,0);
-    assert.equal(events.filter(e=>e.payload?.kind==="PrincipalAuthenticatedMandateIntent").length,2);
-    assert.equal(events.filter(e=>e.payload?.kind==="MandateDeclaration").length,3);
+    assert.equal(events.filter(e=>e.payload?.kind==="PrincipalAuthenticatedMandateIntent").length,3);
+    assert.equal(events.filter(e=>e.payload?.kind==="MandateDeclaration").length,4);
     assert.equal(events.filter(e=>e.payload?.kind==="MandateDeclaration")
       .at(-1).payload.metadata.amendment.approval_scheme,
       "supabase_authenticated_owner_direct_intent_v1");
