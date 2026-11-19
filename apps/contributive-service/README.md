@@ -4,7 +4,7 @@ author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A."
 language: en
 date: 2026-11-18
-last_modified_at: 2026-11-18
+last_modified_at: 2026-11-19
 license: CC BY-SA 4.0
 status: "working-paper — experimental MVP; deployment evidence separate"
 document_role: operational
@@ -31,6 +31,45 @@ review:
 Neutral experimental KYS service. Open to all candidates and nonpolitical initiatives under the same technical conditions. No political targeting, mass-message sending, donations, or automatic endorsement counting.
 
 **Public entrypoint (when unit is healthy):** https://services.acorsica.org/3code . Production status requires a successful live HTTPS test and persistence check.
+
+## Phase pilote — decision du Principal, 19 novembre 2026
+
+Le premier registrar C.O.R.S.I.C.A. / KYS Services se limite aux
+**Bouteilles a la Mer**, c'est-a-dire aux exemplaires singuliers deja
+declares dans une campagne contributive. Il ne propose pas encore
+l'association libre entre un 3Code et des URL arbitraires. Generation
+libre et homonymies restent autorisees, conformement a la specification
+generale et a la future confederation.
+
+### Procedure minimale d'enregistrement
+
+1. Creer une fiche d'exemplaire dans une campagne et conserver la
+   cle privee de controle remise a la creation.
+2. Depuis cette fiche, presenter le copy_id, le 3Code correspondant et
+   la cle privee, puis reconnaitre explicitement la publication
+   de la fiche et les limites de la preuve.
+3. Le registrar prepare une demande (record_id), identifie son
+   registrar_id, sa politique et son perimetre, et conserve un evenement
+   date dans le journal registration_journal.
+4. L'usager expedie lui-meme un courriel avec un challenge unique
+   a validite limitee vers une boite effectivement configuree.
+   La reception verifiee par un adaptateur de confiance produit un
+   deuxieme evenement ; la simple adresse From ne prouve ni identite
+   ni propriete de l'exemplaire.
+5. Le recu local expose l'identifiant stable, le registrar d'origine,
+   le numero de revision et les empreintes des evenements, pour
+   permettre des protections futures sans perdre l'anteriorite.
+
+**Ce que nous ne pretendons pas avoir :** deuxieme registrar,
+replication, signature independante, journal infalsifiable,
+transfert d'autorite, revocation federee ou recuperation automatique.
+La conservation des Packet JSON et de leurs empreintes est un
+historique local, pas une preuve cryptographique externe.
+
+**Evolution proportionnee :** ajouter les defenses lorsqu'une attaque
+est observee, lorsque les volumes augmentent reellement, ou lorsque
+les premiers usagers ont besoin de recuperation, revocation ou
+transfert. Aucune promotion massive du service a ce stade.
 
 ## Capabilities
 

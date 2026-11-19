@@ -1,9 +1,12 @@
 {
-  "schema": "org.cogentia.kys.contributive-service.v0.1",
+  "schema": "org.cogentia.kys.contributive-service.v0.2",
   "id": "org.cogentia.kys.contributive",
   "name": "3Code et Bouteilles à la Mer",
   "language": "fr",
-  "status": "experimental",
+  "status": "limited-pilot",
+  "pilot_scope": "bottle-at-sea/v1",
+  "registrar_id": "urn:3code:registrar:corsica:1",
+  "registration_policy": "bottle-at-sea-registration/v1",
   "provider": "C.O.R.S.I.C.A. / KYS Services",
   "license": "CC BY-SA 4.0",
   "pricing": "free",
@@ -20,10 +23,21 @@
     "create contributive campaigns and missions",
     "declare physical object or photocopy with claimed lineage",
     "resolve ambiguous public codes without assuming uniqueness",
-    "request an email-receipt-based registration when a mailbox is configured",
+    "request an email-receipt-based registration of an existing singular Bouteille a la Mer copy when a mailbox is configured",
     "review voluntary contributions without identifying holders",
     "print a customized tract with QR and optional handwritten child and parent code"
   ],
+  "pilot_registration_rules": {
+    "free_code_generation": true,
+    "general_url_registration": false,
+    "requires_existing_copy": true,
+    "requires_copy_controller_secret": true,
+    "requires_explicit_policy_acknowledgment": true,
+    "requires_observed_inbound_email_for_confirmation": true,
+    "single_registrar_only": true,
+    "federation_and_record_transfer_implemented": false,
+    "origin_preservation": "Packet-backed local revision journal, not cryptographically signed"
+  },
   "public_api": {
     "health": "/3code/api/health",
     "generate": "/3code/api/generate",

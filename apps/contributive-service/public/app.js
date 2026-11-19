@@ -24,13 +24,13 @@ function code(){
 }
 const section=(title,body)=>'<section class="panel"><h2>'+title+'</h2>'+body+'</section>';
 function home(){
-  app.innerHTML='<h1>3Code et Bouteilles à la Mer</h1><p class="lead">Un tract photocopié, un Livre Vivant ou un Bleu de Chine peut porter une mission, devenir un exemplaire singulier et recevoir des contributions. Chaque personne reste libre de participer.</p><p><a class="button" href="/3code/guide">Comprendre le fonctionnement et utiliser mon assistant IA</a></p><h2>Outils disponibles</h2><p class="lead">Générez un 3Code gratuitement, créez une campagne contributive, individualisez un tract photocopié ou un objet et faites revenir une contribution. Accessible à toutes les initiatives, y compris aux différents candidats, sans adhésion politique.</p><div class="grid">'+
+  app.innerHTML='<h1>3Code et Bouteilles à la Mer</h1><p class="lead">Pilote à diffusion modeste : le 3Code sert pour le moment à identifier des Bouteilles à la Mer, c’est-à-dire des tracts, Livres Vivants, textiles ou autres exemplaires singuliers porteurs d’une mission. Ce service n’est pas un raccourcisseur d’URL universel.</p><p><a class="button" href="/3code/guide">Comprendre le fonctionnement et utiliser mon assistant IA</a></p><h2>Outils disponibles</h2><p class="lead">Générez un 3Code gratuitement, créez une campagne contributive, individualisez un tract photocopié ou un objet et faites revenir une contribution. Accessible à toutes les initiatives, y compris aux différents candidats, sans adhésion politique.</p><div class="grid">'+
   section('Générateur 3Code','<p>3 + huit caractères Crockford, générés localement. Les collisions sont permises. Un code non enregistré ne pointe vers rien.</p><button id="gen">Générer</button><div id="generated" class="output mono">—</div>')+
   section('Retrouver une référence','<label for="lookup">3Code manuscrit ou imprimé</label><input id="lookup" placeholder="3XY-Z89-P2K" autocomplete="off"><button id="lookup-btn">Rechercher</button><div id="found"></div>')+
   section('Créer une campagne','<p>Sans compte obligatoire. Vous recevrez une clé de gestion privée : conservez-la.</p><label for="newtitle">Titre</label><input id="newtitle" maxlength="120" placeholder="Inventaire des moulins"><label for="newgoal">Objectif et méthode</label><textarea id="newgoal" maxlength="1200"></textarea><button id="create">Créer ma campagne</button><div id="created"></div>')+
-  section('Enregistrement d’un 3Code par courriel','<p>Générer un code ou déclarer une photocopie ne l’enregistre pas. Il faut préparer un message que vous expédiez vous-même, puis attendre la réception effective par le service.</p><div id="reg-config" class="note" role="status">Vérification de la boîte de réception…</div><label for="reg-code">3Code</label><input id="reg-code" placeholder="3XX-XXX-XXX"><label for="reg-title">Description de la référence</label><input id="reg-title" placeholder="Mon tract, mon objet" maxlength="160"><div id="reg-for-copy"></div><button id="reg-start" disabled>Préparer mon courriel</button><button class="secondary" id="reg-check">Vérifier une demande précédente</button><div id="reg-result" role="status"></div>')+
+  section('Enregistrement d’une Bouteille à la Mer','<p>En phase pilote, seul un exemplaire déjà déclaré dans une campagne contributive peut être enregistré par courriel. Aucune association libre d’un 3Code avec une URL arbitraire.</p><div id="reg-config" class="note" role="status">Vérification de la boîte de réception…</div><div id="reg-copy-context" class="note">Ouvrez la fiche d’un exemplaire déclaré, puis cliquez sur « Préparer mon courriel de référence ». Vous aurez besoin de sa clé privée de contrôle.</div><div id="reg-panel" hidden><label for="reg-code">3Code de cet exemplaire</label><input id="reg-code" placeholder="3XX-XXX-XXX" readonly><div id="reg-for-copy"></div><label for="pilot-ack"><input type="checkbox" id="pilot-ack"> Je déclare vouloir enregistrer cette Bouteille à la Mer et je comprends que son titre, son code et sa fiche seront consultables publiquement. Je conserve ma clé de contrôle. Un courriel reçu ne prouve ni mon identité civile, ni ma propriété de l’objet.</label><button id="reg-start" disabled>Préparer mon courriel</button></div><button class="secondary" id="reg-check">Vérifier une demande précédente</button><div id="reg-result" role="status"></div>')+
   section('Tracts, affiches et photocopies','<p>Personnalisez texte, logo, QR commun et cartouche manuscrit pour chaque exemplaire. Un QR du document maître ne désigne jamais automatiquement un enfant.</p><a class="button" href="/3code/print">Ouvrir le compositeur</a><p class="note">Les exemplaires peuvent être des feuilles, textiles, livres ou objets. Le porteur n’est pas identifié.</p>')+'</div><p class="note">Projet de service d’intérêt général. Toute campagne est sous la responsabilité de son initiateur ; les engagements et résultats ne se déduisent jamais d’un scan.</p>';
-  el('gen').onclick=()=>{const v=code();el('generated').textContent=v+' — non enregistré';el('reg-code').value=v;};
+  el('gen').onclick=()=>{const v=code();el('generated').textContent=v+' — non enregistré';};
   el('lookup-btn').onclick=lookup;
   el('create').onclick=createCampaign;
   el('reg-start').onclick=startRegistration;
@@ -39,8 +39,8 @@ function home(){
   const copyId=params.get('copy_id');
   if(copyId&&/^[a-f0-9-]{36}$/.test(copyId)){
     el('reg-code').value=params.get('three_code')||'';
-    el('reg-title').value='Exemplaire singulier';
-    el('reg-for-copy').textContent='Association à la fiche existante : '+copyId+'. Il faut sa clé de gestion.';
+    el('reg-panel').hidden=false;
+    el('reg-copy-context').textContent='Demande pour l’exemplaire '+copyId+'. La clé privée de contrôle est requise.';
     const token=localStorage.getItem('copy-edit-'+copyId)||'';
     el('reg-for-copy').insertAdjacentHTML('beforeend','<label for="reg-edit">Clé de modification de l’exemplaire</label><input type="password" id="reg-edit">');
     el('reg-edit').value=token;
@@ -59,7 +59,11 @@ async function lookup(){
 async function showRegistrationConfig(){
   try{
     const d=await api('/registrations/config');
-    el('reg-start').disabled=!d.enabled;
+    const copyId=new URLSearchParams(location.search).get('copy_id')||'';
+    el('reg-start').disabled=!d.enabled||el('reg-panel').hidden||!el('pilot-ack')?.checked;
+    if(el('pilot-ack'))el('pilot-ack').onchange=()=>{
+      el('reg-start').disabled=!d.enabled||!(/^[0-9a-f-]{36}$/.test(copyId))||!el('pilot-ack').checked;
+    };
     el('reg-config').textContent=d.enabled
       ? 'Boîte de réception configurée : '+d.inbox+'. Une adresse saisie ne suffit pas, vous devrez expédier le courriel.'
       : 'Le contrôle par courriel n’est pas encore ouvert : aucune boîte de réception dédiée n’est configurée. Générer un code reste libre.';
@@ -70,11 +74,13 @@ async function startRegistration(){
     const p=new URLSearchParams(location.search);
     const copyId=/^[a-f0-9-]{36}$/.test(p.get('copy_id')||'')?p.get('copy_id'):null;
     const data=await api('/registrations',{method:'POST',body:JSON.stringify({
-      three_code:val('reg-code'),title:val('reg-title'),copy_id:copyId,edit_token:copyId?val('reg-edit'):''
+      three_code:val('reg-code'),copy_id:copyId,
+      edit_token:copyId?val('reg-edit'):'',
+      pilot_acknowledged:el('pilot-ack').checked
     })});
     localStorage.setItem('registration-last',data.id);
     localStorage.setItem('registration-view-'+data.id,data.view_token);
-    el('reg-result').innerHTML='<div class="output"><strong>Demande préparée : en attente de votre courriel.</strong><p>Adresse : '+esc(data.email_to)+'</p><label for="reg-subject">Objet du courriel (à conserver exactement)</label><textarea id="reg-subject" readonly></textarea><p><a href="'+esc(data.mailto)+'">Ouvrir mon application de messagerie</a> — vous devez envoyer vous-même le message.</p><p>Expiration : '+esc(data.expires_at)+'. Le statut ne sera confirmé qu’après réception dans la boîte configurée.</p></div>';
+    el('reg-result').innerHTML='<div class="output"><strong>Demande pour une Bouteille à la Mer : en attente de votre courriel.</strong><p>Registrar d’origine : '+esc(data.registrar_id)+' — Référence durable : '+esc(data.record_id)+'</p><p>Adresse : '+esc(data.email_to)+'</p><label for="reg-subject">Objet du courriel (à conserver exactement)</label><textarea id="reg-subject" readonly></textarea><p><a href="'+esc(data.mailto)+'">Ouvrir mon application de messagerie</a> — vous devez envoyer vous-même le message.</p><p>Expiration : '+esc(data.expires_at)+'. Le statut ne sera confirmé qu’après réception dans la boîte configurée.</p></div>';
     el('reg-subject').value=data.email_subject;
   }catch(e){msg('reg-result',e.message,true);}
 }
@@ -87,7 +93,9 @@ async function checkRegistration(){
     msg('reg-result','Demande '+d.three_code+' : '+(
       d.status==='mail_received'?'courriel reçu dans la boîte configurée (identité et propriété non vérifiées)':
       d.status==='expired'?'expirée': 'en attente de réception du courriel'
-    )+'.');
+    )+'. Reçu local disponible ci-dessous.');
+    el('reg-result').insertAdjacentHTML('beforeend','<label for="reg-receipt">Reçu local non signé (à archiver)</label><textarea readonly id="reg-receipt" rows="9"></textarea>');
+    el('reg-receipt').value=JSON.stringify(d,null,2);
   }catch(e){msg('reg-result',e.message,true);}
 }
 async function createCampaign(){
@@ -103,7 +111,7 @@ async function campaign(id){
     const d=await api('/campaigns/'+encodeURIComponent(id)),c=d.campaign;
     app.innerHTML='<h1>'+esc(c.title)+'</h1><p class="lead">'+esc(c.goal)+'</p><span class="pill">'+esc(c.status)+'</span><p class="note">Campagne auto-déclarée : son titre et son statut ne prouvent aucun agrément.</p>'+
     section('Missions contributives','<div id="missions">'+d.missions.map(m=>row('<strong>'+esc(m.title)+'</strong> — '+esc(m.description))).join('')+'</div><div class="manager"><label for="mtitle">Nouvelle mission</label><input id="mtitle" maxlength="140"><label for="mdesc">Description</label><textarea id="mdesc"></textarea><button id="mission-create">Ajouter la mission</button><div id="mission-msg"></div></div>')+
-    section('Enregistrer un exemplaire ou une photocopie','<p>Un nouvel exemplaire reçoit un ID technique propre et un nouveau 3Code. En cas de photocopie, renseignez l’ancien exemplaire ou son 3Code.</p><label for="copy-title">Type et description</label><input id="copy-title" placeholder="Tract N&B, affiche, Bleu de Chine…" maxlength="160"><label for="copy-code">3Code manuscrit (facultatif)</label><input id="copy-code" placeholder="Laisser vide pour génération"><label for="parent-code">3Code du parent (facultatif)</label><input id="parent-code" placeholder="3XX-XXX-XXX"><label for="mission-select">Mission (facultative)</label><select id="mission-select"><option value="">Aucune</option>'+d.missions.map(m=>'<option value="'+esc(m.id)+'">'+esc(m.title)+'</option>').join('')+'</select><button id="copy-create">Enregistrer cette copie</button><div id="copy-msg"></div>')+
+    section('Déclarer un exemplaire ou une photocopie','<p>Un nouvel exemplaire reçoit un ID technique propre et un nouveau 3Code. En cas de photocopie, renseignez l’ancien exemplaire ou son 3Code.</p><label for="copy-title">Type et description</label><input id="copy-title" placeholder="Tract N&B, affiche, Bleu de Chine…" maxlength="160"><label for="copy-code">3Code manuscrit (facultatif)</label><input id="copy-code" placeholder="Laisser vide pour génération"><label for="parent-code">3Code du parent (facultatif)</label><input id="parent-code" placeholder="3XX-XXX-XXX"><label for="mission-select">Mission (facultative)</label><select id="mission-select"><option value="">Aucune</option>'+d.missions.map(m=>'<option value="'+esc(m.id)+'">'+esc(m.title)+'</option>').join('')+'</select><button id="copy-create">Enregistrer cette copie</button><div id="copy-msg"></div>')+
     section('Gestion de campagne','<p>La clé de gestion reste sur votre appareil. Pas de compte obligatoire.</p><div id="manager-area"></div><div id="admin-result"></div>')+
     '<p class="note">ID de campagne : <span class="mono">'+esc(id)+'</span>. Les contributions sont en attente de validation avant publication.</p>';
     const params=new URLSearchParams(location.search);if(params.get('parent_code'))el('parent-code').value=params.get('parent_code');
@@ -147,7 +155,7 @@ async function copyPage(id){
   try{
     const d=await api('/copies/'+id),c=d.copy;
     app.innerHTML='<h1>Exemplaire singulier</h1><section class="panel"><p class="big-code mono">'+esc(c.three_code)+'</p><p>'+esc(c.title)+'</p><p><strong>Parent déclaré :</strong> '+esc(c.parent_code||'aucun')+'</p><p><strong>Statut :</strong> '+esc(c.relation_status)+'</p><img class="qr" src="'+qr(link(id))+'" alt="QR individuel de l’exemplaire"><p class="mono">'+esc(link(id))+'</p><p class="note">Ce QR peut être photocopié mais continue à désigner ce même exemplaire. Il ne prouve ni la possession ni un soutien politique.</p><p><a class="button" href="'+ROOT+'/campaign/'+encodeURIComponent(c.campaign_id)+'?parent_code='+encodeURIComponent(c.three_code)+'">J’ai photocopié cet exemplaire : déclarer un enfant</a></p></section>'+
-      section('Enregistrer cette association 3Code','<p>Pour obtenir le statut « courriel reçu », ouvrez le formulaire et envoyez vous-même le message proposé.</p><p><a class="button" href="'+ROOT+'/?copy_id='+encodeURIComponent(id)+'&three_code='+encodeURIComponent(c.three_code)+'">Préparer mon courriel de référence</a></p>')+
+      section('Enregistrer cette Bouteille à la Mer','<p>Le registrar pilote n’enregistre que les exemplaires déclarés dans une campagne. Pour obtenir le statut « courriel reçu », ouvrez le formulaire et envoyez vous-même le message proposé.</p><p><a class="button" href="'+ROOT+'/?copy_id='+encodeURIComponent(id)+'&three_code='+encodeURIComponent(c.three_code)+'">Préparer mon courriel de référence</a></p>')+
       section('Contribuer librement','<p>Les contributions ne sont pas publiées sans validation de l’organisateur. Ne transmettez pas de données personnelles ou sensibles.</p><label for="contribution">Information, correction, témoignage ou résultat</label><textarea id="contribution" maxlength="1000"></textarea><button id="contribute">Soumettre une contribution</button><div id="contrib-msg"></div>')+
       section('Contributions publiées',d.contributions.map(x=>'<p>'+esc(x.message)+'</p>').join('')||'<p>Pas encore de contribution publiée.</p>');
     el('contribute').onclick=async()=>{try{await api('/contributions',{method:'POST',body:JSON.stringify({copy_id:id,message:val('contribution')})});msg('contrib-msg','Contribution reçue, en attente de qualification.');el('contribution').value='';}catch(e){msg('contrib-msg',e.message,true);}};

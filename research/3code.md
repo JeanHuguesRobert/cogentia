@@ -4,7 +4,7 @@ description: "Présentation à double lecture du projet 3Code : utilité publiqu
 author: "Jean Hugues Noël Robert (conception et témoignage)"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-11-12"
-last_modified_at: "2026-11-12"
+last_modified_at: "2026-11-19"
 license: "CC BY-SA 4.0"
 language: fr
 canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/3code.md"
@@ -238,6 +238,32 @@ Ne pas réinventer les primitives existantes :
 Ces systèmes sont des **précédents et références techniques**, non des implémentations équivalentes de 3Code. En particulier, GS1 et IPNS ne fournissent pas nativement la sémantique 3Code des **collisions volontaires au niveau de la référence humaine**.
 
 Les réponses d'un registrar pourront inclure un `Linkset` par enregistrement candidat, mais une enveloppe propre à 3Code sera nécessaire pour exposer **plusieurs enregistrements homonymes**, avec provenance, statut et niveau de fraîcheur.
+
+## Mise en oeuvre pilote limitee — 19 novembre 2026
+
+La proposition generale reste independante du premier cas d'usage.
+Le registrar C.O.R.S.I.C.A. / KYS commence avec un seul operateur et
+limite ses enregistrements aux **Bouteilles a la Mer**, exemplaires
+singuliers lies a une campagne contributive. Il ne propose pas encore
+l'association libre de tout 3Code a une URL arbitraire. Ce choix
+d'exploitation ne reduit ni le protocole general, ni la liberte de
+generation des codes, ni la future confederation.
+
+La procedure initiale conserve le code public, un record_id stable,
+un identifiant d'exemplaire, le registrar d'origine, le mode de
+controle par cle privee, la politique de publication acceptee, le
+challenge d'un courriel entrant et un journal local d'evenements
+avec empreintes chainees. Les enregistrements du pilote pourront
+ulterieurement adopter des preuves plus fortes sans perdre leur
+identite technique ni leur historique initial.
+
+Un courriel recu ne prouve ni identite civile, ni propriete, ni
+authenticite materielle. Les empreintes conservees localement ne
+constituent pas une preuve independante du registrar. La federation,
+la signature des controleurs, le transfert d'autorite et les
+revocations distribuees ne sont pas encore deployes. La promotion
+reste modeste ; les defenses evolueront selon les besoins et
+incidents effectivement observes.
 
 ## 8. MVP et Test du Réel
 

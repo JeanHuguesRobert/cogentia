@@ -8,7 +8,7 @@ import { mkdirSync, readFileSync, chmodSync, existsSync, realpathSync } from 'no
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import QRCode from 'qrcode';
-import { initRegistrations, validateInbox, createRegistration, getRegistration, resolvedRegistrations } from './registrations.mjs';
+import { initRegistrations, validateInbox, createRegistration, getRegistration, resolvedRegistrations, PILOT_SCOPE, PILOT_REGISTRAR_ID } from './registrations.mjs';
 
 const ROOT = '/3code';
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -104,17 +104,19 @@ export function makeServer({
       if(!p.startsWith(ROOT))return json(res,404,{error:'Hors service'});
       rateGate(rates,req,p);
       if(req.method==='GET'&&p===ROOT+'/api/health'){
-        return json(res,200,{ok:true,service:'contributive-campaigns',schema:'campaigns-mvp-v2',db:!!db.prepare('SELECT 1 AS ok').get(),time:now()});
+        return json(res,200,{ok:true,service:'contributive-campaigns',schema:'campaigns-mvp-v3',db:!!db.prepare('SELECT 1 AS ok').get(),time:now()});
       }
       if(req.method==='GET'&&p===ROOT+'/api/generate') return json(res,200,{code:generate(),registered:false});
       if(req.method==='GET'&&p===ROOT+'/api/registrations/config') {
         return json(res,200,{enabled:!!inbox,inbox:inbox||null,method:'inbound-email-only',
-          notice:inbox?'Un courriel doit effectivement arriver dans cette boîte.':'Aucune boîte de réception vérifiée et configurée pour le moment.'});
+          scope:PILOT_SCOPE,registrar_id:PILOT_REGISTRAR_ID,
+          requires_copy_id:true,requires_copy_control_key:true,
+          notice:inbox?'Le pilote enregistre uniquement les exemplaires Bouteilles à la Mer; le courriel doit être reçu.':'Boîte de réception non configurée; enregistrement de Bouteilles à la Mer différé.'});
       }
       if(req.method==='POST'&&p===ROOT+'/api/registrations') {
         const b=await load(req);
         const r=createRegistration(db,{three_code:code(b.three_code),copy_id:b.copy_id||null,
-          edit_token:b.edit_token||'',title:b.title||'',inbox});
+          edit_token:b.edit_token||'',pilot_acknowledged:b.pilot_acknowledged===true,inbox});
         return json(res,201,r);
       }
       const registrationMatch=p.match(/^\/3code\/api\/registrations\/([a-f0-9-]{36})$/);
@@ -161,12 +163,15 @@ export function makeServer({
         const verifiedCopyIds=new Map(registrations.filter(x=>x.copy_id).map(x=>[x.copy_id,x.id]));
         const results=rows.map(x=>({...x,
           registration_status:verifiedCopyIds.has(x.id)?'mail_received':'unverified_declaration',
-          registry_record_id:verifiedCopyIds.get(x.id)||null
+          registry_record_id:verifiedCopyIds.get(x.id)||null,
+          registrar_id:verifiedCopyIds.has(x.id)?PILOT_REGISTRAR_ID:null
         }));
-        return json(res,200,{code:value,ambiguous:results.length+registrations.filter(x=>!x.copy_id).length>1,
+        return json(res,200,{code:value,registrar_id:PILOT_REGISTRAR_ID,
+          resolution_scope:'local-only',federation_enabled:false,
+          ambiguous:results.length+registrations.filter(x=>!x.copy_id).length>1,
           results,registrations:registrations.filter(x=>!x.copy_id),
           more_possible:rows.length===100||registrations.length===100,
-          notice:'Les fiches d’exemplaire sont déclaratives. Seules les associations marquées « courriel reçu » ont passé le contrôle de contact; celui-ci ne prouve ni identité ni possession.'});
+          notice:'Pilote limité aux Bouteilles à la Mer. Les exemplaires sont déclaratifs; « courriel reçu » prouve seulement un contact, pas une identité ni une propriété. Un résultat local n’est pas une recherche fédérée.'});
       }
       if(req.method==='POST'&&p===ROOT+'/api/copies'){
         const b=await load(req);
