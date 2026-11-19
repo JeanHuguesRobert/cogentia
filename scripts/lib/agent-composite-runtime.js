@@ -1,5 +1,5 @@
 /**
- * Composite Digital Twin runtime adapter.
+ * Hosted native-agent composite runtime adapter.
  *
  * Shared Core is Inseme COP: no second actor registry or mandate ledger.
  * The caller MUST be independently authenticated by its surface. This module
@@ -54,18 +54,24 @@ export function createTwinCompositeRuntime({
     throw new TypeError('COP event store required');
   const cfg={...JHN_COMPOSITE_DEFAULTS,...options};
   const mandate=()=>authDecision(store,cfg);
-  const list=({member_of=null}={})=>
-    listTwinLogicalAgents(store,{twin_root_ref:cfg.twin_root_ref,member_of});
+  const list=({member_of=null}={})=>{
+    const result=listTwinLogicalAgents(store,{twin_root_ref:cfg.twin_root_ref,member_of});
+    if(!result.ok)return result;
+    return {ok:true,host_root_ref:result.twin_root_ref,member_of,
+      agents:result.agents.map(({twin_root_ref,...agent})=>({...agent,
+        host_root_ref:twin_root_ref}))};
+  };
   const declare=(data)=>{
     const check=mandate();
     if(!check.ok)return check;
     if(!valid(data?.agent_ref)||!data.agent_ref.startsWith('agent:')||
-       data.twin_root_ref!==cfg.twin_root_ref||
+       data.twin_root_ref!==undefined||
        !valid(data.profile_ref)||!Array.isArray(data.member_of)||
        !data.member_of.every(valid)||
        !valid(data.declaration_id)||data.declaration_id.length>160)
       return refuse('invalid_member_declaration');
-    return declareLogicalAgent(store,{...data,issued_by_ref:cfg.coordinator_ref,
+    return declareLogicalAgent(store,{...data,twin_root_ref:cfg.twin_root_ref,
+      issued_by_ref:cfg.coordinator_ref,
       reports_to:cfg.coordinator_ref,spawned_by:cfg.coordinator_ref,
       metadata:{...(data.metadata||{}),managed_as:'supervised_member'},
     });
@@ -135,8 +141,10 @@ export function createTwinCompositeRuntime({
       receipt:result.receipt||null,
       text:result.effect?.text||null};
   };
-  return {list,declare,activate,run,inspect:({agent_ref}={})=>
-    projectLogicalAgent(store,{agent_ref})};
+  return {list,declare,activate,run,inspect:({agent_ref}={})=>{
+    const {twin_root_ref,...agent}=projectLogicalAgent(store,{agent_ref});
+    return {...agent,host_root_ref:twin_root_ref};
+  }};
 }
 
 /** Existing JHN profile is a deployment adapter, not a Core special case. */

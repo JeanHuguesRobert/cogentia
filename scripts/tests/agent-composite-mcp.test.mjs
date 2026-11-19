@@ -4,7 +4,7 @@ import {mkdtempSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createMcpCore} from '../lib/cogentia-mcp-core.js';
-import {createTwinCompositeRuntime} from '../lib/twin-composite-runtime.js';
+import {createTwinCompositeRuntime} from '../lib/agent-composite-runtime.js';
 import {createSqliteCopEventStore} from '../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js';
 import {recordMandateDeclaration} from '../../../inseme/packages/cop-core/src/governed-act.js';
 import {recordExecutionBudgetGrant} from '../../../inseme/packages/cop-core/src/execution-budget.js';
@@ -20,13 +20,13 @@ const attested={headers:{authorization:'Bearer test-only-jhn-token',
   'x-cogentia-actor':'agent:jhn'}};
 function result(response){return response?.result?.structuredContent?.data||
   response?.result?.structuredContent||response?.result;}
-test('anonymous and OAuth read-only callers cannot see/use twin mutation tools',async()=>{
+test('anonymous and OAuth read-only callers cannot see/use hosted-agent mutation tools',async()=>{
   const core=createMcpCore(envBase);
   const listing=(await core.handleJsonRpc({jsonrpc:'2.0',id:1,
     method:'tools/list',params:{}},{headers:{}})).result.tools;
-  assert.ok(!listing.some(x=>x.name==='cogentia_twin_member_run'));
-  assert.ok(!listing.some(x=>x.name==='cogentia_twin_members_list'));
-  const refused=await core.handleJsonRpc(cmd('cogentia_twin_member_declare',
+  assert.ok(!listing.some(x=>x.name==='cogentia_agent_member_run'));
+  assert.ok(!listing.some(x=>x.name==='cogentia_agent_members_list'));
+  const refused=await core.handleJsonRpc(cmd('cogentia_agent_member_declare',
     {agent_ref:'agent:fake'}),{headers:{}});
   assert.equal(refused.result.isError,true);
 });
@@ -46,18 +46,21 @@ test('JHN-attested MCP routes declare + activate through existing COP on disposa
     const core=createMcpCore({...envBase,COGENTIA_JOHN_COP_STORE_PATH:db});
     const list=(await core.handleJsonRpc({jsonrpc:'2.0',id:2,
       method:'tools/list',params:{}},attested)).result.tools;
-    assert.ok(list.some(x=>x.name==='cogentia_twin_member_declare'));
-    const declare=await core.handleJsonRpc(cmd('cogentia_twin_member_declare',{
-      agent_ref:'agent:minesteggio:vulcain',twin_root_ref:'twin:jhn',
+    assert.ok(list.some(x=>x.name==='cogentia_agent_member_declare'));
+    assert.ok(list.some(x=>x.name==='cogentia_agent_members_sync'));
+    const declare=await core.handleJsonRpc(cmd('cogentia_agent_member_declare',{
+      agent_ref:'agent:minesteggio:vulcain',
       profile_ref:'profile:minesteggio:informatique',
       member_of:['organization:minesteggio'],
       declaration_id:'synthetic-vulcain',metadata:{synthetic:true}}),attested);
     assert.equal(result(declare).ok,true,JSON.stringify(declare).slice(0,2500));
-    const active=await core.handleJsonRpc(cmd('cogentia_twin_member_activate',{
+    assert.equal(result(declare).supabase_projection.error,'supabase_projection_not_configured');
+    const active=await core.handleJsonRpc(cmd('cogentia_agent_member_activate',{
       agent_ref:'agent:minesteggio:vulcain',expected_revision:1,
       operation_id:'synthetic-activate'}),attested);
     assert.equal(result(active).ok,true,JSON.stringify(active).slice(0,2500));
-    const members=await core.handleJsonRpc(cmd('cogentia_twin_members_list',{
+    assert.equal(result(active).supabase_projection.error,'supabase_projection_not_configured');
+    const members=await core.handleJsonRpc(cmd('cogentia_agent_members_list',{
       member_of:'organization:minesteggio'}),attested);
     assert.equal(result(members).agents.length,1,JSON.stringify(members).slice(0,2500));
     assert.equal(result(members).agents[0].status,'available');
@@ -82,7 +85,7 @@ test('same generic runtime actually invokes injected Magistral handler under roo
       body:{choices:[{message:{content:'Vulcain: analyse technique reçue.'}}]}};}};
     const runtime=createTwinCompositeRuntime({store,router});
     assert.equal(runtime.declare({agent_ref:'agent:minesteggio:vulcain',
-      twin_root_ref:'twin:jhn',profile_ref:'profile:minesteggio:informatique',
+      profile_ref:'profile:minesteggio:informatique',
       member_of:['organization:minesteggio'],declaration_id:'test-real-handler'}).ok,true);
     assert.equal(runtime.activate({agent_ref:'agent:minesteggio:vulcain',
       expected_revision:1,operation_id:'ready'}).ok,true);
