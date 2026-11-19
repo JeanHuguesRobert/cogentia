@@ -6,7 +6,7 @@ ai_assisted_by:
   - "ChatGPT GPT-6 — synthèse architecturale"
 date: "2026-11-19"
 last_modified_at: "2026-11-19"
-version: "0.1.2"
+version: "0.1.3"
 status: "working-paper — synthesis of Principal decisions and hypotheses"
 license: "CC BY-SA 4.0"
 language: "fr"
@@ -73,6 +73,20 @@ Sources de sens à conserver : [Cognitive Packets](cognitive_packets.md), [Packe
 | **Observateur** | Agent autorisé à lire une projection d'événements et à produire un diagnostic ; n'acquiert pas la conduite du travail observé. |
 
 Les mémoires de l'agent et du travail sont **distinctes** : l'expérience réutilisable d'un agent n'est pas l'historique causal nécessaire à la reprise d'un travail. Le transfert du travail doit conserver cette dernière mémoire sans exposer automatiquement la mémoire privée du précédent agent.
+
+### Comptes fournisseur, agents multiples et BYOAI (complément du 19 novembre 2026)
+
+**La personne représentée, le Principal d'un acte, l'agent logique, le compte fournisseur, l'espace de travail et le handler sont des identités distinctes.** Il ne faut pas traiter le libellé « ChatGPT », le modèle GPT-6, une adresse courriel, un compte fournisseur ou une session comme une preuve de l'identité logique d'un agent COP.
+
+Un même Principal peut mobiliser plusieurs agents ChatGPT **distincts**, par exemple personnel et professionnel, éventuellement accessibles via des comptes ChatGPT séparés. Les comptes disposent de leurs propres données et contextes ; inversement, un agent logique peut changer de handler ou de fournisseur sans changer de responsabilité, à condition que la continuité soit explicitement démontrée. **Ne jamais fusionner automatiquement** deux agents ou leurs mémoires sur la base d'un nom de fournisseur ou d'un sujet représenté commun. La réunion, dissociation et réattribution nécessitent des actes causaux gouvernés. Des alias de test tels que `agent:chatgpt:personal` et `agent:chatgpt:professional` sont illustratifs, **non des identités de compte authentifiées**. L'agent conversationnel présent dans un dialogue est observable comme handler, mais sa liaison à un agent logique durable requiert une preuve distincte.
+
+**Fait fournisseur vérifié au 19 novembre 2026** : ChatGPT permet la connexion simultanée à deux comptes distincts dans son sélecteur, avec conversations, mémoires et abonnements séparés ; un même compte peut aussi donner accès à plusieurs espaces personnels/Business, ce qui n'est pas la même chose. La séparation compte personnel / compte professionnel est explicitement prévue ; les droits d'un administrateur sur un compte géré sont différents des droits du détenteur d'un compte personnel. Sources : [OpenAI — comptes multiples](https://help.openai.com/fr-fr/articles/20001068-using-multiple-chatgpt-accounts-on-web-and-mobile), [OpenAI — accès aux données d'un compte géré](https://help.openai.com/en/articles/20001067-data-access-for-your-managed-chatgpt-account), [OpenAI — espaces Business](https://help.openai.com/en/articles/8542216-managing-members-seat-types-and-roles-in-chatgpt-business). Ces fonctions fournisseur ne constituent pas elles-mêmes un registre d'agents Cogentia.
+
+**BYOAI/BYOD dans le travail salarié** : distinguer la finalité de l'entreprise (travail commandé au salarié), le mandat personnel du salarié à son IA, et l'autorisation de traiter les données et systèmes professionnels. L'agent personnel peut augmenter la capacité du salarié, sans devenir pour autant agent de l'employeur ni transférer sa mémoire privée à celui-ci. Les prérogatives de l'employeur, la confidentialité, la loyauté et les droits sur les contributions doivent être gouvernés séparément. Un agent personnel ne peut agir sur un système professionnel qu'avec l'autorisation appropriée de chaque autorité concernée ; aucune déduction de mandat depuis un abonnement personnel. La mobilité de l'employé n'entraîne pas transfert automatique de sa mémoire personnelle ou des documents de l'entreprise.
+
+Le phénomène BYOAI est observé, mais les enquêtes sur l'utilisation d'**outils** ne mesurent pas nécessairement l'utilisation d'**agents autonomes**. La [Work Trend Index Microsoft/LinkedIn 2024](https://www.microsoft.com/en-us/worklab/work-trend-index/ai-at-work-is-here-now-comes-the-hard-part) rapportait que 78 % des utilisateurs d'IA au travail apportaient leurs outils personnels ; la [PagerDuty Shadow AI Survey d'avril 2026](https://www.pagerduty.com/resources/ai/learn/survey-office-professionals-used-ai-tools-at-work-despite-not-being-allowed/) a étudié des pratiques non autorisées dans une autre population, non comparable terme à terme. Ces observations éclairent les besoins de portabilité, de délimitation des droits, de confidentialité et d'imputabilité sans prouver une architecture particulière.
+
+Ce sujet est connexe au [contrat KYS Services / BYOAI](byoai_commons_service_protocol.md) : le prestataire apporte la compétence et les ressources publiques, la personne choisit son assistant et conserve l'autorité sur ses informations. L'employeur ajoute une frontière de confidentialité et de gouvernance spécifique. Le test COP [multi-comptes / multi-agents](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/test/work-multi-account-agent-identity.node-test.mjs) vérifie deux identités d'agent distinctes sous un même John et le refus d'attribuer un travail ancien au seul nom de handler « chatgpt ». **Ce test utilise des identités synthétiques et ne constitue pas un enregistrement effectif des comptes ChatGPT du Principal.**
 
 ## 2. Affectation unique et chaîne de responsabilité
 
