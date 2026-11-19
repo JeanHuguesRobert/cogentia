@@ -4,6 +4,7 @@ import {executeJohnCanonicalRead} from "./john-cop-read-execution.js";
 import {executeJohnCanonicalChatgptTurn} from "./john-cop-chatgpt-turn-execution.js";
 import {createChatgptTurnCapability} from "./browser-chatgpt-turn.js";
 import {openExistingJohnCopStore} from "./john-cop-existing-store.js";
+import {openJohnCompositeRuntime} from "./twin-composite-runtime.js";
 import {createSqliteCopEventStore} from "../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js";
 import {
   MCP_TASKS_EXTENSION_ID, MCP_TASKS_MISSING_CLIENT_CAPABILITY,
@@ -100,6 +101,9 @@ export const MUTATE_TOOLS = new Set([
   "cogentia_side_effect_record",
   "cogentia_side_effect_grant",
   // These public-looking operational tools can write state or initiate work.
+  "cogentia_twin_member_declare",
+  "cogentia_twin_member_activate",
+  "cogentia_twin_member_run",
   "cogentia_scheduler_run",
   "cogentia_emit_static",
   "cogentia_publish_registry",
@@ -117,6 +121,8 @@ export const PRIVATE_READ_TOOLS = new Set([
   "cogentia_cop_consent_review",
   "cogentia_john_mandate_pending", // historic alias
   "cogentia_john_packet_pending",
+  "cogentia_twin_members_list",
+  "cogentia_twin_member_inspect",
   "cogentia_vault_list",
   "cogentia_vault_describe",
   "operium_calendar_list",
@@ -998,6 +1004,31 @@ export const TOOLS = [
       required: ["id"],
       additionalProperties: false,
     },
+  },
+  {
+    name: "cogentia_twin_members_list",
+    description: "Private: list durable members in this Cogentia Twin, optionally filtered by organization. Identity is not authority.",
+    inputSchema: {type:"object",properties:{member_of:{type:"string"}},additionalProperties:false},
+  },
+  {
+    name: "cogentia_twin_member_inspect",
+    description: "Private: inspect one member's durable state and COP lifecycle journal.",
+    inputSchema: {type:"object",properties:{agent_ref:{type:"string"}},required:["agent_ref"],additionalProperties:false},
+  },
+  {
+    name: "cogentia_twin_member_declare",
+    description: "Declare one durable member under John's existing, current mandate. No child authority is issued; JHN-attested mutation only.",
+    inputSchema: {type:"object",properties:{agent_ref:{type:"string"},twin_root_ref:{type:"string"},profile_ref:{type:"string"},member_of:{type:"array",items:{type:"string"}},declaration_id:{type:"string"},memory_ref:{type:"string"},source_ref:{type:"string"},metadata:{type:"object"}},required:["agent_ref","twin_root_ref","profile_ref","member_of","declaration_id"],additionalProperties:false},
+  },
+  {
+    name: "cogentia_twin_member_activate",
+    description: "Activate one declared member's logical state (not a background process or autonomous mandate); JHN-attested mutation only.",
+    inputSchema: {type:"object",properties:{agent_ref:{type:"string"},expected_revision:{type:"integer",minimum:1},operation_id:{type:"string"}},required:["agent_ref","expected_revision","operation_id"],additionalProperties:false},
+  },
+  {
+    name: "cogentia_twin_member_run",
+    description: "Run one bounded public-text mission using a Magistral handler and John's verified current COP mandate; budget/Act/Trace receipts. No independent subagent mandate is implied.",
+    inputSchema: {type:"object",properties:{agent_ref:{type:"string"},packet_ref:{type:"string"},mission_id:{type:"string"},prompt:{type:"string",maxLength:4000},disclosure_class:{type:"string",enum:["public"]}},required:["agent_ref","packet_ref","mission_id","prompt"],additionalProperties:false},
   },
   {
     name: "cogentia_cli_catalog",
@@ -2681,6 +2712,30 @@ export function createMcpCore(env = process.env, extras = {}) {
           throw err;
         }
         return pattern;
+      }
+      case "cogentia_twin_members_list":
+      case "cogentia_twin_member_inspect":
+      case "cogentia_twin_member_declare":
+      case "cogentia_twin_member_activate":
+      case "cogentia_twin_member_run": {
+        const writing=new Set(["cogentia_twin_member_declare",
+          "cogentia_twin_member_activate","cogentia_twin_member_run"]).has(name);
+        if(writing && (!isResolvedCallerAuth(auth)||auth.auth!=="jhn"||
+            auth.principal_ref!=="principal:jhn"||auth.actor!=="agent:jhn"||
+            auth.allowMutate!==true)) {
+          throw Object.assign(new Error("jhn_verified_mutation_required"),
+            {error_class:"mandate_required"});
+        }
+        const {runtime,close}=openJohnCompositeRuntime({readOnly:!writing,env});
+        try{
+          switch(name){
+            case "cogentia_twin_members_list": return runtime.list(args);
+            case "cogentia_twin_member_inspect": return runtime.inspect(args);
+            case "cogentia_twin_member_declare": return runtime.declare(args);
+            case "cogentia_twin_member_activate": return runtime.activate(args);
+            case "cogentia_twin_member_run": return await runtime.run(args);
+          }
+        }finally{close();}
       }
       case "cogentia_cli_catalog": {
         const { buildCapabilityInventory } = await import("./capability-inventory.js");

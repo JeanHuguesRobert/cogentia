@@ -23,6 +23,7 @@ import path from "node:path";
 import readline from "node:readline";
 import { execFileSync, spawnSync } from "node:child_process";
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+import {openJohnCompositeRuntime} from "./lib/twin-composite-runtime.js";
 import { once } from "node:events";
 import { finished } from "node:stream/promises";
 import { pathToFileURL } from "node:url";
@@ -529,6 +530,7 @@ async function main() {
       return cmdRepos(argv.shift() || "status");
     case "agent":
       if (argv[0] === "mail") { argv.shift(); return cmdAgentMail(argv.shift() || "status"); }
+      if (argv[0] === "members") { argv.shift(); return cmdAgentMembers(argv.shift() || "list"); }
       return cmdAgent(argv.shift() || "start");
     case "consolidate":
       return cmdConsolidate();
@@ -931,7 +933,7 @@ Core commands:
                            Add --task <request> to attach a bounded corpus-orientation packet.
   agent health             Check context index, embedding target and AI router.
                            Flags: --router-url <url> --check-query [--query <text>]
-  agent mail status        Show private intra-Twin JMAP capability and runtime binding readiness.
+  agent members list|inspect|declare|activate|run   COP composite Twin members (Principal local host).\n  agent mail status        Show private intra-Twin JMAP capability and runtime binding readiness.
   agent mail send|receive  Reserved semantic verbs: blocked until server-side credential broker and COP authorizer are connected.
   agent mandates plan      List repositories that need the minimal local mandate.
   agent mandates apply     Create missing local mandates from the canonical template.
@@ -3416,6 +3418,32 @@ function cmdRepos(sub) {
     default:
       throw new Error(`Unknown repos subcommand "${sub}". Use status, fetch, sync, push, or import-owner.`);
   }
+}
+
+async function cmdAgentMembers(sub) {
+  const writing = new Set(["declare", "activate", "run"]).has(sub);
+  const {runtime,close} = openJohnCompositeRuntime({readOnly:!writing});
+  try {
+    let result;
+    if(sub==="list") result=runtime.list({member_of:valueFlag("--organization")||null});
+    else if(sub==="inspect") result=runtime.inspect({agent_ref:valueFlag("--agent-ref")});
+    else if(sub==="declare") {
+      const file=valueFlag("--file");
+      if(!file)throw Error("--file <actor.json> required");
+      const declaration=JSON.parse(fs.readFileSync(file,"utf8"));
+      result=runtime.declare(declaration);
+    } else if(sub==="activate") {
+      result=runtime.activate({agent_ref:valueFlag("--agent-ref"),
+        expected_revision:Number(valueFlag("--revision")),
+        operation_id:valueFlag("--operation-id")});
+    } else if(sub==="run") {
+      result=await runtime.run({agent_ref:valueFlag("--agent-ref"),
+        packet_ref:valueFlag("--packet-ref"),mission_id:valueFlag("--mission-id"),
+        prompt:valueFlag("--prompt"),disclosure_class:"public"});
+    } else throw Error("Unknown agent members command: "+sub);
+    output(result,JSON.stringify(result,null,2));
+    if(result?.ok===false)process.exitCode=1;
+  } finally {close();}
 }
 
 function cmdAgent(sub) {
