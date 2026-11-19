@@ -2,14 +2,14 @@
 title: "FractaXXXX — A Generative Grammar of Possibilities"
 subtitle: "Principles, composition, emerging possibilities, friendly prior art, and Reality Tests"
 date: "2026-10-08"
-version: "0.8.2"
+version: "0.8.3"
 status: "working-paper — non-normative"
 language: "en"
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A."
 ai_assisted_by:
   - "ChatGPT GPT-6 (drafting and research synthesis)"
-last_modified_at: "2026-11-08"
+last_modified_at: "2026-11-19"
 license: "CC BY-SA 4.0"
 document_role: source
 document_kind: "research-note"
@@ -93,6 +93,7 @@ These are proposed **moves** for exploration and composition, not a new normativ
 | FractaCarta | Corrigible, recursive maps of informational locations, traversable reasoning steps, situated effort and exploratory traces; no map owns its territory | documented working hypothesis; extended operational crosswalk proposed, not implemented | [FractaCarta](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/fractacarta.md) |
 | **FractaMandate / FractaMandat** | Fractal, locality-aware mandate composition: reasonable competence, attenuated subdelegation, contextual judgment, resource forecasts and accountable acts | **name adopted by Principal, 2026-10-30; doctrine v0.2 working, implementation not established** | [Mandate — Reasonable Agency](./mandate_reasonable_agency.md), [COP/Accounting](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/COP_ACCOUNTING.md) |
 | **FractaReality / FractaRéalité** | Candidate for situated, cross-scale reconciliation of partial Reality observations; avoid duplicating Reality Probes and Trace Treatment | **research candidate; no independent component established** | [Interrogating Reality](./interrogating_reality.md), [Reality Probe Selection](./reality_probe_selection.md), [Trace Treatment](./trace_treatment_packet.md) |
+| **FractaGenesis** | Adopted generative grammar for instantiation, replication, forked lineage and spawning of Cognitive Packet work and lightweight agents; **FractaPrototype** and **FractaInstance** are conceptual roles, not new services | **name adopted by Principal, 2026-11-19; contract and implementation pending** | [Agents, work, Turns and metacognition](./agent_work_turn_metacognition.md) |
 | **FractaAgent** | Candidate *recursive orchestration role* for a governed agent that may receive work and, when expressly permitted, delegate attenuated sub-missions, reconcile evidence and return a result | **proposed by Principal, 2026-11-07; terminological candidate only — no new agent class, COP primitive or implementation established** | [Pluralisation cognitive sous mandat](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/pluralisation_cognitive_sous_mandat.md), [FractaMandate](./mandate_reasonable_agency.md) |
 | **FractaHandler** | Situated execution role accepting governed work on a FractaNode; distinct from a Unix shell, process, protocol or new daemon | **terminology introduced by Principal, 2026-10-28; semantic contract under review** | [Operium operational ownership](./operium_owns_operational_deploy.md), [Shell Fracta2 umbrella #292](https://github.com/JeanHuguesRobert/cogentia/issues/292) |
 | FractaScheduler | Scheduling and progress of distributed cognitive work | implemented/documented profile | [Scheduler](../docs/fracta-scheduler.md) |
@@ -142,6 +143,12 @@ The same minimal accountability pattern can recur at different levels of abstrac
 **Minimum discriminating Reality Test:** compare a flattened permission-per-act workflow with (a) standing contextual FractaMandate and (b) standing FractaMandate plus budget forecast/settlement feedback on matched realistic tasks. Measure mandate compliance, completion, prediction calibration, human-attention cost, harmful exposure, repair effectiveness and traceability. Test adversarial ambiguity and material context changes. Do not claim novelty or reliability prior to independent prior-art and empirical examination.
 
 **Authoritative conceptual source:** [Mandate — Reasonable Agency, Judgment, and Accountable Delegation](./mandate_reasonable_agency.md) (working v0.2). FractaXXXX provides the generative crosswalk only; COP/Accounting retains its accounting authority, [Intent](./intent.md) its provenance and meaning doctrine, [Measured Risk](./measured_risk.md) its exposure doctrine, and [Traçabilité des actes](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/traceabilite_des_actes.md) its imputation doctrine.
+
+## FractaGenesis — adopted generative name (2026-11-19)
+
+**FractaGenesis** names the conceptual **generation and lineage** mechanism for both Cognitive Packet work and lightweight actors: `instantiate` (situated instance), `replicate` (additional incarnation of one logical identity where appropriate), `fork` (independent derived lineage), and `spawn` (bounded dynamic actor or work). **FractaPrototype**, **FractaInstance** and **FractaFork** are provisional names for model, situated incarnation and detached derivative. These operations do **not** equate a work item with its handler, transfer responsibility or enlarge mandate. A generated child work item still has its own responsible logical agent; parent work retains its original responsibility. `join` is synchronization; `merge` is result reconciliation. No independent scheduler, identity store or service is authorized by this vocabulary. Read the [cross-cutting note on agents, work, Turns and observability](./agent_work_turn_metacognition.md) for constraints, posthumous/multi-Twin cases and Reality Tests.
+
+---
 
 ## FractaAgent — candidate name for recursive, governed agent composition (2026-11-07)
 
