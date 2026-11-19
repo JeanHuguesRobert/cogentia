@@ -151,6 +151,9 @@ export function openJohnCompositeRuntime({readOnly=false,db,router,
   }
   const store=createSqliteCopEventStore(pathname);
   return {runtime:createTwinCompositeRuntime({store,
-    router:router||createAiRouterClient(),options:JHN_COMPOSITE_DEFAULTS}),
+    router:router||createAiRouterClient({
+      apiKey:env.COGENTIA_AI_ROUTER_API_KEY||env.MAGISTRAL_API_KEY||"",
+      timeoutMs:Number(env.COGENTIA_AI_ROUTER_TIMEOUT_MS)||90000,
+    }),options:JHN_COMPOSITE_DEFAULTS}),
     close:()=>store.close()};
 }
