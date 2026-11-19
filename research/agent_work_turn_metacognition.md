@@ -6,7 +6,7 @@ ai_assisted_by:
   - "ChatGPT GPT-6 — synthèse architecturale"
 date: "2026-11-19"
 last_modified_at: "2026-11-19"
-version: "0.1.1"
+version: "0.1.2"
 status: "working-paper — synthesis of Principal decisions and hypotheses"
 license: "CC BY-SA 4.0"
 language: "fr"
@@ -203,6 +203,10 @@ La séquence de Reality Tests la plus informative est :
 6. Contrôler avec des cas de Twins distincts d'un même sujet et le régime de continuité posthume : **absence de confusion entre représentation, mandats et autorité vivante**.
 
 **État** : unification conceptuelle et critères de preuve, non annonce d'un moteur intégré déployé. Les fondations existent, mais les invariants transversaux (responsabilité unique, navigation unifiée, monitoring cognitif) nécessitent des Reality Tests avant stabilisation.
+
+### Premier pilote d'affectation COP — 19 novembre 2026
+
+La relation **responsible agent / commissioning agent** et sa reconstruction par événements ont reçu un premier support dans [Inseme COP Core](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/src/packet-work-assignment.js) (commit [3afc6f9](https://github.com/JeanHuguesRobert/inseme/commit/3afc6f9159871bb9401192a40dead97241fe0109)). Elle distingue l'agent logique de ses handlers, enregistre une révision unique au moyen de transactions SQLite/CAS, accepte une commission directe du Principal à l'agent racine et tente une régularisation **paresseuse** lors de la reprise d'un Task/Step paquetisé. Une attribution historique insuffisamment étayée engendre une demande de **Judgment** durable ; une réponse LLM reste une proposition et ne constitue pas un mandat. [Contrat de pilote](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/docs/work-assignment.md) et [tests](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/test/packet-work-assignment.node-test.mjs) : compilation réussie, 61 tests du package réussis au moment du commit. **Limites** : ni migration générale de toutes les Issues et Continuations historiques, ni branchement autonome du JudgmentHandler au LLM, ni enforcement de la responsabilité sur toutes les surfaces de travail ; poursuivre dans [Cogentia #341](https://github.com/JeanHuguesRobert/cogentia/issues/341).
 
 ## 10. Routage des travaux existants
 
