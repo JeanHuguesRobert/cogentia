@@ -84,6 +84,13 @@ export async function projectAgentToSupabase({
   const instance_id=instance.rows[0]?.id;
   if(!instance_id)return fail('supabase_instance_id_missing');
 
+  // Preserve the identity's original creation time across idempotent syncs.
+  const existingCop=await request(endpoint,fetchFn,'cop_logical_agents',{
+    query:'?select=created_at&'+new URLSearchParams({
+      logical_agent_id:'eq.'+agent.agent_ref})
+  });
+  if(!existingCop.ok)return {...existingCop,stage:'cop_read',instance_id};
+  const created_at=existingCop.rows[0]?.created_at||new Date().toISOString();
   const projection=await request(endpoint,fetchFn,'cop_logical_agents',{
     method:'POST',query:'?on_conflict=logical_agent_id',
     body:[{
@@ -98,7 +105,7 @@ export async function projectAgentToSupabase({
         cop_revision:agent.revision,receipt_ref:agent.receipt_ref,
         authority:'supervised_no_independent_mandate'
       }),
-      created_at:new Date().toISOString(),
+      created_at,
       updated_at:new Date().toISOString(),
     }]
   });

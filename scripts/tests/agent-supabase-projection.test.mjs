@@ -24,13 +24,15 @@ test('a native digital agent is a hosted instance with own root; COP is a separa
       return new Response(JSON.stringify([{id:'root',principal_id:principal}]),{status:200});
     if(table==='instances'&&opt.method==='POST')
       return new Response(JSON.stringify([{id:'new-instance-id'}]),{status:201});
+    if(table==='cop_logical_agents'&&opt.method==='GET')
+      return new Response(JSON.stringify([{created_at:'2026-11-19T10:00:00Z'}]),{status:200});
     return new Response(JSON.stringify([{id:'projected'}]),{status:201});
   };
   const r=await projectAgentToSupabase({agent,env,fetchFn:mockFetch});
   assert.equal(r.ok,true,JSON.stringify(r));
   assert.equal(r.canonical_slug,'vulcain-minesteggio');
   assert.deepEqual(requests.map(x=>x.table),
-    ['instances','instances','cop_logical_agents','instance_config','instance_aliases']);
+    ['instances','instances','cop_logical_agents','cop_logical_agents','instance_config','instance_aliases']);
   const i=requests[1].body[0];
   assert.equal(i.subject_ref,subject);
   assert.equal(i.subject_root_ref,subject);
@@ -39,10 +41,11 @@ test('a native digital agent is a hosted instance with own root; COP is a separa
   assert.equal(i.principal_id,principal);
   assert.equal(i.is_claimable,false);
   assert.equal(Object.hasOwn(i,'twin_root_ref'),false);
-  const c=requests[2].body[0];
+  const c=requests[3].body[0];
   assert.equal(c.logical_agent_id,subject);
   assert.equal(c.instance_id,'new-instance-id');
   assert.equal(c.active_mandate_ref,null);
+  assert.equal(c.created_at,'2026-11-19T10:00:00Z');
   assert.equal(JSON.parse(c.metadata).memory_ref,'memory:minesteggio:vulcain');
 });
 test('missing Supabase configuration does not invent a successful projection',async()=>{
