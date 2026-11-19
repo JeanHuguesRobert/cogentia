@@ -6,7 +6,7 @@ ai_assisted_by:
   - "ChatGPT GPT-6 — synthèse architecturale"
 date: "2026-11-19"
 last_modified_at: "2026-11-19"
-version: "0.1"
+version: "0.1.1"
 status: "working-paper — synthesis of Principal decisions and hypotheses"
 license: "CC BY-SA 4.0"
 language: "fr"
@@ -206,6 +206,7 @@ La séquence de Reality Tests la plus informative est :
 
 ## 10. Routage des travaux existants
 
+- [Cogentia #341](https://github.com/JeanHuguesRobert/cogentia/issues/341) — paquet d'implémentation transversal : affectation unique, Work Turns, FractaDashboard en lecture seule et métacognition nocturne.
 - [Cogentia #336](https://github.com/JeanHuguesRobert/cogentia/issues/336) — producteurs, contrats et reprise réelle des Continuations.
 - [Cogentia #339](https://github.com/JeanHuguesRobert/cogentia/issues/339) — taxonomie et labels GitHub, sans autre backlog.
 - [Inseme #194](https://github.com/JeanHuguesRobert/inseme/issues/194) — frontier de travaux et PacketClaims COP, sans scheduler concurrent.
