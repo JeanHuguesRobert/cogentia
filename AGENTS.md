@@ -4,7 +4,7 @@ subtitle: "Operational guidance and local mandates for JeanHuguesRobert/cogentia
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-07-12"
-last_modified_at: "2026-11-18"
+last_modified_at: '2026-11-20'
 version: "1.2"
 status: "stable — active"
 license: "CC BY-SA 4.0"
@@ -64,7 +64,7 @@ Cogentia is the cognitive-infrastructure tooling of the multi-repository corpus:
 ## Coding-agent mandate-first security rule
 
 Every Cogentia coding or implementation handler MUST apply the canonical
-[mandate-first security and infraction-response rule](instructions/AGENTS.shared.md#mandate-first-security-trust-observability-and-response-to-infractions-principal-decision-2026-11-18).
+[mandate-first security and infraction-response rule](instructions/AGENTS.policy-authority.md#mandate-first-security-trust-observability-and-response-to-infractions-principal-decision-2026-11-18).
 **Do not treat hypothetical agent disobedience as the default threat model.**
 Implement the shortest general route that lets a currently mandated agent
 perform real work, then verify attribution, real effects, observability,
@@ -90,7 +90,7 @@ Operium owns live operational deployment evidence and the service control plane.
 
 For changes to agent-instruction tooling, run the focused audit against a configured corpus and `git diff --check`. Report any broader suite not run.
 
-For each new or materially revised substantive Markdown document, follow the shared [Canonical agile frontmatter rule](instructions/AGENTS.shared.md#canonical-agile-frontmatter--establish-metadata-when-authoring). Preserve provenance and an `update_policy`; do not infer missing fields. Verify each affected path with `node scripts/cogentia.js frontmatter verify <path> --strict-role` and `git diff --check` before reporting it ready.
+For each new or materially revised substantive Markdown document, follow the shared [Canonical agile frontmatter rule](instructions/AGENTS.policy-epistemics.md#canonical-agile-frontmatter--establish-metadata-when-authoring). Preserve provenance and an `update_policy`; do not infer missing fields. Verify each affected path with `node scripts/cogentia.js frontmatter verify <path> --strict-role` and `git diff --check` before reporting it ready.
 
 ## Agent Skills (experimental)
 

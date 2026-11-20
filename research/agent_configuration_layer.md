@@ -4,7 +4,7 @@ subtitle: From AGENTS.md to governed corpus projections
 version: '0.4'
 status: working-paper — method note
 date: '2026-06-13'
-last_modified_at: '2026-11-18'
+last_modified_at: '2026-11-20'
 author: Jean Hugues Noël Robert
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: CC BY-SA 4.0
@@ -371,7 +371,7 @@ secret publication or the evasion of a provider prohibition.
 
 This principle specializes **Mandate — Reasonable Agency**, **Optimistic
 Locking**, and **Fix Bugs First**, and is operationalized in the canonical
-[`AGENTS.shared.md`](../instructions/AGENTS.shared.md#mandate-first-security-trust-observability-and-response-to-infractions-principal-decision-2026-11-18).
+[`AGENTS.shared.md`](../instructions/AGENTS.policy-authority.md#mandate-first-security-trust-observability-and-response-to-infractions-principal-decision-2026-11-18).
 It does not change a deployed signed mandate merely by being written.
 
 ### 6.2 Language is a governed derivation constraint

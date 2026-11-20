@@ -5,7 +5,7 @@ description: "Consolidating note articulating FractaCognition definition, multis
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-09-27"
-last_modified_at: "2026-11-15"
+last_modified_at: '2026-11-20'
 version: "0.9.5"
 status: "working-paper"
 license: "CC BY-SA 4.0"
@@ -153,7 +153,7 @@ the default is to attempt the next feasible Reality Test and repair any
 actual reversible defect. A polished intermediate report is not task
 completion. Keep a falsifiable stopping reason; if it cannot be stated
 precisely, proceed. See the enforceable operational interpretation in
-[AGENTS.shared.md](../instructions/AGENTS.shared.md#anti-jeu-abstention-is-not-prudence--continuation-is-the-default).
+[AGENTS.shared.md](../instructions/AGENTS.policy-execution.md#anti-jeu-abstention-is-not-prudence--continuation-is-the-default).
 
 Canonical compact form:
 
@@ -543,7 +543,7 @@ However, like Hanlon, this is a search-order heuristic, not an uncritical endors
 - friendship is **not assimilation**: differences, incompatibilities, competing hypotheses, and proper attribution must be preserved;
 - kinship must not erase the unique residue or novel necessity that provoked the current effort.
 
-Specialized sources: [Telescript as a Friend](telescript_as_a_friend.md), [`AGENTS.shared.md`](../instructions/AGENTS.shared.md#friends-before-competitors).
+Specialized sources: [Telescript as a Friend](telescript_as_a_friend.md), [`AGENTS.shared.md`](../instructions/AGENTS.policy-epistemics.md#friends-before-competitors).
 
 ### 6.3 Ne pas réinventer la roue — surtout quand elle est à notre taille
 

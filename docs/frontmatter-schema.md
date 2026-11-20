@@ -5,7 +5,7 @@ license: CC BY-SA 4.0
 language: en
 title: Frontmatter Schema — v0.1 (Corpus)
 date: '2026-05-27'
-last_modified_at: '2026-11-15'
+last_modified_at: '2026-11-20'
 status: working-paper — auto-filled (frontmatter cleanup)
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/frontmatter-schema.md
 last_stamped_at: 2026-06-01T00:00:00.000Z
@@ -55,7 +55,7 @@ The machine-readable companion is [`frontmatter-schema.v0.1.json`](frontmatter-s
 - `privacy` defaults to `public`. It only needs to be specified when the document falls outside that regime.
 - A document that is **entirely automated**, with no human contributor, must be readily identifiable through the `generated_by` field.
 - Unknown or repository-local fields are not automatically errors and must not be mechanically renamed merely because they are absent from the shared vocabulary.
-- **Stable filename, agile content:** an evolving substantive Markdown document retains a semantic filename without an embedded date, revision number, version suffix or temporary `draft/final` marker. Record `date`, `last_modified_at`, `version`, `status` and review state in the frontmatter, and use immutable Git commits to address earlier states. Do not create a sibling `-v2.md` or `-2026-11-15.md` merely because the content evolves. Exceptions require a real identity difference: frozen legal submissions, editions, protocols with independently meaningful versions, or genuinely parallel incompatible variants. Existing historical names are not retroactively invalidated or automatically renamed. See [Canonical agile frontmatter](../instructions/AGENTS.shared.md#canonical-agile-frontmatter--establish-metadata-when-authoring) and [Verified Handoff Principle](../instructions/AGENTS.shared.md#living-corpus-synchronization-and-reasonable-principal-mobilization).
+- **Stable filename, agile content:** an evolving substantive Markdown document retains a semantic filename without an embedded date, revision number, version suffix or temporary `draft/final` marker. Record `date`, `last_modified_at`, `version`, `status` and review state in the frontmatter, and use immutable Git commits to address earlier states. Do not create a sibling `-v2.md` or `-2026-11-15.md` merely because the content evolves. Exceptions require a real identity difference: frozen legal submissions, editions, protocols with independently meaningful versions, or genuinely parallel incompatible variants. Existing historical names are not retroactively invalidated or automatically renamed. See [Canonical agile frontmatter](../instructions/AGENTS.policy-epistemics.md#canonical-agile-frontmatter--establish-metadata-when-authoring) and [Verified Handoff Principle](../instructions/AGENTS.policy-effects.md#living-corpus-synchronization-and-reasonable-principal-mobilization).
 
 
 ---

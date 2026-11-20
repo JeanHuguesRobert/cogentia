@@ -10,7 +10,7 @@ visibility: public
 
 # John MCP → COP authority: reuse existing controls
 
-**Normative authority:** `instructions/AGENTS.shared.md#monotonic-mandate-attenuation`, `research/monotonic_mandate_attenuation.md`, `research/intent.md`, Inseme COP contracts. Authority(child) is a subset of Authority(parent); child obligations cannot be weakened. Browser leases and transport tokens coordinate execution but do not grant authority.
+**Normative authority:** `instructions/AGENTS.policy-authority.md#monotonic-mandate-attenuation`, `research/monotonic_mandate_attenuation.md`, `research/intent.md`, Inseme COP contracts. Authority(child) is a subset of Authority(parent); child obligations cannot be weakened. Browser leases and transport tokens coordinate execution but do not grant authority.
 
 ## Verified code map
 

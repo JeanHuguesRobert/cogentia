@@ -4,7 +4,7 @@ date: "2026-11-15"
 author: "unknown"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: CC BY-SA 4.0
-last_modified_at: "2026-11-18"
+last_modified_at: '2026-11-20'
 document_role: operational
 document_kind: integration-runbook
 visibility: public
@@ -108,7 +108,7 @@ v4 et à l'idempotence du journal COP.
 > this section were removed from the runtime implementation after the
 > Principal's mandate-first security decision. This passage remains as
 > historical evidence, **not current operational instructions**.
-> See [AGENTS.shared.md](../instructions/AGENTS.shared.md#mandate-first-security-trust-observability-and-response-to-infractions-principal-decision-2026-11-18).
+> See [AGENTS.shared.md](../instructions/AGENTS.policy-authority.md#mandate-first-security-trust-observability-and-response-to-infractions-principal-decision-2026-11-18).
 > The previous installer and custody modules remain available in Git history.
 
 
