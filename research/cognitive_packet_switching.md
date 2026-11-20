@@ -418,6 +418,8 @@ The point is operational recurrence.
 
 Across many domains, useful units circulate through constrained networks.
 
+**Cross-domain research correspondence (20 November 2026).** The ERC Synergy [SAFEr Grid project](https://cordis.europa.eu/project/id/101166783/results) and [Schwarz et al. (2026)](https://doi.org/10.1038/s44287-025-00256-5) apply store-and-forward buffering and routing to asynchronous *electrical* subgrids. This is an instructive, independently pursued physical-domain instance of the recurrence discussed in [Generalized Packet Networks](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/generalized_packet_networks.md), **not** a CPS implementation or evidence that cognitive work obeys electrical-network constraints. CPS concerns resumable, semantically typed work packets, mandates and accountable agent handoffs; energy-router control remains a distinct domain.
+
 In cognitive work, the useful unit is an idea in a broad operational sense.
 
 ---
