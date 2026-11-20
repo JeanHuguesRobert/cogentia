@@ -14,7 +14,7 @@ update_policy: UP-DEFAULT-REVIEWED
 
 ## Purpose and authority
 
-Regression scenario for the [canonical cooperation-first research mandate](../../instructions/AGENTS.shared.md#friends-before-competitors).
+Regression scenario for the [canonical cooperation-first research mandate](../../instructions/AGENTS.policy-epistemics.md#friends-before-competitors).
 The Principal values discovery, sharing, reusable ideas and collaboration,
 not establishing priority, securing patents or framing independently pursued
 research as a competitive threat.
