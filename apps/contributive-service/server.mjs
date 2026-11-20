@@ -57,6 +57,10 @@ function init(dbPath) {
   if(!campaignColumns.has('description'))db.exec("ALTER TABLE campaigns ADD COLUMN description TEXT NOT NULL DEFAULT ''");
   if(!campaignColumns.has('revision'))db.exec("ALTER TABLE campaigns ADD COLUMN revision INTEGER NOT NULL DEFAULT 1");
   if(!campaignColumns.has('updated_at'))db.exec("ALTER TABLE campaigns ADD COLUMN updated_at TEXT");
+  const copyColumns=new Set(db.prepare("SELECT name FROM pragma_table_info('copies')").all().map(r=>r.name));
+  if(!copyColumns.has('status'))db.exec("ALTER TABLE copies ADD COLUMN status TEXT NOT NULL DEFAULT 'declared'");
+  if(!copyColumns.has('revision'))db.exec("ALTER TABLE copies ADD COLUMN revision INTEGER NOT NULL DEFAULT 1");
+  if(!copyColumns.has('updated_at'))db.exec("ALTER TABLE copies ADD COLUMN updated_at TEXT");
   // Aggregate organizer declarations only. Never persist names or addresses of
   // elected officials or citizens here. No value implies official validation.
   db.exec('CREATE TABLE IF NOT EXISTS campaign_progress_events (id INTEGER PRIMARY KEY AUTOINCREMENT,campaign_id TEXT NOT NULL REFERENCES campaigns(id),stage TEXT NOT NULL,count INTEGER NOT NULL,evidence_url TEXT,created_at TEXT NOT NULL);');
@@ -78,7 +82,7 @@ function load(req){
   });
 }
 const colCampaign='id,title,goal,description,status,created_at,updated_at,revision';
-const colCopy='id,campaign_id,mission_id,title,three_code,parent_id,parent_code,relation_status,source_template,created_at';
+const colCopy='id,campaign_id,mission_id,title,three_code,parent_id,parent_code,relation_status,source_template,created_at,status,revision,updated_at';
 function owner(db,id,req) {
   const row=db.prepare('SELECT secret_hash FROM campaigns WHERE id=?').get(id);
   if(!row)fail('Campagne inconnue',404);
@@ -210,6 +214,7 @@ export function makeServer({
       if(req.method==='POST'&&p===ROOT+'/api/missions'){
         const b=await load(req);if(!textId(b.campaign_id))fail('Identifiant invalide');
         owner(db,b.campaign_id,req);
+        if(db.prepare('SELECT status FROM campaigns WHERE id=?').get(b.campaign_id)?.status==='closed')fail('Campagne clôturée',409);
         const id=randomUUID(),t=now(),title=requireText(b.title,140),desc=short(b.description,1200);
         db.prepare('INSERT INTO missions VALUES(?,?,?,?,?)').run(id,b.campaign_id,title,desc,t);
         return json(res,201,{id,campaign_id:b.campaign_id,title,description:desc});
@@ -219,12 +224,13 @@ export function makeServer({
         const stored=db.prepare('SELECT '+colCopy+' FROM copies WHERE id=?').get(parsed.copy_id);
         if(!stored || stored.campaign_id!==parsed.campaign_id || stored.three_code!==parsed.three_code)
           fail('Référence non résolue dans ce registrar',404);
+        if(stored.status==='revoked')fail('Cette référence a été révoquée',410);
         return json(res,200,{...parsed,resolution_scope:'local-only',copy_url:ROOT+'/e/'+stored.id,
           notice:'Référence publique, sans preuve d’identité, de possession, de mandat ou de soutien.'});
       }
       if(req.method==='GET'&&p===ROOT+'/api/resolve'){
         const value=code(u.searchParams.get('code')||'');
-        const rows=db.prepare('SELECT '+colCopy+' FROM copies WHERE three_code=? ORDER BY created_at DESC LIMIT 100').all(value);
+        const rows=db.prepare("SELECT "+colCopy+" FROM copies WHERE three_code=? AND status!='revoked' ORDER BY created_at DESC LIMIT 100").all(value);
         const registrations=resolvedRegistrations(db,value);
         const verifiedCopyIds=new Map(registrations.filter(x=>x.copy_id).map(x=>[x.copy_id,x.id]));
         const results=rows.map(x=>({...x,
@@ -248,8 +254,8 @@ export function makeServer({
         if(camp.status!=='active')owner(db,b.campaign_id,req);
         let parent=null,parentCode=null,relation='none';
         if(b.parent_id) {
-          parent=db.prepare('SELECT id,three_code,campaign_id FROM copies WHERE id=?').get(b.parent_id);
-          if(!parent)fail('Parent introuvable',404);
+          parent=db.prepare('SELECT id,three_code,campaign_id,status FROM copies WHERE id=?').get(b.parent_id);
+          if(!parent||parent.status==='revoked')fail('Parent introuvable ou révoqué',404);
           if(parent.campaign_id!==b.campaign_id)fail('Parent hors campagne');
           parentCode=parent.three_code;relation='linked-unverified';
         } else if(b.parent_code) {parentCode=code(b.parent_code);relation='declared-unverified';}
@@ -257,19 +263,47 @@ export function makeServer({
         const mid=b.mission_id||null;
         if(mid&&!db.prepare('SELECT id FROM missions WHERE id=? AND campaign_id=?').get(mid,b.campaign_id))fail('Mission hors campagne');
         const id=randomUUID(),edit=token(),t=now(),title=short(b.title,160)||'Exemplaire singulier';
-        db.prepare('INSERT INTO copies VALUES(?,?,?,?,?,?,?,?,?,?,?)').run(id,b.campaign_id,mid,title,given,parent?.id||null,parentCode,relation,short(b.source_template,160)||null,hash(edit),t);
+        db.prepare('INSERT INTO copies(id,campaign_id,mission_id,title,three_code,parent_id,parent_code,relation_status,source_template,edit_hash,created_at,status,revision,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+          .run(id,b.campaign_id,mid,title,given,parent?.id||null,parentCode,relation,short(b.source_template,160)||null,hash(edit),t,'declared',1,t);
         db.prepare('INSERT INTO events VALUES(?,?,?,?,?)').run(randomUUID(),id,parentCode?'FORK_DECLARED':'REGISTERED',JSON.stringify({status:'declaration-non-verifiee'}),t);
-        return json(res,201,{id,campaign_id:b.campaign_id,three_code:given,reference:formatCopyReference({campaign_id:b.campaign_id,three_code:given,copy_id:id}),parent_code:parentCode,relation_status:relation,url:ROOT+'/e/'+id,edit_token:edit,notice:'Enregistrement déclaratif, ni authentification de l’objet ni preuve de détention.'});
+        return json(res,201,{id,campaign_id:b.campaign_id,three_code:given,reference:formatCopyReference({campaign_id:b.campaign_id,three_code:given,copy_id:id}),status:'declared',revision:1,parent_code:parentCode,relation_status:relation,url:ROOT+'/e/'+id,edit_token:edit,notice:'Enregistrement déclaratif, ni authentification de l’objet ni preuve de détention.'});
       }
       const copyMatch=p.match(/^\/3code\/api\/copies\/([a-f0-9-]{36})$/);
-      if(req.method==='GET'&&copyMatch){
+      if(copyMatch){
         const row=db.prepare('SELECT '+colCopy+' FROM copies WHERE id=?').get(copyMatch[1]);
         if(!row)fail('Exemplaire inconnu',404);
-        return json(res,200,{copy:{...row,reference:formatCopyReference({...row,copy_id:row.id})},contributions:db.prepare('SELECT id,message,created_at FROM contributions WHERE copy_id=? AND status=? ORDER BY created_at LIMIT 100').all(row.id,'accepted'),events:db.prepare('SELECT kind,created_at FROM events WHERE copy_id=? ORDER BY created_at').all(row.id)});
+        if(row.status==='revoked')fail('Cet exemplaire a été révoqué',410);
+        if(req.method==='PATCH'){
+          const privateRow=db.prepare('SELECT edit_hash FROM copies WHERE id=?').get(row.id);
+          const hasCopyAuthority=authorize(req.headers['x-copy-edit-token'],privateRow.edit_hash);
+          if(!hasCopyAuthority)owner(db,row.campaign_id,req);
+          const b=await load(req),expected=b.expected_revision;
+          if(!Number.isSafeInteger(expected)||expected<1)fail('Révision attendue obligatoire');
+          if(expected!==row.revision)fail('Conflit de révision : rechargez l’exemplaire',409);
+          if(Object.keys(b).some(k=>!['expected_revision','title','status'].includes(k)))fail('Champ inconnu');
+          if(!Object.hasOwn(b,'title')&&!Object.hasOwn(b,'status'))fail('Aucune modification');
+          const title=Object.hasOwn(b,'title')?requireText(b.title,160):row.title;
+          const status=Object.hasOwn(b,'status')?b.status:'declared';
+          if(!['declared','revoked'].includes(status))fail('Statut invalide');
+          if(status==='revoked'&&Object.hasOwn(b,'title'))fail('Révocation et édition séparées');
+          const kind=status==='revoked'?'REVOKED':'UPDATED';
+          db.exec('BEGIN IMMEDIATE');
+          try{
+            const at=now();
+            const updated=db.prepare('UPDATE copies SET title=?,status=?,revision=revision+1,updated_at=? WHERE id=? AND revision=?')
+              .run(title,status,at,row.id,expected);
+            if(updated.changes!==1)fail('Conflit de révision',409);
+            db.prepare('INSERT INTO events VALUES(?,?,?,?,?)').run(randomUUID(),row.id,kind,JSON.stringify({revision:expected+1,method:hasCopyAuthority?'copy-key':'campaign-manager'}),at);
+            db.exec('COMMIT');
+            return json(res,200,{id:row.id,title,status,revision:expected+1,updated_at:at});
+          }catch(e){db.exec('ROLLBACK');throw e;}
+        }
+        if(req.method==='GET')return json(res,200,{copy:{...row,reference:formatCopyReference({...row,copy_id:row.id})},contributions:db.prepare('SELECT id,message,created_at FROM contributions WHERE copy_id=? AND status=? ORDER BY created_at LIMIT 100').all(row.id,'accepted'),events:db.prepare('SELECT kind,created_at FROM events WHERE copy_id=? ORDER BY created_at').all(row.id)});
       }
       if(req.method==='POST'&&p===ROOT+'/api/contributions'){
-        const b=await load(req),copy=db.prepare('SELECT id FROM copies WHERE id=?').get(b.copy_id);
-        if(!copy)fail('Exemplaire inconnu',404);
+        const b=await load(req),copy=db.prepare('SELECT copies.id,copies.status,campaigns.status AS campaign_status FROM copies JOIN campaigns ON campaigns.id=copies.campaign_id WHERE copies.id=?').get(b.copy_id);
+        if(!copy||copy.status==='revoked')fail('Exemplaire inconnu ou révoqué',404);
+        if(copy.campaign_status!=='active')fail('Campagne fermée aux nouvelles contributions',409);
         const id=randomUUID(),t=now(),message=requireText(b.message,1000);
         db.prepare('INSERT INTO contributions VALUES(?,?,?,?,?,?)').run(id,b.copy_id,message,'pending',t,null);
         db.prepare('INSERT INTO events VALUES(?,?,?,?,?)').run(randomUUID(),b.copy_id,'CONTRIBUTION_PENDING','{}',t);

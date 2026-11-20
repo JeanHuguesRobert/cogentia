@@ -6,7 +6,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const val=id=>document.getElementById(id)?.value?.trim()||'';
 const el=id=>document.getElementById(id);
 const msg=(where,text,bad=false)=>{const e=el(where);if(e){e.textContent=text;e.className=bad?'output error':'output success';}};
-const link=id=>location.origin+ROOT+'/e/'+id;
+const link=id=>'https://services.acorsica.org'+ROOT+'/e/'+id;
 const qr=url=>ROOT+'/api/qr?url='+encodeURIComponent(url);
 const localToken=id=>localStorage.getItem('campaign-key-'+id)||'';
 const row=(s)=>'<p>'+s+'</p>';
@@ -215,13 +215,27 @@ async function review(id){
     el('admin-result').querySelectorAll('button[data-cid]').forEach(b=>b.onclick=async()=>{try{await api('/contributions/'+b.dataset.cid+'/review',{method:'POST',headers:{'x-management-token':localToken(id)},body:JSON.stringify({status:b.dataset.decision})});review(id);}catch(e){alert(e.message);}});
   }catch(e){msg('admin-result',e.message,true);}
 }
+async function updateCopy(id,revision,changes){
+  try{
+    await api('/copies/'+id,{method:'PATCH',headers:{
+      'x-copy-edit-token':val('copy-edit-key'),
+      'x-management-token':val('copy-campaign-key')
+    },body:JSON.stringify({expected_revision:revision,...changes})});
+    location.reload();
+  }catch(e){msg('copy-admin-msg',e.message,true);}
+}
 async function copyPage(id){
   try{
     const d=await api('/copies/'+id),c=d.copy;
     app.innerHTML='<h1>Exemplaire singulier</h1><section class="panel"><p class="big-code mono">'+esc(c.three_code)+'</p><p>'+esc(c.title)+'</p><p><strong>Parent déclaré :</strong> '+esc(c.parent_code||'aucun')+'</p><p><strong>Statut :</strong> '+esc(c.relation_status)+'</p><img class="qr" src="'+qr(link(id))+'" alt="QR individuel de l’exemplaire"><p class="mono">'+esc(link(id))+'</p><p class="mono">'+esc(c.reference)+'</p><p><a href="'+ROOT+'/print?copy_id='+encodeURIComponent(id)+'">Composer et imprimer cet exemplaire singulier en PDF</a></p><p class="note">Ce QR peut être photocopié mais continue à désigner ce même exemplaire. Il ne prouve ni la possession ni un soutien politique.</p><p><a class="button" href="'+ROOT+'/campaign/'+encodeURIComponent(c.campaign_id)+'?parent_code='+encodeURIComponent(c.three_code)+'">J’ai photocopié cet exemplaire : déclarer un enfant</a></p></section>'+
       section('Enregistrer cette Bouteille à la Mer','<p>Le registrar pilote n’enregistre que les exemplaires déclarés dans une campagne. Pour obtenir le statut « courriel reçu », ouvrez le formulaire et envoyez vous-même le message proposé.</p><p><a class="button" href="'+ROOT+'/?copy_id='+encodeURIComponent(id)+'&three_code='+encodeURIComponent(c.three_code)+'">Préparer mon courriel de référence</a></p>')+
+      section('Administrer cet exemplaire','<p>Révision : '+esc(c.revision)+'. Le créateur dispose de la clé de contrôle de cet exemplaire ; le gestionnaire de la campagne peut aussi le rectifier ou le révoquer. Une révocation est définitive et retire l’exemplaire de la résolution publique.</p><label for="copy-edit-key">Clé de cet exemplaire</label><input type="password" id="copy-edit-key" autocomplete="off"><label for="copy-campaign-key">Ou clé de gestion de la campagne</label><input type="password" id="copy-campaign-key" autocomplete="off"><label for="copy-new-title">Titre public</label><input id="copy-new-title" maxlength="160" value="'+esc(c.title)+'"><button id="copy-update">Rectifier le titre</button><button class="secondary" id="copy-revoke">Révoquer cet exemplaire</button><div id="copy-admin-msg"></div>')+
       section('Contribuer librement','<p>Les contributions ne sont pas publiées sans validation de l’organisateur. Ne transmettez pas de données personnelles ou sensibles.</p><label for="contribution">Information, correction, témoignage ou résultat</label><textarea id="contribution" maxlength="1000"></textarea><button id="contribute">Soumettre une contribution</button><div id="contrib-msg"></div>')+
       section('Contributions publiées',d.contributions.map(x=>'<p>'+esc(x.message)+'</p>').join('')||'<p>Pas encore de contribution publiée.</p>');
+    el('copy-edit-key').value=localStorage.getItem('copy-edit-'+id)||'';
+    el('copy-campaign-key').value=localToken(c.campaign_id);
+    el('copy-update').onclick=()=>updateCopy(id,c.revision,{title:val('copy-new-title')});
+    el('copy-revoke').onclick=()=>{if(confirm('Révoquer cette référence ? Cette opération ne peut être annulée.'))updateCopy(id,c.revision,{status:'revoked'});};
     el('contribute').onclick=async()=>{try{await api('/contributions',{method:'POST',body:JSON.stringify({copy_id:id,message:val('contribution')})});msg('contrib-msg','Contribution reçue, en attente de qualification.');el('contribution').value='';}catch(e){msg('contrib-msg',e.message,true);}};
   }catch(e){app.innerHTML='<h1>Exemplaire introuvable</h1><p class="error">'+esc(e.message)+'</p>';}
 }

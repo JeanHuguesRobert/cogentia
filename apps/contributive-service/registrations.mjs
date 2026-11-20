@@ -52,8 +52,9 @@ export function createRegistration(db,{three_code,copy_id=null,edit_token='',inb
   if(pilot_acknowledged!==true)throw problem('Prenez connaissance du périmètre et des limites de preuve avant de poursuivre.',422);
   if(!inbox)throw problem('Boîte de réception non configurée : enregistrement différé',503);
   if(!uuid.test(copy_id))throw problem('Identifiant de copie invalide');
-  const target=db.prepare('SELECT copies.three_code,copies.edit_hash,copies.title,copies.campaign_id FROM copies JOIN campaigns ON campaigns.id=copies.campaign_id WHERE copies.id=?').get(copy_id);
+  const target=db.prepare('SELECT copies.three_code,copies.edit_hash,copies.title,copies.campaign_id,copies.status FROM copies JOIN campaigns ON campaigns.id=copies.campaign_id WHERE copies.id=?').get(copy_id);
   if(!target)throw problem('Exemplaire Bouteille à la Mer inexistant',404);
+  if(target.status==='revoked')throw problem('Cet exemplaire a été révoqué',410);
   if(target.three_code!==three_code)throw problem('3Code différent de celui de cet exemplaire');
   const provided=sha(edit_token);
   const a=Buffer.from(provided,'utf8'),b=Buffer.from(target.edit_hash,'utf8');

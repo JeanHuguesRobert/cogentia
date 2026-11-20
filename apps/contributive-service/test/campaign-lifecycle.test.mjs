@@ -7,7 +7,7 @@ import {DatabaseSync} from 'node:sqlite';
 import {makeServer} from '../server.mjs';
 import {formatCopyReference,parseCopyReference} from '../references.mjs';
 
-async function withService(fn,{legacy=false}={}) {
+async function withService(fn,{legacy=false,inbox=''}={}) {
   const dir=mkdtempSync(join(tmpdir(),'3code-lifecycle-'));
   const dbPath=join(dir,'data.sqlite');
   if(legacy){
@@ -16,12 +16,12 @@ async function withService(fn,{legacy=false}={}) {
     db.exec("INSERT INTO campaigns VALUES('2e44c405-2fc9-47be-9e1f-20cb6985114e','Ancien titre','Ancien objectif','draft','0','2026-11-01T00:00:00Z')");
     db.close();
   }
-  const server=makeServer({dbPath});
+  const server=makeServer({dbPath,mailInbox:inbox});
   try{
     await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
     const base='http://127.0.0.1:'+server.address().port+'/3code/api';
-    async function request(path,method='GET',body,token){
-      const response=await fetch(base+path,{method,headers:{...(body===undefined?{}:{'Content-Type':'application/json'}),...(token?{'x-management-token':token}:{})},...(body===undefined?{}:{body:JSON.stringify(body)})});
+    async function request(path,method='GET',body,token,extraHeaders={}){
+      const response=await fetch(base+path,{method,headers:{...(body===undefined?{}:{'Content-Type':'application/json'}),...(token?{'x-management-token':token}:{}),...extraHeaders},...(body===undefined?{}:{body:JSON.stringify(body)})});
       return {status:response.status,body:await response.json()};
     }
     await fn(request);
@@ -143,4 +143,35 @@ test('aggregate presentation progress: separate declarations from official evide
     // No individual political contact names, email addresses or trail in aggregate records.
     assert.equal(Object.keys(r.body.values[0]).sort().join(','),'count,created_at,evidence_url,stage');
   });
+});
+
+test('singular-copy lifecycle: owner edits, manager revokes, references stop resolving',async()=>{
+  await withService(async request=>{
+    const c=(await request('/campaigns','POST',{title:'Campagne indépendante'})).body;
+    await request('/campaigns/'+c.id+'/activate','POST',{},c.management_token);
+    const created=(await request('/copies','POST',{campaign_id:c.id,title:'Texte déclaré',three_code:'3XY-Z89-P2K'})).body;
+    const route='/copies/'+created.id;
+    let r=await request(route);
+    assert.equal(r.status,200);assert.equal(r.body.copy.status,'declared');assert.equal(r.body.copy.revision,1);
+    r=await request(route,'PATCH',{expected_revision:1,title:'Rectification'});
+    assert.equal(r.status,403);
+    r=await request(route,'PATCH',{expected_revision:1,title:'Texte rectifié'},null,{'x-copy-edit-token':created.edit_token});
+    assert.equal(r.status,200);assert.equal(r.body.revision,2);
+    r=await request(route,'PATCH',{expected_revision:1,title:'Écriture périmée'},null,{'x-copy-edit-token':created.edit_token});
+    assert.equal(r.status,409);
+    r=await request(route,'PATCH',{expected_revision:2,status:'revoked',title:'Impossible'},c.management_token);
+    assert.equal(r.status,400);
+    r=await request(route,'PATCH',{expected_revision:2,status:'revoked'},c.management_token);
+    assert.equal(r.status,200);assert.equal(r.body.status,'revoked');assert.equal(r.body.revision,3);
+    r=await request(route);
+    assert.equal(r.status,410);
+    r=await request('/references/parse?ref='+encodeURIComponent(created.reference));
+    assert.equal(r.status,410);
+    r=await request('/resolve?code='+encodeURIComponent(created.three_code));
+    assert.equal(r.status,200);assert.equal(r.body.results.length,0);
+    r=await request('/contributions','POST',{copy_id:created.id,message:'Ne devrait pas passer'});
+    assert.equal(r.status,404);
+    r=await request('/registrations','POST',{copy_id:created.id,edit_token:created.edit_token,three_code:created.three_code,pilot_acknowledged:true});
+    assert.equal(r.status,410);
+  },{inbox:'3code@acorsica.org'});
 });

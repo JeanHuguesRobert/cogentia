@@ -230,3 +230,13 @@ La mise à disposition gratuite de prestations individualisées à des candidats
 **Recette 20 novembre :** `npm test` : 25/25 PASS, dont migrations compatibles avec la base d'avant cet incrément, isolation des campagnes, cycle de vie, collision, parseur `3C1`, écriture protégée et agrégats. Test synthétique avec Chromium sur serveur localhost : chargement du tract et de sa référence, export PDF A4 d'une page. Limite de cette recette locale : l'API QR n'autorise que l'origine HTTPS canonique `services.acorsica.org` ; les QR pointant vers localhost ne doivent pas être considérés comme validés en déploiement public.
 
 **Suite :** test en préproduction du QR canonique, modération/révocation des déclarations d'exemplaires, vérification comptable et confidentialité pour campagnes électorales, traitement supervisé des courriels, attribution des Twins via une file explicitement consentie.
+
+## Rectification et révocation des exemplaires — second incrément du 20 novembre 2026
+
+- Migration additive de `copies` : `status` (`declared` ou `revoked`), `revision`, `updated_at`, avec conservation des anciens `copy_id` et secrets.
+- `PATCH /3code/api/copies/:id` : demande `expected_revision`, une clé de copie `x-copy-edit-token` **ou** la clé de gestion `x-management-token`. Rectification du titre ou révocation, sans changement du code ou de l'identité. Conflit : HTTP 409 ; révocation : HTTP 410 à la résolution du `3C1` et sur la fiche. Historique minimal de rectification et révocation dans `events`.
+- Un exemplaire révoqué ne peut plus accepter de contributions ni de nouvelle demande d'enregistrement par courriel. La révocation d'une référence ne supprime pas l'historique de ses anciennes déclarations, ni les éventuels courriels déjà observés ; elle exclut cet exemplaire des nouveaux résultats résolvables.
+- Les QR utilisent l'origine canonique `https://services.acorsica.org`, y compris lors de la création locale d'un PDF, afin d'éviter de produire un QR en `localhost`. Lors de la recette locale isolée, la génération d'un SVG QR pour une URL individuelle canonique a répondu avec succès.
+- Les copies n'obtiennent pas d'identité supplémentaire lors d'une photocopie du même document. Les publications et suivis demeurent déclaratifs et distincts des présentations électorales officielles.
+
+Tests : `npm test` 26/26 PASS, y compris modification avec clé de copie, refus sans autorité, conflit de révision, révocation avec clé de campagne et blocage de résolution, contributions et enregistrement par courriel après révocation. Cette implémentation reste un source d'application, sans activation de campagne réelle ni envoi automatique.
