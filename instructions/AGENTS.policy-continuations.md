@@ -1,10 +1,10 @@
 ---
 title: "Cognitive Packets and continuations"
-author: Jean Hugues Noël Robert
+author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: '2026-11-20'
 last_modified_at: '2026-11-20'
-status: active
+status: "working-paper — active operational documentation"
 document_role: operational
 document_kind: agent-instructions
 visibility: public
@@ -15,6 +15,15 @@ language: en
 review:
   status: unreviewed
   reviewed_by: []
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/instructions/AGENTS.policy-continuations.md
+generated_by: "ChatGPT GPT-6 (user-directed corpus refactoring)"
+provenance:
+  origin_type: repository
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: "10811ad610306a75fe7c748126baddd0d2280688"
+  origin_date: '2026-11-20'
+  derived_from:
+    - instructions/AGENTS.shared.md
 ---
 
 # Cognitive Packets and continuations
