@@ -8,6 +8,7 @@ import { mkdirSync, readFileSync, chmodSync, existsSync, realpathSync } from 'no
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import QRCode from 'qrcode';
+import { normalize3Code, formatCopyReference, parseCopyReference } from './references.mjs';
 import { initRegistrations, validateInbox, createRegistration, getRegistration, resolvedRegistrations, PILOT_SCOPE, PILOT_REGISTRAR_ID } from './registrations.mjs';
 
 const ROOT = '/3code';
@@ -20,12 +21,7 @@ const token = () => randomBytes(32).toString('base64url');
 const short = (s,n) => typeof s === 'string' ? s.trim().slice(0,n) : '';
 const textId = s => typeof s === 'string' && /^[a-zA-Z0-9_-]{4,100}$/.test(s);
 const requireText = (s,n=120) => { const x=short(s,n); if(x.length<2)throw Error('Champ obligatoire (au moins 2 caractères).');return x; };
-function code(raw) {
-  if (typeof raw !== 'string') throw Error('3Code absent');
-  const s=raw.toUpperCase().replace(/[-\s]/g,'').replace(/O/g,'0').replace(/[IL]/g,'1');
-  if (s.length!==9 || s[0]!=='3' || ![...s.slice(1)].every(x=>ALPHABET.includes(x))) throw Error('3Code invalide');
-  return s.slice(0,3)+'-'+s.slice(3,6)+'-'+s.slice(6,9);
-}
+const code = normalize3Code;
 function generate() {
   const n=randomBytes(5).readUIntBE(0,5);
   let suffix='';
@@ -56,6 +52,15 @@ function init(dbPath) {
     'CREATE TABLE IF NOT EXISTS contributions(id TEXT PRIMARY KEY,copy_id TEXT NOT NULL REFERENCES copies(id),message TEXT NOT NULL,status TEXT NOT NULL,created_at TEXT NOT NULL,reviewed_at TEXT)',
     'CREATE TABLE IF NOT EXISTS events(id TEXT PRIMARY KEY,copy_id TEXT NOT NULL REFERENCES copies(id),kind TEXT NOT NULL,context TEXT NOT NULL,created_at TEXT NOT NULL)'
   ].join(';')+';');
+  // Additive migration: preserve existing campaign ids and management secrets.
+  const campaignColumns=new Set(db.prepare("SELECT name FROM pragma_table_info('campaigns')").all().map(r=>r.name));
+  if(!campaignColumns.has('description'))db.exec("ALTER TABLE campaigns ADD COLUMN description TEXT NOT NULL DEFAULT ''");
+  if(!campaignColumns.has('revision'))db.exec("ALTER TABLE campaigns ADD COLUMN revision INTEGER NOT NULL DEFAULT 1");
+  if(!campaignColumns.has('updated_at'))db.exec("ALTER TABLE campaigns ADD COLUMN updated_at TEXT");
+  // Aggregate organizer declarations only. Never persist names or addresses of
+  // elected officials or citizens here. No value implies official validation.
+  db.exec('CREATE TABLE IF NOT EXISTS campaign_progress_events (id INTEGER PRIMARY KEY AUTOINCREMENT,campaign_id TEXT NOT NULL REFERENCES campaigns(id),stage TEXT NOT NULL,count INTEGER NOT NULL,evidence_url TEXT,created_at TEXT NOT NULL);');
+  db.exec('CREATE INDEX IF NOT EXISTS campaign_progress_by_campaign ON campaign_progress_events(campaign_id,stage,id);');
   return db;
 }
 function json(res,status,obj) {
@@ -72,7 +77,7 @@ function load(req){
     req.on('error',reject);
   });
 }
-const colCampaign='id,title,goal,status,created_at';
+const colCampaign='id,title,goal,description,status,created_at,updated_at,revision';
 const colCopy='id,campaign_id,mission_id,title,three_code,parent_id,parent_code,relation_status,source_template,created_at';
 function owner(db,id,req) {
   const row=db.prepare('SELECT secret_hash FROM campaigns WHERE id=?').get(id);
@@ -128,10 +133,10 @@ export function makeServer({
       }
       if(req.method==='POST'&&p===ROOT+'/api/campaigns'){
         const b=await load(req),id=randomUUID(),key=token(),t=now();
-        db.prepare('INSERT INTO campaigns VALUES(?,?,?,?,?,?)').run(id,requireText(b.title,120),short(b.goal,1200),'draft',hash(key),t);
-        return json(res,201,{id,status:'draft',management_token:key,notice:'Conservez cette clé hors du document public. Elle ne pourra pas être retrouvée.'});
+        db.prepare('INSERT INTO campaigns (id,title,goal,status,secret_hash,created_at,description,revision,updated_at) VALUES(?,?,?,?,?,?,?,?,?)').run(id,requireText(b.title,120),short(b.goal,1200),'draft',hash(key),t,short(b.description,3000),1,t);
+        return json(res,201,{id,status:'draft',revision:1,management_token:key,notice:'Conservez cette clé hors du document public. Elle ne pourra pas être retrouvée.'});
       }
-      const cm=p.match(/^\/3code\/api\/campaigns\/([a-f0-9-]{36})(?:\/(activate|contributions))?$/);
+      const cm=p.match(/^\/3code\/api\/campaigns\/([a-f0-9-]{36})(?:\/(activate|contributions|progress))?$/);
       if(cm){
         const [_,id,sub]=cm;
         const camp=db.prepare('SELECT '+colCampaign+' FROM campaigns WHERE id=?').get(id);
@@ -139,10 +144,63 @@ export function makeServer({
         if(req.method==='GET'&&!sub){
           return json(res,200,{campaign:camp,missions:db.prepare('SELECT id,title,description FROM missions WHERE campaign_id=? ORDER BY created_at').all(id)});
         }
+        if(sub==='progress'){
+          const stages=['contact','interest','promise','form_sent','officially_received','validated'];
+          const notice='Déclarations agrégées de l’organisateur, non vérifiées par le registrar ni par le Conseil constitutionnel. Une promesse ne vaut pas présentation.';
+          if(req.method==='GET'){
+            const rows=db.prepare(`SELECT e.stage,e.count,e.evidence_url,e.created_at FROM campaign_progress_events e
+              JOIN (SELECT stage,MAX(id) latest_id FROM campaign_progress_events WHERE campaign_id=? GROUP BY stage) latest ON latest.latest_id=e.id
+              ORDER BY e.stage`).all(id);
+            return json(res,200,{campaign_id:id,provenance:'organizer-declaration',stages,values:rows,notice});
+          }
+          if(req.method==='POST'){
+            owner(db,id,req);
+            const b=await load(req),stage=b.stage,amount=b.count;
+            if(!stages.includes(stage))fail('Étape inconnue');
+            if(!Number.isSafeInteger(amount)||amount<0||amount>1000000)fail('Nombre agrégé invalide');
+            let evidence=null;
+            if(b.evidence_url!==undefined&&b.evidence_url!==null&&b.evidence_url!==''){
+              if(typeof b.evidence_url!=='string'||b.evidence_url.length>600)fail('URL de preuve invalide');
+              let url;
+              try{url=new URL(b.evidence_url);}catch{fail('URL de preuve invalide');}
+              if(url.protocol!=='https:'||url.username||url.password)fail('URL de preuve HTTPS sans identifiants requise');
+              evidence=url.href;
+            }
+            const at=now();
+            db.prepare('INSERT INTO campaign_progress_events(campaign_id,stage,count,evidence_url,created_at) VALUES(?,?,?,?,?)')
+              .run(id,stage,amount,evidence,at);
+            return json(res,201,{campaign_id:id,stage,count:amount,evidence_url:evidence,created_at:at,provenance:'organizer-declaration',notice});
+          }
+        }
+        if(req.method==='PATCH'&&!sub){
+          owner(db,id,req);
+          const b=await load(req),expected=b.expected_revision;
+          if(!Number.isSafeInteger(expected)||expected<1)fail('Révision attendue obligatoire');
+          if(expected!==camp.revision)fail('Conflit de révision : rechargez la campagne',409);
+          const fields=['title','goal','description','status'];
+          if(Object.keys(b).some(k=>k!=='expected_revision'&&!fields.includes(k)))fail('Champ de modification inconnu');
+          if(!fields.some(k=>Object.hasOwn(b,k)))fail('Aucune modification');
+          const title=Object.hasOwn(b,'title')?requireText(b.title,120):camp.title;
+          const goal=Object.hasOwn(b,'goal')?short(b.goal,1200):camp.goal;
+          const description=Object.hasOwn(b,'description')?short(b.description,3000):camp.description;
+          let status=camp.status;
+          if(Object.hasOwn(b,'status')){
+            if(!((camp.status==='active'&&['paused','closed'].includes(b.status))||
+                 (camp.status==='paused'&&['active','closed'].includes(b.status))))
+              fail('Transition d’état interdite; une campagne brouillon s’active séparément');
+            status=b.status;
+          }
+          const t=now();
+          const result=db.prepare('UPDATE campaigns SET title=?,goal=?,description=?,status=?,revision=revision+1,updated_at=? WHERE id=? AND revision=?')
+            .run(title,goal,description,status,t,id,expected);
+          if(result.changes!==1)fail('Conflit de révision',409);
+          return json(res,200,{id,title,goal,description,status,revision:expected+1,updated_at:t});
+        }
         if(req.method==='POST'&&sub==='activate'){
           owner(db,id,req);
-          db.prepare('UPDATE campaigns SET status=? WHERE id=?').run('active',id);
-          return json(res,200,{id,status:'active'});
+          if(camp.status!=='draft')fail('Cette campagne n’est plus en brouillon',409);
+          db.prepare('UPDATE campaigns SET status=?,revision=revision+1,updated_at=? WHERE id=?').run('active',now(),id);
+          return json(res,200,{id,status:'active',revision:camp.revision+1});
         }
         if(req.method==='GET'&&sub==='contributions'){
           owner(db,id,req);
@@ -155,6 +213,14 @@ export function makeServer({
         const id=randomUUID(),t=now(),title=requireText(b.title,140),desc=short(b.description,1200);
         db.prepare('INSERT INTO missions VALUES(?,?,?,?,?)').run(id,b.campaign_id,title,desc,t);
         return json(res,201,{id,campaign_id:b.campaign_id,title,description:desc});
+      }
+      if(req.method==='GET'&&p===ROOT+'/api/references/parse'){
+        const parsed=parseCopyReference(u.searchParams.get('ref')||'');
+        const stored=db.prepare('SELECT '+colCopy+' FROM copies WHERE id=?').get(parsed.copy_id);
+        if(!stored || stored.campaign_id!==parsed.campaign_id || stored.three_code!==parsed.three_code)
+          fail('Référence non résolue dans ce registrar',404);
+        return json(res,200,{...parsed,resolution_scope:'local-only',copy_url:ROOT+'/e/'+stored.id,
+          notice:'Référence publique, sans preuve d’identité, de possession, de mandat ou de soutien.'});
       }
       if(req.method==='GET'&&p===ROOT+'/api/resolve'){
         const value=code(u.searchParams.get('code')||'');
@@ -178,6 +244,7 @@ export function makeServer({
         if(!textId(b.campaign_id))fail('Campagne requise');
         const camp=db.prepare('SELECT status FROM campaigns WHERE id=?').get(b.campaign_id);
         if(!camp)fail('Campagne inconnue',404);
+        if(camp.status==='paused'||camp.status==='closed')fail('Campagne non ouverte aux nouveaux exemplaires',409);
         if(camp.status!=='active')owner(db,b.campaign_id,req);
         let parent=null,parentCode=null,relation='none';
         if(b.parent_id) {
@@ -192,13 +259,13 @@ export function makeServer({
         const id=randomUUID(),edit=token(),t=now(),title=short(b.title,160)||'Exemplaire singulier';
         db.prepare('INSERT INTO copies VALUES(?,?,?,?,?,?,?,?,?,?,?)').run(id,b.campaign_id,mid,title,given,parent?.id||null,parentCode,relation,short(b.source_template,160)||null,hash(edit),t);
         db.prepare('INSERT INTO events VALUES(?,?,?,?,?)').run(randomUUID(),id,parentCode?'FORK_DECLARED':'REGISTERED',JSON.stringify({status:'declaration-non-verifiee'}),t);
-        return json(res,201,{id,campaign_id:b.campaign_id,three_code:given,parent_code:parentCode,relation_status:relation,url:ROOT+'/e/'+id,edit_token:edit,notice:'Enregistrement déclaratif, ni authentification de l’objet ni preuve de détention.'});
+        return json(res,201,{id,campaign_id:b.campaign_id,three_code:given,reference:formatCopyReference({campaign_id:b.campaign_id,three_code:given,copy_id:id}),parent_code:parentCode,relation_status:relation,url:ROOT+'/e/'+id,edit_token:edit,notice:'Enregistrement déclaratif, ni authentification de l’objet ni preuve de détention.'});
       }
       const copyMatch=p.match(/^\/3code\/api\/copies\/([a-f0-9-]{36})$/);
       if(req.method==='GET'&&copyMatch){
         const row=db.prepare('SELECT '+colCopy+' FROM copies WHERE id=?').get(copyMatch[1]);
         if(!row)fail('Exemplaire inconnu',404);
-        return json(res,200,{copy:row,contributions:db.prepare('SELECT id,message,created_at FROM contributions WHERE copy_id=? AND status=? ORDER BY created_at LIMIT 100').all(row.id,'accepted'),events:db.prepare('SELECT kind,created_at FROM events WHERE copy_id=? ORDER BY created_at').all(row.id)});
+        return json(res,200,{copy:{...row,reference:formatCopyReference({...row,copy_id:row.id})},contributions:db.prepare('SELECT id,message,created_at FROM contributions WHERE copy_id=? AND status=? ORDER BY created_at LIMIT 100').all(row.id,'accepted'),events:db.prepare('SELECT kind,created_at FROM events WHERE copy_id=? ORDER BY created_at').all(row.id)});
       }
       if(req.method==='POST'&&p===ROOT+'/api/contributions'){
         const b=await load(req),copy=db.prepare('SELECT id FROM copies WHERE id=?').get(b.copy_id);

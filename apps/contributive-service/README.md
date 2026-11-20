@@ -197,3 +197,36 @@ avec le bon titre HTML, la réponse health campaigns-mvp-v2, la régression
 des routes KYS existantes et le même code SHA que celui du commit.
 L'existence d'un HTTP 200 ne démontre pas à elle seule la disponibilité
 durable : vérifier le service, l'écoute, le redémarrage et la persistance.
+
+## Incrément générique multi-campagnes — 20 novembre 2026 (source, non encore déployé)
+
+### Références singulières et administration
+
+- Un code humain `3XX-XXX-XXX` peut avoir plusieurs associations et ne prouve ni identité, ni propriété.
+- `3C1:<campaign_uuid>:<3code>:<copy_uuid>` est une référence publique structurée, strictement parsable et non chiffrée. Le `copy_uuid` résout l'ambiguïté même à l'intérieur d'une campagne. `GET /3code/api/references/parse?ref=...` vérifie une déclaration locale existante et renvoie un lien vers l'exemplaire. La fédération n'est pas démontrée.
+- Une campagne a `title`, `goal`, `description`, `status`, `revision`, `updated_at` et une clé privée de gestion ; `PATCH /3code/api/campaigns/:uuid` exige `x-management-token` et `expected_revision`. Modification obsolète : HTTP 409. Activation initiale séparée, suspension/reprise et clôture prévues ; une campagne suspendue ou clôturée ne peut plus créer de copies.
+- Une campagne de recherche de présentations présidentielles peut être initialisée à partir d'un **gabarit générique neutre** dans l'interface. Cela n'établit ni investiture, ni identité du candidat, ni droit à bénéficier gratuitement d'un service électoral.
+
+### Progression de campagne et protection des données
+
+- `GET /3code/api/campaigns/:uuid/progress` renvoie les derniers agrégats déclarés : `contact`, `interest`, `promise`, `form_sent`, `officially_received`, `validated`.
+- `POST` sur le même chemin nécessite la clé de gestion et accepte `{stage,count,evidence_url?}` ; `evidence_url` doit être HTTPS. L'historique est conservé dans `campaign_progress_events`, sans fichier nominatif de citoyens ni d'élus.
+- **Invariants :** toute valeur est une **déclaration de l'organisateur**, y compris `validated`, jamais une attestation officielle du Conseil constitutionnel. L'absence de valeur signifie `UNKNOWN`, pas zéro. Contact ≠ intérêt ≠ promesse ≠ formulaire transmis ≠ présentation officiellement reçue ≠ présentation validée. Le nombre déclaré ne prouve aucun effet politique.
+- En contexte électoral, la collecte de coordonnées, de positions politiques ou de mandats nécessite des garanties propres et n'est **pas** implémentée par ce tableau d'agrégats.
+
+### Tracts singuliers, PDF et future file Cogentia
+
+- `/3code/print?copy_id=<uuid>` charge l'exemplaire et sa campagne, insère code 3Code et référence `3C1`, puis pointe le QR **vers l'URL individuelle de l'exemplaire**. La fonction du navigateur « Imprimer / enregistrer en PDF » produit le fichier localement, sans enregistrer les données du lecteur.
+- Une photocopie du PDF **ne crée pas** de nouvelle identité : il faut créer un nouvel exemplaire et un nouveau QR pour obtenir une filiation distincte.
+- La page propose seulement un **lien facultatif** vers `/waitlist?source=3code` pour le pilote des Cogentia Twins. Elle ne transmet automatiquement ni adresse email, ni code, ni candidature, ni données de contribution. L'inscription à la file n'est pas encore ouverte sur la projection publique KYS vérifiée le 20 novembre.
+- L'enregistrement par **courriel reçu** reste distinct : le service accepte les challenges d'exemplaires via `3code@acorsica.org` en production depuis le 20 novembre, mais **l'adaptateur de collecte automatique des emails et l'envoi des PDF en réponse ne sont pas implémentés**. Aucun email n'est émis par le service.
+
+### Déploiement et conformité (bloquants séparés)
+
+Cet incrément se trouve dans **les sources de travail** du dépôt sur Fracta2 ; ni la base de production, ni l'unité systemd, ni l'URL publique n'ont été modifiées par sa conception et sa recette en local. L'installation publique suppose un déploiement versionné, la vérification de la persistance et un redémarrage autorisé.
+
+La mise à disposition gratuite de prestations individualisées à des candidats par une association ordinaire n'est pas assimilable automatiquement à un commun non partisan : vérification du financement électoral nécessaire avant de lancer une campagne réelle. Voir [CNCCFP — associations et financement](https://cnccfp.fr/faq/les-associations-peuvent-elles-participer-au-financement-dune-campagne-electorale/) et [CNIL — fichiers politiques](https://www.cnil.fr/fr/les-fichiers-de-communication-politique).
+
+**Recette 20 novembre :** `npm test` : 25/25 PASS, dont migrations compatibles avec la base d'avant cet incrément, isolation des campagnes, cycle de vie, collision, parseur `3C1`, écriture protégée et agrégats. Test synthétique avec Chromium sur serveur localhost : chargement du tract et de sa référence, export PDF A4 d'une page. Limite de cette recette locale : l'API QR n'autorise que l'origine HTTPS canonique `services.acorsica.org` ; les QR pointant vers localhost ne doivent pas être considérés comme validés en déploiement public.
+
+**Suite :** test en préproduction du QR canonique, modération/révocation des déclarations d'exemplaires, vérification comptable et confidentialité pour campagnes électorales, traitement supervisé des courriels, attribution des Twins via une file explicitement consentie.
