@@ -5,3 +5,26 @@
 #progress-output td,#progress-output th{text-align:left;padding:.55rem;border-bottom:1px solid #d4dce3}
 #progress-output th{background:#ecf1f5}
 .print-design #p-reference{font-size:9pt;overflow-wrap:anywhere;line-height:1.35}
+
+/* Entrée par les intentions, non par les détails de notre architecture. */
+.landing{padding:1.6rem 0 1rem}
+.eyebrow{font-size:.88rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#38576e}
+.landing .lead{margin-bottom:1.4rem}
+.choice-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1rem;margin:1rem 0 1.4rem}
+.choice{display:flex;flex-direction:column;gap:.55rem;background:#fff;border:1px solid #afc1ce;padding:1.2rem;border-radius:10px;color:#172a3a;text-decoration:none;min-height:144px}
+.choice strong{font-size:1.12rem}.choice span{line-height:1.5;color:#425666}
+.choice:hover,.choice:focus-visible{border-color:#135b85;outline:2px solid #135b85;outline-offset:1px}
+.campaign-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem}
+.campaign-choice{border:1px solid #d2dce2;border-radius:8px;padding:1rem}
+.campaign-choice p{line-height:1.5}
+.action-details>summary{font-size:1.16rem;font-weight:700;cursor:pointer;line-height:1.4;padding:.25rem 0}
+.action-details>summary:focus-visible,details summary:focus-visible{outline:3px solid #f8c957;outline-offset:3px}
+.action-details[open]>summary{margin-bottom:1.1rem}
+details:not(.panel){margin:.9rem 0}
+details:not(.panel)>summary{font-weight:600;cursor:pointer;padding:.4rem 0}
+input[type=checkbox]{display:inline-block;width:auto;margin:0 .5rem 0 0;vertical-align:middle}
+.check-label{font-weight:400;line-height:1.5}
+.smallbreak{overflow-wrap:anywhere;font-size:.82rem}
+#reg-panel[hidden]{display:none}
+header nav{flex-wrap:wrap}
+@media(max-width:650px){main{padding-top:1rem}.landing{padding-top:.4rem}.choice{min-height:0}}

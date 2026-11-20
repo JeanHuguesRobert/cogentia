@@ -24,43 +24,104 @@ function code(){
 }
 const section=(title,body)=>'<section class="panel"><h2>'+title+'</h2>'+body+'</section>';
 function home(){
-  app.innerHTML='<h1>3Code et Bouteilles à la Mer</h1><p class="lead">Pilote à diffusion modeste : le 3Code sert pour le moment à identifier des Bouteilles à la Mer, c’est-à-dire des tracts, Livres Vivants, textiles ou autres exemplaires singuliers porteurs d’une mission. Ce service n’est pas un raccourcisseur d’URL universel.</p><p><a class="button" href="/3code/guide">Comprendre le fonctionnement et utiliser mon assistant IA</a></p><h2>Outils disponibles</h2><p class="lead">Générez un 3Code gratuitement, créez une campagne contributive, individualisez un tract photocopié ou un objet et faites revenir une contribution. Accessible à toutes les initiatives, y compris aux différents candidats, sans adhésion politique.</p><div class="grid">'+
-  section('Générateur 3Code','<p>3 + huit caractères Crockford, générés localement. Les collisions sont permises. Un code non enregistré ne pointe vers rien.</p><button id="gen">Générer</button><div id="generated" class="output mono">—</div>')+
-  section('Retrouver une référence','<label for="lookup">3Code manuscrit ou imprimé</label><input id="lookup" placeholder="3XY-Z89-P2K" autocomplete="off"><button id="lookup-btn">Rechercher</button><div id="found"></div>')+
-  section('Créer une campagne','<p>Sans compte obligatoire. Vous recevrez une clé de gestion privée : conservez-la. Vous êtes responsable des déclarations et de la conformité de votre campagne.</p><label for="campaign-template">Gabarit facultatif</label><select id="campaign-template"><option value="general">Campagne contributive libre</option><option value="presentations">Recherche de présentations présidentielles — démarche civique</option></select><label for="newtitle">Titre</label><input id="newtitle" maxlength="120" placeholder="Inventaire des moulins"><label for="newgoal">Objectif et méthode</label><textarea id="newgoal" maxlength="1200"></textarea><label for="newdesc">Descriptif public</label><textarea id="newdesc" maxlength="3000" placeholder="Objet, périmètre et modalités de participation"></textarea><button id="create">Créer ma campagne</button><div id="created"></div>')+
-  section('Enregistrement d’une Bouteille à la Mer','<p>En phase pilote, seul un exemplaire déjà déclaré dans une campagne contributive peut être enregistré par courriel. Aucune association libre d’un 3Code avec une URL arbitraire.</p><div id="reg-config" class="note" role="status">Vérification de la boîte de réception…</div><div id="reg-copy-context" class="note">Ouvrez la fiche d’un exemplaire déclaré, puis cliquez sur « Préparer mon courriel de référence ». Vous aurez besoin de sa clé privée de contrôle.</div><div id="reg-panel" hidden><label for="reg-code">3Code de cet exemplaire</label><input id="reg-code" placeholder="3XX-XXX-XXX" readonly><div id="reg-for-copy"></div><label for="pilot-ack"><input type="checkbox" id="pilot-ack"> Je déclare vouloir enregistrer cette Bouteille à la Mer et je comprends que son titre, son code et sa fiche seront consultables publiquement. Je conserve ma clé de contrôle. Un courriel reçu ne prouve ni mon identité civile, ni ma propriété de l’objet.</label><button id="reg-start" disabled>Préparer mon courriel</button></div><button class="secondary" id="reg-check">Vérifier une demande précédente</button><div id="reg-result" role="status"></div>')+
-  section('Tracts, affiches et photocopies','<p>Personnalisez texte, logo, QR commun et cartouche manuscrit pour chaque exemplaire. Un QR du document maître ne désigne jamais automatiquement un enfant.</p><a class="button" href="/3code/print">Ouvrir le compositeur</a><p class="note">Les exemplaires peuvent être des feuilles, textiles, livres ou objets. Le porteur n’est pas identifié.</p>')+'</div>'+section('Cogentia Twins — inscription facultative','<p>Le service 3Code est accessible sans compte ni Twin. Demander un Cogentia Twin est une démarche distincte, avec son propre consentement. La collecte de la file d’attente peut ne pas être ouverte.</p><p><a href="/waitlist?source=3code">Consulter la file d’attente Cogentia</a></p>')+'<p class="note">Projet de service d’intérêt général. Toute campagne est sous la responsabilité de son initiateur ; les engagements et résultats ne se déduisent jamais d’un scan.</p>';
-  el('gen').onclick=()=>{const v=code();el('generated').textContent=v+' — non enregistré';};
+  const params=new URLSearchParams(location.search);
+  const copyId=params.get('copy_id')||'';
+  app.innerHTML=[
+    '<section class="landing"><p class="eyebrow">Agir ensemble, librement</p><h1>Que souhaitez-vous faire ?</h1>',
+    '<p class="lead">Vous pouvez soutenir une initiative, faire circuler un document ou lancer votre propre action. Choisissez votre objectif : nous vous guiderons ensuite.</p>',
+    '<nav class="choice-grid" aria-label="Choisir mon parcours">',
+    '<a class="choice" href="#participer"><strong>Je veux participer</strong><span>Choisir une initiative et préparer un document à diffuser.</span></a>',
+    '<a class="choice" href="#retrouver"><strong>J’ai reçu un document</strong><span>Retrouver son origine et découvrir comment contribuer.</span></a>',
+    '<a class="choice" href="#organiser"><strong>Je veux organiser une action</strong><span>Créer une initiative et inviter d’autres personnes à participer.</span></a>',
+    '</nav></section>',
+    '<section class="panel" id="participer"><h2>Choisir une initiative</h2>',
+    '<p>Chaque personne choisit librement la cause ou le candidat qu’elle souhaite aider. Aucune adhésion politique n’est nécessaire.</p>',
+    '<div id="campaigns-list" role="status">Recherche des initiatives ouvertes…</div></section>',
+    '<section class="panel" id="retrouver"><h2>Retrouver un document</h2>',
+    '<p>Un numéro comme <strong>3XY-Z89-P2K</strong> est imprimé sur certains tracts et objets. Saisissez-le pour retrouver leur fiche.</p>',
+    '<label for="lookup">Numéro visible sur le document</label><input id="lookup" placeholder="3XX-XXX-XXX" autocomplete="off" inputmode="text">',
+    '<button id="lookup-btn">Retrouver ce document</button><div id="found" role="status"></div></section>',
+    '<details class="panel action-details" id="organiser"><summary>Organiser une action : créer une initiative</summary>',
+    '<p>Décrivez votre objectif. Vous pourrez ensuite inviter des participants à créer leurs propres documents.</p>',
+    '<p class="note">Vous recevrez une clé privée pour gérer votre initiative. Conservez-la : elle ne pourra pas être récupérée.</p>',
+    '<label for="campaign-template">Quel type d’action ?</label><select id="campaign-template">',
+    '<option value="general">Initiative ouverte à des contributions</option>',
+    '<option value="presentations">Aider à obtenir les présentations nécessaires à une candidature présidentielle</option></select>',
+    '<label for="newtitle">Nom de votre initiative</label><input id="newtitle" maxlength="120" placeholder="Ex. : Aider une candidature à se présenter">',
+    '<label for="newgoal">Que voulez-vous accomplir ?</label><textarea id="newgoal" maxlength="1200" placeholder="Expliquez en quelques phrases votre objectif et comment participer."></textarea>',
+    '<details><summary>Ajouter une présentation plus détaillée (facultatif)</summary><label for="newdesc">Présentation publique</label>',
+    '<textarea id="newdesc" maxlength="3000" placeholder="Contexte et informations complémentaires"></textarea></details>',
+    '<button id="create">Créer mon initiative</button><div id="created" role="status"></div></details>',
+    '<details class="panel action-details" id="courriel"><summary>Confirmer par courriel un document que vous avez créé</summary>',
+    '<p>Cette étape sert à constater la réception de votre message. Elle ne sert pas à créer le document ni à vérifier votre identité.</p>',
+    '<div id="reg-config" class="note" role="status">Vérification de la boîte de réception…</div>',
+    '<div id="reg-copy-context" class="note">Ouvrez la fiche du document que vous avez créé, puis choisissez « Confirmer par courriel ». Vous aurez besoin de la clé privée remise à sa création.</div>',
+    '<div id="reg-panel" hidden><label for="reg-code">Numéro du document</label><input id="reg-code" readonly>',
+    '<div id="reg-for-copy"></div><label class="check-label" for="pilot-ack"><input type="checkbox" id="pilot-ack"> ',
+    'Je souhaite publier le numéro et la fiche de ce document. Je comprends que la réception de mon courriel ne prouve pas mon identité ni que je possède le document.</label>',
+    '<button id="reg-start" disabled>Préparer le courriel à envoyer</button></div>',
+    '<button class="secondary" id="reg-check">Vérifier mon précédent courriel</button><div id="reg-result" role="status"></div></details>',
+    '<details class="panel action-details" id="outils"><summary>Autres outils et explications</summary>',
+    '<h3>Préparer un brouillon à imprimer</h3><p>Vous pouvez préparer un modèle sans l’associer à une initiative. Pour obtenir un document avec son propre numéro et son QR individuel, choisissez plutôt une initiative ci-dessus.</p>',
+    '<p><a href="/3code/print">Préparer un brouillon de tract</a></p>',
+    '<h3>Créer un numéro à la main</h3><p>Un numéro isolé ne désigne encore aucun document. Lors de la création d’un document, un numéro peut être attribué automatiquement.</p>',
+    '<button id="gen" class="secondary">Créer un numéro</button><div id="generated" class="output mono" role="status">Aucun numéro créé.</div>',
+    '<h3>Un assistant numérique personnel, plus tard</h3><p>Vous pouvez découvrir le projet d’assistant personnel Cogentia. Cette démarche est facultative et indépendante de toute initiative.</p>',
+    '<p><a href="/waitlist?source=3code">Découvrir ce service</a></p>',
+    '<p><a href="/3code/guide">Comprendre le fonctionnement en détail</a></p></details>',
+    '<p class="note">Un document et son QR permettent de retrouver une fiche, pas de déduire les opinions de son lecteur. ',
+    'Pour les candidatures présidentielles, seuls les élus habilités peuvent transmettre une présentation officielle.</p>'
+  ].join('');
+  el('gen').onclick=()=>{el('generated').textContent=code()+' — ce numéro n’est pas encore associé à un document';};
   el('lookup-btn').onclick=lookup;
   el('create').onclick=createCampaign;
   el('campaign-template').onchange=()=>{
     if(el('campaign-template').value==='presentations'){
-      el('newtitle').value='Recherche de présentations présidentielles — préciser la candidature';
-      el('newgoal').value='Documenter des démarches citoyennes volontaires auprès des élus habilités, en vue de présentations régies par le droit électoral. Le soutien citoyen ne se substitue pas aux présentations officielles.';
-      el('newdesc').value='Campagne indépendante. Les contacts, intérêts, promesses, formulaires annoncés transmis et présentations reconnues doivent rester distincts. Les résultats publiés ici sont déclaratifs et ne constituent pas une validation par le Conseil constitutionnel. Aucun élu ni citoyen ne doit être enregistré nominativement dans les métriques agrégées.';
-    }else{
-      for(const id of ['newtitle','newgoal','newdesc'])el(id).value='';
-    }
+      el('newtitle').value='Recherche de présentations pour une candidature — préciser laquelle';
+      el('newgoal').value='Des citoyens se mobilisent librement pour entrer en contact avec des élus habilités à présenter une candidature à l’élection présidentielle. Chaque élu reste libre de sa décision.';
+      el('newdesc').value='Les soutiens citoyens et les promesses ne sont pas des présentations officielles. Les résultats publiés par l’organisateur sont déclaratifs. Cette initiative ne revendique aucune investiture.';
+    }else{for(const id of ['newtitle','newgoal','newdesc'])el(id).value='';}
   };
   el('reg-start').onclick=startRegistration;
   el('reg-check').onclick=checkRegistration;
-  const params=new URLSearchParams(location.search);
-  const copyId=params.get('copy_id');
   if(copyId&&/^[a-f0-9-]{36}$/.test(copyId)){
+    el('courriel').open=true;
     el('reg-code').value=params.get('three_code')||'';
     el('reg-panel').hidden=false;
-    el('reg-copy-context').textContent='Demande pour l’exemplaire '+copyId+'. La clé privée de contrôle est requise.';
+    el('reg-copy-context').textContent='Pour confirmer ce document, conservez la clé privée fournie à sa création.';
     const token=localStorage.getItem('copy-edit-'+copyId)||'';
-    el('reg-for-copy').insertAdjacentHTML('beforeend','<label for="reg-edit">Clé de modification de l’exemplaire</label><input type="password" id="reg-edit">');
+    el('reg-for-copy').insertAdjacentHTML('beforeend','<label for="reg-edit">Clé privée du document</label><input type="password" id="reg-edit" autocomplete="off">');
     el('reg-edit').value=token;
+    requestAnimationFrame(()=>el('courriel').scrollIntoView({block:'start'}));
   }
+  const expandHash=()=>{
+    const name=location.hash.slice(1);
+    if(['organiser','outils','courriel'].includes(name))el(name).open=true;
+  };
+  window.addEventListener('hashchange',expandHash);
+  expandHash();
+  loadActiveCampaigns();
   showRegistrationConfig();
+}
+async function loadActiveCampaigns(){
+  try{
+    const d=await api('/campaigns');
+    const campaigns=d.campaigns||[];
+    el('campaigns-list').innerHTML=campaigns.length
+      ?'<div class="campaign-list">'+campaigns.map(c=>'<article class="campaign-choice"><h3>'+esc(c.title)+'</h3><p>'+esc(c.goal||c.description||'Découvrez cette initiative.')+'</p><a class="button" href="'+ROOT+'/campaign/'+encodeURIComponent(c.id)+'">Découvrir et participer</a></article>').join('')+'</div>'
+      :'<p><strong>Aucune initiative n’est encore ouverte.</strong> Vous pouvez revenir plus tard ou <a href="#organiser" id="start-first">créer la première initiative</a>.</p>';
+    if(!campaigns.length){
+      el('start-first').onclick=()=>{el('organiser').open=true;};
+    }
+  }catch(e){msg('campaigns-list','La liste des initiatives ne peut pas être chargée pour le moment. '+e.message,true);}
 }
 async function lookup(){
   try{
     const d=await api('/resolve?code='+encodeURIComponent(val('lookup')));
     const found=el('found');
-    found.innerHTML='<p>'+d.results.length+' déclaration(s) d’exemplaire, '+(d.registrations||[]).length+' référence(s) autonomes ayant un courriel reçu ; ambiguïté : '+(d.ambiguous?'oui':'non')+'.</p>'+
+    found.innerHTML='<p>'+(d.results.length||d.registrations?.length
+        ? (d.ambiguous?'Plusieurs documents utilisent ce numéro : vérifiez le titre pour choisir le bon.':'Voici le document trouvé :')
+        : 'Aucun document trouvé pour ce numéro. Vérifiez les caractères inscrits.')+'</p>'+
       d.results.map(x=>row('<a href="'+ROOT+'/e/'+encodeURIComponent(x.id)+'">'+esc(x.title)+'</a> — '+esc(x.three_code)+' ('+(x.registration_status==='mail_received'?'courriel reçu':'déclaration non vérifiée')+')')).join('')+
       (d.registrations||[]).map(x=>row('<strong>'+esc(x.title)+'</strong> — '+esc(x.three_code)+' (courriel reçu, pas d’identité civile vérifiée)')).join('');
   }catch(e){msg('found',e.message,true);}
@@ -74,8 +135,8 @@ async function showRegistrationConfig(){
       el('reg-start').disabled=!d.enabled||!(/^[0-9a-f-]{36}$/.test(copyId))||!el('pilot-ack').checked;
     };
     el('reg-config').textContent=d.enabled
-      ? 'Boîte de réception configurée : '+d.inbox+'. Une adresse saisie ne suffit pas, vous devrez expédier le courriel.'
-      : 'Le contrôle par courriel n’est pas encore ouvert : aucune boîte de réception dédiée n’est configurée. Générer un code reste libre.';
+      ? 'Pour confirmer votre document par courriel, vous pourrez écrire à '+d.inbox+'. L’envoi reste à votre initiative.'
+      : 'La confirmation par courriel n’est pas disponible pour le moment. La création de documents reste possible.';
   }catch(e){el('reg-config').textContent='Vérification du service indisponible : '+e.message;}
 }
 async function startRegistration(){
@@ -89,7 +150,7 @@ async function startRegistration(){
     })});
     localStorage.setItem('registration-last',data.id);
     localStorage.setItem('registration-view-'+data.id,data.view_token);
-    el('reg-result').innerHTML='<div class="output"><strong>Demande pour une Bouteille à la Mer : en attente de votre courriel.</strong><p>Registrar d’origine : '+esc(data.registrar_id)+' — Référence durable : '+esc(data.record_id)+'</p><p>Adresse : '+esc(data.email_to)+'</p><label for="reg-subject">Objet du courriel (à conserver exactement)</label><textarea id="reg-subject" readonly></textarea><p><a href="'+esc(data.mailto)+'">Ouvrir mon application de messagerie</a> — vous devez envoyer vous-même le message.</p><p>Expiration : '+esc(data.expires_at)+'. Le statut ne sera confirmé qu’après réception dans la boîte configurée.</p></div>';
+    el('reg-result').innerHTML='<div class="output"><strong>Votre courriel est prêt à être envoyé.</strong><p>Cliquez ci-dessous, puis envoyez le message depuis votre messagerie. Nous ne l’envoyons pas à votre place.</p><p><a class="button" href="'+esc(data.mailto)+'">Ouvrir ma messagerie</a></p><p>Si la messagerie ne s’ouvre pas, envoyez un message à <strong>'+esc(data.email_to)+'</strong> en copiant cet objet exact :</p><label for="reg-subject">Objet à copier</label><textarea id="reg-subject" readonly></textarea><p class="note">La demande expire le '+esc(data.expires_at)+'. La réception sera confirmée après vérification du courrier arrivé.</p></div>';
     el('reg-subject').value=data.email_subject;
   }catch(e){msg('reg-result',e.message,true);}
 }
@@ -111,42 +172,73 @@ async function createCampaign(){
   try{
     const d=await api('/campaigns',{method:'POST',body:JSON.stringify({title:val('newtitle'),goal:val('newgoal'),description:val('newdesc')})});
     localStorage.setItem('campaign-key-'+d.id,d.management_token);
-    el('created').innerHTML='<div class="output"><strong>Campagne créée (brouillon).</strong><p>Clé de gestion à sauvegarder ; ne pas diffuser :</p><textarea id="owner-secret" readonly></textarea><p><a href="'+ROOT+'/campaign/'+d.id+'">Gérer la campagne</a></p></div>';
+    el('created').innerHTML='<div class="output"><strong>Votre initiative est créée.</strong><p>Elle est pour le moment privée. Vous pourrez la publier après l’avoir préparée.</p><p><a class="button" href="'+ROOT+'/campaign/'+d.id+'">Préparer mon initiative</a></p><details><summary>Afficher et sauvegarder ma clé de gestion</summary><p>Cette clé permet de modifier votre initiative. Ne la communiquez pas.</p><textarea id="owner-secret" readonly></textarea></details></div>';
     el('owner-secret').value=d.management_token;
   }catch(e){msg('created',e.message,true);}
 }
 async function campaign(id){
   try{
     const d=await api('/campaigns/'+encodeURIComponent(id)),c=d.campaign;
-    app.innerHTML='<h1>'+esc(c.title)+'</h1><p class="lead">'+esc(c.goal)+'</p><p>'+esc(c.description||'')+'</p><span class="pill">'+esc(c.status)+'</span><p class="note">Campagne auto-déclarée : son titre et son statut ne prouvent aucun agrément.</p>'+
-    section('Missions contributives','<div id="missions">'+d.missions.map(m=>row('<strong>'+esc(m.title)+'</strong> — '+esc(m.description))).join('')+'</div><div class="manager"><label for="mtitle">Nouvelle mission</label><input id="mtitle" maxlength="140"><label for="mdesc">Description</label><textarea id="mdesc"></textarea><button id="mission-create">Ajouter la mission</button><div id="mission-msg"></div></div>')+
-    section('Déclarer un exemplaire ou une photocopie','<p>Un nouvel exemplaire reçoit un ID technique propre et un nouveau 3Code. En cas de photocopie, renseignez l’ancien exemplaire ou son 3Code.</p><label for="copy-title">Type et description</label><input id="copy-title" placeholder="Tract N&B, affiche, Bleu de Chine…" maxlength="160"><label for="copy-code">3Code manuscrit (facultatif)</label><input id="copy-code" placeholder="Laisser vide pour génération"><label for="parent-code">3Code du parent (facultatif)</label><input id="parent-code" placeholder="3XX-XXX-XXX"><label for="mission-select">Mission (facultative)</label><select id="mission-select"><option value="">Aucune</option>'+d.missions.map(m=>'<option value="'+esc(m.id)+'">'+esc(m.title)+'</option>').join('')+'</select><button id="copy-create">Enregistrer cette copie</button><div id="copy-msg"></div>')+
-    section('Avancement agrégé déclaré','<p>Les nombres sont déclarés par l’organisateur. Ils ne prouvent ni un parrainage officiel, ni un soutien politique individuel. Inconnu n’est pas zéro.</p><div id="progress-output">Chargement…</div><div id="progress-admin"></div><div id="progress-msg"></div>')+
-    section('Gestion de campagne','<p>La clé de gestion reste sur votre appareil. Pas de compte obligatoire. Version courante : '+esc(c.revision)+'.</p><div id="manager-area"></div><div id="admin-result"></div>')+
-    '<p class="note">ID de campagne : <span class="mono">'+esc(id)+'</span>. Les contributions sont en attente de validation avant publication.</p>';
-    const params=new URLSearchParams(location.search);if(params.get('parent_code'))el('parent-code').value=params.get('parent_code');
-    el('mission-create').onclick=()=>addMission(id);
-    el('copy-create').onclick=()=>addCopy(id);
-    const t=localToken(id);
+    const t=localToken(id),open=c.status==='active',ownerDraft=c.status==='draft'&&!!t;
+    app.innerHTML=
+      '<p class="eyebrow"><a href="'+ROOT+'">Toutes les initiatives</a></p>'+
+      '<h1>'+esc(c.title)+'</h1><p class="lead">'+esc(c.goal||'Découvrez cette action et choisissez comment contribuer.')+'</p>'+
+      (c.description?'<p>'+esc(c.description)+'</p>':'')+
+      (open||ownerDraft
+        ?section('Je crée un document à partager',
+          '<p>Donnez un nom à votre document. Nous lui attribuerons automatiquement un numéro et un QR code personnel. Vous pourrez ensuite télécharger un PDF pour le diffuser.</p>'+
+          '<label for="copy-title">Nom de mon document</label><input id="copy-title" value="Mon tract" maxlength="160">'+
+          '<details><summary>Options facultatives (copie, numéro déjà connu, action précise)</summary>'+
+          '<label for="copy-code">Numéro déjà inscrit (sinon, création automatique)</label><input id="copy-code" placeholder="3XX-XXX-XXX">'+
+          '<label for="parent-code">Numéro du document dont je fais une nouvelle version</label><input id="parent-code" placeholder="3XX-XXX-XXX">'+
+          '<label for="mission-select">Action associée</label><select id="mission-select"><option value="">Sans action particulière</option>'+
+            d.missions.map(m=>'<option value="'+esc(m.id)+'">'+esc(m.title)+'</option>').join('')+'</select></details>'+
+          '<button id="copy-create">Créer mon document et son QR code</button><div id="copy-msg" role="status"></div>')
+        :section('Participation momentanément indisponible',
+          c.status==='draft'?'<p>Cette initiative est en préparation. Son organisateur ne l’a pas encore ouverte.</p>':
+          '<p>Cette initiative ne reçoit pas de nouveaux documents pour le moment.</p>'))+
+      section('Comment aider cette initiative ?',
+        d.missions.length?d.missions.map(m=>'<article><h3>'+esc(m.title)+'</h3><p>'+esc(m.description||'Chacun peut contribuer selon ses possibilités.')+'</p></article>').join(''):
+        '<p>Vous pouvez déjà créer et diffuser votre document. Aucune autre consigne n’a été publiée par l’organisateur.</p>')+
+      section('Où en est cette initiative ?',
+        '<p class="note">Les résultats ci-dessous sont indiqués par l’organisateur ; une promesse d’élu n’est pas un parrainage officiellement validé.</p>'+
+        '<div id="progress-output" role="status">Chargement…</div>')+
+      '<details class="panel action-details" id="gestion"><summary>Je suis organisateur : gérer cette initiative</summary>'+
+      '<p>Cette partie est réservée à la personne qui détient la clé privée de gestion.</p>'+
+      '<div id="manager-area"></div><div id="admin-result" role="status"></div>'+
+      (t?
+       '<h3>Ajouter une action proposée aux participants</h3><label for="mtitle">Titre de l’action</label><input id="mtitle" maxlength="140">'+
+       '<label for="mdesc">Comment participer ?</label><textarea id="mdesc"></textarea><button id="mission-create">Ajouter cette action</button><div id="mission-msg" role="status"></div>'+
+       '<h3>Voir mes modifications les chiffres déclarés</h3><div id="progress-admin"></div><div id="progress-msg" role="status"></div>'
+       :'<p>La clé de gestion a été donnée lors de la création de cette initiative.</p>')+
+      '</details>';
+    const params=new URLSearchParams(location.search);
+    if(el('parent-code')&&params.get('parent_code'))el('parent-code').value=params.get('parent_code');
+    if(el('copy-create'))el('copy-create').onclick=()=>addCopy(id);
+    if(ownerDraft)el('gestion').open=true;
     loadProgress(id,!!t);
-    if(t)el('manager-area').innerHTML=(c.status==='draft'?'<button id="activate">Activer la campagne</button>':'')+
-      '<label for="edit-title">Titre</label><input id="edit-title" maxlength="120" value="'+esc(c.title)+'">'+
-      '<label for="edit-goal">Objectif et méthode</label><textarea id="edit-goal" maxlength="1200">'+esc(c.goal)+'</textarea>'+
-      '<label for="edit-description">Descriptif public</label><textarea id="edit-description" maxlength="3000">'+esc(c.description||'')+'</textarea>'+
-      '<button id="save-campaign">Enregistrer les modifications</button>'+
-      (c.status==='active'?'<button class="secondary" id="pause-campaign">Suspendre la campagne</button>':'')+
-      (c.status==='paused'?'<button id="resume-campaign">Reprendre la campagne</button>':'')+
-      (['active','paused'].includes(c.status)?'<button class="secondary" id="close-campaign">Clôturer la campagne</button>':'')+
-      '<button class="secondary" id="review">Voir les contributions en attente</button>';
-    else el('manager-area').innerHTML='<label for="enter-token">Clé de gestion</label><input id="enter-token" type="password"><button id="save-token">Utiliser cette clé</button>';
+    if(t){
+      el('manager-area').innerHTML=(c.status==='draft'?'<button id="activate">Ouvrir cette initiative aux participants</button>':'')+
+        '<label for="edit-title">Nom de l’initiative</label><input id="edit-title" maxlength="120" value="'+esc(c.title)+'">'+
+        '<label for="edit-goal">Objectif</label><textarea id="edit-goal" maxlength="1200">'+esc(c.goal)+'</textarea>'+
+        '<label for="edit-description">Présentation</label><textarea id="edit-description" maxlength="3000">'+esc(c.description||'')+'</textarea>'+
+        '<button id="save-campaign">Enregistrer mes modifications</button>'+
+        (c.status==='active'?'<button class="secondary" id="pause-campaign">Suspendre les nouvelles participations</button>':'')+
+        (c.status==='paused'?'<button id="resume-campaign">Rouvrir les participations</button>':'')+
+        (['active','paused'].includes(c.status)?'<button class="secondary" id="close-campaign">Clôturer définitivement</button>':'')+
+        '<button class="secondary" id="review">Examiner les messages reçus</button>';
+      if(el('mission-create'))el('mission-create').onclick=()=>addMission(id);
+    }else{
+      el('manager-area').innerHTML='<label for="enter-token">Ma clé privée de gestion</label><input id="enter-token" type="password" autocomplete="off"><button id="save-token">Accéder à la gestion</button>';
+    }
     if(el('activate'))el('activate').onclick=()=>activate(id);
     if(el('review'))el('review').onclick=()=>review(id);
     if(el('save-campaign'))el('save-campaign').onclick=()=>updateCampaign(id,c.revision,{title:val('edit-title'),goal:val('edit-goal'),description:val('edit-description')});
     if(el('pause-campaign'))el('pause-campaign').onclick=()=>updateCampaign(id,c.revision,{status:'paused'});
     if(el('resume-campaign'))el('resume-campaign').onclick=()=>updateCampaign(id,c.revision,{status:'active'});
-    if(el('close-campaign'))el('close-campaign').onclick=()=>{if(confirm('Clôturer cette campagne ? Les nouveaux exemplaires seront refusés.'))updateCampaign(id,c.revision,{status:'closed'});};
+    if(el('close-campaign'))el('close-campaign').onclick=()=>{if(confirm('Clôturer définitivement cette initiative ?'))updateCampaign(id,c.revision,{status:'closed'});};
     if(el('save-token'))el('save-token').onclick=()=>{localStorage.setItem('campaign-key-'+id,val('enter-token'));location.reload();};
-  }catch(e){app.innerHTML='<h1>Campagne indisponible</h1><p class="error">'+esc(e.message)+'</p>';}
+  }catch(e){app.innerHTML='<h1>Cette initiative est introuvable</h1><p class="error">'+esc(e.message)+'</p><p><a href="'+ROOT+'">Revenir à l’accueil</a></p>';}
 }
 const PROGRESS_LABELS={
   contact:'Contacts effectués (déclarés)',
@@ -204,7 +296,7 @@ async function addCopy(id){
   try{
     const d=await api('/copies',{method:'POST',headers:{'x-management-token':localToken(id)},body:JSON.stringify({campaign_id:id,title:val('copy-title'),three_code:val('copy-code'),parent_code:val('parent-code'),mission_id:val('mission-select')})});
     localStorage.setItem('copy-edit-'+d.id,d.edit_token);
-    el('copy-msg').innerHTML='<div class="output"><strong>Exemplaire déclaré (pas encore enregistré par courriel).</strong><p>3Code : <strong class="mono">'+esc(d.three_code)+'</strong></p><p>Parent : '+esc(d.parent_code||'aucun')+'</p><p><a href="'+ROOT+'/e/'+d.id+'">Fiche de cet exemplaire</a></p><p><a href="'+ROOT+'/print?copy_id='+encodeURIComponent(d.id)+'">Composer le PDF singulier (QR individuel)</a></p><p>La clé de modification n’est présentée qu’une fois :</p><textarea readonly id="edit-token"></textarea></div>';
+    el('copy-msg').innerHTML='<div class="output"><strong>Votre document est créé.</strong><p>Son numéro : <strong class="mono">'+esc(d.three_code)+'</strong>. Son QR code vous suivra vers la fiche de ce document.</p><p><a class="button" href="'+ROOT+'/print?copy_id='+encodeURIComponent(d.id)+'">Préparer mon PDF à imprimer</a> <a href="'+ROOT+'/e/'+d.id+'">Voir sa fiche</a></p><details><summary>Ma clé privée pour modifier ce document</summary><p>Conservez cette clé ; elle ne sera pas affichée une seconde fois.</p><textarea readonly id="edit-token"></textarea></details></div>';
     el('edit-token').value=d.edit_token;
   }catch(e){msg('copy-msg',e.message,true);}
 }
@@ -227,25 +319,58 @@ async function updateCopy(id,revision,changes){
 async function copyPage(id){
   try{
     const d=await api('/copies/'+id),c=d.copy;
-    app.innerHTML='<h1>Exemplaire singulier</h1><section class="panel"><p class="big-code mono">'+esc(c.three_code)+'</p><p>'+esc(c.title)+'</p><p><strong>Parent déclaré :</strong> '+esc(c.parent_code||'aucun')+'</p><p><strong>Statut :</strong> '+esc(c.relation_status)+'</p><img class="qr" src="'+qr(link(id))+'" alt="QR individuel de l’exemplaire"><p class="mono">'+esc(link(id))+'</p><p class="mono">'+esc(c.reference)+'</p><p><a href="'+ROOT+'/print?copy_id='+encodeURIComponent(id)+'">Composer et imprimer cet exemplaire singulier en PDF</a></p><p class="note">Ce QR peut être photocopié mais continue à désigner ce même exemplaire. Il ne prouve ni la possession ni un soutien politique.</p><p><a class="button" href="'+ROOT+'/campaign/'+encodeURIComponent(c.campaign_id)+'?parent_code='+encodeURIComponent(c.three_code)+'">J’ai photocopié cet exemplaire : déclarer un enfant</a></p></section>'+
-      section('Enregistrer cette Bouteille à la Mer','<p>Le registrar pilote n’enregistre que les exemplaires déclarés dans une campagne. Pour obtenir le statut « courriel reçu », ouvrez le formulaire et envoyez vous-même le message proposé.</p><p><a class="button" href="'+ROOT+'/?copy_id='+encodeURIComponent(id)+'&three_code='+encodeURIComponent(c.three_code)+'">Préparer mon courriel de référence</a></p>')+
-      section('Administrer cet exemplaire','<p>Révision : '+esc(c.revision)+'. Le créateur dispose de la clé de contrôle de cet exemplaire ; le gestionnaire de la campagne peut aussi le rectifier ou le révoquer. Une révocation est définitive et retire l’exemplaire de la résolution publique.</p><label for="copy-edit-key">Clé de cet exemplaire</label><input type="password" id="copy-edit-key" autocomplete="off"><label for="copy-campaign-key">Ou clé de gestion de la campagne</label><input type="password" id="copy-campaign-key" autocomplete="off"><label for="copy-new-title">Titre public</label><input id="copy-new-title" maxlength="160" value="'+esc(c.title)+'"><button id="copy-update">Rectifier le titre</button><button class="secondary" id="copy-revoke">Révoquer cet exemplaire</button><div id="copy-admin-msg"></div>')+
-      section('Contribuer librement','<p>Les contributions ne sont pas publiées sans validation de l’organisateur. Ne transmettez pas de données personnelles ou sensibles.</p><label for="contribution">Information, correction, témoignage ou résultat</label><textarea id="contribution" maxlength="1000"></textarea><button id="contribute">Soumettre une contribution</button><div id="contrib-msg"></div>')+
-      section('Contributions publiées',d.contributions.map(x=>'<p>'+esc(x.message)+'</p>').join('')||'<p>Pas encore de contribution publiée.</p>');
+    const details=await api('/campaigns/'+c.campaign_id);
+    const campaign=details.campaign;
+    app.innerHTML=
+      '<p class="eyebrow">Vous avez ouvert un document partagé</p><h1>'+esc(c.title)+'</h1>'+
+      '<p class="lead">Ce document renvoie à une initiative : <strong>'+esc(campaign.title)+'</strong>.</p>'+
+      '<p>'+esc(campaign.goal||'Découvrez comment y participer librement.')+'</p>'+
+      '<p><a class="button" href="'+ROOT+'/campaign/'+encodeURIComponent(c.campaign_id)+'">Découvrir cette initiative</a></p>'+
+      section('Reconnaître ce document',
+        '<p>Son numéro : <strong class="big-code mono">'+esc(c.three_code)+'</strong></p>'+
+        '<img class="qr" src="'+qr(link(id))+'" alt="QR code de ce document">'+
+        '<p>En scannant ce QR code, on revient à cette page. Il ne sert pas à identifier les personnes qui lisent le document.</p>'+
+        '<details><summary>Référence complète et informations complémentaires</summary>'+
+        '<p class="mono smallbreak">'+esc(c.reference)+'</p>'+
+        '<p>Document source déclaré : '+esc(c.parent_code||'aucun')+'</p>'+
+        '<p>Cette fiche provient d’une déclaration ; elle ne certifie pas l’identité ou le soutien du lecteur.</p></details>')+
+      section('Vous souhaitez contribuer ?',
+        '<p>Vous pouvez proposer une information, une correction ou un témoignage. Le message ne sera rendu public qu’après examen par l’organisateur.</p>'+
+        '<label for="contribution">Votre message</label><textarea id="contribution" maxlength="1000" placeholder="Votre proposition…"></textarea>'+
+        '<button id="contribute">Envoyer ma contribution</button><div id="contrib-msg" role="status"></div>')+
+      (d.contributions.length?section('Informations publiées',d.contributions.map(x=>'<p>'+esc(x.message)+'</p>').join('')):'')+
+      '<details class="panel action-details" id="creators"><summary>J’ai créé ce document : imprimer, confirmer ou modifier</summary>'+
+      '<p><a class="button" href="'+ROOT+'/print?copy_id='+encodeURIComponent(id)+'">Préparer mon PDF</a></p>'+
+      '<p><a href="'+ROOT+'/?copy_id='+encodeURIComponent(id)+'&three_code='+encodeURIComponent(c.three_code)+'">Confirmer ce document par courriel</a></p>'+
+      '<p><a href="'+ROOT+'/campaign/'+encodeURIComponent(c.campaign_id)+'?parent_code='+encodeURIComponent(c.three_code)+'">Créer une nouvelle version de ce document</a></p>'+
+      '<h3>Modifier ou retirer cette fiche</h3><p>La clé privée du document ou celle de son organisateur est nécessaire.</p>'+
+      '<label for="copy-edit-key">Clé privée du document</label><input type="password" id="copy-edit-key" autocomplete="off">'+
+      '<label for="copy-campaign-key">Ou clé de gestion de l’initiative</label><input type="password" id="copy-campaign-key" autocomplete="off">'+
+      '<label for="copy-new-title">Nom du document</label><input id="copy-new-title" maxlength="160" value="'+esc(c.title)+'">'+
+      '<button id="copy-update">Corriger le nom</button><button class="secondary" id="copy-revoke">Retirer définitivement la fiche</button>'+
+      '<div id="copy-admin-msg" role="status"></div></details>';
     el('copy-edit-key').value=localStorage.getItem('copy-edit-'+id)||'';
     el('copy-campaign-key').value=localToken(c.campaign_id);
     el('copy-update').onclick=()=>updateCopy(id,c.revision,{title:val('copy-new-title')});
-    el('copy-revoke').onclick=()=>{if(confirm('Révoquer cette référence ? Cette opération ne peut être annulée.'))updateCopy(id,c.revision,{status:'revoked'});};
-    el('contribute').onclick=async()=>{try{await api('/contributions',{method:'POST',body:JSON.stringify({copy_id:id,message:val('contribution')})});msg('contrib-msg','Contribution reçue, en attente de qualification.');el('contribution').value='';}catch(e){msg('contrib-msg',e.message,true);}};
-  }catch(e){app.innerHTML='<h1>Exemplaire introuvable</h1><p class="error">'+esc(e.message)+'</p>';}
+    el('copy-revoke').onclick=()=>{if(confirm('Retirer définitivement cette fiche ? Sa référence cessera de fonctionner.'))updateCopy(id,c.revision,{status:'revoked'});};
+    el('contribute').onclick=async()=>{
+      try{
+        await api('/contributions',{method:'POST',body:JSON.stringify({copy_id:id,message:val('contribution')})});
+        msg('contrib-msg','Votre message a été reçu. Il sera examiné avant une éventuelle publication.');
+        el('contribution').value='';
+      }catch(e){msg('contrib-msg',e.message,true);}
+    };
+  }catch(e){
+    app.innerHTML='<h1>Ce document n’est pas disponible</h1><p>'+esc(e.message)+'</p><p><a href="'+ROOT+'">Revenir à l’accueil</a></p>';
+  }
 }
 function printPage(){
   const requestedId=new URLSearchParams(location.search).get('copy_id')||'';
   const hasCopy=/^[0-9a-f-]{36}$/.test(requestedId);
   let registeredCopy=null;
-  app.innerHTML='<div class="no-print"><h1>Compositeur de tract / affiche</h1><p id="print-status">Le modèle reste reproductible par photocopie. Ajoutez ensuite un 3Code unique manuscrit à chaque nouvelle copie.</p><div class="grid">'+
-  section('Texte et format','<label for="ptitle">Titre</label><input id="ptitle" value="Campagne contributive"><label for="pbody">Texte principal</label><textarea id="pbody">Un objet, une mission, une contribution volontaire. Découvrez la campagne et créez votre propre exemplaire.</textarea><label for="pformat">Cartouche</label><select id="pformat"><option value="blank">Manuscrit vierge</option><option value="child">3Code individuel</option><option value="fork">Photocopie / fork</option></select><label for="pchild">3Code enfant</label><input id="pchild" placeholder="3XX-XXX-XXX"><label for="pparent">3Code parent</label><input id="pparent" placeholder="3XX-XXX-XXX">')+
-  section('Logo et QR commun','<label for="plogo">Logo (fichier local, sans transfert)</label><input type="file" id="plogo" accept="image/*"><label for="pcampaign">Identifiant de campagne (facultatif)</label><input id="pcampaign" placeholder="UUID de campagne"><p class="note">Le QR commun ouvre la campagne ou l’accueil. Il ne désigne pas un exemplaire.</p><button id="refresh">Actualiser</button><button id="printer">Imprimer / enregistrer en PDF</button>')+'</div></div><article class="print-design" id="preview"><img id="p-logo" class="mark" alt=""><h1 id="p-title"></h1><p id="p-body"></p><div class="cartridge"><div><strong>EXEMPLAIRE SINGULIER</strong><p>3Code : <span id="p-code" class="mono"></span></p><div class="code-line"></div><p id="p-parent-line">Parent : <span class="mono" id="p-parent-code"></span></p><p class="note">Inscrire un nouveau 3Code pour chaque photocopie. La filiation est déclarative.</p></div><img id="p-qr" alt="QR commun d’enregistrement"></div><p class="note mono" id="p-reference"></p></article>';
+  app.innerHTML='<div class="no-print"><h1>Préparer mon tract à imprimer</h1><p id="print-status">Écrivez votre texte, vérifiez le résultat, puis choisissez « Enregistrer en PDF » dans la fenêtre d’impression.</p><div class="grid">'+
+  section('Le texte de mon tract','<label for="ptitle">Titre</label><input id="ptitle" value="Une initiative à partager"><label for="pbody">Texte principal</label><textarea id="pbody">Découvrez cette initiative et participez librement.</textarea><details class="print-extra"><summary>Numéro et options avancées (facultatif)</summary><label for="pformat">Présentation du numéro</label><select id="pformat"><option value="blank">Sans numéro personnel</option><option value="child">Avec mon numéro</option><option value="fork">Nouvelle version d’un document</option></select><label for="pchild">Numéro de mon document</label><input id="pchild" placeholder="3XX-XXX-XXX"><label for="pparent">Numéro du document source</label><input id="pparent" placeholder="3XX-XXX-XXX"></details>')+
+  section('Mise en page et téléchargement','<label for="plogo">Ajouter un logo (facultatif)</label><input type="file" id="plogo" accept="image/*"><details class="print-extra"><summary>Référence de l’initiative (option avancée)</summary><label for="pcampaign">Code interne de l’initiative (facultatif)</label><input id="pcampaign" placeholder="UUID de campagne"><p class="note">Si vous n’avez pas choisi de document précis, ce QR renvoie simplement vers le service, et non vers un tract personnel.</p><button id="refresh">Voir mes modifications</button><button id="printer">Imprimer ou enregistrer en PDF</button>')+'</div></div><article class="print-design" id="preview"><img id="p-logo" class="mark" alt=""><h1 id="p-title"></h1><p id="p-body"></p><div class="cartridge"><div><strong>RETROUVEZ CE DOCUMENT</strong><p>Numéro : <span id="p-code" class="mono"></span></p><div class="code-line"></div><p id="p-parent-line">Document source : <span class="mono" id="p-parent-code"></span></p><p class="note">Pour une nouvelle version identifiable, demandez un nouveau numéro.</p></div><img id="p-qr" alt="QR commun d’enregistrement"></div><p class="note mono" id="p-reference"></p></article>';
   const refresh=()=>{
     el('p-title').textContent=val('ptitle');
     el('p-body').textContent=val('pbody');
@@ -256,13 +381,13 @@ function printPage(){
     const url=registeredCopy?link(registeredCopy.id):location.origin+ROOT+(campaign?'/campaign/'+encodeURIComponent(campaign):'');
     el('p-qr').src=qr(url);
     el('p-qr').alt=registeredCopy?'QR individuel de cet exemplaire':'QR commun de campagne';
-    el('p-reference').textContent=registeredCopy?'Référence 3C1 : '+registeredCopy.reference+' — exemplaire déclaré, provenance non authentifiée.':'Modèle non individualisé : ne pas présenter le QR commun comme une référence singulière.';
+    el('p-reference').textContent=registeredCopy?'Référence complète : '+registeredCopy.reference+'':'Brouillon sans référence personnelle : le QR ne désigne pas ce tract.';
     const f=el('plogo').files[0];if(f){const reader=new FileReader();reader.onload=()=>{el('p-logo').src=reader.result;};reader.readAsDataURL(f);}
   };
   el('refresh').onclick=refresh;el('printer').onclick=()=>{refresh();setTimeout(()=>window.print(),200);};
   if(hasCopy){
     el('printer').disabled=true;
-    el('print-status').textContent='Chargement de la référence singulière enregistrée…';
+    el('print-status').textContent='Préparation de votre document personnalisé…';
     Promise.all([api('/copies/'+requestedId)])
       .then(async([d])=>{
         const c=d.copy;
@@ -274,13 +399,13 @@ function printPage(){
         el('pchild').value=c.three_code;el('pchild').readOnly=true;
         el('pparent').value=c.parent_code||'';el('pparent').readOnly=true;
         el('pformat').value=c.parent_code?'fork':'child';el('pformat').disabled=true;
-        el('print-status').textContent='QR individuel : cet imprimé référence exactement l’exemplaire '+requestedId+'. Une photocopie conserve la même référence; pour un nouvel exemplaire, créez une nouvelle fiche.';
+        el('print-status').textContent='Le QR de ce tract renvoie à sa propre fiche. Référence interne : '+requestedId+'. Une photocopie conserve le même QR. Pour une nouvelle version identifiable, créez un nouveau document.';
         el('printer').disabled=false;
         refresh();
       })
-      .catch(e=>{el('print-status').textContent='Exemplaire introuvable : '+e.message;el('printer').disabled=true;});
+      .catch(e=>{el('print-status').textContent='Ce document n’est pas disponible : '+e.message;el('printer').disabled=true;});
   }else if(requestedId){
-    el('print-status').textContent='Identifiant d’exemplaire invalide : impression individuelle refusée.';
+    el('print-status').textContent='Le lien vers ce document est invalide : impossible de préparer son PDF personnalisé.';
     el('printer').disabled=true;
   }
   refresh();

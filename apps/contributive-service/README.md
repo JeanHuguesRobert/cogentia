@@ -240,3 +240,29 @@ La mise à disposition gratuite de prestations individualisées à des candidats
 - Les copies n'obtiennent pas d'identité supplémentaire lors d'une photocopie du même document. Les publications et suivis demeurent déclaratifs et distincts des présentations électorales officielles.
 
 Tests : `npm test` 26/26 PASS, y compris modification avec clé de copie, refus sans autorité, conflit de révision, révocation avec clé de campagne et blocage de résolution, contributions et enregistrement par courriel après révocation. Cette implémentation reste un source d'application, sans activation de campagne réelle ni envoi automatique.
+
+## Parcours du visiteur — refonte du 20 novembre 2026
+
+La première page présente des intentions compréhensibles sans connaissance
+préalable du Corpus : « Je veux participer », « J’ai reçu un document »,
+« Je veux organiser une action ». Elle ne commence plus par un glossaire
+3Code, Crockford, registrar, fork, Bouteilles à la Mer ou Twin.
+
+- Participant : choisit une initiative ouverte, la découvre, prépare un
+  document doté automatiquement d'un numéro et d'un QR code, puis utilise
+  « Imprimer ou enregistrer en PDF » depuis son navigateur.
+- Lecteur : saisit le numéro trouvé sur un document ou scanne son QR, puis
+  découvre l'initiative correspondante et peut proposer un message sans compte.
+- Organisateur : crée et prépare son initiative, conserve une clé de gestion,
+  décide de l'ouvrir, publie des actions et des données agrégées.
+- Informations avancées : enregistrement facultatif par courriel, clés,
+  identifiants techniques, numéros indépendants et assistant personnel futur,
+  placés dans des sections repliées.
+
+L'interface montre explicitement l'état vide lorsqu'aucune initiative n'est
+ouverte : aucun candidat fictif n'est proposé. Les présentations présidentielles
+officielles restent distinctes des contributions et engagements citoyens.
+
+Recette : navigateur Chromium facultatif (test/visitor-journey.test.mjs,
+sauté lorsque Chromium est absent), et tests API existants. Les tests utilisent
+une base locale temporaire sans modifier les données publiques.
