@@ -39,9 +39,29 @@ rollback() {
   if [ "$rc" -ne 0 ]; then
     echo "Deployment failed ($rc); restoring $old" >&2
     if [ "$swapped" = 1 ] && [ -n "$old" ]; then
+      # Both campaign/copy schemas grew additive columns. Old INSERT statements
+      # use positional VALUES, so code-only rollback would be nonfunctional.
+      systemctl stop "$UNIT" || true
+      # Preserve the failed new database for forensic reconciliation, including
+      # any writes received in the narrow switchover interval.
+      failed_db="$backup_dir/failed-new-$SHA-$(date -u +%Y%m%dT%H%M%SZ)-$$.sqlite"
+      cp -a "$DATABASE" "$failed_db" || true
+      for suffix in -wal -shm; do
+        if [ -e "$DATABASE$suffix" ]; then
+          cp -a "$DATABASE$suffix" "$failed_db$suffix" || true
+        fi
+      done
+      # Restore the exact online snapshot made before the schema migration.
+      restored="$DATABASE.restore.$$"
+      cp "$backup" "$restored"
+      chown ubuntu:ubuntu "$restored"
+      chmod 600 "$restored"
+      rm -f "$DATABASE-wal" "$DATABASE-shm"
+      mv -Tf "$restored" "$DATABASE"
       ln -sfn "$old" "$STABLE/.rollback.$$"
       mv -Tf "$STABLE/.rollback.$$" "$STABLE/current"
       systemctl restart "$UNIT" || true
+      printf 'ROLLBACK_DB=%s\nPRESERVED_FAILED_DB=%s\n' "$backup" "$failed_db" >&2
     fi
   fi
   if [ -n "$stage" ] && [ -d "$stage" ]; then rm -rf "$stage"; fi
