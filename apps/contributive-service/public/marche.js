@@ -18,6 +18,25 @@ async function api(path,body,headers={}){
   if(!response.ok)throw Error(data.error||'Service indisponible : HTTP '+response.status);
   return data;
 }
+// Rebuild a mailto link from the saved recipient and challenge subject.
+// A page reload must not require creating another pending registration.
+function showPreparedEmail(rec,restored=false){
+  const to=rec?.email_to,subject=rec?.email_subject;
+  if(typeof to!=='string'||!/^[^\s@?]+@[^\s@?]+\.[^\s@?]+$/.test(to)||
+     typeof subject!=='string'||!/^KYS3 [0-9a-f-]{36} [0-9A-F]{40}$/.test(subject))return false;
+  const node=byId('marche-email-result');
+  node.innerHTML='<div class="output"><strong>'+(restored
+      ?'Votre courriel est toujours prêt. Rouvrez-le si vous ne l’avez pas encore envoyé.'
+      :'Le message est prêt : vous devez l’envoyer vous-même.')+'</strong>'+
+    '<p><a class="button" href="'+esc('mailto:'+to+'?subject='+encodeURIComponent(subject))+'">Ouvrir mon application de messagerie</a></p>'+
+    '<p>Si ce bouton ne fonctionne pas, envoyez un courriel à <strong>'+esc(to)+
+    '</strong> avec exactement cet objet :</p><textarea id="marche-mail-subject" readonly></textarea>'+
+    '<p class="note">Le service pourra constater la réception. Il n’envoie aucun message automatiquement.</p></div>';
+  byId('marche-mail-subject').value=subject;
+  byId('marche-status-check').hidden=false;
+  byId('marche-email').disabled=true;
+  return true;
+}
 function optionalLink(href,label){
   if(!href)return '';
   const url=new URL(href);
@@ -169,12 +188,17 @@ async function restoreCopy(){
   byId('marche-declare-result').innerHTML='<div class="output success"><strong>Votre dernier tract a été retrouvé.</strong> '+
     '<a href="'+ROOT+'/e/'+encodeURIComponent(record.id)+'">Consulter sa fiche</a>. '+
     'Pour créer un autre exemplaire, ouvrez <a href="'+HERE+'?nouveau=1">une nouvelle page</a>.</div>';
-  const existing=localStorage.getItem('marche-registration-'+record.id);
-  if(existing){
-    byId('marche-email').disabled=true;
+  let existing=null;
+  try{existing=JSON.parse(localStorage.getItem('marche-registration-'+record.id)||'null');}catch{}
+  if(existing?.id&&existing.view){
     byId('marche-ack').checked=true;
     byId('marche-status-check').hidden=false;
-    put('marche-email-result','Votre demande de confirmation par courriel est enregistrée sur cet appareil. Vous pouvez vérifier son état.');
+    if(!showPreparedEmail(existing,true)){
+      // Earlier releases retained the status token but not the mail subject:
+      // a new request is necessary because the one-time challenge is hashed.
+      byId('marche-email').textContent='Préparer un nouveau courriel';
+      put('marche-email-result','La précédente demande est retrouvée, mais pas son objet de courriel. Vous pouvez en préparer une nouvelle.');
+    }
   }
 }
 async function prepareEmail(){
@@ -186,16 +210,9 @@ async function prepareEmail(){
     const response=await api('/registrations',{
       three_code:currentCopy.three_code,copy_id:currentCopy.id,edit_token:key,pilot_acknowledged:true
     });
-    localStorage.setItem('marche-registration-'+currentCopy.id,JSON.stringify({id:response.id,view:response.view_token}));
-    const node=byId('marche-email-result');
-    node.innerHTML='<div class="output"><strong>Le message est prêt : vous devez l’envoyer vous-même.</strong>'+
-      '<p><a class="button" href="'+esc(response.mailto)+'">Ouvrir mon application de messagerie</a></p>'+
-      '<p>Si ce bouton ne fonctionne pas, envoyez un courriel à <strong>'+esc(response.email_to)+
-      '</strong> avec exactement cet objet :</p><textarea id="marche-mail-subject" readonly></textarea>'+
-      '<p class="note">Le service pourra constater la réception. Il n’envoie aucun message automatiquement.</p></div>';
-    byId('marche-mail-subject').value=response.email_subject;
-    byId('marche-status-check').hidden=false;
-    byId('marche-email').disabled=true;
+    const saved={id:response.id,view:response.view_token,email_to:response.email_to,email_subject:response.email_subject};
+    localStorage.setItem('marche-registration-'+currentCopy.id,JSON.stringify(saved));
+    if(!showPreparedEmail(saved))throw Error('Le courriel préparé contient une adresse ou un objet invalide.');
   }catch(e){put('marche-email-result',e.message,true);}
 }
 async function checkEmail(){
