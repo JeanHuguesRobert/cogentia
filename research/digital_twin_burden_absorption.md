@@ -128,3 +128,15 @@ This is a measurement proposal, **not** a new normative COP schema, and only val
 A task's benefit is not only minutes saved: creative judgment quality, continuity, mistakes prevented, and autonomy remain distinct outcome evidence; do not convert them into fictitious attention savings. Use a before/after Reality test for a bounded class of repetitive administrative tasks; check whether the Twin merely shifted its own monitoring/approval burden onto the principal. Preserve the principal's right to override and the absence of hidden agent decisions.
 
 **Design invariant:** optimizing the amount of agent activity is not equivalent to preserving human attention. A worthwhile burden absorber should reduce the principal's total avoidable attention consumption without eroding control, traceability, or the quality of the work.
+
+**Field validation with the first real users (2026-11-21).** Jean Hugues
+Noël Robert and the prospective direct users of the hosted Maguy and Frédéric
+Twins are the initial *de facto* alpha/beta testers, not a claim that the
+latter's ChatGPT Free accounts already have working Cogentia MCP access.
+Evaluate the user's actual task, outcome and residual attention cost; compare
+how much help was necessary and whether future comparable work becomes easier.
+A developer's successful installation or a green technical unit test is not
+substitutable for a user's successful end-to-end task. Report unknown costs
+as unknown, and do not increase human supervision solely to manufacture
+feedback. For the observation-to-reuse discipline, see
+[FractaCognition §9](fractacognition_principles.md#9-validated-learning-and-selective-propagation).

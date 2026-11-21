@@ -876,6 +876,51 @@ propagated ≠ verified
 
 Specialized sources: [Propagation Register](propagation_register.md), [Memory and Corpus Sleep Cycle](memory_and_corpus_sleep_cycle.md).
 
+### Real-user field learning — inaugural Cogentia alpha/beta cohort (2026-11-21)
+
+The first real users of Cogentia are also its **de facto experimental testers**:
+Jean Hugues Noël Robert (John/JHN) and, as their hosted Personal Twins are
+progressively brought into service, Marguerite Ghionga (Maguy) and Frédéric
+Lecourtois (Aréopage). The words *alpha* and *beta* describe the maturity of
+**the capability being exercised**, not a certification of a person's account,
+a completed validation, or a formally opened public testing programme. A
+provisioned Twin or declared ChatGPT child agent is **not** evidence that its
+owner has authenticated, connected MCP, used the feature, or approved access
+to private accounts. Record each of those milestones separately.
+
+The **user's own work is the primary Reality Test**, not an obligation to
+understand CPS, COP, MCP or FractaCognition or to perform artificial tests for
+the developer. Learn from successful tasks as well as failed tasks, confused
+interfaces, necessary assistance, suspended packets, incorrect completion,
+unresolved requests, and unnecessary demands on human attention. Keep three
+levels of evidence distinct:
+
+1. **Situated observation:** the particular task, the human's reported
+   experience, observed outcome, interruptions and relevant COP receipts;
+   state explicitly what was attempted, witnessed or merely reported.
+2. **Metacognitive hypothesis:** a candidate failure mode, usable heuristic,
+   improved interface or general-purpose FractaHandler inferred from one or
+   several situated observations; an individual case is not yet a universal
+   rule.
+3. **Validated reuse:** a later Reality Test establishes that the change
+   improves a comparable task or user experience; a stored log or a new
+   document alone is **not** evidence that the Learning Computer learned.
+
+Observation scopes follow the applicable observer mandate. Personal context,
+conversations and account contents remain within each Principal/Twin locality;
+**shared hosting is not shared permission**. Promote a minimum reusable,
+non-identifying lesson across localities when justified; an actual transfer
+of private content requires the relevant Principal's authority. Preserve
+original COP events and add corrections or learned interpretations as new
+attributable events, rather than rewriting what happened. Prefer low-overhead
+observation during ordinary work over testing ceremonies that themselves
+increase the human attention burden.
+
+Operational source: [Hosted Personal Twin onboarding](https://github.com/JeanHuguesRobert/inseme/blob/main/docs/hosted-personal-twin-onboarding.md)
+and [Hosted Conversational Agents](https://github.com/JeanHuguesRobert/inseme/blob/main/docs/hosted-conversational-agents.md).
+Evaluation criterion: [Digital Twin Burden Absorption](digital_twin_burden_absorption.md).
+Experimental foundation: [The Network is the Learning Computer — two Odysseys](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/the_network_is_the_learning_computer.md#26-the-decisive-reality-test-two-odysseys).
+
 ### Second-order learning from method failures — Source Before Projection Reality Case (2026-10-09)
 
 An inquiry can produce **two distinct classes of results**: knowledge about its object, and knowledge about the methods, representations, agents and controls through which it was conducted. The second class is first-class metacognitive material, not editorial housekeeping.
