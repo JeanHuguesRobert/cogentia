@@ -10,11 +10,11 @@ const candidate={id:'clara-egger',name:'Clara Egger',movement:'Solution démocra
 const code='3AB-CDE-FG0';
 const subject='3Code '+registrationId+' '+'A'.repeat(40);
 
-async function resume(registration){
+async function resume(registration,{clipboardAvailable=true}={}){
   const elements=new Map();
   const byId=id=>{
     if(!elements.has(id))elements.set(id,{innerHTML:'',textContent:'',value:'',checked:false,
-      hidden:false,disabled:false,scrollIntoView(){}});
+      hidden:false,disabled:false,scrollIntoView(){},focus(){this.focused=true;},select(){this.selected=true;}});
     return elements.get(id);
   };
   const storage=new Map([
@@ -26,6 +26,8 @@ async function resume(registration){
     getItem:key=>storage.has(key)?storage.get(key):null,
     setItem:(key,value)=>storage.set(key,String(value))
   };
+  const copied=[];
+  const navigator=clipboardAvailable?{clipboard:{writeText:async value=>{copied.push(value);}}}:{};
   const fetch=async url=>{
     let data;
     if(url==='/3code/api/marche')data={candidates:[candidate],updated:'2026-11-21'};
@@ -35,7 +37,7 @@ async function resume(registration){
     return {ok:true,status:200,json:async()=>data};
   };
   runInNewContext(source,{
-    document:{getElementById:byId},localStorage,fetch,
+    document:{getElementById:byId},localStorage,navigator,fetch,
     URL,URLSearchParams,encodeURIComponent,
     location:{pathname:'/3code/marche-du-soleil',search:''}
   },{filename:'marche.js'});
@@ -43,7 +45,7 @@ async function resume(registration){
   await new Promise(resolve=>setTimeout(resolve,10));
   assert.equal(byId('marche-code-result').textContent,code);
   assert.equal(byId('marche-email-panel').hidden,false);
-  return {byId};
+  return {byId,copied};
 }
 
 test('returning visitor can reopen the same prepared email without a new request',async()=>{
@@ -53,6 +55,25 @@ test('returning visitor can reopen the same prepared email without a new request
   assert.equal(byId('marche-mail-subject').value,subject);
   assert.match(byId('marche-email-result').innerHTML,/mailto:3code@acorsica\.org\?subject=/);
   assert.match(byId('marche-email-result').innerHTML,/si vous ne l’avez pas encore envoyé/);
+});
+
+test('manual mail fallback exposes recipient and subject with working copy buttons',async()=>{
+  const {byId,copied}=await resume({id:registrationId,view:'private-view',
+    email_to:'3code@acorsica.org',email_subject:subject});
+  assert.equal(byId('marche-mail-to').value,'3code@acorsica.org');
+  assert.equal(byId('marche-mail-subject').value,subject);
+  await byId('marche-copy-to').onclick();
+  await byId('marche-copy-subject').onclick();
+  assert.deepEqual(copied,['3code@acorsica.org',subject]);
+  assert.equal(byId('marche-copy-feedback').textContent,'Objet copié.');
+});
+
+test('manual mail fallback remains selectable when clipboard is unavailable',async()=>{
+  const {byId}=await resume({id:registrationId,view:'private-view',
+    email_to:'3code@acorsica.org',email_subject:subject},{clipboardAvailable:false});
+  await byId('marche-copy-subject').onclick();
+  assert.equal(byId('marche-mail-subject').selected,true);
+  assert.match(byId('marche-copy-feedback').textContent,/Ctrl\+C/);
 });
 
 test('older browser state with no saved subject can request a new mail draft',async()=>{

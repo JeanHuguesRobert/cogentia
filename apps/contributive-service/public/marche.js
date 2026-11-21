@@ -29,13 +29,33 @@ function showPreparedEmail(rec,restored=false){
       ?'Votre courriel est toujours prêt. Rouvrez-le si vous ne l’avez pas encore envoyé.'
       :'Le message est prêt : vous devez l’envoyer vous-même.')+'</strong>'+
     '<p><a class="button" href="'+esc('mailto:'+to+'?subject='+encodeURIComponent(subject))+'">Ouvrir mon application de messagerie</a></p>'+
-    '<p>Si ce bouton ne fonctionne pas, envoyez un courriel à <strong>'+esc(to)+
-    '</strong> avec exactement cet objet :</p><textarea id="marche-mail-subject" readonly></textarea>'+
-    '<p class="note">Le service pourra constater la réception. Il n’envoie aucun message automatiquement.</p></div>';
+    '<p>Si ce bouton ne fonctionne pas, ouvrez vous-même votre messagerie et créez un nouveau courriel avec :</p>'+
+    '<label for="marche-mail-to">Destinataire</label><input id="marche-mail-to" readonly>'+
+    '<button type="button" class="secondary" id="marche-copy-to">Copier l’adresse</button>'+
+    '<label for="marche-mail-subject">Objet exact du courriel</label><textarea id="marche-mail-subject" readonly></textarea>'+
+    '<button type="button" class="secondary" id="marche-copy-subject">Copier l’objet</button>'+
+    '<p id="marche-copy-feedback" role="status" aria-live="polite"></p>'+
+    '<p class="note">Le corps du message peut rester vide. Le service pourra constater la réception ; il n’envoie aucun message automatiquement.</p></div>';
+  byId('marche-mail-to').value=to;
   byId('marche-mail-subject').value=subject;
+  byId('marche-copy-to').onclick=()=>copyPreparedValue('marche-mail-to','Adresse');
+  byId('marche-copy-subject').onclick=()=>copyPreparedValue('marche-mail-subject','Objet');
   byId('marche-status-check').hidden=false;
   byId('marche-email').disabled=true;
   return true;
+}
+async function copyPreparedValue(id,label){
+  const field=byId(id),feedback=byId('marche-copy-feedback');
+  if(!field||!feedback)return;
+  try{
+    if(!navigator.clipboard?.writeText)throw Error('Presse-papiers indisponible');
+    await navigator.clipboard.writeText(field.value);
+    feedback.textContent=label+' copié.';
+  }catch{
+    field.focus?.();
+    field.select?.();
+    feedback.textContent='Copie automatique indisponible : sélectionnez le texte et utilisez Ctrl+C (ou Cmd+C sur Mac).';
+  }
 }
 function optionalLink(href,label){
   if(!href)return '';

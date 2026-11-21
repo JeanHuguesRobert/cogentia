@@ -273,6 +273,7 @@ une base locale temporaire sans modifier les données publiques.
 
 Parcours public :
 - /3code/marche-du-soleil : choisir une candidature dans un répertoire alphabétique, accéder à ses liens connus, imprimer le tract, générer et noter un 3Code, recopier facultativement celui du document source, déclarer son exemplaire et préparer son enregistrement par courriel.
+- Le courriel préparé comporte un lien `mailto:` **et** une alternative indépendante de la configuration du navigateur : champs destinataire/objet en lecture seule, boutons de copie, sélection manuelle si le presse-papiers n’est pas accessible. Le parseur actuel traite uniquement l’objet exact `3Code <uuid> <challenge>` ; le corps et les envois groupés ne sont pas encore pris en charge.
 - /3code/marche-du-soleil/tract?c=<candidate_id> : modèle A4 imprimable dans le navigateur. Deux espaces manuscrits sont prévus : « Mon 3Code » et « 3Code de l'exemplaire d'origine ». Son QR commun ouvre /3code/marche-du-soleil/mode-emploi ; il ne prétend pas identifier une copie manuscrite.
 - /3code/marche-du-soleil/mode-emploi : instructions à l'usage d'une personne qui découvre le dispositif ; lien facultatif vers « Dialogue à trois » avec son propre assistant IA.
 - Les lecteurs peuvent retrouver l'initiative à partir du QR ou du 3Code, sans compte.
