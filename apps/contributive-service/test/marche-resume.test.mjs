@@ -8,7 +8,7 @@ const copyId='123e4567-e89b-42d3-a456-426614174000';
 const registrationId='234e4567-e89b-42d3-a456-426614174001';
 const candidate={id:'clara-egger',name:'Clara Egger',movement:'Solution démocratique'};
 const code='3AB-CDE-FG0';
-const subject='KYS3 '+registrationId+' '+'A'.repeat(40);
+const subject='3Code '+registrationId+' '+'A'.repeat(40);
 
 async function resume(registration){
   const elements=new Map();

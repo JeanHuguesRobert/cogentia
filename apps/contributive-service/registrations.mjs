@@ -63,7 +63,7 @@ export function createRegistration(db,{three_code,copy_id=null,edit_token='',inb
   const id=randomUUID();
   const challenge=randomBytes(20).toString('hex').toUpperCase();
   const view=randomBytes(24).toString('base64url');
-  const subject='KYS3 '+id+' '+challenge;
+  const subject='3Code '+id+' '+challenge;
   const now=stamp(), expires=new Date(Date.now()+sevenDays).toISOString();
   db.exec('BEGIN IMMEDIATE');
   try {
@@ -131,7 +131,7 @@ export function receiveRegistrationEmail(db,{from,subject,provider_uid,mailbox,e
   const inbox=validateInbox(expected_inbox);
   if(!inbox||validateInbox(mailbox)!==inbox)throw problem('Boîte destinataire non conforme',403);
   const address=senderAddress(from);
-  const match=String(subject||'').trim().match(/^KYS3 ([0-9a-f-]{36}) ([0-9A-F]{40})$/);
+  const match=String(subject||'').trim().match(/^3Code ([0-9a-f-]{36}) ([0-9A-F]{40})$/);
   if(!match||!uuid.test(match[1]))throw problem('Objet de courriel incorrect');
   if(typeof provider_uid!=='string'||provider_uid.length<5||provider_uid.length>250)throw problem('UID de réception manquant');
   const id=match[1],proof=match[2];

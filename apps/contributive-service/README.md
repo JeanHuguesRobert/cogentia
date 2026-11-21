@@ -163,6 +163,8 @@ un envoi non livré ou une simple déclaration ne suffisent pas.
    politique ou le résultat d'une mission. La fédération des registrars
    3Code n'est pas encore implémentée.
 
+L'objet du courriel commence exactement par `3Code` (casse comprise), sans autre préfixe accepté.
+
 Exemple de recette locale, valable seulement quand l'opérateur a
 réellement observé un courriel (les adresses ci-dessous sont fictives) :
 
@@ -170,7 +172,7 @@ réellement observé un courriel (les adresses ci-dessous sont fictives) :
       --db /chemin/vers/campaigns.sqlite \
       --mailbox verified@example.org \
       --from sender@example.net \
-      --subject 'KYS3 <uuid> <jeton-hex>' \
+      --subject '3Code <uuid> <jeton-hex>' \
       --provider-uid 'reference-stable-du-fournisseur'
 
 API supplémentaire : GET /3code/api/registrations/config, POST

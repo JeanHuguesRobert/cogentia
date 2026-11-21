@@ -74,7 +74,7 @@ test('prepare email proof, pending; public cannot forge confirmation',async()=>{
   assert.equal(standalone.scope,'bottle-at-sea/v1');
   assert.equal(standalone.copy_id,created.copy.id);
   assert.equal(standalone.status,'awaiting_email');
-  assert.match(standalone.email_subject,/^KYS3 [0-9a-f-]{36} [0-9A-F]{40}$/);
+  assert.match(standalone.email_subject,/^3Code [0-9a-f-]{36} [0-9A-F]{40}$/);
   assert.equal(standalone.email_to,inbox);
   assert.equal(standalone.mailto.startsWith('mailto:'),true);
   r=await req('/registrations/'+standalone.id,undefined,{'x-registration-view':standalone.view_token});
@@ -101,6 +101,18 @@ test('pilot rejects free URL associations, missing consent and wrong controller'
   r=await req('/registrations',{three_code:c.body.three_code,copy_id:c.body.id,edit_token:'wrong',pilot_acknowledged:true});
   assert.equal(r.status,403);
 });
+test('only exact 3Code subject prefix is accepted, with no legacy alias',()=>{
+  const db=openRegistrationDB(path);
+  const input={from:'contributor@example.net',provider_uid:'mailbox-uid-old-format',
+    mailbox:inbox,expected_inbox:inbox,received_by:'trusted-mailbox-adapter'};
+  try{
+    assert.throws(()=>receiveRegistrationEmail(db,{...input,
+      subject:standalone.email_subject.replace(/^3Code /,'KYS3 ')}),/Objet de courriel incorrect/);
+    assert.throws(()=>receiveRegistrationEmail(db,{...input,
+      subject:standalone.email_subject.replace(/^3Code /,'3code ')}),/Objet de courriel incorrect/);
+  }finally{db.close();}
+});
+
 test('inbound proof import checks mailbox source, subject, UID, expiry and idempotence',async()=>{
   const db=openRegistrationDB(path);
   try {

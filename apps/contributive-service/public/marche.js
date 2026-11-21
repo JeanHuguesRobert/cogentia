@@ -23,7 +23,7 @@ async function api(path,body,headers={}){
 function showPreparedEmail(rec,restored=false){
   const to=rec?.email_to,subject=rec?.email_subject;
   if(typeof to!=='string'||!/^[^\s@?]+@[^\s@?]+\.[^\s@?]+$/.test(to)||
-     typeof subject!=='string'||!/^KYS3 [0-9a-f-]{36} [0-9A-F]{40}$/.test(subject))return false;
+     typeof subject!=='string'||!/^3Code [0-9a-f-]{36} [0-9A-F]{40}$/.test(subject))return false;
   const node=byId('marche-email-result');
   node.innerHTML='<div class="output"><strong>'+(restored
       ?'Votre courriel est toujours prêt. Rouvrez-le si vous ne l’avez pas encore envoyé.'
