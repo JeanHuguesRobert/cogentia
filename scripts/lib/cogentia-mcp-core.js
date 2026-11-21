@@ -5,6 +5,7 @@ import {executeJohnCanonicalChatgptTurn} from "./john-cop-chatgpt-turn-execution
 import {createChatgptTurnCapability} from "./browser-chatgpt-turn.js";
 import {openExistingJohnCopStore} from "./john-cop-existing-store.js";
 import {openJohnCompositeRuntime} from "./agent-composite-runtime.js";
+import {readHostedInstanceDirectory} from "./hosted-instance-directory.js";
 import {projectAgentToSupabase} from "./agent-supabase-projection.js";
 import {createSqliteCopEventStore} from "../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js";
 import {
@@ -124,6 +125,7 @@ export const PRIVATE_READ_TOOLS = new Set([
   "cogentia_john_mandate_pending", // historic alias
   "cogentia_john_packet_pending",
   "cogentia_agent_members_list",
+  "cogentia_instances_directory",
   "cogentia_agent_member_inspect",
   "cogentia_vault_list",
   "cogentia_vault_describe",
@@ -1006,6 +1008,14 @@ export const TOOLS = [
       required: ["id"],
       additionalProperties: false,
     },
+  },
+  {
+    name: "cogentia_instances_directory",
+    description: "Private generic directory: hosted Cogentia instances, their nonsecret service bindings and maturation state. Requires attested JHN Principal.",
+    inputSchema: {type:"object",properties:{
+      slug:{type:"string"},
+      subject_kind:{type:"string",enum:["living_person","deceased_person","collective","digital_native"]}
+    },additionalProperties:false},
   },
   {
     name: "cogentia_agent_members_list",
@@ -2719,6 +2729,14 @@ export function createMcpCore(env = process.env, extras = {}) {
           throw err;
         }
         return pattern;
+      }
+      case "cogentia_instances_directory": {
+        if(!isResolvedCallerAuth(auth)||auth.auth!=="jhn"||
+           auth.principal_ref!=="principal:jhn")
+          throw Object.assign(new Error("jhn_verified_principal_required"),
+            {error_class:"tier_forbidden"});
+        return readHostedInstanceDirectory({env,slug:args.slug??null,
+          subject_kind:args.subject_kind??"living_person"});
       }
       case "cogentia_agent_members_list":
       case "cogentia_agent_member_inspect":

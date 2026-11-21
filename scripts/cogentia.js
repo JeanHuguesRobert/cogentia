@@ -24,6 +24,7 @@ import readline from "node:readline";
 import { execFileSync, spawnSync } from "node:child_process";
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import {openJohnCompositeRuntime} from "./lib/agent-composite-runtime.js";
+import {readHostedInstanceDirectory} from "./lib/hosted-instance-directory.js";
 import {projectAgentToSupabase} from "./lib/agent-supabase-projection.js";
 import { once } from "node:events";
 import { finished } from "node:stream/promises";
@@ -529,6 +530,8 @@ async function main() {
       return cmdGit(argv.shift() || "verify");
     case "repos":
       return cmdRepos(argv.shift() || "status");
+    case "instances":
+      return cmdInstancesDirectory();
     case "agent":
       if (argv[0] === "mail") { argv.shift(); return cmdAgentMail(argv.shift() || "status"); }
       if (argv[0] === "members") { argv.shift(); return cmdAgentMembers(argv.shift() || "list"); }
@@ -934,6 +937,7 @@ Core commands:
                            Add --task <request> to attach a bounded corpus-orientation packet.
   agent health             Check context index, embedding target and AI router.
                            Flags: --router-url <url> --check-query [--query <text>]
+  instances --slug <slug> [--subject-kind living_person]  Read JHN hosted instance directory.
   agent members list|inspect|declare|activate|sync|run   COP hosted native-agent members (Principal local host).\n  agent mail status        Show private intra-Twin JMAP capability and runtime binding readiness.
   agent mail send|receive  Reserved semantic verbs: blocked until server-side credential broker and COP authorizer are connected.
   agent mandates plan      List repositories that need the minimal local mandate.
@@ -3419,6 +3423,15 @@ function cmdRepos(sub) {
     default:
       throw new Error(`Unknown repos subcommand "${sub}". Use status, fetch, sync, push, or import-owner.`);
   }
+}
+
+async function cmdInstancesDirectory() {
+  const result=await readHostedInstanceDirectory({
+    slug:valueFlag("--slug")||null,
+    subject_kind:valueFlag("--subject-kind")||"living_person",
+  });
+  output(result,JSON.stringify(result,null,2));
+  if(result?.ok===false)process.exitCode=1;
 }
 
 async function cmdAgentMembers(sub) {
