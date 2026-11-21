@@ -33,7 +33,7 @@ test('first-time visitor understands the three actions, then follows an initiati
       });
     });
     const welcome=await open('/3code');
-    for(const phrase of ['Que souhaitez-vous faire','Je veux participer','J’ai reçu un document','Je veux organiser une action','Aucune initiative n’est encore ouverte'])assert.ok(welcome.includes(phrase),phrase);
+    for(const phrase of ['Que souhaitez-vous faire','Je veux participer','J’ai reçu un document','Je veux organiser une action','La Marche du Soleil'])assert.ok(welcome.includes(phrase),phrase);
     assert.match(welcome,/<details class="panel action-details" id="organiser">/);
     const expanded=await open('/3code#organiser');
     assert.match(expanded,/<details class="panel action-details" id="organiser" open="">/);

@@ -28,3 +28,53 @@ input[type=checkbox]{display:inline-block;width:auto;margin:0 .5rem 0 0;vertical
 #reg-panel[hidden]{display:none}
 header nav{flex-wrap:wrap}
 @media(max-width:650px){main{padding-top:1rem}.landing{padding-top:.4rem}.choice{min-height:0}}
+
+/* La Marche du Soleil: actions first; technology only when useful. */
+.marche-body main{max-width:940px}
+.marche-body .eyebrow{font-size:.86rem;text-transform:uppercase;font-weight:700;letter-spacing:.08em;color:#526476}
+.marche-body h1{font-size:clamp(1.9rem,4vw,2.75rem);line-height:1.15}
+.marche-header nav{flex-wrap:wrap}
+.marche-step{position:relative;padding-left:4rem}
+.marche-step>h2{font-size:1.35rem;margin:.1rem 0 1rem}
+.marche-number{display:flex;align-items:center;justify-content:center;position:absolute;top:1.15rem;left:1.2rem;width:2rem;height:2rem;background:#174a68;color:white;border-radius:50%;font-weight:700}
+.marche-step[hidden],#marche-email-panel[hidden],#marche-parent-panel[hidden],#marche-status-check[hidden]{display:none}
+.marche-details{border-left:3px solid #b7cbd9;margin:.8rem 0;padding:.2rem 1rem}
+.marche-links{display:flex;gap:1rem;flex-wrap:wrap}
+.marche-code{font:700 clamp(1.8rem,5vw,2.6rem) ui-monospace,Consolas,monospace;letter-spacing:.08em;margin:1rem 0}
+.marche-body .check-label{display:flex;gap:.6rem;font-weight:500;align-items:flex-start;line-height:1.5}
+.marche-body .check-label input{width:1.15rem;height:1.15rem;flex:none;margin-top:.12rem}
+.marche-instructions{font-size:1.06rem;line-height:1.65;padding-left:1.7rem}
+.marche-instructions li{margin-bottom:.8rem}
+.marche-body button[disabled]{opacity:.55;cursor:not-allowed}
+.marche-tract{font:16px/1.4 system-ui,sans-serif;background:#fff;color:#111;margin:1.5rem auto;max-width:210mm;min-height:297mm;padding:18mm;border:1px solid #999;display:flex;flex-direction:column;gap:6mm}
+.marche-tract-title{display:flex;justify-content:space-between;gap:1rem;border-top:5px solid #111;border-bottom:1px solid #111;padding:.5rem 0;font-weight:800;font-size:.9rem;letter-spacing:.05em}
+.marche-tract h1{font-size:26pt;margin:7mm 0 1mm;line-height:1.15}
+.marche-tract-lead{font-size:14pt;line-height:1.38;margin:0 0 3mm}
+.marche-tract-choice{border:2px solid #111;padding:4mm 6mm;min-height:22mm}
+.marche-tract-value{font-size:19pt;font-weight:800;line-height:1.2;padding-top:2mm}
+.marche-tract-small{font-size:10pt}
+.marche-tract-body{font-size:12pt;line-height:1.5}
+.marche-tract-fields{display:grid;grid-template-columns:1fr 1fr;gap:4mm}
+.marche-tract-fields>div{border:2px solid #111;min-height:35mm;padding:4mm;display:flex;flex-direction:column;justify-content:space-around}
+.marche-tract-fields span{font:700 17pt/1.5 ui-monospace,monospace;white-space:nowrap}
+.marche-tract-fields small{font-size:9pt}
+.marche-tract-bottom{display:grid;grid-template-columns:1fr 46mm;gap:7mm;align-items:center;border-top:2px solid #111;padding-top:4mm;margin-top:auto}
+.marche-tract-bottom strong{font-size:13pt}
+.marche-tract-bottom p{font-size:10.5pt;margin:.3em 0}
+.marche-tract-url{font-weight:700;font-size:9pt!important;overflow-wrap:anywhere}
+.marche-tract-qr{text-align:center}
+.marche-tract-qr img{width:42mm;height:42mm;object-fit:contain}
+.marche-tract-qr small{display:block;font-size:9pt}
+.marche-tract footer{font:9pt/1.4 system-ui,sans-serif;padding:3mm 0 0;border-top:1px solid #aaa;background:#fff}
+.marche-print-tools{max-width:800px;margin:1rem auto}
+@media(max-width:650px){.marche-step{padding-left:3.2rem}.marche-number{left:.8rem}.marche-tract{padding:7mm;min-height:0}.marche-tract h1{font-size:20pt}.marche-tract-fields{grid-template-columns:1fr}.marche-tract-title{font-size:.7rem}.marche-tract-bottom{grid-template-columns:1fr 34mm}.marche-tract-qr img{height:32mm;width:32mm}}
+@media print {
+  .marche-body header,.marche-body>footer,.marche-print-tools{display:none!important}
+  .marche-body{background:#fff}
+  .marche-body main{padding:0;max-width:none;margin:0}
+  .marche-tract{width:210mm;height:297mm;min-height:0;max-width:none;border:0;padding:17mm;margin:0;break-after:page;gap:5mm}
+  .marche-tract h1{font-size:26pt}
+  .marche-tract-fields{grid-template-columns:1fr 1fr}
+  .marche-tract-bottom{grid-template-columns:1fr 46mm}
+  .marche-tract-qr img{height:42mm;width:42mm}
+}

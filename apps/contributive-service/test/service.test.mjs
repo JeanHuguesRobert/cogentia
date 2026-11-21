@@ -74,10 +74,10 @@ let campaign,secret,mission,parent,child,contribution;
 test('campaign creation requires key to activate and manage',async()=>{
   const d=await call('/api/campaigns',{title:'Inventaire des moulins',goal:'Contributions ouvertes.'});
   assert.equal(d.status,201);campaign=d.body.id;secret=d.body.management_token;assert.equal(d.body.status,'draft');
-  let r=await call('/api/campaigns');assert.equal(r.body.campaigns.length,0);
+  let r=await call('/api/campaigns');assert.equal(r.body.campaigns.length,1);assert.match(r.body.campaigns[0].title,/Marche du Soleil/);
   r=await call('/api/campaigns/'+campaign+'/activate',{});assert.equal(r.status,403);
   r=await call('/api/campaigns/'+campaign+'/activate',{},secret);assert.equal(r.body.status,'active');
-  r=await call('/api/campaigns');assert.equal(r.body.campaigns.length,1);
+  r=await call('/api/campaigns');assert.equal(r.body.campaigns.length,2);
 });
 test('mission: authenticated write only',async()=>{
   let r=await call('/api/missions',{campaign_id:campaign,title:'Recueillir une archive'});assert.equal(r.status,403);

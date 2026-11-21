@@ -34,6 +34,9 @@ function home(){
     '<a class="choice" href="#retrouver"><strong>J’ai reçu un document</strong><span>Retrouver son origine et découvrir comment contribuer.</span></a>',
     '<a class="choice" href="#organiser"><strong>Je veux organiser une action</strong><span>Créer une initiative et inviter d’autres personnes à participer.</span></a>',
     '</nav></section>',
+    '<section class="panel" id="marche-du-soleil"><h2>La Marche du Soleil — présidentielle 2027</h2>',
+    '<p>Choisissez une candidature, préparez un tract, inscrivez votre numéro et enregistrez votre exemplaire.</p>',
+    '<p><a class="button" href="/3code/marche-du-soleil">Participer à La Marche du Soleil</a></p></section>',
     '<section class="panel" id="participer"><h2>Choisir une initiative</h2>',
     '<p>Chaque personne choisit librement la cause ou le candidat qu’elle souhaite aider. Aucune adhésion politique n’est nécessaire.</p>',
     '<div id="campaigns-list" role="status">Recherche des initiatives ouvertes…</div></section>',
@@ -108,7 +111,7 @@ async function loadActiveCampaigns(){
     const d=await api('/campaigns');
     const campaigns=d.campaigns||[];
     el('campaigns-list').innerHTML=campaigns.length
-      ?'<div class="campaign-list">'+campaigns.map(c=>'<article class="campaign-choice"><h3>'+esc(c.title)+'</h3><p>'+esc(c.goal||c.description||'Découvrez cette initiative.')+'</p><a class="button" href="'+ROOT+'/campaign/'+encodeURIComponent(c.id)+'">Découvrir et participer</a></article>').join('')+'</div>'
+      ?'<div class="campaign-list">'+campaigns.map(c=>'<article class="campaign-choice"><h3>'+esc(c.title)+'</h3><p>'+esc(c.goal||c.description||'Découvrez cette initiative.')+'</p><a class="button" href="'+(c.title.startsWith('La Marche du Soleil')?ROOT+'/marche-du-soleil':ROOT+'/campaign/'+encodeURIComponent(c.id))+'">Découvrir et participer</a></article>').join('')+'</div>'
       :'<p><strong>Aucune initiative n’est encore ouverte.</strong> Vous pouvez revenir plus tard ou <a href="#organiser" id="start-first">créer la première initiative</a>.</p>';
     if(!campaigns.length){
       el('start-first').onclick=()=>{el('organiser').open=true;};

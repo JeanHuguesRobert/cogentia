@@ -9,6 +9,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import QRCode from 'qrcode';
 import { normalize3Code, formatCopyReference, parseCopyReference } from './references.mjs';
+import { ensureMarche, marcheCandidates, marcheSources, marcheVersion, marcheCampaignId, missionForCandidate, candidateForMission, candidateFor } from './marche.mjs';
 import { initRegistrations, validateInbox, createRegistration, getRegistration, resolvedRegistrations, PILOT_SCOPE, PILOT_REGISTRAR_ID } from './registrations.mjs';
 
 const ROOT = '/3code';
@@ -88,6 +89,28 @@ function owner(db,id,req) {
   if(!row)fail('Campagne inconnue',404);
   if(!authorize(req.headers['x-management-token'],row.secret_hash))fail('Clé de gestion nécessaire',403);
 }
+function createCopy(db,b,req){
+        if(!textId(b.campaign_id))fail('Campagne requise');
+        const camp=db.prepare('SELECT status FROM campaigns WHERE id=?').get(b.campaign_id);
+        if(!camp)fail('Campagne inconnue',404);
+        if(camp.status==='paused'||camp.status==='closed')fail('Campagne non ouverte aux nouveaux exemplaires',409);
+        if(camp.status!=='active')owner(db,b.campaign_id,req);
+        let parent=null,parentCode=null,relation='none';
+        if(b.parent_id) {
+          parent=db.prepare('SELECT id,three_code,campaign_id,status FROM copies WHERE id=?').get(b.parent_id);
+          if(!parent||parent.status==='revoked')fail('Parent introuvable ou révoqué',404);
+          if(parent.campaign_id!==b.campaign_id)fail('Parent hors campagne');
+          parentCode=parent.three_code;relation='linked-unverified';
+        } else if(b.parent_code) {parentCode=code(b.parent_code);relation='declared-unverified';}
+        const given=b.three_code?code(b.three_code):generate();
+        const mid=b.mission_id||null;
+        if(mid&&!db.prepare('SELECT id FROM missions WHERE id=? AND campaign_id=?').get(mid,b.campaign_id))fail('Mission hors campagne');
+        const id=randomUUID(),edit=token(),t=now(),title=short(b.title,160)||'Exemplaire singulier';
+        db.prepare('INSERT INTO copies(id,campaign_id,mission_id,title,three_code,parent_id,parent_code,relation_status,source_template,edit_hash,created_at,status,revision,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+          .run(id,b.campaign_id,mid,title,given,parent?.id||null,parentCode,relation,short(b.source_template,160)||null,hash(edit),t,'declared',1,t);
+        db.prepare('INSERT INTO events VALUES(?,?,?,?,?)').run(randomUUID(),id,parentCode?'FORK_DECLARED':'REGISTERED',JSON.stringify({status:'declaration-non-verifiee'}),t);
+        return {id,campaign_id:b.campaign_id,three_code:given,reference:formatCopyReference({campaign_id:b.campaign_id,three_code:given,copy_id:id}),status:'declared',revision:1,parent_code:parentCode,relation_status:relation,url:ROOT+'/e/'+id,edit_token:edit,notice:'Enregistrement déclaratif, ni authentification de l’objet ni preuve de détention.'};
+}
 function rateGate(map,req,pathname) {
   if(req.method==='GET')return;
   const key=(req.headers['x-forwarded-for']||req.socket.remoteAddress||'unknown').toString().split(',').slice(-1)[0].trim()+':'+pathname;
@@ -103,6 +126,7 @@ export function makeServer({
 }={}) {
   const db=init(dbPath), rates=new Map(), inbox=validateInbox(mailInbox);
   initRegistrations(db);
+  ensureMarche(db,dbPath);
   const server=createServer(async(req,res)=>{
     res.setHeader('X-Content-Type-Options','nosniff');
     res.setHeader('Referrer-Policy','no-referrer');
@@ -116,6 +140,36 @@ export function makeServer({
         return json(res,200,{ok:true,service:'contributive-campaigns',schema:'campaigns-mvp-v3',db:!!db.prepare('SELECT 1 AS ok').get(),time:now()});
       }
       if(req.method==='GET'&&p===ROOT+'/api/generate') return json(res,200,{code:generate(),registered:false});
+      if(req.method==='GET'&&p===ROOT+'/api/marche'){
+        return json(res,200,{title:'La Marche du Soleil',campaign_id:marcheCampaignId,updated:marcheVersion,
+          notice:'Répertoire indicatif de candidatures annoncées, sans investiture ni participation présumée de leurs équipes. Une présentation officielle appartient à l’élu habilité.',
+          candidates:marcheCandidates,sources:marcheSources,
+          howto:ROOT+'/marche-du-soleil/mode-emploi',
+          tract:ROOT+'/marche-du-soleil/tract'});
+      }
+      const marcheCopy=p.match(/^\/3code\/api\/marche\/documents\/([a-f0-9-]{36})$/);
+      if(req.method==='GET'&&marcheCopy){
+        const row=db.prepare('SELECT '+colCopy+' FROM copies WHERE id=? AND campaign_id=?').get(marcheCopy[1],marcheCampaignId);
+        if(!row)fail('Document de la Marche inconnu',404);
+        if(row.status==='revoked')fail('Ce document a été retiré',410);
+        const candidate=candidateForMission(db,row.mission_id);
+        if(!candidate)fail('Candidature non référencée',404);
+        return json(res,200,{document:{...row,reference:formatCopyReference({...row,copy_id:row.id})},
+          candidate,howto:ROOT+'/marche-du-soleil/mode-emploi'});
+      }
+      if(req.method==='POST'&&p===ROOT+'/api/marche/documents'){
+        const b=await load(req);
+        if(typeof b.candidate_id!=='string'||!candidateFor(b.candidate_id))fail('Choisissez une candidature proposée',422);
+        const mission_id=missionForCandidate(db,b.candidate_id);
+        const candidate=candidateFor(b.candidate_id);
+        const created=createCopy(db,{
+          campaign_id:marcheCampaignId,mission_id,
+          three_code:b.three_code,parent_code:b.parent_code||null,
+          parent_id:b.parent_id||null,source_template:'marche-du-soleil/tract/v1',
+          title:'Tract — '+candidate.name
+        },req);
+        return json(res,201,{...created,candidate:{id:candidate.id,name:candidate.name,movement:candidate.movement}});
+      }
       if(req.method==='GET'&&p===ROOT+'/api/registrations/config') {
         return json(res,200,{enabled:!!inbox,inbox:inbox||null,method:'inbound-email-only',
           scope:PILOT_SCOPE,registrar_id:PILOT_REGISTRAR_ID,
@@ -246,27 +300,7 @@ export function makeServer({
           notice:'Pilote limité aux Bouteilles à la Mer. Les exemplaires sont déclaratifs; « courriel reçu » prouve seulement un contact, pas une identité ni une propriété. Un résultat local n’est pas une recherche fédérée.'});
       }
       if(req.method==='POST'&&p===ROOT+'/api/copies'){
-        const b=await load(req);
-        if(!textId(b.campaign_id))fail('Campagne requise');
-        const camp=db.prepare('SELECT status FROM campaigns WHERE id=?').get(b.campaign_id);
-        if(!camp)fail('Campagne inconnue',404);
-        if(camp.status==='paused'||camp.status==='closed')fail('Campagne non ouverte aux nouveaux exemplaires',409);
-        if(camp.status!=='active')owner(db,b.campaign_id,req);
-        let parent=null,parentCode=null,relation='none';
-        if(b.parent_id) {
-          parent=db.prepare('SELECT id,three_code,campaign_id,status FROM copies WHERE id=?').get(b.parent_id);
-          if(!parent||parent.status==='revoked')fail('Parent introuvable ou révoqué',404);
-          if(parent.campaign_id!==b.campaign_id)fail('Parent hors campagne');
-          parentCode=parent.three_code;relation='linked-unverified';
-        } else if(b.parent_code) {parentCode=code(b.parent_code);relation='declared-unverified';}
-        const given=b.three_code?code(b.three_code):generate();
-        const mid=b.mission_id||null;
-        if(mid&&!db.prepare('SELECT id FROM missions WHERE id=? AND campaign_id=?').get(mid,b.campaign_id))fail('Mission hors campagne');
-        const id=randomUUID(),edit=token(),t=now(),title=short(b.title,160)||'Exemplaire singulier';
-        db.prepare('INSERT INTO copies(id,campaign_id,mission_id,title,three_code,parent_id,parent_code,relation_status,source_template,edit_hash,created_at,status,revision,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
-          .run(id,b.campaign_id,mid,title,given,parent?.id||null,parentCode,relation,short(b.source_template,160)||null,hash(edit),t,'declared',1,t);
-        db.prepare('INSERT INTO events VALUES(?,?,?,?,?)').run(randomUUID(),id,parentCode?'FORK_DECLARED':'REGISTERED',JSON.stringify({status:'declaration-non-verifiee'}),t);
-        return json(res,201,{id,campaign_id:b.campaign_id,three_code:given,reference:formatCopyReference({campaign_id:b.campaign_id,three_code:given,copy_id:id}),status:'declared',revision:1,parent_code:parentCode,relation_status:relation,url:ROOT+'/e/'+id,edit_token:edit,notice:'Enregistrement déclaratif, ni authentification de l’objet ni preuve de détention.'});
+        return json(res,201,createCopy(db,await load(req),req));
       }
       const copyMatch=p.match(/^\/3code\/api\/copies\/([a-f0-9-]{36})$/);
       if(copyMatch){
@@ -328,12 +362,14 @@ export function makeServer({
       }
       const pub={
         '/3code/app.js':['public/app.js','text/javascript; charset=utf-8'],
+        '/3code/marche.js':['public/marche.js','text/javascript; charset=utf-8'],
         '/3code/guide.js':['public/guide.js','text/javascript; charset=utf-8'],
         '/3code/assistant.fr.txt':['public/assistant.fr.txt','text/plain; charset=utf-8'],
         '/3code/service.json':['public/service.json','application/json; charset=utf-8'],
         '/3code/style.css':['public/style.css','text/css; charset=utf-8']
       };
-      const entry=pub[p]||(req.method==='GET'&&p===ROOT+'/guide'?['public/guide.html','text/html; charset=utf-8']:null)||(req.method==='GET'&&(p===ROOT||p===ROOT+'/'||p===ROOT+'/print'||p.startsWith(ROOT+'/e/')||p.startsWith(ROOT+'/campaign/'))?['public/index.html','text/html; charset=utf-8']:null);
+      const entry=pub[p]||(req.method==='GET'&&p===ROOT+'/guide'?['public/guide.html','text/html; charset=utf-8']:null)||
+        (req.method==='GET'&&(p===ROOT+'/marche-du-soleil'||p===ROOT+'/marche-du-soleil/'||p===ROOT+'/marche-du-soleil/mode-emploi'||p===ROOT+'/marche-du-soleil/tract')?['public/marche.html','text/html; charset=utf-8']:null)||(req.method==='GET'&&(p===ROOT||p===ROOT+'/'||p===ROOT+'/print'||p.startsWith(ROOT+'/e/')||p.startsWith(ROOT+'/campaign/'))?['public/index.html','text/html; charset=utf-8']:null);
       if(req.method==='GET'&&entry){
         const body=readFileSync(join(HERE,entry[0]));
         res.writeHead(200,{'Content-Type':entry[1],'Cache-Control':'no-cache'});

@@ -1,0 +1,212 @@
+{
+  "version": "2026-11-21",
+  "description": "Répertoire évolutif et non exhaustif : candidatures déclarées, démarches annoncées et candidatures envisagées recensées dans les sources publiques, sans préjuger de l'inscription officielle à l'élection.",
+  "sources": [
+    "https://lcp.fr/actualites/presidentielle-2027-la-liste-des-candidats-declares-et-potentiels-444932",
+    "https://www.touteleurope.eu/vie-politique-des-etats-membres/presidentielle-2027-qui-sont-les-candidats-deja-declares/",
+    "https://www.reuters.com/world/former-french-pm-de-villepin-launches-2027-presidential-bid-2026-11-20/"
+  ],
+  "candidates": [
+    {
+      "id": "anasse-kazib",
+      "name": "Anasse Kazib",
+      "movement": "Révolution permanente",
+      "site": "https://anasse2027.fr/",
+      "x": "https://x.com/AnasseKazib"
+    },
+    {
+      "id": "antoine-mikolajczak",
+      "name": "Antoine Mikolajczak",
+      "movement": "Équinoxe",
+      "site": "https://parti-equinoxe.fr/qui-est-antoine-mikolajczak/"
+    },
+    {
+      "id": "augustin-billetdoux",
+      "name": "Augustin Billetdoux",
+      "movement": "Sans étiquette"
+    },
+    {
+      "id": "baron-mariani",
+      "name": "Baron Mariani (Jean Hugues Noël Robert)",
+      "movement": "Mouvement Capable",
+      "source_note": "Candidature déclarée par son porteur dans le mouvement Capable ; site du Livre Vivant Capable.",
+      "site": "https://capable.acorsica.org/"
+    },
+    {
+      "id": "benoit-mathieu",
+      "name": "Benoît Mathieu",
+      "movement": "Sans étiquette",
+      "site": "https://benoitmathieu2027.fr/"
+    },
+    {
+      "id": "bruno-retailleau",
+      "name": "Bruno Retailleau",
+      "movement": "Les Républicains"
+    },
+    {
+      "id": "clara-egger",
+      "name": "Clara Egger",
+      "movement": "Solution démocratique",
+      "site": "https://solutiondemocratique.fr/",
+      "x": "https://x.com/ClaraEgger1"
+    },
+    {
+      "id": "david-lisnard",
+      "name": "David Lisnard",
+      "movement": "Nouvelle Énergie"
+    },
+    {
+      "id": "delphine-batho",
+      "name": "Delphine Batho",
+      "movement": "Génération écologie"
+    },
+    {
+      "id": "edouard-philippe",
+      "name": "Édouard Philippe",
+      "movement": "Horizons"
+    },
+    {
+      "id": "eric-zemmour",
+      "name": "Éric Zemmour",
+      "movement": "Reconquête"
+    },
+    {
+      "id": "erwan-rohou",
+      "name": "Erwan Rohou",
+      "movement": "Mouvement écologiste indépendant"
+    },
+    {
+      "id": "fabien-roussel",
+      "name": "Fabien Roussel",
+      "movement": "Parti communiste français"
+    },
+    {
+      "id": "florian-philippot",
+      "name": "Florian Philippot",
+      "movement": "Les Patriotes",
+      "site": "https://les-patriotes.fr/",
+      "x": "https://x.com/f_philippot"
+    },
+    {
+      "id": "francis-lalanne",
+      "name": "Francis Lalanne",
+      "movement": "France Libre"
+    },
+    {
+      "id": "francois-asselineau",
+      "name": "François Asselineau",
+      "movement": "Union populaire républicaine",
+      "site": "https://upr.fr/",
+      "x": "https://x.com/f_asselineau"
+    },
+    {
+      "id": "francois-ruffin",
+      "name": "François Ruffin",
+      "movement": "Debout !",
+      "source_note": "Intention de candidature sous conditions, selon les sources de presse."
+    },
+    {
+      "id": "gabriel-attal",
+      "name": "Gabriel Attal",
+      "movement": "Renaissance"
+    },
+    {
+      "id": "gilles-platret",
+      "name": "Gilles Platret",
+      "movement": "Divers droite"
+    },
+    {
+      "id": "jean-francois-legendre",
+      "name": "Jean-François Legendre",
+      "movement": "À nous maintenant"
+    },
+    {
+      "id": "jean-lassalle",
+      "name": "Jean Lassalle",
+      "movement": "Résistons"
+    },
+    {
+      "id": "jean-luc-melenchon",
+      "name": "Jean-Luc Mélenchon",
+      "movement": "La France insoumise"
+    },
+    {
+      "id": "juan-branco",
+      "name": "Juan Branco",
+      "movement": "Les Ruches",
+      "site": "https://ruches.org/"
+    },
+    {
+      "id": "manolo-mlekuz",
+      "name": "Manolo Mlekuz",
+      "movement": "Trajectoire"
+    },
+    {
+      "id": "marine-le-pen",
+      "name": "Marine Le Pen",
+      "movement": "Rassemblement national"
+    },
+    {
+      "id": "marine-tondelier",
+      "name": "Marine Tondelier",
+      "movement": "Les Écologistes"
+    },
+    {
+      "id": "mira-markovic",
+      "name": "Mira Markovic",
+      "movement": "Parti animaliste",
+      "site": "https://parti-animaliste.fr/mira-markovic-2027",
+      "x": "https://x.com/PartiAnimaliste",
+      "x_label": "X du Parti animaliste"
+    },
+    {
+      "id": "natacha-polony",
+      "name": "Natacha Polony",
+      "movement": "Nous sommes la France"
+    },
+    {
+      "id": "nathalie-arthaud",
+      "name": "Nathalie Arthaud",
+      "movement": "Lutte ouvrière"
+    },
+    {
+      "id": "nicolas-dupont-aignan",
+      "name": "Nicolas Dupont-Aignan",
+      "movement": "Debout la France"
+    },
+    {
+      "id": "olivier-becht",
+      "name": "Olivier Becht",
+      "movement": "Ensemble pour la République"
+    },
+    {
+      "id": "raphael-glucksmann",
+      "name": "Raphaël Glucksmann",
+      "movement": "Place publique"
+    },
+    {
+      "id": "selma-labib",
+      "name": "Selma Labib",
+      "movement": "NPA-Révolutionnaires",
+      "site": "https://npa-revolutionnaires.org/articles/communique-presidentielle-2027-selma-labib-une-candidature-ouvriere-et-revolutionnaire-soutenue-par-gael-quirante",
+      "x": "https://x.com/SelmaLabib"
+    },
+    {
+      "id": "sylvain-durif",
+      "name": "Sylvain Durif",
+      "movement": "Sans étiquette"
+    },
+    {
+      "id": "dominique-de-villepin",
+      "name": "Dominique de Villepin",
+      "movement": "La France humaniste",
+      "source_note": "Candidature annoncée publiquement le 20 novembre 2026."
+    },
+    {
+      "id": "teddy-riner",
+      "name": "Teddy Riner",
+      "movement": "Sans étiquette",
+      "source_note": "Candidature rapportée par la presse en novembre 2026."
+    }
+  ]
+}

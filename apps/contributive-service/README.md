@@ -266,3 +266,30 @@ officielles restent distinctes des contributions et engagements citoyens.
 Recette : navigateur Chromium facultatif (test/visitor-journey.test.mjs,
 sauté lorsque Chromium est absent), et tests API existants. Les tests utilisent
 une base locale temporaire sans modifier les données publiques.
+
+## La Marche du Soleil — page commune (21 novembre 2026)
+
+Parcours public :
+- /3code/marche-du-soleil : choisir une candidature dans un répertoire alphabétique, accéder à ses liens connus, imprimer le tract, générer et noter un 3Code, recopier facultativement celui du document source, déclarer son exemplaire et préparer son enregistrement par courriel.
+- /3code/marche-du-soleil/tract?c=<candidate_id> : modèle A4 imprimable dans le navigateur. Deux espaces manuscrits sont prévus : « Mon 3Code » et « 3Code de l'exemplaire d'origine ». Son QR commun ouvre /3code/marche-du-soleil/mode-emploi ; il ne prétend pas identifier une copie manuscrite.
+- /3code/marche-du-soleil/mode-emploi : instructions à l'usage d'une personne qui découvre le dispositif ; lien facultatif vers « Dialogue à trois » avec son propre assistant IA.
+- Les lecteurs peuvent retrouver l'initiative à partir du QR ou du 3Code, sans compte.
+- Une cinquième étape explique comment faire connaître la candidature auprès d'un élu habilité en fournissant le lien vers le Répertoire national des élus. Aucun message n'est envoyé aux élus automatiquement.
+
+Répertoire :
+- marche-candidates.json (36 entrées au 21 novembre 2026) : sources publiques, candidatures annoncées ou intentions envisagées. Aucun soutien, mandat ni investiture n'est présumé.
+- Liens vers sites et profils X uniquement lorsqu'identifiés ; absence de lien = information inconnue.
+- Pour un tract spécifique demandé par un candidat, une entrée du catalogue peut contenir tract.title et tract.message ; aucun modèle de candidat tiers n'est modifié sans demande.
+- Le contenu générique et le mode d'emploi demeurent communs à toutes les candidatures.
+
+Persistance :
+- Une seule campagne partagée, identifiant stable ; une mission distincte par candidature, initialisée sans duplication au démarrage.
+- La clé de gestion de cette campagne est détenue dans le répertoire privé de la base SQLite, jamais dans le frontend ou dans les réponses publiques.
+- Un exemplaire porte une référence complète 3C1, un code lisible et éventuellement un code parent. La filiation est déclarative, jamais une preuve.
+- Le navigateur garde localement la clé de modification et les références permettant de reprendre le parcours après avoir ouvert sa messagerie.
+- Le courriel d'enregistrement est préparé mais envoyé par l'usager lui-même. Une promesse d'élu ou un courriel reçu ne vaut pas présentation officielle.
+- Aucune inscription au futur Cogentia Twin n'est produite par le parcours.
+
+Vérification : suite npm test, tests de création de copies, de validation, de reprise de la campagne après redémarrage ; test isolé Chromium et génération d'un PDF A4 d'une page avec QR vers le mode d'emploi.
+
+Déploiement de la version ciblée : utiliser deploy/upgrade-fracta2.sh avec le SHA Git publié, puis contrôler les routes publiques /3code/api/marche, /3code/marche-du-soleil/tract et /3code/marche-du-soleil/mode-emploi.
