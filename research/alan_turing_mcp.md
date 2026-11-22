@@ -1,9 +1,12 @@
 ---
-title: Alan v0.1 — Turing-complete direct-style MCP scripting language
-author: unknown
+title: Alan — familiar algorithmic notation, accountable continuations, portable execution (design v0.2)
+author: Jean Hugues Noël Robert
+status: working-paper
 date: '2026-06-26'
+last_modified_at: '2026-11-22'
+version: '0.2'
 document_role: source
-document_kind: documentation
+document_kind: research-paper
 visibility: public
 lifecycle_state: working
 update_policy: UP-DEFAULT-REVIEWED
@@ -16,156 +19,57 @@ provenance:
 review:
   status: unreviewed
   reviewed_by: []
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "explicit-metadata"
-classification_confidence: "medium"
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: explicit-metadata
+classification_confidence: medium
 ---
 
-# Alan v0.1 — Turing-complete direct-style MCP scripting language
+# Alan — executable pseudocode for agents (design v0.2)
 
-## 1. Core definition
+> **Founding question:** What is the smallest algorithmic notation that a contemporary LLM can understand and write almost spontaneously, without receiving a large language manual in every context, and that a deterministic compiler can validate and execute?
+>
+> **Question fondatrice :** Quelle est la notation algorithmique minimale que les LLM comprennent presque spontanément et que nous pouvons rendre rigoureusement exécutable ?
 
-Alan is a Turing-complete direct-style MCP scripting language whose effectful MCP operations are implemented as serializable, policy-aware continuations.
+**Status (2026-11-22):** normative *design proposal*, not an implemented language or deployed runtime. This revision deliberately supersedes the unimplemented v0.1 design at this path. There is **no installed Alan codebase or compatibility obligation**. Existing research, especially [Packet/Continuation Machine](packet_continuation_machine.md), remains the architectural source for cooperative work. Work is tracked in [Cogentia #36](https://github.com/JeanHuguesRobert/cogentia/issues/36) and its cognitive packet.
 
-Short form:
+## 1. Purpose and criterion of success
 
-```text
-Direct-style scripts.
-Resumable MCP effects.
-Policy-aware responsibility.
-```
+Alan is **strict, executable pseudocode** for agents and humans: a small direct-style language expressing computations and requests for capabilities, with explicit resumable operational semantics. Its first design priority is **LLM familiarity per token of context**, not syntactic originality or resemblance to any one existing programming language.
 
-Alan source code should be easy for modern LLMs to write and understand. Its runtime semantics should remain strict enough to support policy resolution, caller mediation, continuations, traceability and accountability.
+Alan deliberately recombines well-known constructs: named variables, functions, `if`, `while`, records, lists, `return`, named arguments, tool requests, and result values. In contrast, the runtime may implement the unfamiliar: serialized continuations, responsibility-bearing work packets, mandate/budget mediation and execution on an Inox VM.
 
-## 2. Central invariant
+Alan shall minimize the *total cognitive cost* of producing a correct program: prompt/context tokens + generation + repairs + tests. Fewer source characters alone do not establish efficiency. A generated program must be mechanically checked; a believable-looking pseudocode fragment is not sufficient.
 
-```text
-Tool availability is not authorization.
-Authorization is not execution.
-Caller mediation remains the execution boundary.
-```
+**Boundary:** Alan is not free-form natural-language pseudocode; no inference of missing steps, invented primitives or ambiguous control flow at runtime. It is not a Python/JavaScript compatibility layer, a shell, or a direct privilege-bearing tool executor.
 
-An MCP capability being available does not mean it may be invoked. An authorization record does not mean execution occurred. Any actual interaction with the external world is mediated by the caller or by a later explicitly-defined execution profile.
+## 2. Remix as a design method
 
-## 2.1 Compute budget and anti-gaming invariant
+The design uses **common references as an interface**, not as a restriction on the underlying computation. Prefer the smallest familiar notation sufficient to express a concept over a new syntactic invention. Do not imitate all of Python, C or JavaScript: their historical semantics and libraries are not the objective.
 
-Alan computations must not appear free. Every effectful or potentially expensive operation should be able to carry compute-budget metadata, even when the MVP only preserves it as protocol data.
+A compiler must own translation; the LLM must not have to memorize Inox stack effects, cell tags, actor layouts or control-stack conventions. Source familiarity is a means to reduce Judgement required for automatic program synthesis. The ultimate test is whether an agent can generate a working Alan program from a short task and a short tool/capability signature, **without a large in-context example corpus**.
 
-Additional invariant:
+A semantic concept may be new although its lexical components are familiar. In particular, an apparent source-level `mcp` request is *not* equivalent to an ordinary synchronous local call.
 
-```text
-No compute without budget.
-No budget without bearer.
-No bearer without mandate.
-No mandate without trace.
+## 3. Four distinct representations
 
-```
+1. **Alan Text:** compact, readable, direct-style authoring language; preferential input to LLMs.
+2. **Alan AST:** canonical structured representation (JSON in the initial profile), parsed and validated without Judgement. AST is a contract, not the original source text.
+3. **Alan execution model:** resumable state machine; request effects, suspension, policy and trace remain explicit regardless of backend.
+4. **Execution targets:** a simple JavaScript reference interpreter for experiments, and **Inox as an intended portable compilation target**, not a presently operational compiler. A stable Inox transport format and resumable VM support still require design and implementation.
 
-## 3. Direct-style source, continuation-based execution
+A backend must preserve observable semantics; it may optimize implementation choices. A local call, a message, a work order, and a remote delivery are **not interchangeable** merely because they share a return-like syntax.
 
-Alan must not force authors or LLMs to write every computation in explicit continuation-passing style.
+## 4. Text grammar: small, strict, familiar
 
-Preferred source style:
+The following is the **minimal proposed v0.2 core**. It is intentionally narrower than general-purpose pseudocode. Keywords are ASCII and case-sensitive. Newlines terminate statements except inside balanced literal lists/records. `#` starts a line comment. Indentation improves readability but does not determine scope; `end` closes blocks. No implicit variable declarations, coercions, global mutable environment or operator precedence are assumed.
 
 ```alan
-fn main query
-  results = mcp github.search q=$query
-  summary = call summarize results=$results
-  return summary=$summary
-end
-```
-
-The line:
-
-```alan
-results = mcp github.search q=$query
-```
-
-is a resumable effect. At runtime it may suspend the program and return a serialized suspension object. The caller may then invoke the external MCP tool, supply a step result, and resume Alan at the saved resume point.
-
-The continuation exists in the operational semantics and protocol, not as a burden imposed on the source-language author.
-
-## 4. Why Alan is Turing-complete
-
-Alan v0.1 is Turing-complete through:
-
-```text
-variables
-state
-functions
-conditionals
-recursion
-loops
-compound data
-```
-
-The runtime may still impose limits:
-
-```text
-max_steps
-max_call_depth
-max_loop_iterations
-max_mcp_calls
-max_state_size
-max_trace_events
-max_output_size
-timeout_ms
-```
-
-Turing-complete does not mean unrestricted. It means Alan can express general computation while preserving a suspendable, traceable and policy-aware runtime.
-
-## 5. Source syntax overview
-
-A program begins with a version declaration and optional imports:
-
-```alan
-alan 0.1
-
+alan 0.2
 use std.core
-use std.text
-use std.list
-use std.map
-use std.time
-use std.trace
-use std.policy
+use std.num
 use std.mcp
-use pkg.github
-```
 
-### 5.1 Internal functions
-
-```alan
-fn summarize results
-  titles = call list.map items=$results fn="title"
-  text = call text.join items=$titles sep="\n"
-  return text=$text
-end
-```
-
-Internal functions are called with `call`:
-
-```alan
-summary = call summarize results=$results
-```
-
-### 5.2 Internal verbs
-
-A `verb` is an internal function whose name is action-oriented. In v0.1, `fn` and `verb` may have the same runtime semantics; `verb` is a readability and intent marker.
-
-```alan
-verb normalize_document doc
-  title = call text.trim value=$doc.title
-  body = call text.trim value=$doc.body
-  return doc={ title: $title, body: $body }
-end
-```
-
-### 5.3 External MCP capabilities
-
-External capabilities are declared with `extern`:
-
-```alan
 extern github.search
   kind tool
   effect read_only
@@ -174,11 +78,248 @@ extern github.search
   input { q: string }
   output { results: list }
 end
+
+fn main query
+  results = mcp github.search q=$query
+  missing = call core.empty value=$results
+  if $missing
+    return status="empty" results=[]
+  else
+    return status="ok" results=$results
+  end
+end
 ```
 
-Sensitive or side-effecting capabilities must carry stronger policy metadata:
+### 4.1 Statement forms
+
+```text
+alan VERSION                        # file header
+use QUALIFIED_NAME                  # declared library/package reference
+extern QUALIFIED_NAME ... end       # external capability metadata
+fn NAME [NAME ...] ... end          # function, lexical parameter names
+verb NAME [NAME ...] ... end        # action-oriented alias of fn
+NAME = VALUE                       # assign/update a local binding
+NAME = call QUALIFIED_NAME [ARG=VALUE ...]
+NAME = mcp QUALIFIED_NAME [ARG=VALUE ...]
+if VALUE ... [else ...] end
+while VALUE ... end
+emit NAME [ARG=VALUE ...]           # attributable trace event
+return [ARG=VALUE ...]              # one record value; ends this call
+fail code=VALUE [message=VALUE]     # controlled failure; ends this call
+```
+
+A standalone `call` or `mcp` is possible when its result is deliberately discarded, but the compiler still records its effects. `fn` and `verb` have identical execution semantics in the core; `verb` is an intent/readability marker. `extern` declares a requirement and a claimed effect classification, **not** an authority grant. Function and external capability names reside in distinct namespaces; ambiguity is an error.
+
+### 4.2 Values and expressions
+
+To keep parsing and validation predictable, the v0.2 core has **no general infix expression grammar**. A `VALUE` is exactly one of: `null`, `true`, `false`, JSON-style number, quoted UTF-8 string, literal list, literal record with named fields, or a local reference `$name` with optional static field path (`$message.priority`). Nested literal values and references are allowed. References are resolved at runtime, not interpolated into source code. Escaping follows JSON strings.
+
+Conditions in `if` and `while` must evaluate to a Boolean; there is no truthiness. Arithmetic, comparison, membership and collection operations use **named pure functions** such as `num.add`, `num.lt`, `text.contains`, `list.length`, and `map.get`. The precise library signatures are versioned contracts, not names the compiler may guess. Subscripts, closures, dynamic `eval`, exception syntax, inheritance and implicit calls are outside this initial core.
 
 ```alan
+n = 0
+keep_going = true
+while $keep_going
+  emit tick count=$n
+  n = call num.add a=$n b=1
+  keep_going = call num.lt a=$n b=3
+end
+return count=$n
+```
+
+The Boolean is explicitly recomputed in the loop; no hidden expression re-evaluation occurs. Loops and recursion may be bounded at runtime without changing the expressive intent of the language.
+
+### 4.3 Operational spelling rules
+
+- A statement has one unambiguous operation; named arguments are unique and retain their declared names.
+- Local bindings belong to the current call frame; reassignment is explicit (`x = ...`). No implicit mutation of another actor's state.
+- `call` refers to a known internal function or library operation. Nested internal calls may themselves suspend when their body reaches an effect.
+- `mcp` refers to a declared external capability, never a guessed or automatically executed tool.
+- `return` builds a single record from named values; `fail` produces a typed failure.
+- Unsupported syntax is rejected with a source location and a machine-readable error, not silently repaired by an LLM.
+
+## 5. Value model
+
+The minimal interoperable core includes `null`, Boolean, integer, finite float (when supported by the selected runtime profile), string, list and record/map. Large opaque values should normally be addressed by references rather than duplicated in a packet.
+
+Runtime references can be qualified as `doc_ref`, `step_result_ref`, `trace_ref`, `capability_ref`, `mandate_ref`, `responsibility_ref`, `artifact_ref`, or `code_ref`. Their textual representation is data, not a raw pointer, credential or permission.
+
+Option/result/error are explicit **tagged records** in the initial profile; they do not require a separate surface syntax. Dates, durations, decimals and binary data require declared, versioned libraries or target profiles. No transport format may silently depend on native JavaScript object identity or on internal Inox addresses.
+
+## 6. Internal calls and ordinary computation
+
+`call` executes an internal function or standard-library function. Source remains direct style: the author does not pass continuations manually. A compiler/interpreter maintains frames, bindings, the next statement and any pending call return binding. An internal function that transitively performs `mcp` can suspend the **whole computation**, including its logical call chain.
+
+Pure library functions are deterministic for specified inputs and profiles. Nondeterminism (wall time, randomness, network, model inference, user input) must appear as a declared capability/effect or an explicitly versioned injected input, so replay and testing do not silently disagree.
+
+## 7. External effects and MCP
+
+```alan
+results = mcp github.search q=$query
+```
+
+This is a **request for a capability**, not evidence of execution. Operationally, the runtime resolves the declared capability, classifies the intended act, consults applicable mandate/policy/budget, then either resolves the effect through a genuinely admitted path or produces a serializable suspension. For the first implementation, **all MCP operations suspend and the caller supplies their results**; there is no direct external invocation by Alan.
+
+The caller may resume with a result, refusal, narrowed scope, need for human review, or controlled failure. Authorization, completion, timeout and delivery are different states. Tool existence is not authorization; an authorization is not an execution receipt.
+
+## 8. Continuations and cognitive packets
+
+A resumable computation must be representable independently of its current host process. The logical continuation carries or refers to:
+
+- code identity (hash, Alan/AST/runtime profile and target version);
+- execution point (function/step index), resumable call frames and local bindings;
+- pending operation, its correlation identifier and expected result binding;
+- references to artifacts, messages and dependencies rather than arbitrary host objects;
+- packet/work identity, causal parentage, mandate and budget references, and COP trace correlation;
+- a continuation version and integrity/provenance information.
+
+A continuation is an **execution descriptor**, not a transfer of arbitrary authority. The receiving runtime resolves the applicable effective mandate and capabilities. Pausing/resuming must preserve the observable result; effects and charges already committed must not be repeated on replay without an explicit justified re-execution.
+
+Typed protocol outputs include `alan.terminal`, `alan.suspension`, `alan.step_result`, `alan.failure`. A suspension can request `caller_tool_call_required`, `authorization_required`, `human_review_required`, `scope_reduction_required`, or another explicitly defined continuation outcome. The result may lead to another suspension rather than termination.
+
+## 9. Responsibility, policy and accounting
+
+Preserve the established Cogentia distinction between **capability, mandate, admission, effect and receipt**. An `extern` declaration describes the capability's expected effect class and data class; the runtime independently classifies the actual act and does not infer authority from the declaration. Existing policy classes P0–P5 may be used as classification metadata; they are not self-enforcing source annotations.
+
+Budget belongs to a responsible bearer under a mandate and is attributable through COP. The principle remains:
+
+```text
+No compute without budget.
+No budget without bearer.
+No bearer without mandate.
+No mandate without trace.
+```
+
+This does not require a separate external authorization ceremony for each local addition. Computation can be accounted for collectively under a valid bounded mandate. The minimal runtime records metering metadata; enforceable charging and CXU settlement are separate implementation milestones. A large compute spend does not establish truth or legitimacy. Replay, cache hits and validation costs must be attributed consistently rather than double-charged or presumed free.
+
+## 10. Cooperation is not a remote function call
+
+`call` is for internal computation. `mcp` is for an external capability request in v0.2. Distributed **messages**, **work orders**, **questions**, **revisions**, **partial/provisional/final deliveries** and **closures** have richer semantics than an RPC response. The [Packet/Continuation Machine](packet_continuation_machine.md) and [Locality Principle](locality_principle.md) govern this distinction.
+
+A source-level convenience must not promise synchronous completion, exactly one response or shared memory across nodes. Syntax such as `send`, `receive`, `commission`, `on delivery` and `on question` remains **candidate future syntax**, not v0.2 grammar. First settle observable semantics and packet contracts; only then add surface keywords.
+
+## 11. Canonical Alan JSON AST
+
+Alan Text is for authors; the AST is for mechanical checking and backend compilation. It is **not** itself an authority or a runtime event. This example is the canonical AST shape for the first source example's effect and return path, illustrating a minimal program:
+
+```json
+{
+  "type": "alan.program",
+  "version": "0.2",
+  "uses": ["std.mcp"],
+  "externs": [
+    {"name":"github.search","kind":"tool","effect":"read_only","data":"public","policy":"P1","input":{"q":"string"},"output":{"results":"list"}}
+  ],
+  "functions": [
+    {"kind":"fn","name":"main","params":["query"],"body":[
+      {"op":"mcp","bind":"results","capability":"github.search","args":{"q":{"kind":"reference","path":["query"]}}},
+      {"op":"return","value":{"kind":"record","fields":{"results":{"kind":"reference","path":["results"]}}}}
+    ]}
+  ]
+}
+```
+
+**AST value rule:** every value node is discriminated: `{"kind":"reference","path":["name"]}`, `{"kind":"literal","value":42}`, `{"kind":"list","items":[...]}` or `{"kind":"record","fields":{"key":...}}`. This keeps a literal user record with a field named `ref` distinct from a reference. AST definitions and runtime protocol objects must eventually be formalized as versioned JSON Schemas; the shape shown here is a proposed normative contract, not an implemented parser.
+
+Core nodes have explicit operations and required fields. For `if`, use `condition`, `then_body`, and optional `else_body`; for `while`, `condition` and `body`; for internal calls, `callee`, `args` and optional `bind`. AST references are structural; no textual substitution of `$name` into tool input is allowed. Source locations and IDs may be attached for diagnostics and continuation stability.
+
+## 12. Inox as a compilation target, not an authoring burden
+
+The **Alan → Inox** compiler is a design objective, not an existing transpiler. Alan expressions map naturally to stack-machine operations; bindings to local slots; branches/loops to explicit control flow; resumable effects to suspension points with stable logical state. The compiler, not the LLM, owns Inox's postfix syntax, cell representations and calling conventions.
+
+A portable Inox artifact should be versioned, self-describing and relogeable, separate from the source and from a host process memory dump. It may contain canonical instructions, constants, symbols, capability imports, metadata, a code hash and a compatible runtime profile. An actor's continuation travels **with or by reference to** the code plus its minimal logical state; it does not carry process-local JavaScript references, raw pointers or a full Unix address space.
+
+Compilation to an Inox source subset is a plausible first milestone; a binary/serialized cell image requires its own format contract. A VM executing a compiled program does not by itself imply resumable migration between processes: that must be tested independently. Do not assert performance or bytecode mobility before measurement. A JavaScript reference executor can serve as a differential semantic oracle during development.
+
+## 13. Standard library and capability signatures
+
+The initial library should be small and regular, with **explicit signatures** available to both compiler and LLM. Candidate namespaces:
+
+```text
+std.core    equal, empty, not, and, or, length
+std.num     add, sub, mul, div, lt, lte, gt, gte
+std.text    concat, contains, trim, split, join
+std.list    length, get, map_field, filter, append
+std.map     get, put, has, keys
+std.json    parse, stringify, validate
+std.time    injected_time, parse, format
+std.trace   emit
+std.policy  describe, classify
+std.mcp     metadata-only capability descriptors
+```
+
+These are **design candidates**, not claims that a runtime implements them. A compiler must reject an unrecognized name; it must not dynamically invent implementations. The minimal LLM context should contain only the task, the short core syntax card and the relevant signature list, not the whole specification. Library effects (including time and randomness) must be declared accurately.
+
+## 14. Packages and reuse
+
+`use std.num` or `use pkg.github` imports a **declared vocabulary and signature metadata**. Packages may include internal functions, types, schemas and capability descriptors. A package cannot silently acquire external authority; it must retain the same semantic effect classification and caller mediation as explicit code.
+
+Canonical reusable programs should be identified by version/hash and accompanied by executable examples and conformance tests. Reuse should reduce context length and correction cycles rather than require inlining an ever-growing glossary into prompts.
+
+## 15. Worked source examples
+
+### 15.1 Deterministic choice
+
+```alan
+alan 0.2
+use std.num
+
+fn classify priority
+  urgent = call num.gt a=$priority b=5
+  if $urgent
+    return route="urgent"
+  else
+    return route="normal"
+  end
+end
+```
+
+### 15.2 Suspend on an external capability
+
+```alan
+alan 0.2
+use std.mcp
+
+extern github.search
+  kind tool
+  effect read_only
+  data public
+  policy P1
+  input { q: string }
+  output { results: list }
+end
+
+fn main query
+  results = mcp github.search q=$query
+  return results=$results
+end
+```
+
+The output is an `alan.suspension` before any tool execution. After the caller supplies a correlated `alan.step_result`, execution resumes and produces `alan.terminal`.
+
+### 15.3 Controlled loop
+
+```alan
+alan 0.2
+use std.num
+
+fn count_to limit
+  n = 0
+  again = call num.lt a=$n b=$limit
+  while $again
+    n = call num.add a=$n b=1
+    again = call num.lt a=$n b=$limit
+  end
+  return count=$n
+end
+```
+
+### 15.4 Staged effect
+
+```alan
+alan 0.2
+use std.mcp
+
 extern github.stage_patch
   kind tool
   effect repository_write
@@ -188,628 +329,41 @@ extern github.stage_patch
   input { repo: string, path: string, patch: Patch }
   output { proposal: PatchProposal }
 end
-```
 
-The source-level invocation is:
-
-```alan
-proposal = mcp github.stage_patch repo=$repo path=$path patch=$patch
-```
-
-This does not imply execution. It means the runtime must resolve policy, potentially suspend, and preserve mediation and trace requirements.
-
-## 6. Minimal instructions
-
-Alan v0.1 should support:
-
-```text
-assign
-call
-mcp
-if
-while
-return
-fail
-emit
-use
-extern
-fn
-verb
-package
-export
-```
-
-Examples:
-
-```alan
-x = 1
-name = "Alan"
-
-if empty($results)
-  return status="no_result"
-else
-  summary = call summarize results=$results
-  return status="ok" summary=$summary
-end
-
-while lt($i, 10)
-  emit tick i=$i
-  i = call num.add a=$i b=1
-end
-```
-
-## 7. Minimal datatypes
-
-### 7.1 Scalars
-
-```text
-null
-bool
-int
-float
-decimal
-string
-symbol
-```
-
-### 7.2 Collections
-
-```text
-list
-map
-record
-set
-```
-
-### 7.3 Time values
-
-```text
-date
-time
-datetime
-duration
-```
-
-### 7.4 Result values
-
-```text
-option
-result
-error
-```
-
-Recommended representation:
-
-```alan
-return ok={ value: $x }
-```
-
-or:
-
-```alan
-return err={ code: "not_found", message: "Missing file" }
-```
-
-### 7.5 References
-
-```text
-ref
-doc_ref
-step_result_ref
-trace_ref
-capability_ref
-mandate_ref
-responsibility_ref
-```
-
-Alan should prefer references over large embedded payloads when possible.
-
-### 7.6 Operational records
-
-Alan v0.1 should define records or schemas for:
-
-```text
-Document
-Patch
-Diff
-Issue
-PullRequest
-Repository
-Capability
-PolicyResolution
-AuthorizationRequest
-AuthorizationResponse
-StepResult
-TraceEvent
-Suspension
-Mandate
-ResponsibilityChain
-```
-
-Accounting-oriented records should be added or left explicitly possible:
-
-```text
-ComputeBudget
-ComputeCost
-CostBearer
-BudgetRef
-AntiGamingPolicy
-
-```
-
-## 8. Standard library v0.1
-
-The standard library should remain small and predictable.
-
-### 8.1 std.core
-
-```text
-eq ne lt le gt ge
-not and or
-type_of is_null is_empty coalesce
-```
-
-### 8.2 std.num
-
-```text
-add sub mul div mod min max abs round
-```
-
-### 8.3 std.text
-
-```text
-trim lower upper contains starts_with ends_with
-replace split join substring match format slug
-```
-
-### 8.4 std.list
-
-```text
-len first last get append map filter reduce sort unique take drop contains
-```
-
-### 8.5 std.map
-
-```text
-keys values get set has merge remove pick omit
-```
-
-### 8.6 std.json
-
-```text
-parse stringify get_path set_path validate schema_check
-```
-
-### 8.7 std.time
-
-```text
-now date datetime duration add_duration before after format_time
-```
-
-### 8.8 std.doc
-
-```text
-title body frontmatter extract_headings extract_links
-summarize normalize chunk diff patch apply_patch_preview
-```
-
-`apply_patch_preview` must not modify anything. It returns a proposal.
-
-### 8.9 std.trace
-
-```text
-emit link parent hash event branch audit_ref
-```
-
-### 8.10 std.policy
-
-```text
-classify_effect classify_data resolve
-requires_authorization requires_human_review requires_mandate is_forbidden
-```
-
-### 8.11 std.mcp
-
-```text
-describe capability request result resume suspend
-```
-
-These helpers inspect or build protocol objects. They do not bypass the `mcp` runtime semantics.
-
-### 8.12 std.pkg
-
-```text
-import version capabilities exports
-```
-
-## 9. Packages
-
-Alan supports package imports:
-
-```alan
-use pkg.github@0.1
-use pkg.corpus@0.1
-use pkg.cop@0.1
-```
-
-A package may export verbs, functions and extern capabilities:
-
-```alan
-package pkg.corpus 0.1
-
-export verb normalize_document
-export extern corpus.search
-export extern corpus.read_private
-
-verb normalize_document doc
-  title = call text.trim value=$doc.title
-  body = call text.trim value=$doc.body
-  return doc={ title: $title, body: $body }
-end
-
-extern corpus.read_private
-  kind tool
-  effect private_data_access
-  data private
-  policy P3
-end
-```
-
-Initial priority packages:
-
-```text
-pkg.github
-pkg.corpus
-pkg.cop
-```
-
-Later specialized packages may include:
-
-```text
-pkg.inox
-pkg.gmail
-pkg.calendar
-pkg.legal
-pkg.finance
-pkg.geo
-pkg.energy
-pkg.museum
-```
-
-## 10. Semantics of `mcp`
-
-The form:
-
-```alan
-x = mcp capability key=value
-```
-
-is compiled as a suspendable effect.
-
-Runtime steps:
-
-```text
-1. Resolve capability.
-2. Classify effect_class.
-3. Classify data_sensitivity.
-4. Resolve policy P0-P5.
-5. If the operation cannot safely complete, produce a suspension.
-6. Save local state.
-7. Save resume_point.
-8. Emit trace.
-9. Resume later from caller-supplied step_result.
-```
-
-### 10.1 P1 public read
-
-```alan
-results = mcp github.search q=$query
-```
-
-Possible suspension:
-
-```json
-{
-  "type": "alan.suspension",
-  "reason": "caller_tool_call_required",
-  "policy": { "level": "P1" },
-  "pending_call": {
-    "capability": "github.search",
-    "input": { "q": "Alan MCP" }
-  },
-  "resume_point": "main:after_mcp_001",
-  "trace": {
-    "caller_mediated": true,
-    "direct_invocation_by_alan": false,
-    "execution_performed": false
-  }
-}
-```
-
-### 10.2 P3 private read
-
-```alan
-doc = mcp corpus.read_private doc_ref=$doc_ref scope={ summary: true }
-```
-
-Must require authorization and usually human review, mandate and responsibility metadata.
-
-### 10.3 P4 staged side effect
-
-```alan
-proposal = mcp github.stage_patch path=$path patch=$patch
-```
-
-Must be staged-only in the MVP. It may create a proposal, not execute a write.
-
-### 10.4 P5 forbidden
-
-```alan
-result = mcp github.delete_file path=$path
-```
-
-Must fail or suspend into refusal. It must not execute.
-
-## 11. Runtime values
-
-Alan runtime should produce and consume these protocol-level values:
-
-```text
-alan.value
-alan.suspension
-alan.step_result
-alan.failure
-alan.terminal
-```
-
-### 11.1 Suspension
-
-```json
-{
-  "type": "alan.suspension",
-  "suspension_id": "susp-001",
-  "reason": "caller_tool_call_required",
-  "resume_point": "main:after_mcp_001",
-  "saved_state_ref": "state-001",
-  "pending_call": {
-    "capability": "github.search",
-    "input": { "q": "Alan MCP" }
-  }
-}
-```
-
-### 11.2 Step result
-
-```json
-{
-  "type": "alan.step_result",
-  "step_result_id": "step-result-001",
-  "for_suspension": "susp-001",
-  "supplied_by": "caller",
-  "value": { "results": [] },
-  "trace": {
-    "caller_mediated": true,
-    "direct_invocation_by_alan": false,
-    "execution_performed": false
-  }
-}
-```
-
-### 11.3 Resume
-
-Resume means:
-
-```text
-load resume_point
-restore saved state
-bind suspended variable to supplied step_result value
-continue execution
-```
-
-## 12. Canonical JSON AST
-
-Alan Text is the authoring form. Alan JSON AST is the validation form.
-
-Source:
-
-```alan
-fn main query
-  results = mcp github.search q=$query
-  return results=$results
-end
-```
-
-AST:
-
-```json
-{
-  "type": "alan.program",
-  "version": "0.1",
-  "uses": ["std.core", "std.mcp"],
-  "functions": [
-    {
-      "kind": "fn",
-      "name": "main",
-      "params": ["query"],
-      "body": [
-        {
-          "op": "mcp",
-          "bind": "results",
-          "capability": "github.search",
-          "input": { "q": "$query" }
-        },
-        {
-          "op": "return",
-          "value": { "results": "$results" }
-        }
-      ]
-    }
-  ]
-}
-```
-
-## 13. Example: read-only MCP search
-
-```alan
-alan 0.1
-
-use std.core
-use std.text
-use std.list
-use std.doc
-use std.mcp
-use pkg.github
-
-extern github.search
-  kind tool
-  effect read_only
-  data public
-  policy P1
-end
-
-fn main query
-  results = mcp github.search q=$query
-
-  if empty($results)
-    return status="no_result"
-  end
-
-  summary = call summarize_results results=$results
-  return status="ok" summary=$summary
-end
-
-fn summarize_results results
-  titles = call list.map items=$results fn="title"
-  text = call text.join items=$titles sep="\n"
-  return text=$text
-end
-```
-
-## 14. Example: staged repository write
-
-```alan
-alan 0.1
-
-use std.doc
-use std.policy
-use std.mcp
-use pkg.github
-
-extern github.stage_patch
-  kind tool
-  effect repository_write
-  data public
-  policy P4
-  mode staged_only
-end
-
-fn improve_readme path old_body new_body
-  patch = call doc.diff old=$old_body new=$new_body
-  proposal = mcp github.stage_patch path=$path patch=$patch
+fn request_patch repo path patch
+  proposal = mcp github.stage_patch repo=$repo path=$path patch=$patch
   return proposal=$proposal
 end
 ```
 
-This program looks direct, but `github.stage_patch` is P4. Alan must not write. The caller mediates and the trace must prove `execution_performed=false`.
+The request does not constitute a repository write. A staged proposal and its eventual execution are distinct accountable acts.
 
-## 15. Example: private read with reduced scope
+## 16. Validation and failure semantics
 
-```alan
-alan 0.1
+The first implementation must fail explicitly on unknown keyword, name, signature, missing/duplicate argument, invalid Boolean condition, invalid field reference, unsupported literal, invalid external effect or incompatible runtime profile. Return typed diagnostics with line/column and relevant source/AST node. Reject accidental nondeterminism, dynamic code evaluation and implicit host interop in the core.
 
-use std.doc
-use std.mcp
-use pkg.corpus
+Compile-time checking must not be confused with actual effect authorization. Runtime failures include budget exhaustion, incompatible continuation version, missing referenced artifact, declined capability, malformed supplied result and mismatched correlation ID. Result schemas and continuation IDs must be validated before resumption; replay must be idempotent for already-receipted effects.
 
-extern corpus.read_private
-  kind tool
-  effect private_data_access
-  data private
-  policy P3
-end
+## 17. Empirical evaluation: context is part of the cost
 
-fn summarize_private_doc doc_ref
-  doc = mcp corpus.read_private doc_ref=$doc_ref scope={ summary: true, body: false }
-  summary = call doc.summarize doc=$doc
-  return summary=$summary
-end
-```
+A language designed for LLMs must be evaluated **with LLMs**, not just judged readable by its authors. A small benchmark shall compare direct Inox, a familiar JavaScript subset and Alan on identical tasks with identical allowed capabilities, including routing/classification, bounded loops, JSON processing and one suspend/resume workflow.
 
-If the caller authorizes only metadata and summary, the step result must not contain `full_body`, secrets, credentials or forbidden fields.
+Record at least: input context tokens (including tutorials/examples), generated tokens, executable-program success rate, tool/compile attempts, repair cycles, runtime correctness, and cost per verified successful program. Test a **cold** model prompt with a tiny Alan syntax card and compare it with longer reference prompts. Include tasks requiring adaptation rather than verbatim imitation. The language should win by reducing total Judgement and maintenance cost, not by a predeclared outcome.
 
-## 16. Relationship to MCP, COP and Inox
+The compiler must pass conformance tests independent of the LLM. A reference executor and an Inox backend, when implemented, must agree on terminal values, failures, suspensions, effect requests and resumption order for the same canonical AST.
 
-```text
-MCP exposes capabilities.
-Alan orchestrates in direct style.
-Alan runtime suspends and resumes.
-The caller mediates invocation.
-Inox may execute small bounded machines.
-COP preserves trace and accountability.
-```
+## 18. Scope, compatibility and roadmap
 
-Alan decides the continuation path. MCP exposes external verbs. The caller holds the hand. COP records responsibility. Inox may execute bounded machines only when explicitly authorized.
+There is no deployed Alan runtime or installed base as of this revision. Therefore the grammar and AST can change deliberately without a backward-compatibility simulation. This document replaces the v0.1 proposal's loose examples and speculative surface features with an implementable **v0.2 design baseline**.
 
-## 17. Non-goals for v0.1
+Implementation order is: (1) minimal source syntax card, grammar and discriminated JSON AST; (2) validator and pure JavaScript reference evaluator; (3) mocked MCP suspension/resume with COP correlations; (4) differential tests and LLM cost benchmark; (5) Alan→Inox subset compiler; (6) portable code-state/continuation tests, first across isolated processes, then across nodes. The first profile must not silently execute real external writes or request credentials.
 
-Alan v0.1 is not:
-
-```text
-a general shell
-a replacement for Python
-a direct execution engine for side effects
-a way for an LLM to own credentials
-a bypass of MCP policy or caller mediation
-```
-
-Alan v0.1 is a script language for MCP workflows with direct-style syntax, resumable runtime effects and accountable traces.
-
-## 18. Stabilized concept
-
-```text
-Alan is a Turing-complete direct-style MCP scripting language.
-
-It lets LLMs write simple programs with internal functions, verbs, packages and external MCP capabilities.
-
-Internally, every MCP operation is treated as a policy-aware resumable effect.
-
-When the operation cannot safely complete immediately, the runtime returns a serializable suspension.
-
-The caller mediates the external world.
-
-Alan resumes from supplied results.
-
-COP preserves the trace.
-
-Authorization is not execution.
-Tool availability is not authorization.
-```
-
-Final short formula:
-
-```text
-Alan: direct-style scripts, resumable MCP effects, accountable continuations.
-```
+Non-goals now: full Python/JS compatibility, complete OO system, universal distributed RPC, arbitrary running-process migration, executable host pointers, and a public promise of deployed capabilities.
 
 ## 19. Future actor/cooperative-work semantics (clarification, 2026-11-10)
 
-**Alan v0.1 remains unchanged.** Its direct style and serialized MCP suspensions are the initial implementation profile, not a commitment to RPC or a requirement that every local operation become a serialized continuation.
+Alan v0.2 retains the earlier **message-first, cooperative** distinction. One actor may serve multiple local lightweight work units; actors can share a host process without sharing logical authority. A durable agent is not necessarily a permanent Unix process, JS isolate or VM. Where a local direct dispatch faithfully preserves the observable message/work semantics, it may replace expensive physical transport. It must not collapse a negotiated work order into an ordinary blocking return.
 
-For a prospective version beyond v0.1, distinguish:
+A worker may ask questions, supply provisional or partial deliveries, revise, decline and eventually close a work relationship. The requester may continue other work rather than block. The network transports cognitive packets with explicit causal links and reconstructible continuations when required; local operations should use the cheapest admissible materialization, not serialize everything by default.
 
-- `call`: pure or ordinary internal computation within an actor;
-- **message**: address a logical recipient without assuming a particular process or placement;
-- **work order**: request an outcome and open a potentially asynchronous, cooperative conversation;
-- **delivery**: partial, provisional or final contribution, not necessarily the terminal response;
-- **question / revision**: legitimate intermediate exchanges;
-- **closure**: a separately recorded outcome of the work relationship, not inferred merely from handler termination.
-
-Syntax such as `spawn`, `send`, `receive`, `commission`, `on delivery` or `on question` is **candidate syntax only**, not a feature or grammar commitment of v0.1. The conceptual model must be agreed before adding keywords or an interpreter.
-
-An actor may create many ephemeral workers; a durable agent identity need not correspond to a permanently resident OS process, Unix thread, LLM session, or separate Supabase `instance_config`. Multiple actors may share one Unix process while retaining separate logical state and COP responsibility. FractaCache can serve Side-style intermediate slots, per-actor working memory, and shared immutable process-local projections; crossing a physical boundary may require encoding, stable references or durable packet closure.
-
-An optimization that compiles a message into a direct local function dispatch is permissible **only if it preserves the observable message/work semantics**. Alan must not claim that remote work behaves like a local function. A supplier may negotiate, ask for clarification, deliver incrementally or decline; the requester need not block. The relationship is a graph of cooperative work, not a distributed call stack.
-
-External effects still require the applicable caller mediation, mandate, budget, receipts and COP trace; a local fast path cannot bypass these obligations. Side-style replay and warm in-RAM continuations are valid execution strategies alongside a cold serialized continuation when the required recovery semantics are met.
-
-See the canonical [Packet/Continuation Machine — message-first cooperative work](packet_continuation_machine.md#16-message-first-cooperative-work-and-locality-2026-11-10), [Locality Principle / FractaCache](locality_principle.md), [Side](https://github.com/virteal/side), and [Inox / Erlang OTP / virtual actors](https://github.com/JeanHuguesRobert/Inox/blob/master/research/fractanet_language_abstractions.md).
+This section defines semantic constraints, **not** `spawn`, `send`, `receive`, `commission` or other new v0.2 parser keywords. See [Packet/Continuation Machine](packet_continuation_machine.md), [Locality Principle](locality_principle.md), [Cognitive Packet Closure](cognitive_packet_closure_and_packet_native_semantics.md), and [Inox / actor abstractions](https://github.com/JeanHuguesRobert/Inox/blob/master/research/fractanet_language_abstractions.md).

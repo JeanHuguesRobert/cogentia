@@ -181,9 +181,10 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Secret-safe operational inspection](../docs/secret-safe-inspection.md) *(general security method: inspect credential metadata, presence and scope without reading or printing secret values)* | this repo | 2026-07-12 |
 | [Retrieval roadmap — Guide, Ophelia, Fractanet](../docs/retrieval-roadmap.md) *(operational roadmap for embedding serving, public Guide retrieval and Fractanet/Inox integration)* | this repo | 2026-07-03 |
 | [Trustable Digital Twin Agile Roadmap](../docs/digital-twin-agile-roadmap.md) *(living agile plan for raising an owner-facing digital twin through reversible, traceable capability increments)* | this repo | 2026-06-30 |
-| [Alan v0.1 — Turing-complete direct-style MCP scripting language](alan_turing_mcp.md) *(direct-style MCP scripting language with resumable, policy-aware continuations and caller-mediated execution boundaries)* | this repo | 2026-06-26 |
-| [Alan Turing MCP — Implementation Plan](alan_turing_mcp_implementation_plan.md) *(implementation plan for the Alan v0.1 MCP scripting language)* | this repo | 2026-06-26 |
-| [Coding Agent Prompt — Implement Alan Turing MCP v0.1](alan_turing_mcp_coding_agent_prompt.md) *(coding-agent implementation prompt for the Alan v0.1 MCP scripting language)* | this repo | 2026-06-26 |
+| [Alan v0.2 — executable pseudocode for agents](alan_turing_mcp.md) *(minimal familiar LLM-facing notation, strict AST, accountable continuations, and prospective Alan→Inox compiler)* | this repo | 2026-11-22 |
+| [Alan v0.2 — minimal LLM syntax card](alan_syntax_card.md) *(short prompt projection for cold LLM programming without a large language manual)* | this repo | 2026-11-22 |
+| [Alan v0.2 — Implementation and Evaluation Plan](alan_turing_mcp_implementation_plan.md) *(staged grammar/AST, reference runtime, continuation, LLM cost benchmarks, and Inox backend plan)* | this repo | 2026-11-22 |
+| [Coding Agent Brief — Implement Alan v0.2](alan_turing_mcp_coding_agent_prompt.md) *(minimal JS/TS implementation brief, with tested stages and exclusions)* | this repo | 2026-11-22 |
 | [Cogentia/Fractanet node: fracta](../docs/fracta-node.md) *(operational deployment guide for a local VPS node, portable registry, local data directory and public/full daemon views)* | this repo | 2026-06-21 |
 | [Cogentia Personal Data Portability — Architecture](../cogentia_personal/data_portability/ARCHITECTURE.md) *(generic architecture for reusable data portability tooling)* | this repo | 2026-06-11 |
 | [Cogentia Personal Data Portability — Provider Adapters](../cogentia_personal/data_portability/ADAPTERS.md) *(provider adapter architecture note for unstable, heterogeneous exports)* | this repo | 2026-06-13 |

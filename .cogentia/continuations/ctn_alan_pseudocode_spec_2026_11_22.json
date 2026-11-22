@@ -1,0 +1,45 @@
+{
+  "id": "ctn_alan_pseudocode_spec_2026_11_22",
+  "packet_id": "CPKT-2026-11-22-ALAN-SPEC",
+  "kind": "cognitive_packet_journey",
+  "subject": "alan_executable_pseudocode_and_inox_target_specification_refonte",
+  "status": "completed",
+  "created_at": "2026-11-22",
+  "updated_at": "2026-11-22",
+  "principal": "Jean Hugues Noël Robert",
+  "authority_source": "Principal explicit request to refactor Alan specification and track in a cognitive packet; repository documentation changes",
+  "source_issue": "https://github.com/JeanHuguesRobert/cogentia/issues/36",
+  "preceding_design": "Alan v0.1 (2026-06-26, documentation only, no implemented installed base)",
+  "input_context": [
+    "LLM coding tends toward familiar languages and coding styles; large Inox exemplars inflate prompt-context cost",
+    "Fertile Grounds/remix: recombine familiar algorithmic concepts rather than invent unfamiliar syntax",
+    "Academic pseudocode: accessible notation with strict executable semantics",
+    "Alan Text -> validated AST -> accountable continuations -> prospective Inox execution and code mobility",
+    "Existing CPS/Packet Continuation Machine, COP responsibility and MCP caller mediation"
+  ],
+  "mission": "Replace the original Alan language sketch with a rigorous v0.2 pseudocode-oriented specification that agents can use with very little in-context teaching, maintaining accountable resumable semantics and preparing an Inox compiler without claiming implementation.",
+  "target_documents": [
+    "research/alan_turing_mcp.md",
+    "research/alan_syntax_card.md",
+    "research/alan_turing_mcp_implementation_plan.md",
+    "research/alan_turing_mcp_coding_agent_prompt.md",
+    "research/index.md",
+    "research/packet_continuation_machine.md"
+  ],
+  "checkpoint": {
+    "result": "Specification v0.2 revised, concise LLM prompt card added, implementation/evaluation roadmap and agent brief aligned, index and CPS cross-link updated.",
+    "semantic_commitments": [
+      "minimal strict familiar pseudocode rather than a complete Python/JS clone",
+      "discriminated Alan AST and deterministic validation",
+      "direct-style calls with caller-mediated suspensions",
+      "packet/COP mandate, budget and trace continuity",
+      "distributed work orders differ from synchronous calls",
+      "Inox is a proposed compilation/execution target, not yet implemented",
+      "evaluate total LLM token and correction cost instead of claiming intrinsic ease"
+    ],
+    "runtime_implemented": false,
+    "transpiler_implemented": false,
+    "deployed": false
+  },
+  "next_packet_candidate": "Implement and benchmark minimal grammar, discriminated AST, reference executor and Alan→Inox differential backend under Cogentia #36; this is a future distinct coding mandate, not work claimed complete."
+}

@@ -1,7 +1,9 @@
 ---
-title: Coding Agent Prompt — Implement Alan Turing MCP v0.1
-author: unknown
+title: Coding-agent brief — implement and evaluate Alan v0.2 incrementally
+author: Jean Hugues Noël Robert
 date: '2026-06-26'
+last_modified_at: '2026-11-22'
+version: '0.2'
 document_role: source
 document_kind: documentation
 visibility: public
@@ -16,409 +18,42 @@ provenance:
 review:
   status: unreviewed
   reviewed_by: []
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "explicit-metadata"
-classification_confidence: "medium"
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: explicit-metadata
+classification_confidence: medium
 ---
 
-# Coding Agent Prompt — Implement Alan Turing MCP v0.1
+# Coding-agent brief — Alan v0.2
 
-Repository:
+**Repository:** `JeanHuguesRobert/cogentia` · **Work item:** [#36](https://github.com/JeanHuguesRobert/cogentia/issues/36).
 
-```text
-JeanHuguesRobert/cogentia
-```
-
-Work on:
-
-```text
-main
-```
-
-Do not create or use a branch unless explicitly instructed later.
+**Status:** implementation brief for a future coding task, not a claim the runtime exists. Follow the current mandate and [AGENTS.shared.md](../instructions/AGENTS.shared.md); first inspect the canonical [Alan specification](alan_turing_mcp.md), [implementation plan](alan_turing_mcp_implementation_plan.md) and [tiny LLM-facing syntax card](alan_syntax_card.md).
 
 ## Mission
 
-Implement the first practical slice of Alan v0.1 as a Turing-complete direct-style MCP scripting language.
+Prove whether Alan can become an **executable pseudocode surface** that LLMs generate with very little instructional context. Begin with a strict parser, discriminated JSON AST, validator and deterministic reference executor. Later implement suspend/resume; only after agreement with the reference semantics explore Alan→Inox compilation. Use **JavaScript/TypeScript**, not Python by habit.
 
-Read first:
+## Minimum first slice
 
-```text
-research/alan_turing_mcp_v0_1.md
-research/alan_turing_mcp_implementation_plan.md
-```
+1. Parse one `alan 0.2` source defining `fn main`, bindings, pure `call`, `if`, `return` and source locations.
+2. Validate undeclared or malformed operations, types/Boolean conditions and named argument signatures.
+3. Execute pure examples (`classify`, `count_to`) deterministically under a bounded budget.
+4. Implement a test harness with expected ASTs and terminal results, plus negative tests.
+5. Report exact passing tests, supported grammar and unsupported features; no claim of MCP execution or portability.
 
-Tracking issue:
+## Subsequent semantic slice
 
-```text
-#36 — Design Turing MCP continuation language
-```
+Support `extern`, an `mcp` instruction that **suspends** without invoking anything, serialized frames and resume points, caller-provided `alan.step_result`, trace/mandate/budget references, typed result/failure, and replay handling. A nested internal function must be able to suspend transitively. Preserve the distinction between message/work-order semantics and local calls. The language must not silently turn a declared capability into an authorized real effect.
 
-## Core concept
+## Inox backend (later, not MVP)
 
-Alan source is direct-style:
+Compile the canonical Alan AST into a minimal, documented Inox subset. Compare reference-JS and Inox results, including suspension/resumption, through differential tests. Any claim that code or live state travels to another process/host requires a measured test with a relocatable state representation, not merely successful execution on one VM.
 
-```alan
-fn main query
-  results = mcp github.search q=$query
-  summary = call summarize results=$results
-  return summary=$summary
-end
-```
+## Quality gate
 
-But `mcp` operations are resumable effects. They may produce serialized suspensions instead of values.
+The primary evaluation is **LLM cost per verified working program**, including all syntax/documentation prompt tokens, compiler diagnostics, retries and repairs. Compare a cold Alan prompt using only the tiny syntax card and relevant signatures with direct Inox and a familiar JS subset. Avoid a growing collection of in-prompt examples as a substitute for learning. Keep the output of the coding task, validated test evidence and packet continuation linked to #36.
 
-The caller supplies a step result. Alan resumes from the saved resume point.
+## Explicit exclusions
 
-## Non-negotiable invariants
-
-```text
-Tool availability is not authorization.
-Authorization is not execution.
-Caller mediation remains the execution boundary.
-No compute without budget.
-No budget without bearer.
-No bearer without mandate.
-No mandate without trace.
-```
-
-Do not implement direct external MCP invocation by Alan.
-
-Do not implement credentials.
-
-Do not implement real side effects.
-
-Do not let authorization imply execution.
-
-Do not let a large budget imply legitimacy. A branch, claim, proposal or conclusion does not become important merely because an agent burned many CXU on it.
-
-## Required first implementation slice
-
-Build a minimal runtime able to prove this flow:
-
-```text
-Alan AST
-→ run main
-→ hit mcp op
-→ return alan.suspension
-→ accept alan.step_result from caller
-→ resume at saved point
-→ return alan.terminal
-```
-
-## Suggested files
-
-Create:
-
-```text
-tools/alan-lang/
-  alan_ast.js
-  validate_ast.js
-  run_alan.js
-  resume_alan.js
-  stdlib.js
-  examples/
-    read_only_search.ast.json
-    read_only_search.step_result.json
-    staged_patch.ast.json
-    private_read.ast.json
-  tests/
-    test_run_alan.js
-    test_resume_alan.js
-```
-
-Optional later:
-
-```text
-tools/alan-lang/parse_alan.js
-```
-
-Do not start with a complex parser. JSON AST execution comes first.
-
-## Minimal AST
-
-Support this shape:
-
-```json
-{
-  "type": "alan.program",
-  "version": "0.1",
-  "uses": ["std.core", "std.mcp"],
-  "externs": [
-    {
-      "name": "github.search",
-      "kind": "tool",
-      "effect": "read_only",
-      "data": "public",
-      "policy": "P1"
-    }
-  ],
-  "functions": [
-    {
-      "kind": "fn",
-      "name": "main",
-      "params": ["query"],
-      "body": [
-        {
-          "op": "mcp",
-          "bind": "results",
-          "capability": "github.search",
-          "input": { "q": "$query" }
-        },
-        {
-          "op": "return",
-          "value": { "results": "$results" }
-        }
-      ]
-    }
-  ]
-}
-```
-
-## Required operations
-
-Implement:
-
-```text
-assign
-call
-mcp
-if
-return
-fail
-emit
-```
-
-`while` and parser support may come after the minimal resumable MCP runtime works.
-
-## Standard library minimum
-
-Implement only enough for first tests:
-
-```text
-core.empty
-core.eq
-core.lt
-num.add
-num.sub
-text.join
-text.trim
-list.len
-list.map_field
-map.get
-```
-
-Keep the full intended standard library in the spec, but do not overbuild it yet.
-
-## Semantics of `mcp`
-
-For v0.1, every `mcp` op returns either:
-
-```text
-alan.suspension
-alan.failure
-```
-
-It must not call real external tools.
-
-Policy behavior:
-
-```text
-read_only + public → P1 → suspension caller_tool_call_required
-private_data_access or private data → P3 → suspension authorization_required
-repository_write → P4 → suspension human_review_required / staged_only
-destructive_action → P5 → alan.failure forbidden_in_mvp
-unknown → conservative failure or P4/P5 suspension
-```
-
-## CXU budget and anti-gaming constraints
-
-Every future effect slot must be able to carry a compute budget and cost trace. For the MVP, it is acceptable to store these fields as metadata only, but the shape must not make them impossible later.
-
-Use this doctrine:
-
-```text
-Compute cost creates seriousness.
-It does not create truth, legitimacy or authority.
-```
-
-Minimal fields to preserve or leave room for:
-
-```json
-{
-  "compute_budget": {
-    "unit": "CXU",
-    "estimated": null,
-    "actual": null,
-    "payer_ref": null,
-    "mandate_ref": null,
-    "trace_ref": null,
-    "over_budget": "suspend|degrade|ask|abort"
-  },
-  "anti_gaming": {
-    "large_spend_is_not_legitimacy": true,
-    "detect_circular_spend": false,
-    "requires_mandate": true
-  }
-}
-```
-
-Do not implement real billing in v0.1. Do implement the vocabulary and tests so future runtime code cannot treat compute as free or unmandated.
-
-## Required suspension shape
-
-```json
-{
-  "type": "alan.suspension",
-  "suspension_id": "susp-001",
-  "reason": "caller_tool_call_required",
-  "policy": { "level": "P1" },
-  "pending_call": {
-    "capability": "github.search",
-    "input": { "q": "Alan MCP" }
-  },
-  "resume_point": {
-    "function": "main",
-    "step_index": 1,
-    "bind": "results"
-  },
-  "saved_state": {
-    "query": "Alan MCP"
-  },
-  "compute_budget": {
-    "unit": "CXU",
-    "estimated": null,
-    "actual": null,
-    "payer_ref": null,
-    "mandate_ref": null,
-    "trace_ref": null,
-    "over_budget": "suspend"
-  },
-  "anti_gaming": {
-    "large_spend_is_not_legitimacy": true,
-    "requires_mandate": true
-  },
-  "trace": {
-    "caller_mediated": true,
-    "direct_invocation_by_alan": false,
-    "execution_performed": false
-  }
-}
-```
-
-## Required step result shape
-
-```json
-{
-  "type": "alan.step_result",
-  "for_suspension": "susp-001",
-  "supplied_by": "caller",
-  "value": {
-    "results": [
-      { "title": "Alan v0.1", "url": "https://example.test/alan" }
-    ]
-  },
-  "trace": {
-    "caller_mediated": true,
-    "direct_invocation_by_alan": false,
-    "execution_performed": false
-  }
-}
-```
-
-## Resume semantics
-
-When resuming:
-
-```text
-1. Check step_result.for_suspension matches suspension.suspension_id.
-2. Check supplied_by = caller.
-3. Check caller_mediated = true.
-4. Check direct_invocation_by_alan = false.
-5. Check execution_performed = false.
-6. Preserve compute_budget and anti_gaming metadata.
-7. Restore saved_state.
-8. Bind resume_point.bind to step_result.value.
-9. Continue the function body at resume_point.step_index.
-```
-
-## Tests to implement
-
-Use plain Node `assert` if no test framework is already configured.
-
-Required tests:
-
-```text
-validate minimal AST
-run read_only_search until suspension
-resume read_only_search from step_result to terminal
-reject step_result supplied_by alan
-reject direct_invocation_by_alan = true
-reject execution_performed = true
-reject destructive MCP op as forbidden_in_mvp
-preserve compute_budget metadata across suspension/resume
-reject or flag missing mandate_ref when policy later requires it
-do not treat high CXU spend as proof of truth, priority or legitimacy
-```
-
-## Expected command
-
-Add or document a command equivalent to:
-
-```bash
-node tools/alan-lang/tests/test_run_alan.js
-node tools/alan-lang/tests/test_resume_alan.js
-```
-
-Optional package script:
-
-```json
-{
-  "alan:lang:test": "node tools/alan-lang/tests/test_run_alan.js && node tools/alan-lang/tests/test_resume_alan.js"
-}
-```
-
-## Coding style
-
-Keep the implementation boring and explicit.
-
-Prefer:
-
-```text
-small functions
-clear error messages
-plain JSON objects
-no dependencies unless necessary
-no hidden magic
-```
-
-Do not implement a full VM yet.
-
-Do not implement a full parser yet unless the AST runtime is complete.
-
-Do not mix this with the broader MCP private-read / side-effect roadmap.
-
-Do not implement accounting as a cosmetic field that can be ignored by the trace. If a cost or budget is represented, it must be represented as part of the runtime/protocol object.
-
-## Completion criteria
-
-The task is complete when:
-
-```text
-Alan AST validates.
-A read-only public MCP op suspends.
-The suspension records caller mediation and no execution.
-A caller-supplied step result resumes execution.
-Compute budget metadata survives suspension and resume.
-A terminal value is produced.
-Negative tests reject unsafe traces.
-The implementation remains on main.
-```
-
-Final rule:
-
-```text
-Make Alan able to suspend and resume correctly before making it able to do anything externally powerful.
-Make Alan able to account for compute before making compute appear free.
-```
+Do not implement full Python or JavaScript; do not invent unversioned library functions; do not use `l9.nox` as a prerequisite for the first interpreter; do not implement speculative `send`/`commission` syntax; do not run external MCP effects or acquire secrets; do not declare an untested Inox transport format portable.
