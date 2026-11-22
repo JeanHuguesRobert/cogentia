@@ -58,3 +58,16 @@ test('local persistence occurs only on the explicit store call and preserves ori
   clearLocalCogentigram(storage)
   assert.equal(items.size,0)
 })
+
+test('a second capture must not silently overwrite the immutable saved one', () => {
+  const items = new Map()
+  const storage = {
+    setItem:(k,v)=>items.set(k,v),getItem:k=>items.get(k)??null,removeItem:k=>items.delete(k),
+  }
+  const original=JSON.stringify(profile)
+  const distinct=JSON.stringify({...profile,indicators:profile.indicators.slice(0,79)})
+  storeLocalCogentigram(storage,original)
+  assert.throws(()=>storeLocalCogentigram(storage,distinct),/capture|remplac|enregistr/i)
+  assert.equal(storage.getItem(LOCAL_COGENTIGRAM_KEY),original)
+  assert.equal(restoreLocalCogentigram(storage).data.indicators.length,80)
+})

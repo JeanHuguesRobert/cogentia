@@ -3,13 +3,89 @@ import { Link } from 'react-router-dom'
 import dimensionsRegistry from '../../../../research/cogentigram_dimensions.json'
 import promptDocument from '../../../../research/kys_capture_prompt_v2.md?raw'
 import {
-  buildCogentigramPrompt, parseLocalCogentigram, cogentigramCoverage,
+  LOCAL_COGENTIGRAM_KEY, buildCogentigramPrompt, parseLocalCogentigram, cogentigramCoverage,
   storeLocalCogentigram, restoreLocalCogentigram, clearLocalCogentigram,
 } from '../lib/cogentigram-open.js'
+import {
+  appendLocalAnnotation, readLocalAnnotations, clearLocalAnnotations,
+  exportAnnotatedCapture,
+} from '../lib/cogentigram-annotations.js'
+
 
 
 const collectionPrompt = buildCogentigramPrompt(promptDocument, dimensionsRegistry)
 const dimensions = dimensionsRegistry.dimensions
+
+const JUDGMENTS = [
+  { value: 'accepted', label: 'Confirmée' },
+  { value: 'contested', label: 'Contestée' },
+  { value: 'corrected', label: 'À corriger' },
+  { value: 'uncertain', label: 'À vérifier' },
+]
+
+function SubjectAnnotation({ indicator, events, enabled, onAppend }) {
+  const [open, setOpen] = useState(false)
+  const [judgment, setJudgment] = useState('corrected')
+  const [note, setNote] = useState('')
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState('')
+  const history = events.filter(event => event.dimension_id === indicator.id)
+  const record = async () => {
+    setPending(true)
+    setError('')
+    try {
+      await onAppend({ dimension_id: indicator.id, decision: judgment, note })
+      setNote('')
+      setOpen(false)
+    } catch (cause) {
+      setError(cause.message)
+    } finally {
+      setPending(false)
+    }
+  }
+  return (
+    <div className="mt-2 space-y-2">
+      {history.length > 0 && <details className="text-xs text-muted">
+        <summary className="cursor-pointer">
+          {history.length} appréciation(s) du sujet (journal conservé)
+        </summary>
+        <div className="mt-2 space-y-2 border-l-2 border-border pl-3">
+          {history.map(event => <div key={event.event_id}>
+            <span className="font-mono">{event.recorded_at} · {event.decision}</span>
+            {event.note && <p className="text-dim">{event.note}</p>}
+          </div>)}
+        </div>
+      </details>}
+      <button type="button" className="text-xs text-signal underline" onClick={() => setOpen(!open)}>
+        {open ? 'Fermer la correction' : 'Confirmer, contester ou corriger'}
+      </button>
+      {open && (
+        <div className="rounded-md border border-line/50 p-3 space-y-2">
+          <p className="text-xs text-muted">
+            L'appréciation sera ajoutée au journal du sujet sans modifier l'observation de l'agent.
+          </p>
+          <label className="text-xs text-bright block" htmlFor={'judgment-' + indicator.id}>Votre appréciation</label>
+          <select id={'judgment-' + indicator.id} className="input w-full" value={judgment}
+            onChange={event => setJudgment(event.target.value)}>
+            {JUDGMENTS.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}
+          </select>
+          <label className="text-xs text-bright block" htmlFor={'note-' + indicator.id}>Précision ou contre-exemple</label>
+          <textarea id={'note-' + indicator.id} className="input w-full" rows={3} value={note}
+            onChange={event => setNote(event.target.value)}
+            placeholder="Votre observation, avec le contexte qui permet de l'interpréter." />
+          {!enabled && <p className="text-xs text-muted">
+            Conservez d'abord la capture dans ce navigateur pour y rattacher vos corrections.
+          </p>}
+          {error && <p role="alert" className="text-xs text-red-300">{error}</p>}
+          <button type="button" className="btn-ghost" onClick={record}
+            disabled={!enabled || pending || (judgment !== 'accepted' && !note.trim())}>
+            {pending ? 'Enregistrement…' : "Ajouter l'appréciation"}
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function Indicators() {
   const [copied, setCopied] = useState(false)
@@ -21,21 +97,28 @@ export default function Indicators() {
   const [saved, setSaved] = useState(false)
   const [storedCopy, setStoredCopy] = useState(false)
   const [storageError, setStorageError] = useState('')
+  const [annotations, setAnnotations] = useState([])
 
   // Reading a previously saved capture is allowed; new data are only stored
   // by an explicit click on the save button.
   useEffect(() => {
-    try {
-      const savedCapture = restoreLocalCogentigram(window.localStorage)
-      if (savedCapture) {
-        setResponse(savedCapture.rawText)
-        setPortrait(savedCapture.data)
-        setSaved(true)
-        setStoredCopy(true)
+    let alive = true
+    async function restore() {
+      try {
+        const savedCapture = restoreLocalCogentigram(window.localStorage)
+        if (savedCapture && alive) {
+          setResponse(savedCapture.rawText)
+          setPortrait(savedCapture.data)
+          setSaved(true)
+          setStoredCopy(true)
+          setAnnotations(await readLocalAnnotations(window.localStorage, savedCapture.rawText))
+        }
+      } catch (error) {
+        if (alive) setStorageError('La copie locale ne peut pas être restaurée : ' + error.message)
       }
-    } catch (error) {
-      setStorageError('La copie locale ne peut pas être restaurée : ' + error.message)
     }
+    restore()
+    return () => { alive = false }
   }, [])
   const copyPrompt = async () => {
     try {
@@ -47,34 +130,46 @@ export default function Indicators() {
       setCopyError(true)
     }
   }
-  const showPortrait = () => {
+  const showPortrait = async () => {
     try {
       setPortrait(parseLocalCogentigram(response).data)
-      setSaved(false)
+      const current = window.localStorage.getItem(LOCAL_COGENTIGRAM_KEY)
+      setSaved(current === response)
+      setAnnotations(await readLocalAnnotations(window.localStorage, response))
       setResponseError('')
     } catch (e) {
       setPortrait(null)
       setResponseError('Impossible de lire ce JSON : ' + e.message)
     }
   }
-  const saveCapture = () => {
+  const saveCapture = async () => {
     try {
       const result = storeLocalCogentigram(window.localStorage, response)
       setPortrait(result.data)
       setSaved(true)
       setStoredCopy(true)
+      setAnnotations(await readLocalAnnotations(window.localStorage, response))
       setStorageError('')
     } catch (error) {
       setStorageError('Enregistrement local impossible : ' + error.message)
     }
   }
-  const clearCapture = () => {
+  const addAnnotation = async annotation => {
+    if (!saved) throw new Error('La capture originale doit être enregistrée avant une correction.')
+    const event = await appendLocalAnnotation(window.localStorage, response, annotation)
+    setAnnotations(previous => [...previous, event])
+    setStorageError('')
+  }
+  const clearCapture = async () => {
     try {
+      const original = window.localStorage.getItem(LOCAL_COGENTIGRAM_KEY)
+      if (original !== null) await clearLocalAnnotations(window.localStorage, original)
       clearLocalCogentigram(window.localStorage)
       setSaved(false)
       setStoredCopy(false)
+      setAnnotations([])
       setStorageError('')
-      // Clearing the saved item does not silently erase the open editing draft.
+      // The user's editing draft remains visible until explicitly replaced.
     } catch (error) {
       setStorageError('Suppression locale impossible : ' + error.message)
     }
@@ -91,6 +186,24 @@ export default function Indicators() {
     a.click()
     a.remove()
     URL.revokeObjectURL(url)
+  }
+  const exportDossier = async () => {
+    try {
+      if (!saved) throw new Error("Enregistrez d'abord la capture originale.")
+      const bundle = await exportAnnotatedCapture(window.localStorage, response)
+      const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json;charset=utf-8' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'cogentigram-capture-annotee.json'
+      document.body.append(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+      setStorageError('')
+    } catch (error) {
+      setStorageError("Export du dossier impossible : " + error.message)
+    }
   }
   const groups = Object.groupBy
     ? Object.groupBy(dimensions, d => d.category)
@@ -147,8 +260,9 @@ export default function Indicators() {
         <h2 className="font-display text-2xl font-semibold text-bright">Lire la réponse dans ce navigateur</h2>
         <label htmlFor="cogentigram-response" className="text-sm font-medium text-bright">Réponse complète de votre agent</label>
         <textarea id="cogentigram-response" className="input min-h-48 w-full resize-y font-mono text-xs"
-          value={response} onChange={e=>{setResponse(e.target.value);setPortrait(null);setSaved(false);setResponseError('')}} placeholder="Collez le JSON complet, version 2.0 ou archive 1.0."/>
+          value={response} onChange={e=>{setResponse(e.target.value);setPortrait(null);setSaved(false);setAnnotations([]);setResponseError('')}} placeholder="Collez le JSON complet, version 2.0 ou archive 1.0."/>
         {responseError && <p role="alert" className="text-red-300 text-sm">{responseError}</p>}
+        {storageError && <p role="alert" className="text-red-300 text-sm">{storageError}</p>}
         <button type="button" className="btn-primary" onClick={showPortrait} disabled={!response.trim()}>
           Afficher les dimensions observées
         </button>
@@ -176,14 +290,17 @@ export default function Indicators() {
             <button className="btn-ghost" type="button" onClick={saveCapture}>
               {saved ? 'Réenregistrer dans ce navigateur' : 'Conserver dans ce navigateur'}
             </button>
-            {storedCopy && <button className="btn-ghost" type="button" onClick={clearCapture}>Effacer la copie locale</button>}
+            {saved && <button className="btn-ghost" type="button" onClick={exportDossier}>
+              Exporter capture et annotations
+            </button>}
+            {storedCopy && <button className="btn-ghost" type="button" onClick={clearCapture}>Effacer copie et annotations locales</button>}
           </div>
           {storedCopy && !saved && <p className="text-xs text-muted">
             Une copie antérieure reste enregistrée ; la réponse affichée n'a pas remplacé cette copie.
           </p>}
           <p className="text-xs text-muted">La copie n'est enregistrée dans ce navigateur que sur demande.
             Aucun serveur Cogentia ne reçoit cette réponse depuis cette page.</p>
-          {storageError && <p role="alert" className="text-red-300 text-xs">{storageError}</p>}
+
           {Object.entries(measurementGroups).map(([category, rows])=>(
             <div key={category} className="space-y-3">
               <h3 className="font-semibold">{category} · {rows.length}</h3>
@@ -200,12 +317,30 @@ export default function Indicators() {
                   {item.measurement?.context && <p className="text-xs text-muted mt-1">Contexte : {item.measurement.context}</p>}
                   {item.measurement?.contexts?.map((c,i)=><p key={i} className="text-xs text-muted mt-1">{c.domain} : {c.observation}</p>)}
                   {Array.isArray(item.counter_evidence) && item.counter_evidence.length > 0 &&
-                    <p className="text-xs text-muted mt-1">Contre-preuves : {item.counter_evidence.join(' ; ')}</p>}
+                    <p className="text-xs text-muted mt-1">Contre-preuves : {item.counter_evidence.map(value => typeof value === 'string' ? value : JSON.stringify(value)).join(' ; ')}</p>}
                   {item.provenance && <p className="text-xs text-muted mt-1">Source : {item.provenance}</p>}
+                  <SubjectAnnotation indicator={item} events={annotations} enabled={saved} onAppend={addAnnotation} />
                 </div>
               ))}
             </div>
           ))}
+          <details className="border-t border-line/50 pt-3">
+            <summary className="cursor-pointer text-sm font-semibold">
+              Observations libres, variations, prédictions et audit de l'instrument
+            </summary>
+            {[
+              ['Observations libres', portrait.free_observations],
+              ['Variations contextuelles', portrait.contextual_variations],
+              ['Prédictions à éprouver', portrait.unseen_predictions],
+              ["Audit de l'instrument", portrait.instrument_self_audit],
+              ['Points non résolus', portrait.unresolved_residue],
+            ].map(([label, value]) => <div key={label} className="mt-3">
+              <p className="text-sm font-medium">{label}</p>
+              <pre className="text-xs text-dim whitespace-pre-wrap break-words">
+                {value == null ? 'Non renseigné' : JSON.stringify(value, null, 2)}
+              </pre>
+            </div>)}
+          </details>
         </section>
       )}
 

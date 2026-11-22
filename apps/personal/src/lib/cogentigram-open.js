@@ -68,6 +68,12 @@ export function cogentigramCoverage(capture, registry) {
 
 export function storeLocalCogentigram(storage, rawText) {
   const result = parseLocalCogentigram(rawText)
+  const existing = storage.getItem(LOCAL_COGENTIGRAM_KEY)
+  if (existing !== null && existing !== rawText) {
+    throw new Error(
+      'Une autre capture est déjà enregistrée. Exportez-la et effacez-la explicitement avant de la remplacer.',
+    )
+  }
   storage.setItem(LOCAL_COGENTIGRAM_KEY, rawText)
   return result
 }

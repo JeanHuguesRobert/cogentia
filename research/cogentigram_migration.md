@@ -66,6 +66,29 @@ The browser-facing v2 prompt must be generated from the *entire canonical dimens
 
 Live deployment of the static app is separate from GitHub and requires the authorized publish mechanism for `/srv/www/kys-services/current`, a root-owned symlink to an immutable release. See #206 and #207 for outstanding or completed release checkpoints.
 
+## Resumed implementation — subject corrections and Reality tests (22 November 2026)
+
+A reproduced browser defect allowed a second captured answer to silently
+overwrite the first one in localStorage. A negative test fails on the old
+implementation and passes after the root-cause fix: refuse a different capture
+until the subject has explicitly exported and cleared the saved one. The current
+browser-local protocol still stores only one active copy per browser; do not
+misrepresent it as a server-backed permanent multi-capture archive.
+
+Subject corrections are now a separate locally stored append-only event
+stream, keyed to SHA-256 of the original exact response. The UI enables
+confirm/contest/correct/mark uncertain, retains prior corrections, exports
+the exact raw response and subject corrections together, and never silently
+modifies the captured agent output. The full one-shot response's independent
+observations, contextual variations, predictions, instrument self-audit,
+residue and structured counter-evidence are visible without conversion into
+pseudo-percentile graphs. See #205 (frozen tests), #206 (raw/annotations) and
+#207 (user correction UX).
+
+Not yet implemented: server-backed encrypted storage and PrivAI permission
+engine, cross-agent empirical acquisition, real-one-shot campaign and
+protocol freeze. The Principal's independent gate in #200 remains in force.
+
 ## Acceptance
 
 - At least 80 first-class active entries and no fixed maximum; all IDs unique.

@@ -264,6 +264,25 @@ rights: {}                    # independent rights to measure/store/view/use/dis
 
 A measured number is only a *population percentile* if the capture identifies an empirical calibration population, its instrument and transformation. Pre-existing 0–100 agent estimates have distinct type `agent_estimate_0_100`; do not silently reinterpret them. Preserve raw input, the normalized form, human annotations and every derived view separately. Unknown fields and additional dimensions must survive parsing and export.
 
+### Subject corrections must not mutate the instrument response (22 November 2026)
+
+The first browser-native implementation of the subject-correction layer is
+`apps/personal/src/lib/cogentigram-annotations.js`. An annotation contains
+`event_id`, `recorded_at`, `actor=subject`, `dimension_id`,
+`decision=accepted|contested|corrected|uncertain`, `note`, and the
+`original_sha256` of the **exact unmodified raw response string**.
+The annotation journal is append-only, independent of the saved RawMeasurement.
+Corrections can contradict the agent's claim; neither its numeric estimate nor
+its source evidence may be rewritten to make them agree.
+
+The current browser stores one explicitly saved capture. Replacing that
+capture implicitly is prohibited: the subject must export/erase it explicitly
+before saving a different response. Local user-initiated export can contain
+both the raw exact text and its correction journal. No upload, dissemination,
+twin use, or sharing consent is inferred by local capture/annotation. This
+browser-local layer is an implementation increment, not yet a frozen
+cross-provider KYS rights contract; further rights work remains in #208.
+
 ## 5. Anti-Loss Invariants (Contract Guarantees)
 
 Any conforming prompt and downstream parser must enforce these four non-negotiable guarantees:
