@@ -3,7 +3,7 @@ title: "Engineering and publication operations"
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: '2026-11-20'
-last_modified_at: '2026-11-20'
+last_modified_at: '2026-11-22'
 status: "working-paper — active operational documentation"
 document_role: operational
 document_kind: agent-instructions
@@ -103,6 +103,16 @@ and resumable work in existing packets, not a parallel attention ledger.
 Provenance: reconciled from Cogentia PR #151 and its Operium reference,
 without replacing newer shared-agent instructions or promoting a
 synthetic text-assertion test into a runtime safety guarantee.
+
+## Root-cause-first — workarounds by exception only (2026-11-22)
+
+**Principal decision (Jean Hugues Noel Robert; GPT-6 transcribed under his direction).** FixBugsFirst means repairing a violated invariant, not merely obtaining a green demonstration by switching mechanisms. **By default: no workaround instead of a correction.** Before modifying a broken system, (1) reproduce its failure with a discriminating test, (2) identify the intended contract and the causal failure, distinguishing program misuse, parser, compiler, VM and dependency faults, (3) repair the smallest competent causal layer, and (4) verify both the observable behavior and relevant resource invariants (e.g. that an iterative loop does not grow the return stack). The test must exercise the mechanism that was broken, not only a downstream result.
+
+**Not a fix:** replacing iteration with recursion lacking verified tail-call elimination; ignoring failing cases; weakening assertions, timeouts or security checks; swallowing errors; changing test inputs or modes to mask an underlying failure; repairing a generated projection without addressing its canonical generator, unless that generator demonstrably does not exist. Diagnostic substitution in an isolated probe is welcome *as an experiment*, but must not be promoted into the canonical product as a silent correction.
+
+**Exception gate:** a temporary workaround is permissible only for a concrete operational need (for example urgent continuity) or when a root fix is genuinely inaccessible or disproportionate within the current bounded mandate. Before using it, record in the owning Cognitive Packet/Issue: the unfixed causal defect; why a direct fix is not feasible now; the workaround's limited scope and expected duration; tests of correctness, regression and resource bounds; its owner, review/expiry trigger and the next removal action. Label it **temporary workaround, not bug fixed**. If these elements are missing, do not deploy or publish it. Never bypass provider denials, rights, authorization or mandated security boundaries.
+
+When the root cause remains unproven, preserve the failing test and trace as an **open** bug; continue diagnosis or report the exact technical boundary. Do not infer a successful correction from narrow smoke tests, green CI transport or a process exit code alone. Preserve coding-agent attribution, review and cleanup of discarded experiments. This rule refines the *repair method*, not Operium's existing [Fix Bugs First prioritization and waiver policy](https://github.com/JeanHuguesRobert/operium/blob/main/docs/fix-bugs-first.md).
 
 ## Mandatory two-channel GitHub Actions discipline (FBF)
 

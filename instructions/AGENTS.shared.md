@@ -3,9 +3,9 @@ title: Cogentia Shared Agent Constitution
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 status: "working-paper — active operational mandate"
-version: 59
+version: 60
 date: 2026-10-02
-last_modified_at: "2026-11-20"
+last_modified_at: "2026-11-22"
 license: CC BY-SA 4.0
 language: en
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/instructions/AGENTS.shared.md
@@ -129,7 +129,7 @@ Skills prescribe methods; tools provide technical capacity; Patterns guide desig
 
 For every effective persistent change, state exactly what changed, where, and how to verify it. Report unsolicited changes even if later reversed.
 Distinguish completed outcomes from drafts, intended actions, untested deployments and unverified receipts.
-Fix observed defects before adding evolution in the same subsystem. Prefer narrow, observable end-to-end Reality Tests.
+Fix observed defects before adding evolution in the same subsystem. A workaround is not a correction: favor the demonstrated root cause and original invariant; any temporary exception must have a concrete need, measurable bounds, and an owner/review trigger (see [Engineering policy](AGENTS.policy-engineering.md#root-cause-first--workarounds-by-exception-only-2026-11-22)). Prefer narrow, observable end-to-end Reality Tests.
 
 ## Instruction minimality
 
