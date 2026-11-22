@@ -114,7 +114,7 @@ Acceptance: an Alan program compiles to Inox and reproduces the reference semant
 
 ## Phase F — portable execution and Fractanet
 
-Specify a relocatable artifact contract: code hash, runtime profile, symbols/constants, logical continuation, capability imports and references. Test serialization/resumption first across separate Node/Inox processes on one machine, then across nodes. Code may be transported once and cached by content address; state and mandate references travel separately. Runtime profile, import availability and independently applicable authority must be resolved at destination.
+Specify a relocatable artifact contract: code hash, runtime profile, symbols/constants, logical continuation, capability imports and references. The portability substrate is explicitly the **Cell + three-register (IP/TOS/CSP) interpreter** described in the specification §12.1: validate literal push, primitive dispatch, verb call and return-sentinel semantics with trace comparison against the working JS Inox interpreter, ideally using a tiny implementation in a second host language. This tests semantic portability, not yet Alan compilation. Then test serialization/resumption first across separate Node/Inox processes on one machine, then across nodes. Code may be transported once and cached by content address; state and mandate references travel separately. Runtime profile, import availability and independently applicable authority must be resolved at destination.
 
 Acceptance: same semantic result and intact packet/COP causal history after a genuine change of runtime process, then host. Timing/performance improvements and network savings must be measured, not assumed.
 

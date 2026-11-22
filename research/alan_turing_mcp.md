@@ -231,6 +231,40 @@ A portable Inox artifact should be versioned, self-describing and relogeable, se
 
 Compilation to an Inox source subset is a plausible first milestone; a binary/serialized cell image requires its own format contract. A VM executing a compiled program does not by itself imply resumable migration between processes: that must be tested independently. Do not assert performance or bytecode mobility before measurement. A JavaScript reference executor can serve as a differential semantic oracle during development.
 
+### 12.1. A very small execution kernel: Cell + IP/TOS/CSP
+
+The suitability of Inox as a portable target comes from the **small semantics of its interpreter loop**, not primarily from an optimizer. The current `lib/inox.ts` implementation's `run()` dispatches on the cell addressed by `IP`. Its three central execution registers are:
+
+- `IP` — instruction pointer within the executable cell sequence;
+- `TOS` — address of the current top of the data stack;
+- `CSP` — address of the current top of the control/return stack.
+
+With a conventional cell representation (type/name metadata plus value), the semantics of the fast interpreter can be sketched as follows. This is explanatory pseudocode, **not** a byte-for-byte implementation or an assertion that all runtime services are complete:
+
+```text
+while IP != 0:
+    cell = memory[IP]
+    if cell is the empty/end-of-word sentinel:
+        IP = pop_return(CSP)
+    else if cell.type == primitive:
+        IP += 1
+        invoke_primitive(cell.name)   # may change IP, TOS, CSP and memory
+    else if cell.type == verb:
+        push_return(CSP, IP + 1)
+        IP = cell.value              # destination definition
+    else:
+        push_data(TOS, copy(cell))    # preserve Cell metadata/ref semantics
+        IP += 1
+```
+
+There are **four branches**, not merely the literal/primitive dichotomy: the current implementation also handles verb calls and return sentinels. Its debug path and optimizations may handle tail calls, scope cleanup, instruction-credit scheduling and late-bound verbs specially. Such behavior must be preserved in the agreed VM profile or expressed through equivalent primitives; it is not additional Alan source syntax.
+
+A small implementation in another host language can reproduce this loop once it implements the `Cell` data model, the two stacks, the three pointers and the referenced primitive semantics. This makes cross-platform portability plausible, but **the size of the dispatch loop is not the size of the whole VM**: references/ownership, memory management, primitive ABI, symbol resolution and any host capability mediation still have defined behavior. An actor's memory base, when present, is an address-space/context concern rather than a fourth fundamental execution register in this sketch.
+
+For an Alan→Inox compiler, the resulting contract is a simple **target machine with explicit semantic operations**, not a demand that the LLM learn the target syntax. The portable execution profile should define how `Cell` types and names, instruction addresses, imports, references, primitive identifiers and return points are encoded and relocated; a raw in-process memory image does not automatically satisfy that contract.
+
+A first conformance probe should run the *same* literal, primitive, nested-verb and return programs against the existing JavaScript Inox interpreter and a deliberately minimal second interpreter, then compare stack and register traces. After this, test a serialized continuation and later a cross-process/cross-host transfer. The objective is semantic portability and low implementation cost; performance claims require measurements.
+
 ## 13. Standard library and capability signatures
 
 The initial library should be small and regular, with **explicit signatures** available to both compiler and LLM. Candidate namespaces:
