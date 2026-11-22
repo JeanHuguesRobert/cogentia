@@ -27,7 +27,7 @@
     "research/packet_continuation_machine.md"
   ],
   "checkpoint": {
-    "result": "Specification v0.2 revised, concise LLM prompt card added, implementation/evaluation roadmap and agent brief aligned, index and CPS cross-link updated. Follow-up: documented concrete minimal Inox VM kernel and portability conformance criteria in specification §12.1 and implementation plan Phase F.",
+    "result": "Specification v0.2 revised, concise LLM prompt card added, implementation/evaluation roadmap and agent brief aligned, index and CPS cross-link updated. Follow-up: documented concrete minimal Inox VM kernel and portability conformance criteria in specification §12.1 and implementation plan Phase F. Follow-up: specification §12.2 and Phase E now select definition-oriented IR and tiny Cell assembly rather than routing Alan output through the full source parser.",
     "semantic_commitments": [
       "minimal strict familiar pseudocode rather than a complete Python/JS clone",
       "discriminated Alan AST and deterministic validation",
@@ -36,7 +36,9 @@
       "distributed work orders differ from synchronous calls",
       "Inox is a proposed compilation/execution target, not yet implemented",
       "evaluate total LLM token and correction cost instead of claiming intrinsic ease",
-      "Inox portability is grounded in Cell dispatch with IP/TOS/CSP and explicit literal, primitive, verb and return cases, tested by semantic trace equivalence across runtimes"
+      "Inox portability is grounded in Cell dispatch with IP/TOS/CSP and explicit literal, primitive, verb and return cases, tested by semantic trace equivalence across runtimes",
+      "Alan transpilation targets definition-oriented Inox IR and a minimal Cell assembler/direct image builder; the rich Inox source parser is optional",
+      "Inox JS vs draft micro-v0 disagreement on zero Cell return and primitive ID placement is an ABI conformance item before portable image claims"
     ],
     "runtime_implemented": false,
     "transpiler_implemented": false,

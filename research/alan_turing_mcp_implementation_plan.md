@@ -104,13 +104,15 @@ Measure prompt tokens including documentation, output tokens, validation attempt
 
 Acceptance: evidence that justifies (or rejects) Alan's existence as a lower-Judgement authoring surface.
 
-## Phase E — Alan → Inox compiler
+## Phase E — Alan → Inox definitions and tiny assembler
 
-Only after A–C establish the semantics, compile the **same canonical AST** to a small stable subset of Inox. Initially use textual `.nox` and execute through the working minimal CLI; do not require `l9.nox` classes/threads. Stack/slot translation, lexical frame conventions and deterministic control flow belong to the compiler. Treat `mcp` as a continuation boundary with an explicit host interface, not an Inox primitive silently authorized to perform an effect.
+Only after A–C establish the semantics, lower the **same canonical Alan AST** to a **definition-oriented Inox IR**, then assemble **blocks of executable Cells**. The Alan transpiler handles Alan-specific syntax, lexical bindings, structured conditions and loops, suspension points and required imports; a thin assembler needs only to build named definitions from `literal`, `primitive`, `verb`, branch/label, and end/return records. Do not require the complete Forth/Smalltalk-inspired Inox parser or `l9.nox` to consume this output.
 
-Differential tests must match reference JS and Inox results for data, failures, suspensions, resume points and output; not just success-path arithmetic. Avoid depending on undocumented Inox memory addresses or JavaScript engine references.
+Two initial implementations are acceptable: (a) a simple textual Inox assembly dialect with a minimal parser, for transparency; or (b) a structured object-to-cell builder emitting definitions directly, with no textual parse step. Do **not** create both until a measured need exists. Prefer reusing the existing `define_verb()` / `add_machine_code()` behavior when valid, and define a stable, versioned linker/relocation contract for portable images.
 
-Acceptance: an Alan program compiles to Inox and reproduces the reference semantics for a bounded test suite.
+**Before claiming portability**, reconcile the actual JS `run()` zero-cell return semantics and primitive-name dispatch with the draft micro-runtime's zero-`VOID` no-op and primitive-value dispatch; this is a target ABI divergence, not an Alan concern. Differential tests must cover literal pushes, primitive lookup, nested verb calls/returns, resolved symbols, branches, data, failures, suspensions and resume points. The JS reference interpreter remains the semantic oracle, and a second minimal Inox runtime is a useful conformance target.
+
+Acceptance: a nontrivial Alan program produces named Inox definitions and reproduces the reference semantics in a bounded test suite, **without invoking the full Inox source grammar**.
 
 ## Phase F — portable execution and Fractanet
 

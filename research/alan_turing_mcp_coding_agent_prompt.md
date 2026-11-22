@@ -48,7 +48,7 @@ Support `extern`, an `mcp` instruction that **suspends** without invoking anythi
 
 ## Inox backend (later, not MVP)
 
-Compile the canonical Alan AST into a minimal, documented Inox subset. Compare reference-JS and Inox results, including suspension/resumption, through differential tests. Any claim that code or live state travels to another process/host requires a measured test with a relocatable state representation, not merely successful execution on one VM.
+Lower canonical Alan AST to a tiny definition-oriented Inox IR, then construct named blocks of executable Cells. Prefer a minimal assembler/direct Cell builder rather than compiling general Inox syntax; test both the compiled definitions and image ABI consistency against the reference JS run loop. Compare reference-JS and Inox results, including suspension/resumption, through differential tests. Any claim that code or live state travels to another process/host requires a measured test with a relocatable state representation, not merely successful execution on one VM.
 
 ## Quality gate
 

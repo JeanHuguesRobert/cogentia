@@ -229,7 +229,7 @@ The **Alan → Inox** compiler is a design objective, not an existing transpiler
 
 A portable Inox artifact should be versioned, self-describing and relogeable, separate from the source and from a host process memory dump. It may contain canonical instructions, constants, symbols, capability imports, metadata, a code hash and a compatible runtime profile. An actor's continuation travels **with or by reference to** the code plus its minimal logical state; it does not carry process-local JavaScript references, raw pointers or a full Unix address space.
 
-Compilation to an Inox source subset is a plausible first milestone; a binary/serialized cell image requires its own format contract. A VM executing a compiled program does not by itself imply resumable migration between processes: that must be tested independently. Do not assert performance or bytecode mobility before measurement. A JavaScript reference executor can serve as a differential semantic oracle during development.
+The first backend may target either a restricted Inox assembly dialect or a direct structured Cell-definition builder, without traversing the rich Inox source parser; a binary/serialized cell image requires its own format contract. A VM executing a compiled program does not by itself imply resumable migration between processes: that must be tested independently. Do not assert performance or bytecode mobility before measurement. A JavaScript reference executor can serve as a differential semantic oracle during development.
 
 ### 12.1. A very small execution kernel: Cell + IP/TOS/CSP
 
@@ -264,6 +264,42 @@ A small implementation in another host language can reproduce this loop once it 
 For an Alan→Inox compiler, the resulting contract is a simple **target machine with explicit semantic operations**, not a demand that the LLM learn the target syntax. The portable execution profile should define how `Cell` types and names, instruction addresses, imports, references, primitive identifiers and return points are encoded and relocated; a raw in-process memory image does not automatically satisfy that contract.
 
 A first conformance probe should run the *same* literal, primitive, nested-verb and return programs against the existing JavaScript Inox interpreter and a deliberately minimal second interpreter, then compare stack and register traces. After this, test a serialized continuation and later a cross-process/cross-host transfer. The objective is semantic portability and low implementation cost; performance claims require measurements.
+
+### 12.2. Alan code generation need not invoke the full Inox source compiler
+
+A central simplification is to separate **Inox source syntax** from **executable Inox definitions**. The existing JavaScript/TypeScript implementation already has the relevant mechanisms: `eval_definition_begin()`, `add_machine_code()`, `define_verb()`, and `eval_definition_end()` build named definitions as executable blocks of `Cell`. `eval_definition_end()` appends a return sentinel. The flexible Inox/Forth/Smalltalk-inspired parser, immediate words, special forms and syntax sugar are an *authoring layer*, not a prerequisite for executing these definitions.
+
+Therefore the Alan compiler **does not have to generate general Inox source**, nor ask the full Inox parser to understand Alan. A preferred experimental path is:
+
+```text
+Alan Text --strict parse--> canonical Alan AST
+  --deterministic lowering--> definition-oriented Inox IR
+  --tiny Cell assembler--> named executable Cell blocks
+  --image builder (when available)--> relocatable semantic image
+  --minimal Inox VM--> execution
+```
+
+The **definition-oriented IR** needs only a bounded set of records such as `define(name)`, `literal(cell)`, `primitive(symbol)`, `verb(symbol)`, `label`, `branch`, and `end`. Labels, branches, local variables, effect suspension points and references are resolved by the Alan compiler or a deterministic linker; the tiny assembler only encodes cells, resolves declared symbols/imports and adds the appropriate return/termination form. It should not have to parse expressions, perform implicit type inference, invent control-flow semantics, or re-interpret the Alan language.
+
+Illustrative assembly **design notation**, not current executable Inox syntax:
+
+```text
+define add_two
+  literal integer 2
+  primitive add
+end                         # emit end-of-definition/return cell
+```
+
+This makes a definition with stack effect `(n -- n+2)` provided the `add` primitive accepts two integers. Its actual cell encoding, symbol identifier and relocation rules belong to the target execution profile.
+
+There are at least two compatible build paths:
+
+1. **Simple textual path:** emit a deliberately tiny, regular Inox assembly dialect for a thin loader/assembler. It is inspectable and easy to debug; it should not require Inox's rich source parser.
+2. **Direct structured path:** emit canonical definition records or cell-assembly objects directly from the Alan AST, then link and serialize them into an image. In this path a textual Inox parser is unnecessary. The structured path may become canonical, with a textual dump for inspection.
+
+Neither path implies a second general-purpose language. The assembler is a small deterministic **definition/image builder**. It can initially run on the JavaScript host; subsequently the same assembly operations can be implemented as Inox primitives/verbs and packaged in a precompiled image. This is the natural connection to **self-hosting/bootstrap** and the already documented [Inox Images, Lineages, Hibernation, and Wake](https://github.com/JeanHuguesRobert/Inox/blob/master/research/inox-images-lineages-and-hibernation.md) and [Inox micro-runtime and image format](https://github.com/JeanHuguesRobert/Inox/blob/master/research/inox-cpp-micro-runtime-and-images.md). A small VM may consume images without needing *any* source-language compiler.
+
+**Concrete ABI discrepancy to resolve before an interoperable image is claimed:** the present `lib/inox.ts` interpreter treats the zero cell as **return from a verb** and dispatches primitives using a **name** field; the draft `inox-micro-v0` image specification describes `VOID` zero as a **no-op** and primitive ID in the **value** field. This is an actual semantic/encoding mismatch, not a difference in syntax sugar. The image profile, assembler, JS execution reference and portable VM must agree on return-cell behavior and primitive lookup, or explicitly version and translate between ABIs. The initial conformance suite must include nested verb return, primitive dispatch, literal tags, and symbolic relocation.
 
 ## 13. Standard library and capability signatures
 
