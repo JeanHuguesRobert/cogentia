@@ -30,7 +30,7 @@ export default function Submit() {
   const { state }   = useLocation()
   const promptVersionId = state?.promptVersionId ?? null
 
-  const [method,   setMethod]   = useState('auto')
+  const [method,   setMethod]   = useState('paste')
   const [url,      setUrl]      = useState('')
   const [platform, setPlatform] = useState(null)
   const [pasted,   setPasted]   = useState('')
@@ -51,18 +51,17 @@ export default function Submit() {
     setError(null)
   }
 
-  // Extrait le JSON depuis un texte brut (même logique que le backend)
+  // Preserve the complete source text, including code fences; server parses it.
   const extractJson = (text) => {
-    const m = text.match(/```json\s*(\{[\s\S]*?"cogentia_version"[\s\S]*?\})\s*```/)
-    if (m) return m[1]
-    const m2 = text.match(/(\{[\s\S]*?"cogentia_version"[\s\S]*?\})/)
-    if (m2) return m2[1]
-    return null
+    const source = String(text ?? '').trim()
+    if (source.startsWith('{') || /^\`\`\`(?:json)?\s*\{/i.test(source)) return text
+    const fenced = source.match(/\`\`\`(?:json)?\s*([\s\S]*?)\s*\`\`\`/i)
+    return fenced?.[1]?.includes('cogentia_version') ? fenced[1] : null
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!url.trim()) { setError('L\'URL de la conversation est requise dans tous les cas.'); return }
+    if (method === 'auto' && !url.trim()) { setError('Une URL est nécessaire uniquement en collecte automatique.'); return }
     setStatus('loading'); setError(null)
 
     let rawJson = null
@@ -97,7 +96,7 @@ export default function Submit() {
     const { data, error: dbError } = await supabase
       .from('analyses')
       .insert({
-        conversation_url:     url.trim(),
+        conversation_url:     method === 'auto' ? url.trim() : (url.trim() || null),
         prompt_version_id:    promptVersionId,
         status:               'pending',
         collection_method:    method,
@@ -120,7 +119,7 @@ export default function Submit() {
     navigate(`/results/${data.id}`)
   }
 
-  const urlOk = url.trim().length > 0
+  const urlOk = method !== 'auto' || url.trim().length > 0
 
   return (
     <div className="max-w-xl mx-auto px-6 py-24 animate-slide-up">
@@ -128,22 +127,22 @@ export default function Submit() {
       <p className="font-mono text-signal text-xs tracking-widest uppercase mb-6">Étape 02 / 03</p>
       <h1 className="font-display text-3xl font-bold text-bright mb-3">Soumettre les résultats</h1>
       <p className="font-body text-dim text-sm mb-10">
-        Colle toujours le lien de la conversation — il sert de trace horodatée.
-        Choisis ensuite comment transmettre la réponse de ton agent.
+        Colle directement la réponse JSON de ton agent, ou importe un fichier.
+        Un lien de conversation est facultatif et nécessaire uniquement pour la récupération automatique.
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-8">
 
-        {/* URL — toujours requis */}
+        {/* URL optional unless legacy automatic fetch is selected */}
         <div>
-          <label className="label">URL de la conversation <span className="text-signal">*</span></label>
+          <label className="label">URL de la conversation {method === 'auto' ? '(nécessaire)' : '(facultative)'}</label>
           <input
             type="url"
             className="input"
             placeholder="https://chat.openai.com/share/…"
             value={url}
             onChange={handleUrlChange}
-            required
+            required={method === 'auto'}
           />
           {platform && (
             <p className="font-mono text-xs text-signal mt-2 animate-fade-in">✓ {platform} détecté</p>

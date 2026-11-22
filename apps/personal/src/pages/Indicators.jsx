@@ -1,32 +1,30 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import promptDocument from '../../../../research/cogentia_prompt_v1.md?raw'
+import dimensionsRegistry from '../../../../research/cogentigram_dimensions.json'
+import promptDocument from '../../../../research/kys_capture_prompt_v2.md?raw'
 
-const promptStart = promptDocument.indexOf('## PROMPT (à copier intégralement)')
-const promptOpen = promptDocument.indexOf('```', promptStart) + 4
-const promptEnd = promptDocument.indexOf('\n[FIN DU PROTOCOLE COGENTIA v1.0]', promptOpen)
-const collectionPrompt = promptDocument.slice(promptOpen, promptEnd).trim()
+const collectionPrompt = promptDocument.split(/\n---\n\nTu es mon agent conversationnel habituel\./)[1]
+  ? 'Tu es mon agent conversationnel habituel.' + promptDocument.split(/\n---\n\nTu es mon agent conversationnel habituel\./)[1]
+  : promptDocument
+const dimensions = dimensionsRegistry.dimensions
 
-const categoryNames = {
-  'Cognitive Architecture': 'Architecture cognitive',
-  'Social Interface': 'Interface sociale',
-  'Semiotics & Language': 'Sémiotique et langage',
-  'Axiology & Arbitration': 'Axiologie et arbitrage',
-  'Flow Dynamics': 'Dynamique des échanges',
-  'Derived Scores': 'Indices dérivés',
-  'Cogentia+': 'Cogentia+',
+const readJson = (response) => {
+  const input = response.trim()
+  const candidate = input.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i)?.[1] ?? input
+  const parsed = JSON.parse(candidate)
+  if (!['1.0', '2.0'].includes(parsed.cogentia_version)
+      || !Array.isArray(parsed.indicators)
+      || parsed.indicators.length === 0) {
+    throw new Error('La version ou la liste des dimensions est absente.')
+  }
+  const seen = new Set()
+  parsed.indicators.forEach((item, i) => {
+    const id = item.id || (parsed.cogentia_version === '1.0' ? `COG-${String(item.rank ?? i+1).padStart(3,'0')}` : '')
+    if (!id || seen.has(id)) throw new Error('Identifiant manquant ou répété : ' + id)
+    seen.add(id)
+  })
+  return parsed
 }
-
-const indicators = [...collectionPrompt.matchAll(/\{\s*"rank":\s*(\d+),\s*"category":\s*"([^"]+)",\s*"name":\s*"([^"]+)"/g)]
-  .map(([, rank, category, name]) => ({ rank: Number(rank), category, name }))
-  .filter(({ rank }) => rank >= 1 && rank <= 73)
-
-const presentations = [
-  ['Big Five · OCEAN', 'Cinq grandes dimensions descriptives : ouverture, conscienciosité, extraversion, agréabilité et stabilité émotionnelle.'],
-  ['MBTI · 16 types', 'Quatre préférences résumées en lettres. Les dimensions peuvent être proches du centre et ne définissent pas une identité fixe.'],
-  ['DISC', 'Une lecture des tendances comportementales autour de la décision, de l’influence, de la stabilité et de la précision.'],
-  ['Ennéagramme · 9 types', 'Une typologie de développement personnel. Les scores doivent rester des pistes de réflexion, pas des motivations établies.'],
-]
 
 export default function Indicators() {
   const [copied, setCopied] = useState(false)
@@ -34,6 +32,7 @@ export default function Indicators() {
   const [response, setResponse] = useState('')
   const [portrait, setPortrait] = useState(null)
   const [responseError, setResponseError] = useState('')
+  const [expanded, setExpanded] = useState('')
   const copyPrompt = async () => {
     try {
       await navigator.clipboard.writeText(collectionPrompt)
@@ -46,105 +45,128 @@ export default function Indicators() {
   }
   const showPortrait = () => {
     try {
-      const jsonText = response.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1] || response
-      const parsed = JSON.parse(jsonText.trim())
-      if (parsed.cogentia_version !== '1.0' || !Array.isArray(parsed.indicators) || parsed.indicators.length < 65) {
-        throw new Error('Le format Cogentia v1 ou la liste des indicateurs est absent.')
-      }
-      setPortrait(parsed)
+      setPortrait(readJson(response))
       setResponseError('')
-    } catch (error) {
+    } catch (e) {
       setPortrait(null)
-      setResponseError(`Impossible de lire cette réponse. Collez le bloc JSON complet produit par l’agent. ${error.message}`)
+      setResponseError('Impossible de lire ce JSON : ' + e.message)
     }
   }
-  const groups = indicators.reduce((result, indicator) => {
-    ;(result[indicator.category] ||= []).push(indicator)
-    return result
+  const groups = Object.groupBy
+    ? Object.groupBy(dimensions, d => d.category)
+    : dimensions.reduce((r, d) => { (r[d.category] ||= []).push(d); return r }, {})
+  const measured = portrait?.indicators || []
+  const measurementGroups = measured.reduce((r, d) => {
+    (r[d.category || 'Non classé'] ||= []).push(d)
+    return r
   }, {})
+
   return (
-    <div className="max-w-5xl mx-auto px-4 py-12 md:py-20 space-y-14">
+    <div className="max-w-5xl mx-auto px-4 py-12 md:py-20 space-y-12">
       <header className="max-w-3xl space-y-5">
-        <p className="font-mono text-signal text-xs tracking-widest uppercase">Explorer le modèle Cogentia</p>
-        <h1 className="font-display text-3xl md:text-5xl font-bold text-bright">73 indicateurs, plusieurs façons de lire un portrait</h1>
-        <p className="text-dim leading-relaxed">Ces indicateurs servent à explorer ce qu’un agent croit comprendre de votre façon de penser, d’échanger et de décider. L’intérêt n’est pas de vous enfermer dans un type : c’est de pouvoir repérer ce que l’agent a retenu, ce qu’il suppose à tort, et ce qui pourrait vous aider à mieux travailler avec lui.</p>
-        <p className="text-sm text-muted leading-relaxed">Ce sont des estimations formulées par un agent, pas un test standardisé ni une mesure psychométrique validée. Cogentia ne peut pas vérifier, avec ce prompt, ce que le fournisseur conserve en arrière-plan ni prouver l’absence de surveillance.</p>
-        <a className="btn-primary" href="#collect">Collecter les indicateurs avec mon agent →</a>
+        <p className="font-mono text-signal text-xs tracking-widest uppercase">Cogentigram · KYS</p>
+        <h1 className="font-display text-3xl md:text-5xl font-bold text-bright">
+          {dimensions.length} dimensions de premier rang, et un modèle ouvert
+        </h1>
+        <p className="text-sm text-dim leading-relaxed">
+          Le nombre n'est pas un plafond : toute dimension distincte, documentée et pertinente peut
+          rejoindre le registre. Les sept dimensions REP, ENG et OPS ont le même statut que les autres.
+          Les anciennes captures demeurent des archives, pas la frontière de ce que nous pouvons apprendre.
+        </p>
+        <a href="#collect" className="btn-primary">Examiner le protocole de capture</a>
       </header>
 
-      <section id="collect" className="card space-y-5 scroll-mt-24" aria-labelledby="collect-title">
-        <div className="space-y-2">
-          <p className="font-mono text-signal text-xs tracking-widest uppercase">Protocole Cogentia v1 · 73 indicateurs</p>
-          <h2 id="collect-title" className="font-display text-2xl font-semibold text-bright">Demandez le portrait à votre agent</h2>
-          <p className="text-sm text-dim leading-relaxed">Copiez le prompt ci-dessous et collez-le dans une conversation avec l’agent que vous utilisez déjà. Il lui demande ce qu’il croit savoir de vous et comment il l’estime, en 73 dimensions. Vous pourrez ensuite examiner ses réponses, avec leurs limites, et décider ce qui vous semble utile ou faux.</p>
-          <p className="text-xs text-muted leading-relaxed">Votre prompt est envoyé au service d’IA choisi, qui répond selon son accès et son contexte. La réponse que vous ramenez ici est traitée dans cette page, sans transmission automatique à Cogentia. Cela ne révèle pas les données ni les journaux internes du fournisseur.</p>
-        </div>
-        <ol className="list-decimal pl-5 space-y-2 text-sm text-dim">
-          <li>Copiez le protocole complet.</li>
-          <li>Collez-le dans une conversation avec votre agent et envoyez-le.</li>
-          <li>Revenez ici, collez la réponse de l’agent dans le champ qui apparaîtra juste après la copie, puis affichez votre portrait.</li>
-        </ol>
+      <section id="collect" className="card space-y-4 scroll-mt-24">
+        <p className="font-mono text-signal text-xs uppercase">Protocole expérimental v2 · Dimensions ouvertes</p>
+        <h2 className="font-display text-2xl font-semibold text-bright">Interroger votre agent habituel</h2>
+        <p className="text-sm text-dim">
+          Copiez le prompt dans l'agent disposant de votre historique. Il doit distinguer observations,
+          hypothèses, contradictions et inconnus, sans fabriquer de percentiles. Vous pouvez examiner
+          sa réponse localement sur cette page, sans l'envoyer à Cogentia.
+        </p>
         <div className="flex flex-wrap items-center gap-3">
-          <button className="btn-primary" type="button" onClick={copyPrompt}>{copied ? 'Prompt copié ✓' : 'Copier le prompt complet'}</button>
-          {copyError && <span role="status" className="text-sm text-dim">La copie automatique a échoué. Ouvrez le prompt ci-dessous et copiez-le manuellement.</span>}
+          <button type="button" className="btn-primary" onClick={copyPrompt}>
+            {copied ? 'Prompt copié ✓' : 'Copier le prompt complet'}
+          </button>
+          {copyError && <span role="status" className="text-sm text-dim">
+            La copie automatique a échoué. Le texte est accessible ci-dessous.
+          </span>}
         </div>
         <details className="rounded-xl border border-line/50 p-4">
-          <summary className="cursor-pointer text-sm font-semibold text-bright">Afficher le prompt complet pour le copier manuellement</summary>
-          <textarea className="mt-4 w-full min-h-[32rem] rounded-lg bg-base p-4 font-mono text-xs leading-relaxed text-dim" aria-label="Prompt complet de collecte des 73 indicateurs" readOnly value={collectionPrompt} onFocus={(event) => event.currentTarget.select()} />
+          <summary className="cursor-pointer text-sm font-semibold text-bright">
+            Afficher et copier manuellement le prompt
+          </summary>
+          <textarea aria-label="Prompt Cogentigram ouvert" className="mt-4 w-full min-h-[26rem] rounded-lg bg-base p-4 font-mono text-xs leading-relaxed text-dim"
+            value={collectionPrompt} readOnly onFocus={e=>e.currentTarget.select()} />
         </details>
       </section>
 
-      <section className="card space-y-4" aria-labelledby="return-title">
-        <p className="font-mono text-signal text-xs tracking-widest uppercase">Après la réponse de votre agent</p>
-        <h2 id="return-title" className="font-display text-2xl font-semibold text-bright">Revenez ici pour lire le portrait</h2>
-        <p className="text-sm text-dim leading-relaxed">Quand votre agent a terminé, copiez sa réponse complète, revenez sur cette page et collez-la ci-dessous. Le portrait est affiché dans ce navigateur; il n’est pas envoyé à un serveur.</p>
-        <label htmlFor="agent-response" className="block text-sm font-medium text-bright">Réponse complète de votre agent</label>
-        <textarea id="agent-response" value={response} onChange={(event) => setResponse(event.target.value)} placeholder="Collez ici le bloc JSON complet, y compris les balises ```json si elles sont présentes…" className="input min-h-48 w-full resize-y font-mono text-xs leading-relaxed" />
-        {responseError && <p role="alert" className="text-sm text-red-300">{responseError}</p>}
-        <button className="btn-primary" type="button" onClick={showPortrait} disabled={!response.trim()}>Afficher mon portrait</button>
+      <section className="card space-y-4">
+        <h2 className="font-display text-2xl font-semibold text-bright">Lire la réponse dans ce navigateur</h2>
+        <label htmlFor="cogentigram-response" className="text-sm font-medium text-bright">Réponse complète de votre agent</label>
+        <textarea id="cogentigram-response" className="input min-h-48 w-full resize-y font-mono text-xs"
+          value={response} onChange={e=>setResponse(e.target.value)} placeholder="Collez le JSON complet, version 2.0 ou archive 1.0."/>
+        {responseError && <p role="alert" className="text-red-300 text-sm">{responseError}</p>}
+        <button type="button" className="btn-primary" onClick={showPortrait} disabled={!response.trim()}>
+          Afficher les dimensions observées
+        </button>
       </section>
 
-      {portrait && <section className="card space-y-5" aria-labelledby="portrait-title">
-        <div>
-          <p className="font-mono text-signal text-xs tracking-widest uppercase">Interprétation de votre agent</p>
-          <h2 id="portrait-title" className="font-display text-2xl font-semibold text-bright">Votre portrait Cogentia</h2>
-          <p className="mt-2 text-sm text-dim">Agent : {portrait.agent?.name || 'non précisé'} · Confiance globale déclarée : {portrait.user_relationship?.global_confidence ?? '—'}/100</p>
-        </div>
-        <p className="text-xs text-muted">Ces scores sont des estimations produites par un agent, pas des résultats de test validés. Ils restent dans cette page et ce navigateur.</p>
-        <ol className="space-y-4">
-          {portrait.indicators.slice().sort((a, b) => a.rank - b.rank).map((item) => <li key={item.rank} className="border-t border-line/50 pt-3">
-            <div className="flex flex-wrap justify-between gap-2 text-sm"><span className="font-medium text-bright">{item.rank}. {item.name}</span><span className="text-dim">{item.score == null ? 'Non estimé' : `${item.score}${item.score_type === 'percentile' ? 'e percentile estimé' : ''}`} · confiance {item.confidence ?? '—'}/100</span></div>
-            {item.score != null && <div className="mt-2 h-1.5 rounded-full bg-line"><div className="h-1.5 rounded-full bg-signal" style={{ width: `${Math.max(0, Math.min(100, Number(item.score) || 0))}%` }} /></div>}
-            {item.evidence && <p className="mt-1 text-xs text-dim">{item.evidence}</p>}
-          </li>)}
-        </ol>
-      </section>}
+      {portrait && (
+        <section className="card space-y-5" aria-label="Portrait de l'agent">
+          <h2 className="font-display text-2xl font-semibold text-bright">
+            {measured.length} dimensions rapportées par {portrait.agent?.name || 'l’agent'}
+          </h2>
+          <p className="text-xs text-muted">Ce que l'agent affirme, non une mesure psychométrique certifiée.
+            Une absence de score numérique ne supprime ni la dimension ni les éléments de preuve.</p>
+          {Object.entries(measurementGroups).map(([category, rows])=>(
+            <div key={category} className="space-y-3">
+              <h3 className="font-semibold">{category} · {rows.length}</h3>
+              {rows.map((item, idx)=>(
+                <div key={item.id || idx} className="border-t border-line/50 pt-3">
+                  <div className="flex justify-between gap-3 text-sm">
+                    <span className="font-medium text-bright">{item.id || '—'} — {item.name}</span>
+                    <span className="text-dim shrink-0">{item.score == null ? 'Qualitatif' : `Est. IA : ${item.score}/100`}</span>
+                  </div>
+                  {item.evidence && <p className="text-xs text-dim mt-1">
+                    {typeof item.evidence === 'string' ? item.evidence : JSON.stringify(item.evidence)}
+                  </p>}
+                  {item.measurement?.context && <p className="text-xs text-muted mt-1">Contexte : {item.measurement.context}</p>}
+                  {item.measurement?.contexts?.map((c,i)=><p key={i} className="text-xs text-muted mt-1">{c.domain} : {c.observation}</p>)}
+                </div>
+              ))}
+            </div>
+          ))}
+        </section>
+      )}
 
-      <section className="space-y-5" aria-labelledby="indicator-list-title">
-        <div><h2 id="indicator-list-title" className="font-display text-2xl font-semibold text-bright">Les 73 indicateurs du modèle</h2><p className="text-sm text-dim mt-2">La liste et les catégories proviennent du prompt Cogentia version 1. L’agent formule des estimations; elles ne mesurent pas une capacité clinique.</p></div>
+      <section className="space-y-4">
+        <h2 className="font-display text-2xl font-semibold text-bright">Registre actuel des dimensions</h2>
+        <p className="text-sm text-dim">Chaque entrée possède un identifiant stable et une définition.
+          Les catégories servent uniquement à naviguer et peuvent évoluer.</p>
         <div className="grid sm:grid-cols-2 gap-4">
-          {Object.entries(groups).map(([category, items]) => (
-            <details key={category} className="card group">
-              <summary className="cursor-pointer font-display font-semibold text-bright">{categoryNames[category] || category}<span className="font-mono text-xs text-dim ml-2">{items.length}</span></summary>
-              <ol className="mt-4 space-y-2 list-decimal pl-5 text-sm text-dim">
-                {items.map(({ rank, name }) => <li key={rank}>{name}</li>)}
-              </ol>
-            </details>
+          {Object.entries(groups).map(([category, items])=>(
+            <div key={category} className="card">
+              <button type="button" className="w-full text-left font-semibold text-bright" onClick={()=>setExpanded(expanded===category?'':category)}>
+                {category} <span className="text-xs text-dim">{items.length}</span>
+              </button>
+              {expanded===category && (
+                <div className="space-y-3 mt-4">
+                  {items.map(item=><div key={item.id} className="text-sm border-t border-line/50 pt-2">
+                    <p className="font-medium">{item.id} — {item.name}</p>
+                    <p className="text-xs text-muted">{item.definition}</p>
+                  </div>)}
+                </div>
+              )}
+            </div>
           ))}
         </div>
-        <p className="text-xs text-muted">{indicators.length} indicateurs trouvés dans la source. Les sept scores dérivés font partie de cette liste; leur présence ne les rend pas indépendants des autres estimations.</p>
       </section>
 
-      <section className="space-y-5" aria-labelledby="presentations-title">
-        <div><h2 id="presentations-title" className="font-display text-2xl font-semibold text-bright">Des présentations familières</h2><p className="text-sm text-dim mt-2">Big Five, MBTI, DISC et Ennéagramme sont des façons connues d’organiser des observations sur soi. Elles peuvent aider à réfléchir ou à mieux communiquer avec un agent; elles ne constituent pas quatre preuves indépendantes ni des étiquettes définitives.</p></div>
-        <div className="grid sm:grid-cols-2 gap-4">{presentations.map(([title, description]) => <article key={title} className="card"><h3 className="font-display text-lg font-semibold text-bright mb-2">{title}</h3><p className="text-sm text-dim leading-relaxed">{description}</p></article>)}</div>
-        <p className="text-xs text-muted">Le parcours actuel affiche les estimations Cogentia v1 que vous collez. Il ne convertit pas encore ces scores vers les quatre présentations; nous les montrons ici comme des repères de lecture, pas comme des résultats calculés.</p>
-      </section>
-
-      <section className="card space-y-4">
-        <h2 className="font-display text-xl font-semibold text-bright">Le parcours disponible aujourd’hui</h2>
-        <ol className="list-decimal pl-5 space-y-2 text-sm text-dim"><li>Choisissez un agent et copiez son prompt.</li><li>Collez sa réponse pour voir ses affirmations dans un portrait lisible.</li><li>Examinez, corrigez et comparez les réponses localement.</li></ol>
-        <div className="flex flex-wrap gap-3"><Link className="btn-primary" to="/snapshot">Interroger mon agent</Link><Link className="btn-ghost" to="/mirror">Ouvrir le miroir</Link></div>
+      <section className="text-xs text-muted space-y-2">
+        <p>Les vues Big Five, MBTI, DISC et Ennéagramme de l'ancien parcours constituent des projections historiques,
+          et non des validations indépendantes de ce registre ouvert.</p>
+        <Link className="btn-ghost inline-flex" to="/snapshot">Ouvrir aussi le miroir KYS</Link>
       </section>
     </div>
   )

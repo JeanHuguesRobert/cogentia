@@ -21,6 +21,19 @@ classification_source: "cogentia.js"
 classification_version: "1"
 classification_rule: "explicit-metadata"
 classification_confidence: "medium"
+status: working-paper — active documentation
+license: CC BY-SA 4.0
+last_modified_at: '2026-11-22'
+provenance:
+  origin_type: unknown
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+affiliation: Institut Mariani / C.O.R.S.I.C.A.
 ---
 
 # Specialized KYS profiles and Agent JHN fidelity
@@ -44,11 +57,13 @@ This principal is deliberately **open** about structural self-model for research
 | Mandate subset | `AGENTS.public-readonly` | What the surface may do |
 | Representation | `agent_brief` | What to say / red lines |
 | Specialized KYS | `kys.public_answer_style` → thinking capsule | How to write/reason |
-| Open structural radar | `cogentigram_jhn_public_open.json` | Full 73-axis **structural** profile, person-open |
+| Open structural radar | `cogentigram_jhn_public_open.json` | Open **80 first-class dimensions** structural profile, person-open (not a closed 73-axis map) |
 | March baseline | `apps/personal/samples/cogentigram_author.json` | 2026-03 ChatGPT sample (compare note below) |
 | Facts | Public corpus retrieval | Evidence |
 
 March vs August delta: [`cogentigram_jhn_march_vs_open_2026-08.md`](cogentigram_jhn_march_vs_open_2026-08.md) — **66/73** scores unchanged, **7** one-point bumps, **13** evidence rewrites; radar shape stable.
+
+**Active migration, 22 November 2026:** [the canonical registry](cogentigram_dimensions.json) now specifies at least 80 equal-level first-class dimensions. In the JHN profile, REP-001/002/003, ENG-001/002/003 and OPS-001 are peers of the preceding entries, with qualitative measures where no validated number exists. The March→August 73-axis comparison above remains a **historical comparison only**, not the active modelling contract. Selection for Agent John covers relevant categories and contextual evidence, including unscored traits, rather than simply choosing the highest historical numbers. Work owner: [#200](https://github.com/JeanHuguesRobert/cogentia/issues/200).
 
 Episodic private traces (raw WhatsApp, private registry dumps) stay **out**.
 
@@ -59,7 +74,7 @@ channel policy
   → AGENTS.public-readonly
   → agent_brief
   → kys.public_answer_style (capsule)
-  → compressed top-N from person-open Cogentigram (default N=12)
+  → context/coverage-selected dimension sample from person-open Cogentigram (default N=12)
   → public corpus excerpts
   → user question
 ```

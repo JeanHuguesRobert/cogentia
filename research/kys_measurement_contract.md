@@ -239,6 +239,31 @@ unresolved_residue:
 
 ---
 
+## Addendum — dimension-bearing observations with open cardinality (22 November 2026)
+
+Current Cogentigram dimensions are specified by [the canonical register](cogentigram_dimensions.json), with stable `dimension_id` keys; they are not bounded by the cardinality or list from March 2026. Every dimension has equal standing, including REP-001/002/003, ENG-001/002/003 and OPS-001. This is complementary to the original one-shot measurement contract: capture observations first and project onto dimensions as a distinct derived act.
+
+A dimension-bound observation can contain:
+
+```yaml
+dimension_id: REP-001
+value:
+  kind: conditional            # qualitative | ordinal | quantitative | conditional | unknown
+  numeric_value: null          # absence does not imply no evidence
+  contexts:
+    - domain: conventional_calculus_notation
+      observation: "direct decoding of formula reported as opaque"
+    - domain: programming_language
+      observation: "working formal-language fluency demonstrated in implementation"
+observations: []               # source-bearing atoms
+counter_evidence: []
+instrument_metadata: {}       # what was actually available to observer
+epistemic_status: inference   # observation | inference | hypothesis
+rights: {}                    # independent rights to measure/store/view/use/disclose
+```
+
+A measured number is only a *population percentile* if the capture identifies an empirical calibration population, its instrument and transformation. Pre-existing 0–100 agent estimates have distinct type `agent_estimate_0_100`; do not silently reinterpret them. Preserve raw input, the normalized form, human annotations and every derived view separately. Unknown fields and additional dimensions must survive parsing and export.
+
 ## 5. Anti-Loss Invariants (Contract Guarantees)
 
 Any conforming prompt and downstream parser must enforce these four non-negotiable guarantees:

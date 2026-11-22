@@ -71,7 +71,7 @@ export default async function handler(req) {
   // ─── 3. Statut → parsing ──────────────────────────────────────────────────
   await setStatus(analysisId, 'parsing')
 
-  const { data: parsed, error: parseErr, warnings } = parseCogentiaJson(rawJson)
+  const { data: parsed, source: original, rawText, error: parseErr, warnings } = parseCogentiaJson(rawJson)
 
   if (parseErr) {
     await setStatus(analysisId, 'error', parseErr)
@@ -125,9 +125,9 @@ export default async function handler(req) {
 
       // Intégrité
       prompt_version_id: promptVersion?.id ?? null,
-      prompt_verified: true,
+      prompt_verified: false,  // Version check is not evidence of prompt integrity.
       json_valid: true,
-      raw_json: parsed,
+      raw_json: { ...parsed, _raw_measurement: { exact_text: rawText, original } },
 
       status: 'scoring', // juste avant l'insert des scores
     })
@@ -138,16 +138,18 @@ export default async function handler(req) {
     return json({ error: updateErr.message }, 500)
   }
 
-  // ─── 6. Insère les 73 scores ──────────────────────────────────────────────
+  // ─── 6. Store every dimension (numeric or qualitative), without cap ───────
   const scores = parsed.indicators.map(ind => ({
     analysis_id: analysisId,
     rank: ind.rank,
+    dimension_id: ind.id,
+    measurement: ind.measurement ?? null,
     category: ind.category,
     name: ind.name,
     score: ind.score,
     score_type: ind.score_type,
     confidence: ind.confidence,
-    evidence: ind.evidence,
+    evidence: typeof ind.evidence === 'string' ? ind.evidence : JSON.stringify(ind.evidence ?? ''),
   }))
 
   const { error: insertErr } = await supabaseAdmin
@@ -174,8 +176,12 @@ export default async function handler(req) {
     .eq('id', analysisId)
     .single()
 
-  generatePresentations(analysisId, storedScores ?? [], storedAnalysis ?? {})
-    .catch(e => console.error('[Cogentia] Presentations failed:', e.message))
+  // The ordinal-rank-based psychometric mappings are legacy research projections.
+  // They cannot be interpreted or auto-generated from open v2 dimensions.
+  if (parsed.cogentia_version === '1.0') {
+    generatePresentations(analysisId, storedScores ?? [], storedAnalysis ?? {})
+      .catch(e => console.error('[Cogentia] Presentations failed:', e.message))
+  }
 
   // ─── 8. Terminé ───────────────────────────────────────────────────────────────
   await setStatus(analysisId, 'complete')

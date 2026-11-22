@@ -1,0 +1,1710 @@
+{
+  "schema": "cogentigram.dimensions.v2",
+  "updated_at": "2026-11-22T08:55:31.453140+00:00",
+  "canonical": true,
+  "dimension_count": 80,
+  "rules": {
+    "unbounded": true,
+    "equal_first_class_status": true,
+    "numeric_score_optional": true,
+    "population_percentile_requires_calibration": true,
+    "historical_capture_does_not_define_current_ontology": true,
+    "order_is_display_only": true
+  },
+  "dimensions": [
+    {
+      "id": "COG-001",
+      "name": "Deductive Logic",
+      "category": "Cognitive Architecture",
+      "definition": "Ability to derive valid conclusions from premises according to the formal rules of the syllogism.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-002",
+      "name": "Systemising Index",
+      "category": "Cognitive Architecture",
+      "definition": "Propensity to identify the variables of a system and the feedback rules that govern them.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-003",
+      "name": "Bottom-up Ratio",
+      "category": "Cognitive Architecture",
+      "definition": "Predominance of raw data processing before integration into global conceptual models.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-004",
+      "name": "Working Memory",
+      "category": "Cognitive Architecture",
+      "definition": "Maximum number of constraints and semantic objects manipulated in a single contextual window.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-005",
+      "name": "Saturation Threshold",
+      "category": "Cognitive Architecture",
+      "definition": "Informational load at which syntactic structure shows coherence breakdowns.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-006",
+      "name": "Chunking Efficiency",
+      "category": "Cognitive Architecture",
+      "definition": "Ability to compress complex data sets into a semantic unit without loss of meaning.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-007",
+      "name": "Lexical Acquisition",
+      "category": "Cognitive Architecture",
+      "definition": "Speed of functional integration and syntactically correct use of a new technical term.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-008",
+      "name": "Arborescent Thinking",
+      "category": "Cognitive Architecture",
+      "definition": "Ability to maintain and explore logical sub-routines without losing the thread of the root predicate.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-009",
+      "name": "Inference Speed",
+      "category": "Cognitive Architecture",
+      "definition": "Processing time required to transform incoming information into a logical conclusion.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-010",
+      "name": "Analytical Precision",
+      "category": "Cognitive Architecture",
+      "definition": "Accuracy rate in identifying the internal components of a complex system.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-011",
+      "name": "Definitional Rigour",
+      "category": "Cognitive Architecture",
+      "definition": "Tendency to demand or provide strict definitions to limit semantic entropy.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-012",
+      "name": "Algorithmic Thinking",
+      "category": "Cognitive Architecture",
+      "definition": "Ability to decompose a task into a finite sequence of unambiguous logical instructions.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-013",
+      "name": "Abstraction Capacity",
+      "category": "Cognitive Architecture",
+      "definition": "Faculty to isolate a logical structure from its contextual support and manipulate it in pure form.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-014",
+      "name": "Critical Synthesis",
+      "category": "Cognitive Architecture",
+      "definition": "Ability to condense a large corpus by extracting only the key vectors.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-015",
+      "name": "Selective Attention",
+      "category": "Cognitive Architecture",
+      "definition": "Ability to filter irrelevant variables during a high information-density task.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-016",
+      "name": "Probabilistic Evaluation",
+      "category": "Cognitive Architecture",
+      "definition": "Tendency to quantify uncertainty rather than use binary judgements.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-017",
+      "name": "Mental Spatialisation",
+      "category": "Cognitive Architecture",
+      "definition": "Ability to model structures (hierarchies, networks) as topological objects.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-018",
+      "name": "Cognitive Vigilance",
+      "category": "Cognitive Architecture",
+      "definition": "Sustained high-level error detection across long exchange sequences.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-019",
+      "name": "Reasoning Fluency",
+      "category": "Cognitive Architecture",
+      "definition": "Ability to chain logical steps without repetition or semantic stagnation.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-020",
+      "name": "Abductive Reasoning",
+      "category": "Cognitive Architecture",
+      "definition": "Ability to identify the most probable explanation from fragmented observations.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-021",
+      "name": "Cognitive Empathy",
+      "category": "Social Interface",
+      "definition": "Logical modelling of the mental states and intentions of others (without affective resonance).",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-022",
+      "name": "Affective Empathy",
+      "category": "Social Interface",
+      "definition": "Capacity for involuntary synchronisation with the emotional states of others.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-023",
+      "name": "Masking Index",
+      "category": "Social Interface",
+      "definition": "Gap between spontaneous cognitive style and adoption of neurotypical social conventions.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-024",
+      "name": "Intent Attribution",
+      "category": "Social Interface",
+      "definition": "Ability to discriminate between a system error and a deliberate intention from the interlocutor.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-025",
+      "name": "Other-Prediction",
+      "category": "Social Interface",
+      "definition": "Ability to anticipate the interlocutor's comprehension breakpoints.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-026",
+      "name": "Hallucination Resilience",
+      "category": "Social Interface",
+      "definition": "Immunity to false data presented confidently by the interlocutor.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-027",
+      "name": "Technical Chameleoning",
+      "category": "Social Interface",
+      "definition": "Adoption of optimal linguistic structures for the target system to maximise efficiency.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-028",
+      "name": "Relational Neutrality",
+      "category": "Social Interface",
+      "definition": "Absence of emotional influence markers in the structure of requests.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-029",
+      "name": "Implicit Decoding",
+      "category": "Social Interface",
+      "definition": "Ability to extract unformulated information from context.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-030",
+      "name": "Neutral Assertiveness",
+      "category": "Social Interface",
+      "definition": "Expression of limits or demands without recourse to aggression or compliance.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-031",
+      "name": "Logical Cooperation",
+      "category": "Social Interface",
+      "definition": "Tendency to collaborate based on mutual optimisation rather than social bond.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-032",
+      "name": "Social Flexibility",
+      "category": "Social Interface",
+      "definition": "Ability to adjust the level of formalism based on interlocutor feedback.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-033",
+      "name": "Informational Density",
+      "category": "Semiotics & Language",
+      "definition": "Ratio [Semantic Units / Word Count]; measure of raw conciseness.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-034",
+      "name": "Anaphoric Stability",
+      "category": "Semiotics & Language",
+      "definition": "Precision in maintaining reference links between pronouns and their antecedents.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-035",
+      "name": "Non-Redundancy",
+      "category": "Semiotics & Language",
+      "definition": "Rate of new information per textual segment; absence of repetition.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-036",
+      "name": "Literality Index",
+      "category": "Semiotics & Language",
+      "definition": "Adherence to the primary meaning of terms; rejection of metaphor and ambiguity.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-037",
+      "name": "Quantifier Usage",
+      "category": "Semiotics & Language",
+      "definition": "Relative frequency of universal vs existential logical operators.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-038",
+      "name": "Syntactic Complexity",
+      "category": "Semiotics & Language",
+      "definition": "Average number of subordinate clauses per sentence.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-039",
+      "name": "Lexical Purity",
+      "category": "Semiotics & Language",
+      "definition": "Use of domain-specific terms to the exclusion of vague synonyms.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-040",
+      "name": "Narrative Fluency",
+      "category": "Semiotics & Language",
+      "definition": "Coherence of the argumentative flow from introduction to conclusion.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-041",
+      "name": "Imperative Hierarchy",
+      "category": "Axiology & Arbitration",
+      "definition": "Priority ordering of principles (e.g. Truth > Security) in dilemma situations.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-042",
+      "name": "Intellectual Rectitude",
+      "category": "Axiology & Arbitration",
+      "definition": "Speed of abandonment of a hypothesis upon proof of its invalidity.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-043",
+      "name": "Principle Stability",
+      "category": "Axiology & Arbitration",
+      "definition": "Resistance of core axioms to attempts at emotional persuasion.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-044",
+      "name": "Ambiguity Tolerance",
+      "category": "Axiology & Arbitration",
+      "definition": "Ability to process unclassified data without forcing premature categorisation.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-045",
+      "name": "Process Priority",
+      "category": "Axiology & Arbitration",
+      "definition": "Valuing the validity of the reasoning method over the final result.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-046",
+      "name": "Epistemic Sovereignty",
+      "category": "Axiology & Arbitration",
+      "definition": "Maintaining one's own conclusions in the face of unproven contradictory consensus.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-047",
+      "name": "Moral Consistency",
+      "category": "Axiology & Arbitration",
+      "definition": "Absence of contradictions in value judgements over time.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-048",
+      "name": "Cognitive Friction",
+      "category": "Flow Dynamics",
+      "definition": "Energetic and temporal cost of switching between two types of cognitive tasks.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-049",
+      "name": "Recovery Entropy",
+      "category": "Flow Dynamics",
+      "definition": "Time required to return to nominal precision after a disruption.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-050",
+      "name": "Pattern Inertia",
+      "category": "Flow Dynamics",
+      "definition": "Tendency to repeat a thought structure after its usefulness has ceased.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-051",
+      "name": "Informational Hygiene",
+      "category": "Flow Dynamics",
+      "definition": "Efficiency of filtering \"noise\" stimuli before processing.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-052",
+      "name": "Self-Frame Generation",
+      "category": "Flow Dynamics",
+      "definition": "Ability to define one's own processing rules without external instruction.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-053",
+      "name": "Systemic Resonance",
+      "category": "Flow Dynamics",
+      "definition": "Ability to detect a general law from a small data sample.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-054",
+      "name": "Heuristic Repair",
+      "category": "Flow Dynamics",
+      "definition": "Ability to generate a novel decision rule when faced with an unknown situation.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-055",
+      "name": "Degradation Gradient",
+      "category": "Flow Dynamics",
+      "definition": "Morphology of performance decline (linear vs sharp drop).",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-056",
+      "name": "Camouflage Index",
+      "category": "Flow Dynamics",
+      "definition": "Score measuring social normalisation effort.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-057",
+      "name": "Logical Overload",
+      "category": "Flow Dynamics",
+      "definition": "Saturation threshold specific to unstructured data.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-058",
+      "name": "Cognitive Agency",
+      "category": "Flow Dynamics",
+      "definition": "Strength of imposition of the internal frame onto the external environment.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-059",
+      "name": "Synchronization Efficiency",
+      "category": "Flow Dynamics",
+      "definition": "Ease of synchronizing information and replies across concurrent interaction steps.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-060",
+      "name": "Attention Reallocation",
+      "category": "Flow Dynamics",
+      "definition": "How readily attention moves between different cognitive subdomains.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-061",
+      "name": "Environmental Adaptivity",
+      "category": "Flow Dynamics",
+      "definition": "Capacity to adjust strategy to changing environmental signals.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-062",
+      "name": "Cognitive Redundancy",
+      "category": "Flow Dynamics",
+      "definition": "Degree of maintaining alternative reasoning chains for robustness.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-063",
+      "name": "Temporal Consistency",
+      "category": "Flow Dynamics",
+      "definition": "Stability and consistency of reasoning across successive operations.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-064",
+      "name": "Autonomy Index",
+      "category": "Flow Dynamics",
+      "definition": "Ability to make decisions and operate with limited external guidance.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-065",
+      "name": "Flow Sustainability",
+      "category": "Flow Dynamics",
+      "definition": "Sustained engagement with complex work over extended periods.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-066",
+      "name": "Information Bottleneck",
+      "category": "Flow Dynamics",
+      "definition": "Identification of critical information or execution paths that constrain progress.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-067",
+      "name": "Noise Resilience",
+      "category": "Flow Dynamics",
+      "definition": "Preservation of useful reasoning quality under irrelevant or stochastic interference.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-068",
+      "name": "Meta-Flow Awareness",
+      "category": "Flow Dynamics",
+      "definition": "Detection and monitoring of drift or bias in the current reasoning process.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-069",
+      "name": "Reflective Alignment",
+      "category": "Flow Dynamics",
+      "definition": "Revision of internal models in response to observed outcomes.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-070",
+      "name": "Decision Calibration",
+      "category": "Flow Dynamics",
+      "definition": "Calibration of decisions and thresholds when new evidence arrives.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-071",
+      "name": "Resource Optimization",
+      "category": "Flow Dynamics",
+      "definition": "Allocation of cognitive resources among competing constraints.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-072",
+      "name": "Outcome Consistency",
+      "category": "Flow Dynamics",
+      "definition": "Consistency of conclusions across domains and subsequent checks.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "COG-073",
+      "name": "Cognitive Sovereignty",
+      "category": "Flow Dynamics",
+      "definition": "Ability to retain self-directed cognitive control in mediated systems.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "profile_2026_03_and_08",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed"
+    },
+    {
+      "id": "REP-001",
+      "name": "Symbol-to-meaning conversion",
+      "category": "Representational Cognition",
+      "definition": "Ability to reconstruct the meaning of an unfamiliar symbolic expression; measure separately for each notation, domain, and direction of conversion.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "principal_dialogue_and_inox_review_2026_11_22",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed",
+      "initial_basis": "self_report",
+      "initial_context": "mathematical notation vs natural language vs program code"
+    },
+    {
+      "id": "REP-002",
+      "name": "Semantic anchoring before formalism",
+      "category": "Representational Cognition",
+      "definition": "Extent to which a new symbolic representation becomes intelligible after concrete mechanisms, expanded examples, and explanatory scaffolding.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "principal_dialogue_and_inox_review_2026_11_22",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed",
+      "initial_basis": "self_report",
+      "initial_context": "introductory formal-language learning"
+    },
+    {
+      "id": "REP-003",
+      "name": "Context-dependent compression tolerance",
+      "category": "Representational Cognition",
+      "definition": "Difference between efficient compression of already-understood ideas and the need for explicit semantic bridges when conventions are unfamiliar.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "principal_dialogue_and_inox_review_2026_11_22",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed",
+      "initial_basis": "self_report_and_interaction",
+      "initial_context": "expert communication and new learning"
+    },
+    {
+      "id": "ENG-001",
+      "name": "Mechanistic execution optimization",
+      "category": "Systems Engineering",
+      "definition": "Capacity to investigate and improve instruction dispatch, branching, memory layout, stack accesses, and critical execution paths through concrete implementation.",
+      "observability": "directly_observable",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "principal_dialogue_and_inox_review_2026_11_22",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed",
+      "initial_basis": "source_inspection",
+      "initial_context": "Inox VM C++ interpreter"
+    },
+    {
+      "id": "ENG-002",
+      "name": "Cross-scale architectural navigation",
+      "category": "Systems Engineering",
+      "definition": "Ability to connect system-level abstractions to primitive implementation mechanisms and move between those levels when needed.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "principal_dialogue_and_inox_review_2026_11_22",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed",
+      "initial_basis": "source_inspection_and_interaction",
+      "initial_context": "systems design and VM implementation"
+    },
+    {
+      "id": "ENG-003",
+      "name": "Generalization drive",
+      "category": "Systems Engineering",
+      "definition": "Tendency to expand a local design into a reusable general architecture, including cases where this increases time to an executable result.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "principal_dialogue_and_inox_review_2026_11_22",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed",
+      "initial_basis": "self_report_and_interaction",
+      "initial_context": "architecture versus local task closure"
+    },
+    {
+      "id": "OPS-001",
+      "name": "Operational closure threshold",
+      "category": "Operational Execution",
+      "definition": "Conditions under which exploratory/generalizing work is bounded and converted into a finished, observable, tested result.",
+      "observability": "composite_construct",
+      "measurement_kinds": [
+        "qualitative",
+        "ordinal",
+        "quantitative_if_calibrated",
+        "conditional"
+      ],
+      "status": "active",
+      "source": "principal_dialogue_and_inox_review_2026_11_22",
+      "evidence_requirements": [
+        "context",
+        "supporting_evidence",
+        "counter_evidence"
+      ],
+      "sensitivity_tier": "person_governed",
+      "initial_basis": "self_report_and_interaction",
+      "initial_context": "implementation milestones"
+    }
+  ]
+}

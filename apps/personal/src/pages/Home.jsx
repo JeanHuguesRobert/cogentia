@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import dimensionRegistry from '../../../../research/cogentigram_dimensions.json'
 import BlindSpotCard from '../components/BlindSpotCard'
 
 const STEPS = [
@@ -57,8 +58,8 @@ export default function Home() {
 
       <section className="mt-10 card border-signal/30 space-y-4">
         <p className="font-mono text-signal text-xs tracking-widest uppercase">Explorer aussi</p>
-        <h2 className="font-display text-2xl font-semibold text-bright">73 indicateurs et des lectures familières</h2>
-        <p className="text-sm text-dim leading-relaxed">Découvrez les dimensions du modèle et les présentations autrefois proposées : Big Five, MBTI, DISC et Ennéagramme. Elles restent des lectures estimatives, sans certification psychométrique.</p>
+        <h2 className="font-display text-2xl font-semibold text-bright">{dimensionRegistry.dimensions.length} dimensions ouvertes et extensibles</h2>
+        <p className="text-sm text-dim leading-relaxed">Explorez les dimensions de premier rang, le protocole de capture et les observations contextuelles ; les présentations historiques ne sont pas des validations indépendantes.</p>
         <Link className="btn-ghost" to="/indicators">Explorer les indicateurs et les présentations →</Link>
       </section>
 

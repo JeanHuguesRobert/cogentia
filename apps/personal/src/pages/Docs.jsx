@@ -201,12 +201,13 @@ export default function Docs() {
           Documentation
         </p>
         <h1 className="font-display text-4xl font-bold text-bright mb-4">
-          Protocole Cogentia
+          Archives du protocole Cogentia v1
         </h1>
         <p className="font-body text-dim text-base max-w-2xl leading-relaxed">
-          Méthodologie, définitions des 73 indicateurs, cadre éthique et format de données.
-          Tout ce qu'il faut savoir pour interpréter un profil Cogentia avec justesse.
+          Cette page décrit l'ancien protocole à 73 axes, conservé comme source historique.
+          Le Cogentigram actif utilise un registre ouvert de dimensions à identifiants stables.
         </p>
+        <Link className="btn-primary inline-flex mt-5" to="/indicators">Ouvrir le registre actif des dimensions</Link>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-10">

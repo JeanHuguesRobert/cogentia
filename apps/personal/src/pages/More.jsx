@@ -30,7 +30,7 @@ export default function More() {
         <p className="font-body text-lg text-dim leading-relaxed">Pas besoin d’être spécialiste pour se demander ce qu’un agent a retenu, ce qu’il suppose ou comment mieux travailler avec lui. Voici quelques chemins pour comprendre le projet, ses limites et son ambition.</p>
         <div className="flex flex-wrap gap-3">
           <Link className="btn-primary" to="/snapshot">Commencer avec mon agent →</Link>
-          <Link className="btn-ghost" to="/indicators">Voir les 73 indicateurs</Link>
+          <Link className="btn-ghost" to="/indicators">Explorer les dimensions Cogentigram</Link>
           <Link className="btn-ghost" to="/waitlist?source=more">Être informé de l’ouverture du pilote</Link>
         </div>
       </header>

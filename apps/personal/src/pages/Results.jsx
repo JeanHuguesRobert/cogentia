@@ -6,18 +6,10 @@ import { supabase } from '../supabaseClient'
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
-const CATEGORIES = [
-  'Architecture Cognitive',
-  'Interface Sociale',
-  'Sémiotique & Langage',
-  'Axiologie & Arbitrage',
-  'Dynamique de Flux',
-  'Scores Dérivés',
-  'Cogentia+',
-]
-
-// Catégories affichées dans le radar (les dérivés sont calculés, pas mesurés)
-const RADAR_CATEGORIES = CATEGORIES.filter(c => c !== 'Scores Dérivés')
+// Dimension IDs, categories and cardinality are supplied by the capture.
+// Display order is not an epistemic rank.
+const isQualitative = item =>
+  item.score == null && Boolean(item.measurement || item.evidence)
 
 const RELIABILITY = {
   'ne pas interpréter': { color: 'text-red-400',    bg: 'border-red-900/50 bg-red-950/20',    icon: '⚠' },
@@ -26,148 +18,36 @@ const RELIABILITY = {
   'très fiable':        { color: 'text-signal',      bg: 'border-signal/30 bg-signal/5',         icon: '✦' },
 }
 
-// ─── SVG Radar Chart ─────────────────────────────────────────────────────────
+// ─── Evidence coverage (not a pseudo-population radar) ────────────────────────
 
-function polarToXY(angle, radius, cx, cy) {
-  const rad = (angle - 90) * (Math.PI / 180)
-  return {
-    x: cx + radius * Math.cos(rad),
-    y: cy + radius * Math.sin(rad),
-  }
-}
-
-function RadarChart({ data, size = 280 }) {
-  const cx = size / 2
-  const cy = size / 2
-  const maxR = size / 2 - 36
-  const n = data.length
-  if (n < 3) return null
-
-  const rings = [25, 50, 75, 100]
-  const angles = data.map((_, i) => (360 / n) * i)
-
-  // Polygone utilisateur
-  const userPoints = data.map((d, i) => {
-    const r = ((d.score ?? 50) / 100) * maxR
-    return polarToXY(angles[i], r, cx, cy)
-  })
-
-  // Polygone référence (médiane pop = 50e percentile)
-  const medianPoints = data.map((_, i) => polarToXY(angles[i], maxR * 0.5, cx, cy))
-
-  const toPath = pts => pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ') + ' Z'
-
+function CategoryCoverage({ groups }) {
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="overflow-visible">
-      <defs>
-        <radialGradient id="radarGrad" cx="50%" cy="50%" r="50%">
-          <stop offset="0%"   stopColor="#4f7cff" stopOpacity="0.25" />
-          <stop offset="100%" stopColor="#4f7cff" stopOpacity="0.04" />
-        </radialGradient>
-      </defs>
-
-      {/* Grille circulaire */}
-      {rings.map(pct => (
-        <circle
-          key={pct}
-          cx={cx} cy={cy}
-          r={(pct / 100) * maxR}
-          fill="none"
-          stroke="#1e2535"
-          strokeWidth="1"
-        />
+    <div className="w-full space-y-3">
+      {groups.map(({ name, items }) => (
+        <div key={name} className="flex items-start justify-between gap-3 border-b border-border pb-2">
+          <span className="font-body text-xs text-bright">{name}</span>
+          <span className="font-mono text-xs text-muted shrink-0">
+            {items.filter(i => i.evidence || i.measurement).length}/{items.length} documentés
+          </span>
+        </div>
       ))}
-
-      {/* Axes */}
-      {data.map((d, i) => {
-        const outer = polarToXY(angles[i], maxR, cx, cy)
-        return <line key={i} x1={cx} y1={cy} x2={outer.x} y2={outer.y} stroke="#1e2535" strokeWidth="1" />
-      })}
-
-      {/* Médiane populationnelle */}
-      <path
-        d={toPath(medianPoints)}
-        fill="none"
-        stroke="#3a4460"
-        strokeWidth="1"
-        strokeDasharray="4 3"
-      />
-
-      {/* Polygone utilisateur */}
-      <path d={toPath(userPoints)} fill="url(#radarGrad)" stroke="#4f7cff" strokeWidth="1.5" />
-
-      {/* Points sur les axes */}
-      {userPoints.map((p, i) => (
-        <circle key={i} cx={p.x} cy={p.y} r="3" fill="#4f7cff" />
-      ))}
-
-      {/* Labels */}
-      {data.map((d, i) => {
-        const labelR = maxR + 22
-        const pos = polarToXY(angles[i], labelR, cx, cy)
-        const anchor = pos.x < cx - 4 ? 'end' : pos.x > cx + 4 ? 'start' : 'middle'
-        // Abréviation du nom de catégorie
-        const short = d.name
-          .replace('Architecture Cognitive', 'Cognition')
-          .replace('Interface Sociale', 'Social')
-          .replace('Sémiotique & Langage', 'Langage')
-          .replace('Axiologie & Arbitrage', 'Axiologie')
-          .replace('Dynamique de Flux', 'Flux')
-          .replace('Cogentia+', 'Cogentia+')
-        return (
-          <text
-            key={i}
-            x={pos.x} y={pos.y}
-            textAnchor={anchor}
-            dominantBaseline="middle"
-            fontSize="10"
-            fontFamily="IBM Plex Mono, monospace"
-            fill={d.score !== null ? '#8892a4' : '#3a4460'}
-          >
-            {short}
-          </text>
-        )
-      })}
-
-      {/* Score central */}
-      <text x={cx} y={cy - 8} textAnchor="middle" fontSize="20" fontFamily="Syne, sans-serif" fontWeight="700" fill="#e8ecf5">
-        {Math.round(data.filter(d => d.score !== null).reduce((s, d) => s + d.score, 0) / Math.max(data.filter(d => d.score !== null).length, 1))}
-      </text>
-      <text x={cx} y={cy + 10} textAnchor="middle" fontSize="8" fontFamily="IBM Plex Mono, monospace" fill="#3a4460">
-        MOY. PERCENTILE
-      </text>
-    </svg>
+    </div>
   )
 }
 
-// ─── Barre percentile ────────────────────────────────────────────────────────
-
-function PercentileBar({ score, confidence }) {
-  if (score === null) return <span className="font-mono text-muted text-xs">données insuffisantes</span>
-
-  const dimmed = confidence < 40
-  // Couleur selon zone percentile
-  const barColor = score >= 84 ? 'bg-signal'
-                 : score >= 60 ? 'bg-blue-400'
-                 : score >= 40 ? 'bg-muted'
-                 : 'bg-pulse'
-
-  return (
-    <div className={`flex items-center gap-3 ${dimmed ? 'opacity-40' : ''}`} title={`Confidence : ${confidence}%`}>
-      {/* Marqueur médiane */}
-      <div className="relative flex-1 h-1.5 bg-border rounded-full overflow-visible">
-        {/* Ligne médiane à 50 */}
-        <div className="absolute top-1/2 left-1/2 -translate-y-1/2 w-px h-3 bg-muted/50 z-10" />
-        <div
-          className={`h-full ${barColor} rounded-full transition-all duration-700 ease-out`}
-          style={{ width: `${score}%` }}
-        />
-      </div>
-      <span className="font-mono text-xs text-bright w-7 text-right shrink-0 tabular-nums">
-        {score}
+function DimensionValue({ ind }) {
+  if (ind.score == null) {
+    return (
+      <span className="text-xs font-body text-signal">
+        {isQualitative(ind) ? 'Observation contextuelle' : 'Non évalué'}
       </span>
-      {dimmed && <span className="font-mono text-xs text-muted" title="Confiance faible">~</span>}
-    </div>
+    )
+  }
+  const calibrated = ind.score_type === 'population_percentile_calibrated'
+  return (
+    <span className="font-mono text-xs text-bright" title={calibrated ? 'Percentile étalonné' : 'Estimation numérique non étalonnée'}>
+      {calibrated ? 'Percentile' : 'Est. IA'} : {ind.score}/100
+    </span>
   )
 }
 
@@ -186,16 +66,25 @@ function IndicatorRow({ ind }) {
             {ind.name}
           </p>
         </div>
-        <PercentileBar score={ind.score} confidence={ind.confidence} />
+        <DimensionValue ind={ind} />
       </div>
-      {open && ind.evidence && (
-        <div className="px-2 pb-2 animate-fade-in">
-          <p className="font-body text-xs text-dim leading-relaxed border-l-2 border-border pl-3 ml-1">
-            {ind.evidence}
-          </p>
-          <p className="font-mono text-xs text-muted mt-1 pl-3 ml-1">
-            confiance : {ind.confidence}/100
-          </p>
+      {open && (
+        <div className="px-2 pb-3 animate-fade-in space-y-2">
+          {ind.id && <p className="font-mono text-xs text-muted">Dimension : {ind.id}</p>}
+          {ind.evidence && <p className="font-body text-xs text-dim leading-relaxed border-l-2 border-border pl-3 ml-1">
+            {typeof ind.evidence === 'string' ? ind.evidence : JSON.stringify(ind.evidence)}
+          </p>}
+          {ind.measurement?.context && <p className="font-mono text-xs text-muted">
+            Contexte : {ind.measurement.context}
+          </p>}
+          {Array.isArray(ind.measurement?.contexts) && ind.measurement.contexts.map((c, j) => (
+            <p key={j} className="font-body text-xs text-dim">
+              {c.domain ? c.domain + ' : ' : ''}{c.observation ?? JSON.stringify(c)}
+            </p>
+          ))}
+          {ind.confidence != null && <p className="font-mono text-xs text-muted">
+            Confiance déclarée par l'instrument : {ind.confidence}/100
+          </p>}
         </div>
       )}
     </div>
@@ -249,7 +138,7 @@ export default function Results() {
   const [indicators, setIndicators] = useState([])
   const [loading,    setLoading]    = useState(true)
   const [error,      setError]      = useState(null)
-  const [activeTab,  setActiveTab]  = useState(CATEGORIES[0])
+  const [activeTab,  setActiveTab]  = useState('')
 
   // Poll toutes les 2s si l'analyse est encore en cours
   useEffect(() => {
@@ -298,26 +187,18 @@ export default function Results() {
 
   // ─── Données calculées ────────────────────────────────────────────────────
 
+  const categories = [...new Set(indicators.map(i => i.category || 'Non classé'))]
   const byCategory = Object.fromEntries(
-    CATEGORIES.map(cat => [cat, indicators.filter(i => i.category === cat)])
+    categories.map(cat => [cat, indicators.filter(i => (i.category || 'Non classé') === cat)])
   )
-
-  const categoryAvg = cat => {
-    const items = byCategory[cat]?.filter(i => i.score !== null) ?? []
-    if (!items.length) return null
-    return Math.round(items.reduce((s, i) => s + i.score, 0) / items.length)
-  }
-
-  const radarData = RADAR_CATEGORIES.map(cat => ({
-    name:  cat,
-    score: categoryAvg(cat),
-  }))
-
-  // Top 5 scores les plus élevés (avec score non-null)
-  const topIndicators = [...indicators]
-    .filter(i => i.score !== null && i.confidence >= 40)
-    .sort((a, b) => b.score - a.score)
+  const activeCategory = categories.includes(activeTab) ? activeTab : categories[0]
+  const coverageGroups = categories.map(name => ({ name, items: byCategory[name] }))
+  // A high score does not make a dimension more relevant than evidence without a number.
+  const notableIndicators = [...indicators]
+    .filter(i => i.evidence || i.measurement)
+    .sort((a, b) => Number(isQualitative(b)) - Number(isQualitative(a)))
     .slice(0, 5)
+  const legacyProjections = indicators.every(i => i.score_type === 'percentile')
 
   const rel = RELIABILITY[analysis.reliability_recommendation] ?? RELIABILITY['avec précaution']
 
@@ -355,9 +236,9 @@ export default function Results() {
             {analysis.reliability_recommendation === 'avec précaution' &&
               "L'historique est limité. Interprète ces résultats comme une première indication, pas un portrait définitif."}
             {analysis.reliability_recommendation === 'fiable' &&
-              "L'agent dispose d'un historique suffisant. Ce profil est une représentation fiable de tes tendances cognitives."}
+              "L'agent déclare disposer d'un historique riche. Ses interprétations restent à confronter aux observations."}
             {analysis.reliability_recommendation === 'très fiable' &&
-              "L'agent te connaît très bien. Ce profil a une forte valeur psychométrique."}
+              "L'agent déclare une bonne couverture de son historique ; cela ne constitue pas un étalonnage psychométrique."}
             {analysis.rel_global_confidence_rationale && (
               <span className="block mt-1 text-muted">{analysis.rel_global_confidence_rationale}</span>
             )}
@@ -368,68 +249,53 @@ export default function Results() {
       {/* ── Vue globale : radar + top traits ───────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
 
-        {/* Radar */}
+        {/* Observable coverage, including unscored dimensions */}
         <div className="card flex flex-col items-center gap-4">
-          <p className="label self-start">Vue globale par catégorie</p>
-          <RadarChart data={radarData} size={260} />
+          <p className="label self-start">Couverture par domaine</p>
+          <CategoryCoverage groups={coverageGroups} />
           <p className="font-mono text-xs text-muted text-center">
-            Tiret = médiane populationnelle (50e percentile)
+            Les observations qualitatives comptent autant que les évaluations numériques.
           </p>
         </div>
 
         {/* Top traits */}
         <div className="card flex flex-col gap-4">
-          <p className="label">Traits dominants</p>
-          {topIndicators.length === 0 ? (
+          <p className="label">Repères documentés</p>
+          {notableIndicators.length === 0 ? (
             <p className="font-body text-xs text-muted">Données insuffisantes</p>
           ) : (
             <div className="space-y-4 flex-1">
-              {topIndicators.map((ind, i) => (
-                <div key={ind.rank} className="flex items-center gap-3">
+              {notableIndicators.map((ind, i) => (
+                <div key={ind.id ?? ind.rank} className="flex items-center gap-3">
                   <span className="font-mono text-xs text-muted w-4 shrink-0">{i + 1}</span>
                   <div className="flex-1 min-w-0">
                     <p className="font-body text-xs text-bright truncate">{ind.name}</p>
                     <p className="font-mono text-xs text-muted">{ind.category}</p>
                   </div>
-                  <span className="font-mono text-sm font-bold text-signal shrink-0">
-                    {ind.score}
+                  <span className="font-mono text-xs text-signal shrink-0">
+                    {ind.score == null ? 'Qualitatif' : 'Évalué'}
                   </span>
                 </div>
               ))}
             </div>
           )}
 
-          {/* Scores dérivés synthétiques */}
-          {byCategory['Scores Dérivés']?.filter(i => i.score !== null).length > 0 && (
-            <div className="border-t border-border pt-4 space-y-2">
-              <p className="label">Indices dérivés</p>
-              {byCategory['Scores Dérivés'].filter(i => i.score !== null).map(ind => (
-                <div key={ind.rank} className="flex items-center justify-between">
-                  <span className="font-mono text-xs text-dim">{ind.name}</span>
-                  <span className={`font-mono text-xs font-semibold ${ind.score >= 84 ? 'text-signal' : ind.score >= 50 ? 'text-bright' : 'text-pulse'}`}>
-                    {ind.score}e
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
 
       {/* ── Détail par catégorie (onglets) ──────────────────────────── */}
       <div>
-        <p className="label mb-4">Détail des 73 indicateurs</p>
+        <p className="label mb-4">Détail des {indicators.length} dimensions</p>
 
         {/* Tabs */}
         <div className="flex flex-wrap gap-1 mb-6 border-b border-border pb-3">
-          {CATEGORIES.map(cat => {
-            const avg = categoryAvg(cat)
+          {categories.map(cat => {
             return (
               <button
                 key={cat}
                 onClick={() => setActiveTab(cat)}
                 className={`px-3 py-1.5 rounded text-xs font-body transition-colors duration-150 ${
-                  activeTab === cat
+                  activeCategory === cat
                     ? 'bg-panel text-bright border border-border'
                     : 'text-muted hover:text-dim'
                 }`}
@@ -438,36 +304,22 @@ export default function Results() {
                     .replace('Sémiotique & Langage', 'Sémiotique')
                     .replace('Axiologie & Arbitrage', 'Axiologie')
                     .replace('Dynamique de Flux', 'Flux')}
-                {avg !== null && (
-                  <span className="ml-1.5 font-mono text-signal">{avg}</span>
-                )}
+                <span className="ml-1.5 font-mono text-muted">{byCategory[cat]?.length ?? 0}</span>
               </button>
             )
           })}
         </div>
 
         {/* Contenu de l'onglet */}
-        <div className="card animate-fade-in" key={activeTab}>
-          {/* Légende */}
-          <div className="flex items-center gap-6 mb-6 pb-4 border-b border-border">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-px bg-signal" />
-              <span className="font-mono text-xs text-muted">toi</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-px bg-muted border-dashed border-t border-muted" />
-              <span className="font-mono text-xs text-muted">médiane pop.</span>
-            </div>
-            <span className="font-mono text-xs text-muted ml-auto">
-              {byCategory[activeTab]?.filter(i => i.score !== null).length ?? 0}/
-              {byCategory[activeTab]?.length ?? 0} scorés
-            </span>
+        <div className="card animate-fade-in" key={activeCategory}>
+          <div className="font-mono text-xs text-muted mb-5">
+            {byCategory[activeCategory]?.length ?? 0} dimensions, chacune avec sa preuve et ses conditions de validité.
           </div>
 
           {/* Indicateurs */}
           <div className="divide-y divide-border -mx-2">
-            {(byCategory[activeTab] ?? []).map(ind => (
-              <IndicatorRow key={ind.rank} ind={ind} />
+            {(byCategory[activeCategory] ?? []).map(ind => (
+              <IndicatorRow key={ind.id ?? ind.rank} ind={ind} />
             ))}
           </div>
         </div>
@@ -475,7 +327,14 @@ export default function Results() {
 
       {/* ── Modes de présentation ──────────────────────────────────────── */}
       <div className="mt-12">
-        <PresentationPanel analysisId={id} analysis={analysis} />
+        {legacyProjections ? (
+          <PresentationPanel analysisId={id} analysis={analysis} />
+        ) : (
+          <p className="font-body text-xs text-muted">
+            Les projections psychométriques héritées ne sont pas calculées à partir du Cogentigram extensible :
+            elles nécessitent une correspondance par identifiant et une calibration distincte.
+          </p>
+        )}
       </div>
 
       {/* ── Feedback ────────────────────────────────────────────────── */}

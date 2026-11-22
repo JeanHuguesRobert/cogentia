@@ -28,6 +28,7 @@ review:
   status: unreviewed
   reviewed_by: []
 update_policy: UP-DEFAULT-REVIEWED
+language: en
 ---
 
 # Cogentigraphic Distillation
@@ -102,6 +103,8 @@ This paper calls the extraction, training, or specification of that operating la
 ---
 
 ## 2. Position within the Cogentia Corpus
+
+The [open first-class Cogentigram registry](cogentigram_dimensions.json) supersedes the old fixed 73-axis active model. Its first implementation has 80 peer dimensions, including contextual qualitative representation-learning and systems-engineering traits; the older 73-axis captures remain dated records rather than a permanent projection contract.
 
 Cogentia already distinguishes structural cognitive signatures from biography. In [`Cogentia-and-Cogentigram.md`](Cogentia-and-Cogentigram.md), Cogentia is defined as a persistent structural signature inferred from repeated interaction, not as episodic memory, demographic metadata, or biography. [`cogentia-digital-twin.md`](cogentia-digital-twin.md) then frames this as a question of sovereignty: if AI systems inevitably model a person, that model must be accessible, contestable, correctable, and governed by the subject.
 

@@ -81,7 +81,7 @@ create table public.analyses (
   prompt_version_id     uuid references public.prompt_versions(id) on delete set null,
 
   -- Source
-  conversation_url      text not null,          -- lien partagé par l'user
+  conversation_url      text,                   -- facultatif en collecte manuelle
   conversation_raw      text,                   -- HTML/JSON brut récupéré
 
   -- Identification de l'agent IA
@@ -150,25 +150,30 @@ comment on table public.analyses is
 
 -- ============================================================
 -- TABLE : indicator_scores
--- Les 73 scores individuels par analyse (table normalisée)
+-- Dimensions ouvertes et mesures contextualisées par analyse
 -- ============================================================
 create table public.indicator_scores (
   id            uuid primary key default uuid_generate_v4(),
   analysis_id   uuid not null references public.analyses(id) on delete cascade,
 
   -- Identité de l'indicateur
-  rank          integer not null check (rank between 1 and 73),
+  rank          integer not null check (rank > 0),
+  dimension_id  text not null,
   category      text not null,
   name          text not null,
 
   -- Score
-  score         integer check (score between 0 and 100),  -- percentile, null si confidence < 20
-  score_type    text not null default 'percentile',
-  confidence    integer not null check (confidence between 0 and 100),
+  score         integer check (score between 0 and 100),  -- score optionnel, jamais implicitement percentile
+  score_type    text not null default 'qualitative',
+  measurement   jsonb,  -- conditions, contextes, observations et contre-preuves
+  confidence    integer check (confidence between 0 and 100),
   evidence      text,
 
   created_at    timestamptz not null default now()
 );
+
+create unique index indicator_scores_analysis_dimension_unique
+  on public.indicator_scores(analysis_id, dimension_id);
 
 create unique index indicator_scores_analysis_rank_unique
   on public.indicator_scores(analysis_id, rank);
@@ -177,7 +182,7 @@ create index indicator_scores_analysis_id_idx on public.indicator_scores(analysi
 create index indicator_scores_rank_idx on public.indicator_scores(rank);
 
 comment on table public.indicator_scores is
-  'Scores percentiles des 73 indicateurs Cogentia pour chaque analyse.';
+  'Mesures de dimensions Cogentia extensibles, à identité stable et valeur numérique optionnelle.';
 
 -- ============================================================
 -- VUES UTILITAIRES
@@ -223,7 +228,7 @@ from public.indicator_scores s
 group by s.analysis_id, s.category;
 
 comment on view public.category_scores is
-  'Scores moyens par catégorie par analyse — base pour les graphiques radar.';
+  'Synthèse historique des scores numériques par catégorie, non équivalente à une mesure psychométrique normée.';
 
 -- ============================================================
 -- ROW LEVEL SECURITY (RLS)

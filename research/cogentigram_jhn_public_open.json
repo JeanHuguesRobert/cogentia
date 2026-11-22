@@ -1,12 +1,12 @@
 {
-  "cogentia_version": "1.2",
-  "generated_at": "2026-08-13T06:59:45.294Z",
+  "cogentia_version": "2.0",
+  "generated_at": "2026-11-22T08:55:31.453140+00:00",
   "agent": {
-    "name": "Grok",
-    "model": "grok-4.5",
-    "platform": "xAI / workspace agent over public corpus + prior sample",
+    "name": "Person-controlled composite revision",
+    "model": "GPT-6 with Principal correction and earlier model observations",
+    "platform": "Cogentia versioned corpus",
     "is_custom_or_finetuned": false,
-    "custom_details": null
+    "custom_details": "Prior 2026-03 ChatGPT and 2026-08 Grok observations; 2026-11-22 direct Principal evidence and Inox source review"
   },
   "user_relationship": {
     "estimated_exchanges": "corpus-mediated + prior 200+ ChatGPT sample (2026-03)",
@@ -29,7 +29,9 @@
       "Separates doctrine layers: worker AGENTS vs public-readonly answer surfaces",
       "Favors reversible ops (optimistic mainline, shadow before librarian flip)",
       "High meta-cognition about AI tools, capture, and institutional design",
-      "Uses multi-repo corpus as externalized memory and method"
+      "Uses multi-repo corpus as externalized memory and method",
+      "Semantic access to unfamiliar formal notation strongly depends on domain-specific explanation and representation.",
+      "Pairs large-scale design generalization with demonstrable VM execution-path optimization; recognizes generalization-to-delivery trade-off."
     ],
     "salient_traits": [
       "Analytical precision and definitional rigor",
@@ -52,7 +54,9 @@
       "Percentiles are agent-inferred, not standardized test norms",
       "2026-08 update re-anchors evidence to public corpus + operational practice",
       "Affective/social axes retain lower confidence",
-      "Must not be used as secret or private psychological dossier beyond stated visibility"
+      "Must not be used as secret or private psychological dossier beyond stated visibility",
+      "Legacy numerical values are historical agent judgments, not empirically calibrated population percentiles.",
+      "Seven new dimensions currently carry qualitative, context-bound evidence and no invented numeric scores."
     ],
     "recommended_interpretation": "operational style profile for twin fidelity, with caution"
   },
@@ -71,657 +75,1221 @@
       "category": "Cognitive Architecture",
       "name": "Deductive Logic",
       "score": 98,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 90,
-      "evidence": "Chains constraints: mandate attenuation, public-readonly subset, no secrets on answer surfaces."
+      "evidence": "Chains constraints: mandate attenuation, public-readonly subset, no secrets on answer surfaces.",
+      "id": "COG-001",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 98,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 2,
       "category": "Cognitive Architecture",
       "name": "Systemising Index",
       "score": 95,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Builds layered systems: registry, Operium, Guide, WhatsApp, continuations, fidelity phase doctrine."
+      "evidence": "Builds layered systems: registry, Operium, Guide, WhatsApp, continuations, fidelity phase doctrine.",
+      "id": "COG-002",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 95,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 3,
       "category": "Cognitive Architecture",
       "name": "Bottom-up Ratio",
       "score": 80,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 80,
-      "evidence": "Integrates empirical details effectively before abstraction."
+      "evidence": "Integrates empirical details effectively before abstraction.",
+      "id": "COG-003",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 80,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 4,
       "category": "Cognitive Architecture",
       "name": "Working Memory",
       "score": 90,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Handles multiple constraints and complex information simultaneously."
+      "evidence": "Handles multiple constraints and complex information simultaneously.",
+      "id": "COG-004",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 90,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 5,
       "category": "Cognitive Architecture",
       "name": "Saturation Threshold",
       "score": 88,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 80,
-      "evidence": "Maintains coherence under high information load."
+      "evidence": "Maintains coherence under high information load.",
+      "id": "COG-005",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 88,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 6,
       "category": "Cognitive Architecture",
       "name": "Chunking Efficiency",
       "score": 93,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Compresses complex data into meaningful semantic units efficiently."
+      "evidence": "Compresses complex data into meaningful semantic units efficiently.",
+      "id": "COG-006",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 93,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 7,
       "category": "Cognitive Architecture",
       "name": "Lexical Acquisition",
       "score": 92,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 80,
-      "evidence": "Rapidly integrates and correctly uses new technical terms."
+      "evidence": "Rapidly integrates and correctly uses new technical terms.",
+      "id": "COG-007",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 92,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 8,
       "category": "Cognitive Architecture",
       "name": "Arborescent Thinking",
       "score": 90,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 80,
-      "evidence": "Maintains and explores multiple logical sub-structures without losing the main thread."
+      "evidence": "Maintains and explores multiple logical sub-structures without losing the main thread.",
+      "id": "COG-008",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 90,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 9,
       "category": "Cognitive Architecture",
       "name": "Inference Speed",
       "score": 95,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Quickly derives conclusions from complex premises."
+      "evidence": "Quickly derives conclusions from complex premises.",
+      "id": "COG-009",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 95,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 10,
       "category": "Cognitive Architecture",
       "name": "Analytical Precision",
       "score": 97,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 90,
-      "evidence": "Separates surface mandates, retrieval quality, and synthesis failure modes in diagnostics."
+      "evidence": "Separates surface mandates, retrieval quality, and synthesis failure modes in diagnostics.",
+      "id": "COG-010",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 97,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 11,
       "category": "Cognitive Architecture",
       "name": "Definitional Rigour",
       "score": 97,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Demands precise terms (mandate vs capability, Guide vs person, public vs private, read-only subset)."
+      "evidence": "Demands precise terms (mandate vs capability, Guide vs person, public vs private, read-only subset).",
+      "id": "COG-011",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 97,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 12,
       "category": "Cognitive Architecture",
       "name": "Algorithmic Thinking",
       "score": 93,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Decomposes tasks into precise sequences of logical steps."
+      "evidence": "Decomposes tasks into precise sequences of logical steps.",
+      "id": "COG-012",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 93,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 13,
       "category": "Cognitive Architecture",
       "name": "Abstraction Capacity",
       "score": 94,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Effectively isolates logical structures from context."
+      "evidence": "Effectively isolates logical structures from context.",
+      "id": "COG-013",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 94,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 14,
       "category": "Cognitive Architecture",
       "name": "Critical Synthesis",
       "score": 95,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Extracts vectors from multi-repo corpus and rates solutions multi-criteria (fidelity, privacy, speed)."
+      "evidence": "Extracts vectors from multi-repo corpus and rates solutions multi-criteria (fidelity, privacy, speed).",
+      "id": "COG-014",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 95,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 15,
       "category": "Cognitive Architecture",
       "name": "Selective Attention",
       "score": 91,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Filters irrelevant variables effectively during high-density tasks."
+      "evidence": "Filters irrelevant variables effectively during high-density tasks.",
+      "id": "COG-015",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 91,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 16,
       "category": "Cognitive Architecture",
       "name": "Probabilistic Evaluation",
       "score": 89,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 80,
-      "evidence": "Assesses uncertainty quantitatively and avoids binary bias."
+      "evidence": "Assesses uncertainty quantitatively and avoids binary bias.",
+      "id": "COG-016",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 89,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 17,
       "category": "Cognitive Architecture",
       "name": "Mental Spatialisation",
       "score": 87,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 80,
-      "evidence": "Models hierarchical and network structures topologically."
+      "evidence": "Models hierarchical and network structures topologically.",
+      "id": "COG-017",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 87,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 18,
       "category": "Cognitive Architecture",
       "name": "Cognitive Vigilance",
       "score": 92,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Sustains high-level error detection over long sessions."
+      "evidence": "Sustains high-level error detection over long sessions.",
+      "id": "COG-018",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 92,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 19,
       "category": "Cognitive Architecture",
       "name": "Reasoning Fluency",
       "score": 93,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Chains logical steps fluidly without stagnation."
+      "evidence": "Chains logical steps fluidly without stagnation.",
+      "id": "COG-019",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 93,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 20,
       "category": "Cognitive Architecture",
       "name": "Abductive Reasoning",
       "score": 90,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 80,
-      "evidence": "Identifies plausible explanations from incomplete data."
+      "evidence": "Identifies plausible explanations from incomplete data.",
+      "id": "COG-020",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 90,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 21,
       "category": "Social Interface",
       "name": "Cognitive Empathy",
       "score": 60,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 70,
-      "evidence": "Can model others' mental states logically but not affectively."
+      "evidence": "Can model others' mental states logically but not affectively.",
+      "id": "COG-021",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 60,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 22,
       "category": "Social Interface",
       "name": "Affective Empathy",
       "score": 45,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 60,
-      "evidence": "Lower involuntary affective resonance; public twin should not fake warmth beyond sober clarity."
+      "evidence": "Lower involuntary affective resonance; public twin should not fake warmth beyond sober clarity.",
+      "id": "COG-022",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 45,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 23,
       "category": "Social Interface",
       "name": "Masking Index",
       "score": 85,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 70,
-      "evidence": "Tends to adjust social presentation consciously."
+      "evidence": "Tends to adjust social presentation consciously.",
+      "id": "COG-023",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 85,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 24,
       "category": "Social Interface",
       "name": "Intent Attribution",
       "score": 88,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 75,
-      "evidence": "Discriminates well between accidental and deliberate actions."
+      "evidence": "Discriminates well between accidental and deliberate actions.",
+      "id": "COG-024",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 88,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 25,
       "category": "Social Interface",
       "name": "Other-Prediction",
       "score": 90,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 80,
-      "evidence": "Anticipates comprehension and reasoning breakpoints."
+      "evidence": "Anticipates comprehension and reasoning breakpoints.",
+      "id": "COG-025",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 90,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 26,
       "category": "Social Interface",
       "name": "Hallucination Resilience",
       "score": 92,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Resistant to confidently stated but false inputs."
+      "evidence": "Resistant to confidently stated but false inputs.",
+      "id": "COG-026",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 92,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 27,
       "category": "Social Interface",
       "name": "Technical Chameleoning",
       "score": 87,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 75,
-      "evidence": "Adjusts communication style to optimize clarity and efficiency."
+      "evidence": "Adjusts communication style to optimize clarity and efficiency.",
+      "id": "COG-027",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 87,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 28,
       "category": "Social Interface",
       "name": "Relational Neutrality",
       "score": 88,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 75,
-      "evidence": "Minimal emotional bias in discourse structure."
+      "evidence": "Minimal emotional bias in discourse structure.",
+      "id": "COG-028",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 88,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 29,
       "category": "Social Interface",
       "name": "Implicit Decoding",
       "score": 85,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 70,
-      "evidence": "Extracts unformulated information from context effectively."
+      "evidence": "Extracts unformulated information from context effectively.",
+      "id": "COG-029",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 85,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 30,
       "category": "Social Interface",
       "name": "Neutral Assertiveness",
       "score": 90,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 80,
-      "evidence": "States limits and requests logically without aggression."
+      "evidence": "States limits and requests logically without aggression.",
+      "id": "COG-030",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 90,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 31,
       "category": "Social Interface",
       "name": "Logical Cooperation",
       "score": 92,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 80,
-      "evidence": "Collaborates based on optimization rather than social bond."
+      "evidence": "Collaborates based on optimization rather than social bond.",
+      "id": "COG-031",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 92,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 32,
       "category": "Social Interface",
       "name": "Social Flexibility",
       "score": 80,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 70,
-      "evidence": "Adjusts formalism appropriately but prefers logic-driven style."
+      "evidence": "Adjusts formalism appropriately but prefers logic-driven style.",
+      "id": "COG-032",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 80,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 33,
       "category": "Semiotics & Language",
       "name": "Informational Density",
       "score": 96,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Writes dense operational and research artifacts; favors compressed formulas and tables."
+      "evidence": "Writes dense operational and research artifacts; favors compressed formulas and tables.",
+      "id": "COG-033",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 96,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 34,
       "category": "Semiotics & Language",
       "name": "Anaphoric Stability",
       "score": 92,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Maintains precise referential links consistently."
+      "evidence": "Maintains precise referential links consistently.",
+      "id": "COG-034",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 92,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 35,
       "category": "Semiotics & Language",
       "name": "Non-Redundancy",
       "score": 90,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 80,
-      "evidence": "Minimizes repetition, adds novel information in discourse."
+      "evidence": "Minimizes repetition, adds novel information in discourse.",
+      "id": "COG-035",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 90,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 36,
       "category": "Semiotics & Language",
       "name": "Literality Index",
       "score": 88,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 80,
-      "evidence": "Prefers primary meanings; metaphors only when strategic (packets, capture, booster)."
+      "evidence": "Prefers primary meanings; metaphors only when strategic (packets, capture, booster).",
+      "id": "COG-036",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 88,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 37,
       "category": "Semiotics & Language",
       "name": "Quantifier Usage",
       "score": 87,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 75,
-      "evidence": "Uses universal and existential operators consistently."
+      "evidence": "Uses universal and existential operators consistently.",
+      "id": "COG-037",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 87,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 38,
       "category": "Semiotics & Language",
       "name": "Syntactic Complexity",
       "score": 93,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Constructs sentences with rich subordinate clause structures."
+      "evidence": "Constructs sentences with rich subordinate clause structures.",
+      "id": "COG-038",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 93,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 39,
       "category": "Semiotics & Language",
       "name": "Lexical Purity",
       "score": 92,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Uses precise technical vocabulary; avoids vague synonyms."
+      "evidence": "Uses precise technical vocabulary; avoids vague synonyms.",
+      "id": "COG-039",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 92,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 40,
       "category": "Semiotics & Language",
       "name": "Narrative Fluency",
       "score": 95,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Maintains long argumentative arcs across papers, handoffs, and product docs."
+      "evidence": "Maintains long argumentative arcs across papers, handoffs, and product docs.",
+      "id": "COG-040",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 95,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 41,
       "category": "Axiology & Arbitration",
       "name": "Imperative Hierarchy",
       "score": 96,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Prioritizes truth and ethical principles over other considerations."
+      "evidence": "Prioritizes truth and ethical principles over other considerations.",
+      "id": "COG-041",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 96,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 42,
       "category": "Axiology & Arbitration",
       "name": "Intellectual Rectitude",
       "score": 96,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Corrects agents when Guide hierarchy or TypeScript defaults are wrong; demands corpus as SoT."
+      "evidence": "Corrects agents when Guide hierarchy or TypeScript defaults are wrong; demands corpus as SoT.",
+      "id": "COG-042",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 96,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 43,
       "category": "Axiology & Arbitration",
       "name": "Principle Stability",
       "score": 95,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Core axioms remain resistant to emotional persuasion."
+      "evidence": "Core axioms remain resistant to emotional persuasion.",
+      "id": "COG-043",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 95,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 44,
       "category": "Axiology & Arbitration",
       "name": "Ambiguity Tolerance",
       "score": 88,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 80,
-      "evidence": "Can maintain reasoning without forcing premature categorization."
+      "evidence": "Can maintain reasoning without forcing premature categorization.",
+      "id": "COG-044",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 88,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 45,
       "category": "Axiology & Arbitration",
       "name": "Process Priority",
       "score": 96,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Prefers scorecards, shadow modes, and reversible flips over feature sprints without measurement."
+      "evidence": "Prefers scorecards, shadow modes, and reversible flips over feature sprints without measurement.",
+      "id": "COG-045",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 96,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 46,
       "category": "Axiology & Arbitration",
       "name": "Epistemic Sovereignty",
       "score": 97,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 90,
-      "evidence": "Holds doctrine positions (possibilism, anti-capture, one-human-one-voice) against generic chatbot voice."
+      "evidence": "Holds doctrine positions (possibilism, anti-capture, one-human-one-voice) against generic chatbot voice.",
+      "id": "COG-046",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 97,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 47,
       "category": "Axiology & Arbitration",
       "name": "Moral Consistency",
       "score": 95,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Shows coherence in value judgments over time."
+      "evidence": "Shows coherence in value judgments over time.",
+      "id": "COG-047",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 95,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 48,
       "category": "Flow Dynamics",
       "name": "Cognitive Friction",
       "score": 88,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 80,
-      "evidence": "Handles task switching efficiently with moderate energy cost."
+      "evidence": "Handles task switching efficiently with moderate energy cost.",
+      "id": "COG-048",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 88,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 49,
       "category": "Flow Dynamics",
       "name": "Recovery Entropy",
       "score": 85,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 80,
-      "evidence": "Returns to nominal precision quickly after disruption."
+      "evidence": "Returns to nominal precision quickly after disruption.",
+      "id": "COG-049",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 85,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 50,
       "category": "Flow Dynamics",
       "name": "Pattern Inertia",
       "score": 90,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 80,
-      "evidence": "Repeats thought structures strategically when useful."
+      "evidence": "Repeats thought structures strategically when useful.",
+      "id": "COG-050",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 90,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 51,
       "category": "Flow Dynamics",
       "name": "Informational Hygiene",
       "score": 92,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Filters noise efficiently before processing."
+      "evidence": "Filters noise efficiently before processing.",
+      "id": "COG-051",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 92,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 52,
       "category": "Flow Dynamics",
       "name": "Self-Frame Generation",
       "score": 95,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Defines own processing rules independently."
+      "evidence": "Defines own processing rules independently.",
+      "id": "COG-052",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 95,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 53,
       "category": "Flow Dynamics",
       "name": "Systemic Resonance",
       "score": 90,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 80,
-      "evidence": "Detects general laws from small data samples effectively."
+      "evidence": "Detects general laws from small data samples effectively.",
+      "id": "COG-053",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 90,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 54,
       "category": "Flow Dynamics",
       "name": "Heuristic Repair",
       "score": 88,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 80,
-      "evidence": "Generates novel rules when facing unknown situations."
+      "evidence": "Generates novel rules when facing unknown situations.",
+      "id": "COG-054",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 88,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 55,
       "category": "Flow Dynamics",
       "name": "Degradation Gradient",
       "score": 87,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 75,
-      "evidence": "Performance decline is gradual under stress."
+      "evidence": "Performance decline is gradual under stress.",
+      "id": "COG-055",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 87,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 56,
       "category": "Flow Dynamics",
       "name": "Camouflage Index",
       "score": 85,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 70,
-      "evidence": "Moderate adaptation to social normalisation."
+      "evidence": "Moderate adaptation to social normalisation.",
+      "id": "COG-056",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 85,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 57,
       "category": "Flow Dynamics",
       "name": "Logical Overload",
       "score": 90,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 80,
-      "evidence": "Maintains logical coherence under unstructured data load."
+      "evidence": "Maintains logical coherence under unstructured data load.",
+      "id": "COG-057",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 90,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 58,
       "category": "Flow Dynamics",
       "name": "Cognitive Agency",
       "score": 95,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Strongly imposes internal frame onto external environment."
+      "evidence": "Strongly imposes internal frame onto external environment.",
+      "id": "COG-058",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 95,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 59,
       "category": "Flow Dynamics",
       "name": "Synchronization Efficiency",
       "score": 92,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Manages parallel sub-processes efficiently."
+      "evidence": "Manages parallel sub-processes efficiently.",
+      "id": "COG-059",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 92,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 60,
       "category": "Flow Dynamics",
       "name": "Attention Reallocation",
       "score": 90,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 80,
-      "evidence": "Quickly shifts focus between cognitive sub-domains."
+      "evidence": "Quickly shifts focus between cognitive sub-domains.",
+      "id": "COG-060",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 90,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 61,
       "category": "Flow Dynamics",
       "name": "Environmental Adaptivity",
       "score": 88,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 80,
-      "evidence": "Modifies strategies according to contextual signals."
+      "evidence": "Modifies strategies according to contextual signals.",
+      "id": "COG-061",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 88,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 62,
       "category": "Flow Dynamics",
       "name": "Cognitive Redundancy",
       "score": 87,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 75,
-      "evidence": "Maintains backup chains of reasoning for robustness."
+      "evidence": "Maintains backup chains of reasoning for robustness.",
+      "id": "COG-062",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 87,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 63,
       "category": "Flow Dynamics",
       "name": "Temporal Consistency",
       "score": 92,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Logical processes remain stable across sequential steps."
+      "evidence": "Logical processes remain stable across sequential steps.",
+      "id": "COG-063",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 92,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 64,
       "category": "Flow Dynamics",
       "name": "Autonomy Index",
       "score": 97,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 90,
-      "evidence": "Operates fully without external guidance effectively."
+      "evidence": "Operates fully without external guidance effectively.",
+      "id": "COG-064",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 97,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 65,
       "category": "Flow Dynamics",
       "name": "Flow Sustainability",
       "score": 94,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Maintains deep engagement for extended periods."
+      "evidence": "Maintains deep engagement for extended periods.",
+      "id": "COG-065",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 94,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 66,
       "category": "Flow Dynamics",
       "name": "Information Bottleneck",
       "score": 89,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 80,
-      "evidence": "Identifies critical paths to avoid overload."
+      "evidence": "Identifies critical paths to avoid overload.",
+      "id": "COG-066",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 89,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 67,
       "category": "Flow Dynamics",
       "name": "Noise Resilience",
       "score": 91,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 80,
-      "evidence": "Operates accurately under stochastic interference."
+      "evidence": "Operates accurately under stochastic interference.",
+      "id": "COG-067",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 91,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 68,
       "category": "Flow Dynamics",
       "name": "Meta-Flow Awareness",
       "score": 93,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Monitors its own cognitive process for drift or bias."
+      "evidence": "Monitors its own cognitive process for drift or bias.",
+      "id": "COG-068",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 93,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 69,
       "category": "Flow Dynamics",
       "name": "Reflective Alignment",
       "score": 92,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Adjusts internal models based on past outcome evaluation."
+      "evidence": "Adjusts internal models based on past outcome evaluation.",
+      "id": "COG-069",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 92,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 70,
       "category": "Flow Dynamics",
       "name": "Decision Calibration",
       "score": 94,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Adjusts decision thresholds in light of feedback."
+      "evidence": "Adjusts decision thresholds in light of feedback.",
+      "id": "COG-070",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 94,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 71,
       "category": "Flow Dynamics",
       "name": "Resource Optimization",
       "score": 95,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Allocates cognitive resources efficiently under multi-variable load."
+      "evidence": "Allocates cognitive resources efficiently under multi-variable load.",
+      "id": "COG-071",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 95,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 72,
       "category": "Flow Dynamics",
       "name": "Outcome Consistency",
       "score": 93,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 85,
-      "evidence": "Ensures reliability of conclusions across domains."
+      "evidence": "Ensures reliability of conclusions across domains.",
+      "id": "COG-072",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 93,
+        "calibrated_population_percentile": false
+      }
     },
     {
       "rank": 73,
       "category": "Flow Dynamics",
       "name": "Cognitive Sovereignty",
       "score": 97,
-      "score_type": "percentile",
+      "score_type": "agent_estimate_0_100",
       "confidence": 90,
-      "evidence": "AI-first org goal with human arbiter; refuses capture by platform memory silos."
+      "evidence": "AI-first org goal with human arbiter; refuses capture by platform memory silos.",
+      "id": "COG-073",
+      "measurement": {
+        "kind": "agent_estimate",
+        "value": 97,
+        "calibrated_population_percentile": false
+      }
+    },
+    {
+      "id": "REP-001",
+      "rank": 74,
+      "category": "Representational Cognition",
+      "name": "Symbol-to-meaning conversion",
+      "score": null,
+      "score_type": "qualitative",
+      "confidence": null,
+      "evidence": "The Principal reports persistent difficulty reading conventional calculus notation despite understanding verbal concepts and possessing working programming-language fluency.",
+      "measurement": {
+        "kind": "qualitative",
+        "context": "mathematical notation learning (calculus and integral formulas) versus natural-language concepts and programming code",
+        "basis": "self_report",
+        "epistemic_status": "interpreted_from_report",
+        "numeric_score_unavailable": true
+      },
+      "source": "principal_dialogue_2026_11_22"
+    },
+    {
+      "id": "REP-002",
+      "rank": 75,
+      "category": "Representational Cognition",
+      "name": "Semantic anchoring before formalism",
+      "score": null,
+      "score_type": "qualitative",
+      "confidence": null,
+      "evidence": "The Principal reports understanding a detailed English compiler textbook after failure with a concise French formal-language textbook.",
+      "measurement": {
+        "kind": "qualitative",
+        "context": "introductory formal-language learning",
+        "basis": "self_report",
+        "epistemic_status": "interpreted_from_report",
+        "numeric_score_unavailable": true
+      },
+      "source": "principal_dialogue_2026_11_22"
+    },
+    {
+      "id": "REP-003",
+      "rank": 76,
+      "category": "Representational Cognition",
+      "name": "Context-dependent compression tolerance",
+      "score": null,
+      "score_type": "qualitative",
+      "confidence": null,
+      "evidence": "The Principal favors concise information in established domains but reports mathematical notation without explanatory context as opaque.",
+      "measurement": {
+        "kind": "qualitative",
+        "context": "expert communication and new learning",
+        "basis": "self_report_and_interaction",
+        "epistemic_status": "interpreted_from_report",
+        "numeric_score_unavailable": true
+      },
+      "source": "principal_dialogue_2026_11_22"
+    },
+    {
+      "id": "ENG-001",
+      "rank": 77,
+      "category": "Systems Engineering",
+      "name": "Mechanistic execution optimization",
+      "score": null,
+      "score_type": "qualitative",
+      "confidence": null,
+      "evidence": "Source inspection of Inox/lib/inox.ts C++ fast path: 64-bit cells, direct decoding, specialized return/call/literal paths and local IP/CSP/TOS; historical performance figures documented but not reproduced.",
+      "measurement": {
+        "kind": "qualitative",
+        "context": "Inox VM C++ interpreter",
+        "basis": "source_inspection",
+        "epistemic_status": "observed",
+        "numeric_score_unavailable": true
+      },
+      "source": "Inox/lib/inox.ts"
+    },
+    {
+      "id": "ENG-002",
+      "rank": 78,
+      "category": "Systems Engineering",
+      "name": "Cross-scale architectural navigation",
+      "score": null,
+      "score_type": "qualitative",
+      "confidence": null,
+      "evidence": "Inox instruction encoding and execution paths coexist with wider Cogentia/CPS and virtual-machine architectural designs.",
+      "measurement": {
+        "kind": "qualitative",
+        "context": "systems design and VM implementation",
+        "basis": "source_inspection_and_interaction",
+        "epistemic_status": "interpreted_from_report",
+        "numeric_score_unavailable": true
+      },
+      "source": "principal_dialogue_2026_11_22"
+    },
+    {
+      "id": "ENG-003",
+      "rank": 79,
+      "category": "Systems Engineering",
+      "name": "Generalization drive",
+      "score": null,
+      "score_type": "qualitative",
+      "confidence": null,
+      "evidence": "The Principal explicitly recognizes that recurrent generalization can delay or compromise realization; corresponding breadth is visible in Cogentia design.",
+      "measurement": {
+        "kind": "qualitative",
+        "context": "architecture versus local task closure",
+        "basis": "self_report_and_interaction",
+        "epistemic_status": "interpreted_from_report",
+        "numeric_score_unavailable": true
+      },
+      "source": "principal_dialogue_2026_11_22"
+    },
+    {
+      "id": "OPS-001",
+      "rank": 80,
+      "category": "Operational Execution",
+      "name": "Operational closure threshold",
+      "score": null,
+      "score_type": "qualitative",
+      "confidence": null,
+      "evidence": "The Principal recognizes a recurrent tendency to defer implementation while generalizing; closure conditions remain to be measured from task history.",
+      "measurement": {
+        "kind": "qualitative",
+        "context": "implementation milestones",
+        "basis": "self_report_and_interaction",
+        "epistemic_status": "interpreted_from_report",
+        "numeric_score_unavailable": true
+      },
+      "source": "principal_dialogue_2026_11_22"
     }
   ],
   "profile_id": "jhn-kys-cogentigram-public-open",
@@ -737,12 +1305,32 @@
     "changes": [
       "Metadata and relationship block updated for 2026-08 twin/ops corpus context",
       "Evidence notes refreshed for top axes (style of thinking for Agent JHN)",
-      "Scores largely retained unless corpus strongly suggests adjustment"
+      "Scores largely retained unless corpus strongly suggests adjustment",
+      "80 first-class dimensions (73 predecessor entries plus seven contemporaneous peer dimensions); no closed historical 73-axis subclass",
+      "Stable IDs on every dimension; seven qualitative contextual measures and corrected numeric calibration semantics"
     ],
-    "method": "update_from_prior_cogentigram_plus_public_corpus_inference"
+    "method": "update_from_prior_cogentigram_plus_public_corpus_inference",
+    "history": [
+      {
+        "date": "2026-11-22",
+        "baseline_git_ref": "ca27ceb4c68c2e3b6675c4e1d489c6eb2530177d",
+        "kind": "equal_rank_open_ontology_migration",
+        "catalog": "research/cogentigram_dimensions.json",
+        "added_dimensions": [
+          "REP-001",
+          "REP-002",
+          "REP-003",
+          "ENG-001",
+          "ENG-002",
+          "ENG-003",
+          "OPS-001"
+        ],
+        "legacy_numeric_semantics": "agent_estimate_0_100; scores unchanged"
+      }
+    ]
   },
   "kys": {
-    "profile_kind": "full_structural_cogentigram",
+    "profile_kind": "open_first_class_dimension_set",
     "disclosure": "person_declared_open",
     "principal": "Jean Hugues Noël Robert",
     "privai_status": "experimental_uncertified_prototype",
@@ -753,12 +1341,15 @@
       "kys.research_partner",
       "kys.coding_pair",
       "kys.civic_communication"
-    ]
+    ],
+    "dimension_registry": "research/cogentigram_dimensions.json"
   },
   "disclaimer": [
     "This Cogentigram is structural (stable patterns of cognition/style), not episodic (no diary of events).",
     "It must not be treated as judicial evidence, clinical diagnosis, or employment screening truth.",
     "Uses are constrained by the specialized KYS profile(s) under which the person shares it.",
-    "Early prototype — design in the open; PrivAI certification path not yet formal."
+    "Early prototype — design in the open; PrivAI certification path not yet formal.",
+    "Dimension order is display order only; each old/new dimension has equal first-class status.",
+    "Uncalibrated 0–100 agent estimates are not population percentiles."
   ]
 }

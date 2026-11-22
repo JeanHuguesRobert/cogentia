@@ -94,6 +94,14 @@ Each entry in the registry is structured according to the following schema:
 
 ---
 
+## Canonical first-class Cogentigram dimension register (22 November 2026)
+
+The active dimensional model is the machine-readable [Cogentigram dimensions](cogentigram_dimensions.json). It currently lists **80 equally first-class, stable-ID dimensions**, not a privileged historical 73 plus an appendix. The list is **open-ended**: the model does not assume a maximum or a preordained taxonomy, and display order is not epistemic ranking. Each dimension has a definition, observability, possible measurement kinds and evidence obligations. The seven dimensions REP-001 through REP-003, ENG-001 through ENG-003 and OPS-001 are peers of all other entries.
+
+The older HIST-xxx examples and legacy 73-axis comparisons **document past instruments only**. They neither define the current active dimension list nor impose a numerical maximum. Earlier measurement records remain immutable historical evidence and can be reinterpreted through new views.
+
+Absence of a numerical score must not delete a dimension with qualitative or contextual evidence. Similarly, a number supplied by an agent cannot be treated as a population percentile without independent calibration. Current personal reference: [JHN public Cogentigram](cogentigram_jhn_public_open.json), version 2.0. Implementation and cross-Corpus migration: [Cogentigram migration](cogentigram_migration.md), packet [#200](https://github.com/JeanHuguesRobert/cogentia/issues/200).
+
 ## 3. Construct Clusters
 
 The registry organizes candidate constructs into seven distinct clusters:

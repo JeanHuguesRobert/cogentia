@@ -25,6 +25,7 @@ review:
   status: unreviewed
   reviewed_by: []
 update_policy: UP-DEFAULT-REVIEWED
+language: en
 ---
 # Cogentia and Cogentigrams
 
@@ -36,7 +37,7 @@ update_policy: UP-DEFAULT-REVIEWED
 
 Persistent interaction with artificial intelligence systems generates stable structural representations of users' behavioral, cognitive, and stylistic tendencies. This paper introduces **Cogentia**, defined as the enduring structural signature of an entity as inferred through repeated AI-mediated interaction.
 
-Its measurable representation, the **Cogentigram**, formalizes this signature along defined psychometric and behavioral axes, using percentile normalization, uncertainty estimation, and longitudinal analysis.
+Its measurable representation, the **Cogentigram**, formalizes this signature through an open set of structural and behavioral dimensions, supported by contextual evidence, uncertainty estimates, and longitudinal analysis. Population percentiles apply only when empirically calibrated.
 
 We propose a methodological framework integrating psychometrics, semantic embeddings, federated learning, and differential privacy. We further outline governance mechanisms and graded disclosure licensing structures designed to preserve individual autonomy while enabling legitimate institutional use.
 
@@ -84,7 +85,7 @@ Cogentia differs from metaphysical constructs: it is operational, statistical, a
 The persistent structural signature of an entity inferred from repeated AI-mediated interaction, capturing stable cognitive, behavioral, and stylistic tendencies.
 
 **Cogentigram**
-A structured representation of Cogentia composed of defined axes, percentile normalization against reference populations, confidence intervals, and longitudinal indicators.
+An extensible, revisable representation of Cogentia: identifiable first-class dimensions, context-bound observations, explicit uncertainty, counter-evidence and longitudinal claims. Numerical scoring and population normalization are optional derived operations requiring a stated instrument and calibration.
 
 **Cogentiscope**
 The instrument of inference — the protocol, the measurement process, and the analytical engine that produces a Cogentigram from observable behavior. In the current MVP, the Cogentiscope is the Cogentia prompt submitted to the user's own AI agent; the agent acts as the measurement instrument. Any structured inference process that produces a Cogentigram from behavioral data is a Cogentiscope, regardless of technical implementation.
@@ -146,7 +147,9 @@ Psychometric grounding may draw from:
 * Big Five (OCEAN)
 * HEXACO (including Honesty–Humility)
 
-Axes are grouped into four categories:
+The following are **illustrative families**, not a closed axis catalogue or a privileged historical taxonomy. The active versioned dimensions are defined in [the canonical registry](cogentigram_dimensions.json).
+
+Illustrative families include:
 
 **Cognitive Structure**
 
@@ -180,6 +183,12 @@ Axes are explicitly statistical constructs, not ontological claims.
 
 ---
 
+### 4.1a Open first-class dimensional ontology
+
+The active Cogentigram is an open dimension set, not the preservation of a historical 73-axis template. The first implementation of the revised model contains **80 dimensions of equal standing**, including REP-001/002/003 (representation), ENG-001/002/003 (systems engineering), and OPS-001 (operational completion). Each dimension has a stable ID and operational definition. The model may add, merge, revise or retire dimensions under provenance and evidence controls; number and order have no special psychological significance. See [Cogentigram dimensions](cogentigram_dimensions.json), [the migration contract](cogentigram_migration.md) and Cognitive Packet [#200](https://github.com/JeanHuguesRobert/cogentia/issues/200).
+
+The distinction between raw observations, their contextual interpretations, human corrections and derived numeric or graphical views is preserved. A dimension can be meaningful without a score. The older snapshots are historical evidence; they do not impose the current model's limits.
+
 ### 4.2 Measurement
 
 Data sources may include:
@@ -193,8 +202,8 @@ Scoring process:
 1. Feature extraction
 2. Axis mapping
 3. Population normalization
-4. Percentile computation
-5. Confidence interval estimation
+4. Contextualized measure construction, optionally numerical where warranted
+5. Explicit uncertainty and calibration metadata; validated percentiles only against an empirical reference distribution
 
 Uncertainty reflects sampling variance, model variance, and temporal drift.
 

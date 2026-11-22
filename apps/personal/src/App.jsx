@@ -21,7 +21,7 @@ function Layout({ children }) {
     { to: '/rights', label: 'Accès aux droits' },
     { to: '/snapshot', label: 'Que savent mes IA de moi ?' },
     { to: '/mirror', label: 'Coller' },
-    { to: '/indicators', label: '73 indicateurs' },
+    { to: '/indicators', label: 'Cogentigram' },
     { to: '/about', label: 'Comprendre' },
     { to: '/more', label: 'Aller plus loin' },
     { to: '/waitlist?source=menu', label: 'Liste d’attente' },

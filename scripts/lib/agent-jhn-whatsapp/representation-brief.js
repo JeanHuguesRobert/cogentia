@@ -437,38 +437,67 @@ export function compressCogentigramTopN(profile, options = {}, env = process.env
     30,
   ));
   const indicators = Array.isArray(profile?.indicators) ? profile.indicators.slice() : [];
-  indicators.sort((a, b) => Number(b.score || 0) - Number(a.score || 0));
-  const top = indicators.slice(0, n).map((item) => ({
-    rank: item.rank,
-    category: item.category,
-    name: item.name,
-    score: item.score,
-    confidence: item.confidence,
-    evidence: String(item.evidence || "").slice(0, 220),
-  }));
+  const context = String(options.taskContext || options.question || options.query || options.userMessage || "").toLowerCase();
+  // A source-backed qualitative dimension can matter as much as a high numerical
+  // estimate. First cover distinct conceptual categories; then fill by relevance.
+  const stopwords = new Set(["need", "help", "with", "and", "from", "into", "that", "this", "your", "about", "could", "would", "where"]);
+  const terms = (context.match(/[a-zà-ÿ]{4,}/g) || []).filter(term => !stopwords.has(term));
+  const relevance = (item) => {
+    const body = [item.id, item.name, item.category, item.evidence, item.measurement?.context]
+      .filter(Boolean).join(" ").toLowerCase();
+    const words = new Set(body.match(/[a-zà-ÿ]{4,}/g) || []);
+    const matched = terms.filter(term => words.has(term)).length;
+    const evidence = item.evidence ? 1 : 0;
+    return matched * 1000 + evidence * 10 + Number(item.confidence ?? 0) / 100;
+  };
+  const scoreSort = (a, b) => {
+    const byContext = relevance(b) - relevance(a);
+    if (context && byContext) return byContext;
+    const as = Number.isFinite(a.score) ? a.score : -1;
+    const bs = Number.isFinite(b.score) ? b.score : -1;
+    return bs - as;
+  };
+  const categories = [...new Set(indicators.map(item => item.category || "Unclassified"))];
+  const bestPerCategory = categories.map(category =>
+    indicators.filter(item => (item.category || "Unclassified") === category).sort(scoreSort)[0]
+  ).filter(Boolean);
+  bestPerCategory.sort((a, b) => context ? relevance(b) - relevance(a) : 0);
+  const top = bestPerCategory.slice(0, n);
+  const selected = new Set(top.map(item => item.id || item.rank));
+  for (const item of indicators.filter(item => !selected.has(item.id || item.rank)).sort(scoreSort)) {
+    if (top.length >= n) break;
+    top.push(item);
+    selected.add(item.id || item.rank);
+  }
   const low = indicators
-    .slice()
-    .sort((a, b) => Number(a.score || 0) - Number(b.score || 0))
+    .filter(item => Number.isFinite(item.score))
+    .sort((a, b) => a.score - b.score)
     .slice(0, 3)
-    .map((item) => ({ name: item.name, score: item.score, note: "do not fake this axis" }));
+    .map(item => ({ id: item.id, name: item.name, score: item.score, note: "do not fake this axis" }));
 
   const grant = buildKysGrantMetadata(options, env);
+  const selectedTop = top.map(item => ({
+    id: item.id, rank: item.rank, category: item.category, name: item.name,
+    score: item.score ?? null, score_type: item.score_type,
+    confidence: item.confidence ?? null,
+    evidence: String(item.evidence || "").slice(0, 220),
+  }));
   const lines = [
-    `Compressed structural Cogentigram top-${top.length} (person-open dogfood).`,
+    `Context/coverage-selected first-class Cogentigram dimensions: ${selectedTop.length} (person-open dogfood).`,
     `profile_id: ${profile?.profile_id || "unknown"}`,
     `kys_profile_id: ${grant.kys_profile_id}`,
     `purpose: ${grant.purpose}`,
     "Structural only — not episodic; not court evidence; not clinical/HR truth.",
     "",
-    "Top axes (prefer answers that exhibit these):",
-    ...top.map((item, i) =>
-      `${i + 1}. ${item.name} (${item.category}) score=${item.score} conf=${item.confidence} — ${item.evidence}`,
+    "Relevant, category-diverse dimensions (not a ranking by score):",
+    ...selectedTop.map((item, i) =>
+      `${i + 1}. ${item.id || item.name}: ${item.name} (${item.category}) ${item.score === null ? "qualitative" : `agent_estimate=${item.score}`} — ${item.evidence}`,
     ),
     "",
-    "Lower axes (do not simulate):",
-    ...low.map((item) => `- ${item.name} score=${item.score}`),
+    "Low numeric estimates (not automatic proof of incapacity):",
+    ...low.map(item => `- ${item.id || item.name}: ${item.name} estimate=${item.score}`),
   ];
-  return { text: lines.join("\n"), top, low, n: top.length, grant };
+  return { text: lines.join("\n"), top: selectedTop, low, n: selectedTop.length, grant };
 }
 
 /**

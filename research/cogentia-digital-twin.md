@@ -25,6 +25,7 @@ review:
   status: unreviewed
   reviewed_by: []
 update_policy: UP-DEFAULT-REVIEWED
+language: en
 ---
 <!-- BEGIN_AUTO: trails -->
 > 🧭 **Trail: From Method to Machine**
@@ -114,7 +115,7 @@ It is not your opinions. It is your cognitive architecture.
 Like the concept of *style* in Buffon's sense ("le style, c'est l'homme") — Cogentia is the structural invariant that persists across contexts and contents.
 
 ### Cogentigram
-The measurable representation of Cogentia. A structured numerical map along defined psychometric axes — percentile-normalized against a reference population, with explicit confidence intervals and temporal drift indicators.
+The inspectable representation of Cogentia: an extensible set of identifiable structural dimensions, supported by contextual observations, counter-evidence, uncertainty and temporal claims. Numerical values and empirically calibrated percentiles are optional derived views, not prerequisites for representation.
 
 The Cogentigram is not the person. It is a map of the person's cognitive territory.  
 Maps are always approximate. They are always revisable. They are never the territory.
@@ -163,7 +164,7 @@ The Cogentigram makes the inevitable explicit and auditable. Rather than allowin
 ### Cogentiscope
 The instrument of inference — the protocol, the measurement process, the analytical engine that produces a Cogentigram from observable behavior.
 
-In the current MVP implementation, the Cogentiscope is the Cogentia prompt submitted to the user's own AI agent. The agent — which has processed the user's interaction history — scores 73 psychometric indicators on a percentile scale. The user's own AI becomes the measurement instrument. This is deliberate: the entity that knows you best is not a platform algorithm operating in a corporate interest. It is your personal agent, operating in your interest, under your instruction.
+The March 2026 **historical** Cogentiscope prototype submitted a one-shot prompt to the person's habitual AI agent and requested 73 pseudo-percentile judgments. This established an acquisition path but not a permanent ontology or an empirically calibrated population measure. The active design now uses an open [first-class dimension registry](cogentigram_dimensions.json), context-bound qualitative or numerical observations, and a governed capture/projection pipeline (see [migration](cogentigram_migration.md) and [#200](https://github.com/JeanHuguesRobert/cogentia/issues/200)). The habitual agent remains one fallible instrument, not an oracle.
 
 The Cogentiscope is also the concept that generalizes: any structured inference process that produces a Cogentigram from behavioral data is a Cogentiscope, regardless of its technical implementation.
 
@@ -247,7 +248,7 @@ The following questions are open, published here in the spirit of design in the 
 
 ## Status
 
-Cogentia MVP is under active development. The current implementation provides a copy-paste workflow: the Cogentia prompt is submitted to the user's own AI agent; the agent's structured JSON response is submitted to the analysis engine; results are displayed as a percentile radar across 73 indicators grounded in established psychometric frameworks (see [Cogentia and Cogentigrams](Cogentia-and-Cogentigram.md) §4 for the formal axis construction).
+Cogentia Personal/KYS remains an evolving MVP. Its **historical advanced** copy/paste result page once displayed a pseudo-percentile radar over 73 axes; that is a dated prototype, not the normative representation. The revised source introduces an 80-dimension open registry and a v2 capture path, with categorical/contextual evidence and no automatic population-percentile claims. Source, deployed state and validated psychometrics are separate questions; see [the migration work contract](cogentigram_migration.md).
 
 Honesty indicators are not yet included in the public protocol. PrivAI does not yet exist as a formal institution. Both are prerequisites for any deployment beyond experimental MVP.
 

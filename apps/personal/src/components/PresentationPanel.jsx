@@ -57,7 +57,7 @@ function BigFiveView({ scores }) {
         ))}
       </div>
       <p className="font-mono text-xs text-muted pt-2 border-t border-border">
-        Score percentile · 50 = médiane pop. · 84 = +1σ
+        Projection numérique historique · non étalonnée sur une population
       </p>
     </div>
   )
@@ -183,7 +183,7 @@ function RawView({ analysis }) {
     <div className="space-y-3">
       <p className="font-body text-xs text-dim leading-relaxed">
         Présentation directe des données Cogentia sans reformatage dans un framework externe.
-        Les 73 indicateurs sont présentés dans la section principale de cette page.
+        Les dimensions de cette capture historique figurent dans la section principale de cette page.
       </p>
       <div className="grid grid-cols-2 gap-3">
         {[
@@ -249,7 +249,7 @@ export default function PresentationPanel({ analysisId, analysis }) {
           Ton profil vu par d'autres frameworks
         </h3>
         <p className="font-body text-xs text-muted mt-1">
-          Calculés à partir de tes 73 indicateurs Cogentia. Indicatifs — voir la{' '}
+          Projections expérimentales de la capture v1, non étalonnées. Voir la{' '}
           <a href="/docs#Éthique & Limites" className="text-signal hover:underline">documentation</a>.
         </p>
       </div>

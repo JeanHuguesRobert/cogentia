@@ -191,7 +191,7 @@ export default function Landing() {
         <div className="flex items-center gap-3 mb-10 animate-fade-in">
           <div className="h-px flex-1 max-w-[48px] bg-signal" />
           <span className="font-mono text-signal text-xs tracking-[0.3em] uppercase">
-            PrivAI · Protocole Cogentia v1.0
+            Cogentia · Dimensions ouvertes
           </span>
         </div>
 
@@ -212,8 +212,8 @@ export default function Landing() {
           style={{ animationDelay: '0.2s', animationFillMode: 'both' }}
         >
           Ton agent IA t'observe depuis des mois. Cogentia le transforme en instrument
-          psychométrique certifié — <span className="text-bright">73 indicateurs</span>,
-          scorés en percentile, référencés sur la population générale.
+          de lecture de dimensions cognitives ouvertes, fondées sur des observations contextualisées,
+          sans certification psychométrique ni percentiles inventés.
         </p>
 
         {/* CTA */}
@@ -241,7 +241,7 @@ export default function Landing() {
           style={{ animationDelay: '0.5s', animationFillMode: 'both' }}
         >
           {[
-            { n: 73,   suffix: '',  label: 'indicateurs psychocognitifs' },
+            { n: 80,   suffix: '+', label: 'dimensions cognitives ouvertes' },
             { n: 5,    suffix: '+', label: 'catégories WAIS-compatibles' },
             { n: 100,  suffix: '%', label: 'scoring par ton propre agent IA' },
           ].map(({ n, suffix, label }) => (
@@ -279,7 +279,7 @@ export default function Landing() {
             {
               n: '02',
               title: 'Colle dans ton agent',
-              body: 'ChatGPT, Claude, Gemini, ou tout autre agent IA. Il répond avec le JSON Cogentia — 73 scores percentiles.',
+              body: 'ChatGPT, Claude, Gemini, ou tout autre agent IA. Il répond avec le JSON Cogentia — des dimensions qualitatives ou quantitatives.',
               detail: 'Compatible tous agents LLM',
             },
             {
@@ -312,7 +312,7 @@ export default function Landing() {
           <div className="flex items-center gap-4 mb-16">
             <span className="font-mono text-signal text-xs tracking-widest uppercase">Indicateurs</span>
             <div className="h-px flex-1 bg-border" />
-            <span className="font-mono text-xs text-muted">73 métriques</span>
+            <span className="font-mono text-xs text-muted">Dimensions ouvertes</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
