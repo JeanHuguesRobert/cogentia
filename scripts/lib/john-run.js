@@ -463,7 +463,10 @@ export async function runJohnRequest(request, options = {}) {
                   : step.capability === "browser.form.fill"
                     ? {tab_id:step.input?.tab_id,field_index:step.input?.field_index,
                        expected_origin:"[redacted]",text:"[redacted]",text_length:String(step.input?.text||"").length}
-                    : step.input,
+                    : step.capability === "browser.form.upload"
+                      ? {tab_id:step.input?.tab_id,file_index:step.input?.file_index,
+                         expected_origin:"[redacted]",file_path:"[redacted]"}
+                      : step.input,
               })
             );
             if (result?.status === "completed") {

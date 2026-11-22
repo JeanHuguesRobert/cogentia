@@ -2,6 +2,7 @@ import {compileNonSecretFormFill} from "./browser-form-script.js";
 import { SAFE_DOM_STRUCTURE_CODE } from "./browser-safe-dom-structure.js";
 import { createGatewaySession } from "./navigation-assistant/gateway-session.js";
 import {createHostedFrameTransport} from "./browser-frame-cdp-transport.js";
+import {createBrowserFileUploadCapability} from "./browser-file-upload.js";
 import {executeFrameEvaluate} from "./browser-frame-evaluate.js";
 import {projectFrameTree} from "./browser-frame-tree.js";
 /** Hosted Chromium capabilities over the Fracta2 navigation-assistant extension. */
@@ -241,6 +242,7 @@ export function createHostedBrowserCapabilities(options = {}) {
         throw capabilityError("BROWSER_ACTION_NOT_ALLOWED");
       },
     },
+    createBrowserFileUploadCapability({transport:frameTransport,allowedRoots:options.uploadRoots}),
     {
       name: "browser.form.fill",
       kind: "tool", risk: "internal_recoverable", resultVisibility: "reasoner", costUnits: 1,
@@ -249,6 +251,7 @@ export function createHostedBrowserCapabilities(options = {}) {
         tab_id:{type:"integer",minimum:1},field_index:{type:"integer",minimum:0,maximum:79},
         expected_url:{type:"string",minLength:1,maxLength:4096},
         text:{type:"string",minLength:1,maxLength:2048},
+        field_kind:{type:"string",enum:["contenteditable"]},
         frame_id:{type:"string",minLength:1,maxLength:160},
         iframe_index:{type:"integer",minimum:0,maximum:19},
         expected_frame_origin:{type:"string",minLength:1,maxLength:256},
@@ -257,6 +260,8 @@ export function createHostedBrowserCapabilities(options = {}) {
         const tab=positiveInt(input.tab_id,"tab_id");
         const expected=String(input.expected_url||"");
         const value=String(input.text||"");
+        const fieldKind=input.field_kind||"plain";
+        if(!["plain","contenteditable"].includes(fieldKind))throw capabilityError("BROWSER_FORM_FIELD_KIND_INVALID");
         if(!expected.startsWith('https://')||!value||value.length>2048)throw capabilityError('BROWSER_FORM_INPUT_INVALID');
         const cdpFrame=input.frame_id!==undefined;
         const hasFrame=cdpFrame||input.iframe_index!==undefined||input.expected_frame_origin!==undefined;
@@ -287,11 +292,11 @@ export function createHostedBrowserCapabilities(options = {}) {
         // FBF: new recipes live in the Core, not the extension worker.
         // Explicit alternate path uses existing generic page.evaluate bridge.
         // Keep the proven native-CDP path as default until browser parity tests.
-        const scriptBackend=hasFrame||options.formFillBackend==='client-script';
+        const scriptBackend=hasFrame||fieldKind==='contenteditable'||options.formFillBackend==='client-script';
         const response=scriptBackend
           ? await rpc(gateway,"page.evaluate",{browser_instance_id:browserId,
               tabId:tab,expectedUrl:expected,
-              code:compileNonSecretFormFill({fieldIndex:input.field_index,text:value,expectedUrl:expected,
+              code:compileNonSecretFormFill({fieldIndex:input.field_index,text:value,expectedUrl:expected,fieldKind,
                 ...(hasFrame?{iframeIndex:input.iframe_index,expectedFrameOrigin:input.expected_frame_origin}:{})})},timeoutMs)
           : await rpc(gateway,"page.form.fill",{browser_instance_id:browserId,
               tabId:tab,expectedUrl:expected,fieldIndex:input.field_index,text:value},timeoutMs);

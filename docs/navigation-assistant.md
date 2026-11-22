@@ -433,3 +433,68 @@ Implemented as explicitly injectable server-side modules:
 **Remaining before any real credential fill:** prove Principal identity with a verified auth session or offline issuer signature and bind it to a specific instance; securely enroll/attest the Fracta2 and ThinkPad node keys (SSH host-key possession alone is insufficient); issue an appropriate COP mandate and effect budget through the genuine Principal-controlled issuer; implement server-side vault secret access with least privilege; implement a dedicated trusted browser secret sink (never generic extension RPC, `page.evaluate`, or model-facing text) with atomic target checks, race rejection, redacted receipt, cancellation and settlement. Each requires separate Reality Tests. A Secret Vault key or Supabase `service_role` is technical access only, never proof of the Principal's legal or operational authority. Do not activate production simply because fixtures pass.
 
 Tests: `node scripts/lib/browser-supabase-trust-directory.test.js`, `node scripts/lib/browser-credential-bound-authority.test.js`, `node scripts/lib/browser-credential-composition.test.js`, `node scripts/lib/browser-credential-capabilities.test.js`, `node scripts/lib/digital-twin-instance-public-projection.test.js`.
+
+## 2026-11-22 — Generic contenteditable and governed file inputs (Core only)
+
+Following the audio-video publication of *La Marche du Soleil* on YouTube,
+the Navigation Assistant supports two site-neutral operations without changing
+the already installed extension:
+
+- **Rich text:** the existing COP-admitted 'browser.form.fill' accepts
+  'field_kind: "contenteditable"' in addition to its previous plain input
+  contract. It uses the existing 'page.evaluate' transport with a
+  Core-compiled recipe. 'tab_id', 'field_index' and exact 'expected_url' bind
+  the intended field; the recipe focuses and replaces its entire contents,
+  verifies the replacement, and never submits the form. The bounded canonical
+  form envelope accepts this *explicit* field kind, while rejecting all
+  unspecified extensions (passwords, file input and other sensitive types
+  remain excluded). The default native input path is unchanged.
+- **File input:** the new capability 'browser.form.upload' is **not** an
+  extension message. It uses the existing Core 'createHostedFrameTransport'
+  to correlate the Navigation Assistant tab with its CDP target and hold a
+  tab lease; it selects the numbered native 'input[type=file]' by
+  'DOM.setFileInputFiles'. The selected local path must resolve to an ordinary
+  nonempty file strictly inside an operator-configured allowlist of roots,
+  'COGENTIA_BROWSER_UPLOAD_ROOTS' (Linux path-delimited absolute directories)
+  or the injected 'uploadRoots' capability configuration. Symlinks escaping
+  these roots are rejected; files are limited to 300 MiB. No roots configured
+  means no upload is permitted. Receipts contain no file path or file contents.
+
+**Effect boundary:** selecting a file may instantly start a remote upload, so
+'browser.form.upload' has 'risk: external_write', *not*
+'internal_recoverable'. Unlike plain text entry, its invocation requires
+the corresponding independent COP mandate, explicit target and file
+authorization and external-effect accounting. In particular, permission to
+fill a form, or an older 'browser.form.fill' mandate, **does not** grant file
+upload or publication. The tool does not click Submit/Publish; its receipt
+reports 'upload_completion: unverified', because the site may continue
+processing the file asynchronously.
+
+**Examples of semantic inputs (no credentials):**
+
+    browser.form.fill:
+      tab_id: 42
+      expected_url: https://example.org/editor
+      field_index: 0
+      field_kind: contenteditable
+      text: "Texte public à insérer"
+
+    browser.form.upload:
+      tab_id: 42
+      expected_url: https://example.org/editor
+      file_index: 0
+      file_path: /absolute/approved/artifacts/episode.mp4
+
+**Validation:** Node fixture tests cover selection and replacement,
+Unicode/multiline preservation, refusal of noneditable/sensitive targets,
+tab/URL guards, allowed path and symlink enforcement, disabled fields and
+redacted receipts. Real Chromium Reality Tests on Fracta2 used temporary
+*inactive* tabs at https://example.org/, inserted a synthetic editor
+and an inert file input and confirmed both operations. A native file
+'change' event was observed; no form was submitted. Both temporary tabs and
+their upload fixture were removed.
+
+This section describes implemented Core source and bounded live probes; it
+does **not** by itself imply that a running agent service has loaded the new
+commit, that its runtime upload roots are configured, or that the separate
+COP upload mandate has been issued.

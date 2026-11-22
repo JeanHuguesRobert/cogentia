@@ -2,10 +2,11 @@
  * No caller-provided JavaScript; non-secret ordinary text inputs only.
  * The input text is embedded in the CDP RPC: NEVER use this for secrets.
  */
-export function compileNonSecretFormFill({fieldIndex,text,expectedUrl,iframeIndex,expectedFrameOrigin}={}){
+export function compileNonSecretFormFill({fieldIndex,text,expectedUrl,iframeIndex,expectedFrameOrigin,fieldKind="plain"}={}){
  if(!Number.isInteger(fieldIndex)||fieldIndex<0||fieldIndex>79||
    typeof text!=='string'||text.length<1||text.length>2048||
    typeof expectedUrl!=='string'||!expectedUrl.startsWith('https://')||expectedUrl.length>4096)throw Error('form_script_invalid_input');
+ if(!['plain','contenteditable'].includes(fieldKind))throw Error('form_script_field_kind_invalid');
  const scoped=iframeIndex!==undefined||expectedFrameOrigin!==undefined;
  if(scoped && (!Number.isInteger(iframeIndex)||iframeIndex<0||iframeIndex>19||
     typeof expectedFrameOrigin!=='string'||!expectedFrameOrigin.startsWith('https://')||
@@ -23,10 +24,15 @@ export function compileNonSecretFormFill({fieldIndex,text,expectedUrl,iframeInde
  if(!targetDocument||targetDocument.location.origin!==${JSON.stringify(expectedFrameOrigin)})
    return {ok:false,reason:'cross_origin_frame_requires_isolated_world'};` : ''}
  const el=targetDocument.querySelectorAll('input,textarea,select,button,[contenteditable="true"]')[${fieldIndex}];
- if(!el||!el.isConnected||el.disabled||el.readOnly||
-   !['INPUT','TEXTAREA'].includes(el.tagName))return {ok:false,reason:'field_unavailable'};
+ if(!el||!el.isConnected||el.disabled||el.readOnly||el.getAttribute?.('aria-disabled')==='true')
+   return {ok:false,reason:'field_unavailable'};
+ const kind=${JSON.stringify(fieldKind)};
+ if(kind==='contenteditable' && (!el.isContentEditable || el.getAttribute('contenteditable')!=='true'))
+   return {ok:false,reason:'rich_text_field_unavailable'};
+ if(kind==='plain' && !['INPUT','TEXTAREA'].includes(el.tagName))
+   return {ok:false,reason:'field_unavailable'};
  const type=String(el.type||'text').toLowerCase();
- if(el.tagName==='INPUT'&&!['text','search','tel','url'].includes(type))
+ if(kind==='plain' && el.tagName==='INPUT' && !['text','search','tel','url'].includes(type))
    return {ok:false,reason:'field_type_forbidden'};
  if(/username|password|one-time-code|cc-number|cc-csc/i.test(String(el.autocomplete||'')))
    return {ok:false,reason:'sensitive_autocomplete'};
@@ -34,12 +40,25 @@ export function compileNonSecretFormFill({fieldIndex,text,expectedUrl,iframeInde
  if(location.href!==${urlLiteral})return {ok:false,reason:'document_url_changed'};
  el.focus({preventScroll:true});
  if(targetDocument.activeElement!==el)return {ok:false,reason:'focus_denied'};
- try{el.setSelectionRange(0,el.value.length);}catch{return {ok:false,reason:'selection_denied'};}
+ if(kind==='contenteditable'){
+   const selection=targetDocument.getSelection();
+   if(!selection)return {ok:false,reason:'selection_unavailable'};
+   const range=targetDocument.createRange();
+   range.selectNodeContents(el);
+   selection.removeAllRanges();
+   selection.addRange(range);
+ }else{
+   try{el.setSelectionRange(0,el.value.length);}catch{return {ok:false,reason:'selection_denied'};}
+ }
  if(location.href!==${urlLiteral}||!el.isConnected||targetDocument.activeElement!==el)
    return {ok:false,reason:'document_or_focus_changed'};
  const inserted=targetDocument.execCommand('insertText',false,value);
- return {ok:inserted===true&&el.value===value,
-   insertedLength:inserted===true&&el.value===value?value.length:0,
+ const actual=kind==='contenteditable'
+   ? String(el.innerText||el.textContent||'').replace(/\\r\\n/g,'\\n')
+   : el.value;
+ const matches=actual===value || (kind==='contenteditable'&&actual===value+'\\n');
+ return {ok:inserted===true&&matches,
+   insertedLength:inserted===true&&matches?value.length:0,
    ${scoped?`iframeIndex:${iframeIndex},`:''}submitted:false};
 })()`;
 }

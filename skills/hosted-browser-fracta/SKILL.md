@@ -86,6 +86,8 @@ WhatsApp adapter for the supported bounded actions.
 - `browser.hosted.interact` activates, opens, or closes a tab and enters
   user-supplied text into the focused field. The WhatsApp adapter exposes this
   bounded set only for an explicitly requested browser task.
+- 'browser.form.fill' with explicit 'field_kind: contenteditable' replaces non-secret rich-text editor contents through a Core-compiled recipe, without extension upgrades or submission.
+- 'browser.form.upload' selects one allowlisted local file in the numbered native file input of a URL-pinned tab using Core CDP; selecting a file can start an immediate external upload, so a separate COP-authorized external effect is required, and completion is not implied.
 - `browser.hosted.evaluate` evaluates a caller-supplied JavaScript expression
   in the active page. The governed harness rejects it unless the exact
   capability is included in `confirmed_capabilities`; page code can have

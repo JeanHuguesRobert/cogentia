@@ -21,7 +21,10 @@ export async function executeJohnCanonicalForm({store,authorizedKeysPath,auth,re
    b.max_tool_calls!==1||b.max_internal_effects!==1||b.max_external_effects!==0||
    typeof run!=='function'||!/^[-\w:.]{1,120}$/.test(String(request.request_id||''))||
    !args||!['expected_url,field_index,tab_id,text',
-    'expected_frame_origin,expected_url,field_index,frame_id,tab_id,text'].includes(Object.keys(args).sort().join(','))||
+    'expected_url,field_index,field_kind,tab_id,text',
+    'expected_frame_origin,expected_url,field_index,frame_id,tab_id,text',
+    'expected_frame_origin,expected_url,field_index,field_kind,frame_id,tab_id,text'].includes(Object.keys(args).sort().join(','))||
+   (args.field_kind!==undefined && args.field_kind!=='contenteditable')||
    (args.frame_id!==undefined && (!/^[A-Za-z0-9_-]{1,160}$/.test(args.frame_id)||
      !exactHttpsOrigin(args.expected_frame_origin)))||
    !Number.isInteger(args.tab_id)||args.tab_id<1||
