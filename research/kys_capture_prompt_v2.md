@@ -88,4 +88,4 @@ Réponds en un seul objet JSON valide, sans Markdown, respectant le schéma ouve
   "unresolved_residue": []
 }
 
-Une sortie peut proposer des dimensions inédites ; elles ne sont pas des erreurs de conformité parce qu'elles ne figurent pas dans un ancien catalogue. Si tu n'as pas de preuve pour REP-001 ou une autre dimension particulière, ne la remplis pas artificiellement.
+Une sortie peut proposer des dimensions inédites ; elles ne sont pas des erreurs de conformité parce qu'elles ne figurent pas dans un ancien catalogue. Si tu n'as pas de preuve pour REP-001 ou une autre dimension particulière, enregistre son absence de preuve comme `measurement.kind=unknown`, sans inventer de caractéristique. Le catalogue actif complet est ajouté à la copie du prompt par l'application, depuis le registre canonique.

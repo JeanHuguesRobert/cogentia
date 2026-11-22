@@ -58,6 +58,14 @@ review:
 5. Agent JHN brief presently selects by numeric score only; relevance must allow important contextual unscored dimensions to reach the twin.
 6. Validate source and test suite, check final GitHub SHA, and **separately** verify any deployed production version. A commit is not deployment.
 
+## Deployment reality — 22 November 2026
+
+The current production KYS Personal interface at `https://services.acorsica.org/` serves a **browser-first Snapshot and Cogentigram exploration**. The active `/indicators` capture path does not require a Supabase connection; browser-only export and user-initiated local persistence can work without a server. By contrast, `/submit` and `/results/:id` are legacy advanced paths that require tables `analyses` and `indicator_scores` and a backend that is **not configured** on the public KYS host: `/api/*` returns HTTP 404. The two accessible active Supabase projects (JHN and Kudocracy) do not have those tables. **Do not apply `20261122000000_open_cogentigram_dimensions.sql` to either project by conjecture.** That migration is for a verified legacy-backed target only, not a requirement for the browser-first KYS release.
+
+The browser-facing v2 prompt must be generated from the *entire canonical dimension registry*, not just the seven recent discoveries: include all 80 stable IDs and definitions, accept explicit `unknown` records without fabricating values, and allow truly emergent dimensions of equal standing. A v2 response with only seven dimensions is valid but **incomplete** and should be displayed as 7/80 coverage, not silently promoted to an 80-dimension profile. Browser-side saving must be opt-in, with a clear erase/export route, and original input must not be normalized away.
+
+Live deployment of the static app is separate from GitHub and requires the authorized publish mechanism for `/srv/www/kys-services/current`, a root-owned symlink to an immutable release. See #206 and #207 for outstanding or completed release checkpoints.
+
 ## Acceptance
 
 - At least 80 first-class active entries and no fixed maximum; all IDs unique.
