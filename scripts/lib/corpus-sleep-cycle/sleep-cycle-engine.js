@@ -225,6 +225,16 @@ export async function runMonteCarloAudit(options = {}) {
     costUnits: options.costUnits || 0
   });
 
+  const historicalSet = new Set(previousPairs);
+  const newlyExplored = [...sampler.visitedPairs].filter(key => !historicalSet.has(key)).length;
+  metrics.coverage.intercycle = {
+    recent_pairs_before: previousPairs.length,
+    novel_pairs_this_cycle: newlyExplored,
+    revisited_recent_pairs_this_cycle: sampler.visitedPairs.size - newlyExplored,
+    recent_pairs_after: Math.min(MAX_HISTORY_PAIRS, new Set([...previousPairs, ...sampler.visitedPairs]).size),
+    history_limit: MAX_HISTORY_PAIRS,
+    history_applied: persistentSampling
+  };
   const finalCheckpoint = { ...sampler.exportCheckpoint(), seed };
   if (persistentSampling && evaluatedPairsThisRun > 0) {
     savePairHistory(queueRoot, view, previousPairs, sampler.visitedPairs);
