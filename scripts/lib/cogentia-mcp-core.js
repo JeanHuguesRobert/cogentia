@@ -1545,6 +1545,9 @@ export function createMcpCore(env = process.env, extras = {}) {
     const fromMeta = String(meta[MCP_META.protocolVersion] || "").trim();
     const fromHeader = String(transport.protocolVersionHeader || "").trim();
     const method = String(message?.method || "");
+    // FBF 2026-11-23: per-request versions must never silently disagree.
+    if (fromHeader && fromMeta && fromHeader !== fromMeta)
+      return { era: "error", protocolVersion: fromHeader, meta, headerMismatch: true };
 
     if (method === "initialize") {
       return {
@@ -1729,23 +1732,33 @@ export function createMcpCore(env = process.env, extras = {}) {
     }
     if (message.id === undefined) return null;
 
-    if (transport.mcpMethod) {
-      const headerMethod = String(transport.mcpMethod).trim();
-      if (headerMethod && headerMethod !== message.method) {
-        return jsonRpcError(message.id, -32600, `Mcp-Method header (${headerMethod}) does not match body method (${message.method})`);
-      }
-    }
-    if (transport.mcpName && message.method === "tools/call") {
-      const headerName = String(transport.mcpName).trim();
-      const bodyName = String(message.params?.name || "");
-      if (headerName && bodyName && headerName !== bodyName) {
-        return jsonRpcError(message.id, -32600, `Mcp-Name header (${headerName}) does not match tools/call name (${bodyName})`);
-      }
-    }
-
     const resolved = resolveRequestProtocol(message, transport);
-    if (resolved.unsupported) {
+    // FBF 2026-11-23: SEP-2243 header mismatches use MCP -32020,
+    // never the generic JSON-RPC Invalid Request code on the modern path.
+    if (resolved.headerMismatch)
+      return jsonRpcError(message.id, -32020, "MCP protocol header does not match request _meta");
+    if (resolved.unsupported)
       return unsupportedProtocolVersionError(message.id, resolved.protocolVersion);
+    if (transport.mcpMethod && String(transport.mcpMethod).trim() !== message.method)
+      return jsonRpcError(message.id, resolved.era === "modern" ? -32020 : -32600,
+        "Mcp-Method header does not match request method");
+    if (transport.mcpName) {
+      const name = ["tools/call", "prompts/get"].includes(message.method) ? message.params?.name
+        : message.method === "resources/read" ? message.params?.uri
+        : ["tasks/get", "tasks/update", "tasks/cancel"].includes(message.method) ? message.params?.taskId : null;
+      if (name != null && String(transport.mcpName).trim() !== String(name))
+        return jsonRpcError(message.id, resolved.era === "modern" ? -32020 : -32600,
+          "Mcp-Name header does not match request name");
+    }
+    // FBF: July 2026 capabilities and version are supplied on *each* request;
+    // discovery remains usable for a first probe without prior negotiation.
+    if (resolved.era === "modern" && message.method !== "server/discover") {
+      const meta = message.params?._meta;
+      if (meta?.[MCP_META.protocolVersion] !== PROTOCOL_VERSION_MODERN ||
+          !meta?.[MCP_META.clientCapabilities] ||
+          typeof meta[MCP_META.clientCapabilities] !== "object" ||
+          Array.isArray(meta[MCP_META.clientCapabilities]))
+        return jsonRpcError(message.id, -32602, "Invalid modern MCP request metadata");
     }
 
     const auth = callerAuthFor(message, transport);
@@ -1808,8 +1821,10 @@ export function createMcpCore(env = process.env, extras = {}) {
         }
       }
       if (message.method === "ping") {
-        const result = resolved.era === "modern" ? attachModernMeta({}, resolved.protocolVersion) : {};
-        return jsonRpcResult(message.id, result);
+        // FBF: ping was removed from the MCP 2026-07-28 method set.
+        return resolved.era === "modern"
+          ? jsonRpcError(message.id, -32601, "Method not found")
+          : jsonRpcResult(message.id, {});
       }
       if (message.method === "tools/list") {
         let result = toolsListResult(resolved.era, auth);
