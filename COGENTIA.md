@@ -62,6 +62,8 @@ Dernière consolidation : 2026-07-13 — ajout du point d’entrée opérationne
 
 ---
 
+**Intuition before terminology.** Imagine commissioning work, passing a folder to a colleague, receiving separate deliveries, or collecting a parcel left at a pickup point. Cognitive work can circulate and resume in much the same way: its identity and instructions need not depend on the person or software currently handling it. Computers and AI make this familiar cooperation dramatically cheaper and faster, potentially enabling organizational forms impractical by hand. This is the starting point of [Cognitive Packet Switching](research/cognitive_packet_switching.md); Cogentia supplies methods and tools for carrying it out and checking its results.
+
 Cogentia is a framework for **distributed knowledge production under AI conditions**.
 
 Not a product. Not a SaaS. Not a vendor.
