@@ -65,7 +65,7 @@ const modernList = await publicCore.handleJsonRpc(
     jsonrpc: "2.0",
     id: 4,
     method: "tools/list",
-    params: { _meta: { [MCP_META.protocolVersion]: PROTOCOL_VERSION_MODERN } },
+    params: { _meta: { [MCP_META.protocolVersion]: PROTOCOL_VERSION_MODERN, [MCP_META.clientCapabilities]: {} } },
   },
   { protocolVersionHeader: PROTOCOL_VERSION_MODERN, mcpMethod: "tools/list" },
 );
@@ -335,6 +335,7 @@ try {
       arguments: { query: "continuation", limit: 2 },
       _meta: {
         [MCP_META.protocolVersion]: PROTOCOL_VERSION_MODERN,
+        [MCP_META.clientCapabilities]: {},
         traceparent: "00-11111111111111111111111111111111-2222222222222222-01",
       },
     },
@@ -445,3 +446,26 @@ console.log(JSON.stringify({
   mutate_tools: [...MUTATE_TOOLS],
   live,
 }, null, 2));
+
+// FBF 2026-11-23: modern request metadata and removed legacy methods.
+const modernPing = await publicCore.handleJsonRpc({
+  jsonrpc: "2.0", id: 801, method: "ping",
+  params: { _meta: {
+    [MCP_META.protocolVersion]: PROTOCOL_VERSION_MODERN,
+    [MCP_META.clientCapabilities]: {},
+  } },
+});
+assert.equal(modernPing.error?.code, -32601);
+const missingCapabilities = await publicCore.handleJsonRpc({
+  jsonrpc: "2.0", id: 802, method: "tools/list",
+  params: { _meta: { [MCP_META.protocolVersion]: PROTOCOL_VERSION_MODERN } },
+});
+assert.equal(missingCapabilities.error?.code, -32602);
+const headerMismatch = await publicCore.handleJsonRpc({
+  jsonrpc: "2.0", id: 803, method: "tools/list",
+  params: { _meta: {
+    [MCP_META.protocolVersion]: PROTOCOL_VERSION_MODERN,
+    [MCP_META.clientCapabilities]: {},
+  } },
+}, { protocolVersionHeader: PROTOCOL_VERSION_MODERN, mcpMethod: "tools/call" });
+assert.equal(headerMismatch.error?.code, -32020);
