@@ -117,7 +117,7 @@ test("MCP task cancellation is a durable request, not fictitious termination", a
     const afterRestart = f.reopen();
     const persisted = await afterRestart.handleJsonRpc(rpc("tasks/get", { taskId: id }));
     assert.equal(persisted.result.status, "cancelled");
-    const denied = await newCore.handleJsonRpc(rpc("tasks/get", { taskId: "task:" + "0".repeat(36) }));
+    const denied = await afterRestart.handleJsonRpc(rpc("tasks/get", { taskId: "task:" + "0".repeat(36) }));
     assert.equal(denied.error.code, -32602);
     assert.equal(f.audit().ok, true);
   } finally { f.close(); }
