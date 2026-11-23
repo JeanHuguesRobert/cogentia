@@ -93,6 +93,14 @@ Institut Mariani / C.O.R.S.I.C.A.
 
 ---
 
+## A familiar starting point: orders, parcels, and cooperation
+
+People already know how to organize work across distance. We place orders, delegate tasks, exchange documents, send parcels, and receive results. One order may involve several workers and produce several deliveries: one arrives directly, another waits at a collection point, and a third is delayed or needs rerouting. Work in progress can pass to a successor if the handoff includes enough context to continue.
+
+Computers did not invent these arrangements. They make their execution and coordination much faster and less costly. **Cognitive Packet Switching (CPS) applies the same familiar logic to cognitive work**, whether performed by humans, ordinary programs, or AI agents. The stable object is the work being carried, not the conversation or worker currently handling it. A *Cognitive Packet* gives that work a portable identity and enough routing and resumption information; a *handler* is whoever can work on it.
+
+At scale, cheaper and faster exchanges do more than accelerate existing tasks: they can make previously impractical forms of cooperation possible. That possible change of organizational nature is the motivating hypothesis, not a guaranteed emergent property. The technical definitions and implementation profiles below make the analogy precise without identifying a cognitive packet with a physical parcel.
+
 ## Object and associated documents
 
 ### Object of this document
