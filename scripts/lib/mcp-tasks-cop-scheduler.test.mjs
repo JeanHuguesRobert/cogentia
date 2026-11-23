@@ -4,6 +4,10 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createServer } from "node:http";
+import { readFileSync } from "node:fs";
+import { DatabaseSync } from "node:sqlite";
+import { createSqliteCopEventStore as createPortableCopEventStore } from
+  "../../../inseme/apps/platform/mcp/cop/sqliteRuntimeStore.js";
 import { createMcpCore } from "./cogentia-mcp-core.js";
 import { createCopMcpTasksPilot } from "./mcp-tasks-cop-pilot.mjs";
 import { createCopMcpTasksScheduledPilot } from "./mcp-tasks-cop-scheduler.mjs";
@@ -294,5 +298,60 @@ test("HTTP 2026-07-28 receives automatic COP delivery without manual run", async
   } finally {
     await closeHttp();
     f.close();
+  }
+});
+
+test("MCP scheduled Tasks work with the existing Inseme portable COP SQLite store", async () => {
+  const root = mkdtempSync(join(tmpdir(), "mcp-tasks-cop-portable-"));
+  const migration = readFileSync(new URL(
+    "../../../inseme/apps/platform/supabase/migrations/20260801120000_cop_runtime_portable_tables.sql",
+    import.meta.url), "utf8");
+  const filename = join(root, "cop-portable.sqlite");
+  let db, store, dispatch, core, executions = 0;
+  function start() {
+    db = new DatabaseSync(filename);
+    db.exec(migration);
+    store = createPortableCopEventStore(db);
+    const pilot = createCopMcpTasksPilot({
+      store, toolName: "cogentia_pattern_list", allowAnonymous: true,
+      handler: async () => {
+        executions++;
+        return { content: [{ type: "text", text: "portable COP store" }] };
+      },
+    });
+    dispatch = createCopMcpTasksScheduledPilot({
+      pilot, store, startDelayMs: 40,
+      authorizationForTask: async () => AUTH,
+    }).start();
+    core = createMcpCore({ COGENTIA_MCP_VIEW: "public" },
+      { mcpTasksAdapter: dispatch.adapter });
+  }
+  function close() {
+    dispatch?.stop();
+    db?.close();
+  }
+  try {
+    start();
+    const created = await core.handleJsonRpc(rpc("tools/call", {
+      name: "cogentia_pattern_list", arguments: {},
+    }));
+    assert.equal(created.result.resultType, "task");
+    const id = created.result.taskId;
+    await until(async () => {
+      const fetched = await core.handleJsonRpc(rpc("tasks/get", { taskId: id }));
+      return fetched.result?.status === "completed";
+    });
+    assert.equal(executions, 1);
+    assert.ok(store.listTopic("mcp-task:" + id).length >= 3);
+    close();
+    start();
+    const recovered = await dispatch.recover();
+    assert.equal(recovered.scheduled, 0);
+    assert.equal((await core.handleJsonRpc(rpc("tasks/get", { taskId: id }))).result.status,
+      "completed");
+    assert.equal(executions, 1);
+  } finally {
+    close();
+    rmSync(root, { recursive: true, force: true });
   }
 });

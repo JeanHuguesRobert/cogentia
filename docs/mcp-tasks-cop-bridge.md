@@ -254,7 +254,17 @@ la programmation d'une Task ne requiert plus l'appel direct à
 environnement isolé. Les suites de contrat, du premier pilote et de
 l'ordonnanceur doivent passer ensemble avant intégration.
 
-**Frontière suivante :** choisir un store et un routeur COP déployés,
+**Vérification supplémentaire :** le même pilote a été exécuté avec
+`apps/platform/mcp/cop/sqliteRuntimeStore.js` d'Inseme et ses tables
+portables `cop_events`, au lieu du seul journal SQLite autonome du
+noyau COP. La création, le dispatch par COP, la livraison et la relecture
+après réouverture du stockage passent également. Les suites MCP Tasks,
+pilote et ordonnanceur totalisent désormais **20 tests réussis**.
+Cela confirme la compatibilité des interfaces du stockage COP de plateforme
+pour ce profil, sans établir le choix du magasin de production.
+
+**Frontière suivante :** identifier le store et le routeur COP effectivement
+déployés,
 fournir au worker la résolution effective des mandats et des capacités,
 réconcilier les claims interrompus par un résultat observable ou un
 jugement, et raccorder le bootstrap du service HTTP réel. Le pilote
