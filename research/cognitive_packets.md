@@ -49,6 +49,14 @@ Institut Mariani / C.O.R.S.I.C.A.
 
 ---
 
+## A concrete intuition: one order, several deliveries
+
+Imagine commissioning a report. The work is divided among several contributors. One sends a result directly; another leaves a document at a collection point and notifies you; a third cannot finish and passes the unfinished work, with its instructions and evidence, to a successor. The order, each piece of work, its physical or digital carrier, its route, its delivery event, and your eventual use of the result are **different things**.
+
+Cognitive Packets make this ordinary coordination explicit for human and machine handlers. A packet identifies bounded work and can carry or reference what an admissible successor needs. A job is one possible kind of commissioned work, not a separate universal architecture. Delivery may be immediate or deferred; producing, depositing, notifying, receiving, acknowledging, and assimilating a result are not interchangeable events. An order may correspond to several related packets, without forcing a new packet into existence for every step or message.
+
+This postal/logistics analogy is a way to recognize familiar semantics, not a requirement that all packets be physical parcels, that every operation be asynchronous, or that the same transport or store be used everywhere. The formal envelope/payload and authority distinctions below remain normative.
+
 ## Version note
 
 **v0.7** removes the temporary `PacketClaim` duplicate and converges multi-handler coordination on the already implemented COP `PacketClaim` (`cop.packet-claim/v1`) model. Cognitive Packets describe resumable work; COP Packet coordination owns claims, lease epochs, stale-holder fencing and generation-aware mutation semantics; local filesystem, SQL and GitHub mechanisms remain adapters or enforcement strategies.
