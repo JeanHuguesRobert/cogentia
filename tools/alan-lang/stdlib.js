@@ -6,6 +6,12 @@ export const standard = Object.freeze({
   'num.mul': {params:['a','b'], run:({a,b})=>number(a)*number(b)},
   'num.lt':  {params:['a','b'], run:({a,b})=>number(a)<number(b)},
   'num.gt':  {params:['a','b'], run:({a,b})=>number(a)>number(b)},
+  // Side-style frozen logical time: supplied once by the caller, never sampled from host clock.
+  'time.injected_time': {params:[], run:(_,context)=>{
+    if(typeof context?.logical_time!=='string'||context.logical_time.length===0)
+      throw Error('ALAN_LOGICAL_TIME_REQUIRED');
+    return context.logical_time;
+  }},
   'core.eq': {params:['a','b'], run:({a,b})=>Object.is(a,b)},
   'core.not':{params:['value'], run:({value})=>{
     if(typeof value!=='boolean')throw Error('ALAN_TYPE_BOOLEAN');

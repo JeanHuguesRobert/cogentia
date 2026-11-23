@@ -7,7 +7,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {execFileSync} from 'node:child_process';
 import {parseAlan} from '../grammar.js';
-import {start,sourceHash} from '../run-reference.js';
+import {start,resume,sourceHash} from '../run-reference.js';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const source=readFileSync(path.join(root,'examples/search.alan'),'utf8');
 const fixture=JSON.parse(readFileSync(path.join(root,'examples/search.ast.json'),'utf8'));
@@ -114,4 +114,66 @@ test('canonical P4 staged proposal has typed named schemas and never performs a 
   assert.throws(()=>parseAlan(unsafe),/ALAN_EXTERN_POLICY_MISMATCH/);
   assert.throws(()=>parseAlan(source.replace('mode staged_only','mode immediate')),
     /ALAN_EXTERN_POLICY_MISMATCH/);
+});
+
+test('Side-style time is an injected logical value stable across an MCP suspension',()=>{
+  const ast=parseAlan(readFileSync(path.join(root,'examples/frozen-time.alan'),'utf8'));
+  const logicalTime='2026-11-23T09:00:00.000Z';
+  const s=start(ast,{
+    args:{query:'Inox'},
+    context:{logical_time:logicalTime,packet_id:'CPKT-FROZEN-TIME'}
+  });
+  assert.equal(s.type,'alan.suspension');
+  assert.equal(s.saved_state.context.logical_time,logicalTime);
+  assert.equal(s.saved_state.frames.at(-1).locals.before,logicalTime);
+  assert.equal(s.saved_state.slots[0].state,'pending');
+  const r=JSON.parse(JSON.stringify(s));
+  const terminal=resume(ast,r,{
+    type:'alan.step_result',for_suspension:s.suspension_id,
+    supplied_by:'caller',outcome:'resolved',value:{results:[1,2]},
+    trace:{caller_mediated:true,direct_invocation_by_alan:false}
+  });
+  assert.equal(terminal.type,'alan.terminal');
+  assert.deepEqual(terminal.result,{
+    before:logicalTime,after:logicalTime,results:[1,2]
+  });
+  assert.equal(terminal.context.logical_time,logicalTime);
+});
+
+test('logical time cannot silently fall back to current wall-clock time',()=>{
+  const ast=parseAlan(readFileSync(path.join(root,'examples/frozen-time.alan'),'utf8'));
+  for(const context of [{},{logical_time:null},{logical_time:''}]){
+    const failed=start(ast,{args:{query:'Inox'},context});
+    assert.equal(failed.type,'alan.failure');
+    assert.equal(failed.error.code,'ALAN_LOGICAL_TIME_REQUIRED');
+  }
+});
+
+test('frozen time survives cold resume in a different Node process',()=>{
+  const dir=mkdtempSync(path.join(tmpdir(),'alan-frozen-time-test-'));
+  try{
+    const source=path.join(root,'examples/frozen-time.alan');
+    const args=path.join(root,'examples/search.args.json');
+    const context=path.join(root,'examples/frozen-time.context.json');
+    const suspension=JSON.parse(execFileSync(process.execPath,[
+      path.join(root,'cli.js'),'start',source,args,context
+    ],{encoding:'utf8'}));
+    assert.equal(suspension.type,'alan.suspension');
+    const time=suspension.saved_state.context.logical_time;
+    assert.equal(suspension.saved_state.frames.at(-1).locals.before,time);
+    writeFileSync(path.join(dir,'suspension.json'),JSON.stringify(suspension));
+    writeFileSync(path.join(dir,'step.json'),JSON.stringify({
+      type:'alan.step_result',
+      for_suspension:suspension.suspension_id,
+      supplied_by:'caller',value:{results:['A']},
+      trace:{caller_mediated:true,direct_invocation_by_alan:false}
+    }));
+    const terminal=JSON.parse(execFileSync(process.execPath,[
+      path.join(root,'cli.js'),'resume',source,
+      path.join(dir,'suspension.json'),path.join(dir,'step.json')
+    ],{encoding:'utf8'}));
+    assert.equal(terminal.type,'alan.terminal');
+    assert.deepEqual(terminal.result,{before:time,after:time,results:['A']});
+    assert.equal(terminal.trace.filter(e=>e.event==='mcp_result_supplied').length,1);
+  }finally{rmSync(dir,{recursive:true,force:true})}
 });

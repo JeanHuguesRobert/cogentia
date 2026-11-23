@@ -1,0 +1,19 @@
+alan 0.2
+use std.time
+use std.mcp
+
+extern github.search
+  kind tool
+  effect read_only
+  data public
+  policy P1
+  input { q: string }
+  output { results: list }
+end
+
+fn main query
+  before = call time.injected_time
+  results = mcp github.search q=$query
+  after = call time.injected_time
+  return before=$before after=$after results=$results.results
+end

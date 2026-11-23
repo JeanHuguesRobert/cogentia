@@ -155,6 +155,20 @@ Option/result/error are explicit **tagged records** in the initial profile; they
 
 Pure library functions are deterministic for specified inputs and profiles. Nondeterminism (wall time, randomness, network, model inference, user input) must appear as a declared capability/effect or an explicitly versioned injected input, so replay and testing do not silently disagree.
 
+**Experimental Side-style frozen-time probe (2026-11-23).** The current
+JavaScript reference implementation supports the optional pure library call
+`time.injected_time` (imported through `use std.time`).
+It returns exactly the caller-supplied `context.logical_time`
+string. There is no implicit sampling of the host clock: if the logical-time
+input is absent, the operation fails with
+`ALAN_LOGICAL_TIME_REQUIRED`. Since this input is part
+of the serialized continuation, reads before an MCP suspension and after
+resumption in another process return the same value. A distinct request to
+refresh time or invalidate dependent cached results would require explicit
+semantics: this first experiment **does not** implement TTLs, reactive
+invalidation, stochastic replay or distributed clock synchronization.
+
+
 ## 7. External effects and MCP
 
 ```alan
@@ -437,7 +451,7 @@ Non-goals now: full Python/JS compatibility, complete OO system, universal distr
 
 The first bounded experimental slice implements the proposed **Alan Text → validated discriminated AST → JavaScript reference execution → serialized MCP suspension → caller-supplied step result → resumed execution** path. It includes explicit logical call frames, intermediate slots, a caller-injected stable logical-time field, continuation code identity, correlated resumes, named budget/mandate/packet references, and trace entries distinguishing requests from caller-supplied results. A two-process Node.js fixture demonstrates cold resume without replaying earlier source instructions. The focused test command is pnpm test:alan.
 
-The implementation supports a strict **subset** of the v0.2 grammar and built-in type checks; user-defined named MCP types are retained as opaque declared schema names, not fully validated as structure. It does not execute MCP tools, prove their effects, enforce external authority, implement automatic clock/random freezing, perform general cache invalidation, compile into Inox or transport packets through Fractanet. The digest over a serialized continuation detects accidental changes, **not** cryptographically authorized resumption. External policy and caller mediation remain independent execution boundaries.
+The implementation supports a strict **subset** of the v0.2 grammar and built-in type checks; user-defined named MCP types are retained as opaque declared schema names, not fully validated as structure. It does not execute MCP tools, prove their effects, enforce external authority, automatically sample/freeze a host clock or random source, perform general cache invalidation, compile into Inox or transport packets through Fractanet. It now exposes an explicitly injected and frozen logical time to source code, with cold-resume tests; no implicit wall-clock semantics are added. The digest over a serialized continuation detects accidental changes, **not** cryptographically authorized resumption. External policy and caller mediation remain independent execution boundaries.
 
 The demonstration is an executable proof of resumable work, not an implemented instance of the whole **Cognitive Packet Switching** architecture or of the Learning Computer. The historical **Continuation-Passing Style** is a control mechanism; **Cognitive Packet Switching** is the separate distributed cognitive-work architecture descended from it.
 

@@ -133,7 +133,7 @@ function execute(program,machine,compiled){
           const args=evaluate(frame.locals,op.args);
           const std=standard[op.callee];
           if(std){
-            const result=std.run(args);
+            const result=std.run(args,machine.context);
             if(op.bind)frame.locals[op.bind]=clone(result);
             frame.pc++;break;
           }
