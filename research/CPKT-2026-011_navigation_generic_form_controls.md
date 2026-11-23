@@ -5,9 +5,9 @@ packet_version: 1
 title: "CPKT-2026-011 — Navigation Assistant : champs riches et fichiers"
 created: "2026-11-22"
 date: "2026-11-22"
-last_modified_at: "2026-11-22"
+last_modified_at: "2026-11-23"
 status: working-paper
-packet_status: "Core implemented and fixture/Chromium tests passed; production rollout pending"
+packet_status: "Release bundle verified; privileged service activation pending owner action"
 lifecycle_state: working
 visibility: public
 language: fr
@@ -125,3 +125,35 @@ les versions attendues et que l'autorité COP est disponible pour chaque effet.
 interfaces standard de l'agent et non plus par un script CDP ponctuel,
 avec reçu typé, protection contre les effets non autorisés et reprise
 possible d'un travail interrompu.
+
+
+## Reprise du 23 novembre 2026 — release vérifiée et activation système en attente
+
+Le Principal a **expressément autorisé** le déploiement sur Fracta2 et le redémarrage contrôlé de `mcp-cogentia.service`.
+
+Un **bundle autonome de code** est préparé hors du checkout WIP, sous :
+
+`/srv/cogentia/releases/mcp-cogentia/cb3e3de52b6131556a2771fba6670e33e9b8dcbc/`
+
+Il contient :
+
+- `cogentia/` : extraction Git **cb3e3de52b6131556a2771fba6670e33e9b8dcbc** ; dépendances Node copiées dans ce bundle, distinctes du checkout WIP ;
+- `inseme/` : extraction Git **f4fa82ed0f861f0f7035088109fc93390991a8a7** ; résolution des imports COP et scheduler réellement utilisés par le service ;
+- `activate.sh` : script d'activation avec vérification de la révision, drop-in systemd réversible, redémarrage et contrôle de santé ;
+- `rollback.sh` : retrait du seul drop-in spécifique et retour au service précédent.
+
+**Tests réellement passés sur Fracta2 :** six tests ciblés `contenteditable`, `browser.form.upload` et porte COP ; tests de connexion Navigation Assistant et réception gouvernée ; démarrage isolé du serveur MCP depuis le *répertoire de la release* sur `127.0.0.1:18891`, avec son environnement d'import configuré, réponse de santé `ok:true`. Les processus de test sont arrêtés.
+
+**Racine d'import déjà créée :** `/srv/cogentia/artifacts/browser-uploads`, propriétaire `ubuntu`, permissions `0700`. Les champs de fichier restent soumis à autorisation COP indépendante ; aucune publication sur un tiers n'a été tentée.
+
+**Frontière constatée :** l'exécution privilégiée via le courtier Fracta2 a refusé l'effet (`cop_authorization_denied`) même après émission d'une préparation et d'un grant côté MCP. Aucune commande root ni modification systemd n'a été exécutée. Il ne faut pas contourner ce refus par un canal d'agent non gouverné. Le service de production reste attaché à `/srv/cogentia/repos/cogentia` avec son processus démarré le 21 novembre 2026.
+
+**Une seule commande d'administration par le Principal, sur Fracta2 :**
+
+```sh
+sudo /bin/sh /srv/cogentia/releases/mcp-cogentia/cb3e3de52b6131556a2771fba6670e33e9b8dcbc/activate.sh
+```
+
+Ce script doit afficher `DEPLOY_VERIFIED=1` si la nouvelle version et le service sont corrects. Il installe uniquement `/etc/systemd/system/mcp-cogentia.service.d/98-cogentia-nav-release.conf`, définit `WorkingDirectory` et `ExecStart` sur cette release et `COGENTIA_BROWSER_UPLOAD_ROOTS` sur la racine préparée, conserve tous les autres drop-ins, et annule sa modification du service si le contrôle de santé échoue. La commande retour arrière est `sudo /bin/sh /srv/cogentia/releases/mcp-cogentia/cb3e3de52b6131556a2771fba6670e33e9b8dcbc/rollback.sh`.
+
+**État factuel :** code publié et testé ; bundle prêt ; racine d'import prête ; configuration et redémarrage du service **non réalisés** ; test post-activation MCP **à effectuer après** la commande privilégiée. Le paquet ne peut pas être marqué terminé avant la vérification de l'effet réel.
