@@ -1,6 +1,11 @@
 ---
 title: Alan v0.2 — minimal LLM syntax card
 author: Jean Hugues Noël Robert
+affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
+license: unknown
+language: en
+status: working-paper
+last_modified_at: '2026-11-23'
 date: '2026-11-22'
 document_role: derived
 document_kind: reference
@@ -13,9 +18,12 @@ provenance:
   origin_ref: research/alan_turing_mcp.md
   origin_date: '2026-11-22'
   derived_from: [research/alan_turing_mcp.md]
+review:
+  status: unreviewed
+  reviewed_by: []
 ---
 
-# Alan 0.2 — tiny authoring card (design, not implemented)
+# Alan 0.2 — tiny authoring card (experimental JS interpreter subset)
 
 **Use only declared functions/capabilities.** Alan is executable pseudocode, not Python/JavaScript. One statement per line. Close `fn`, `if`, `while`, `extern` with `end`. Use `#` comments. Conditions must be Boolean. Do not invent verbs or assume MCP executes directly.
 
@@ -50,5 +58,15 @@ extern github.search
   output { results: list }
 end
 ```
+
+**Experimental read-only Slot cache (optional):** a declaration may include
+`cache max_age_ms=60000` (one minute). Identical reads inside one suspended
+work can reuse their slot while valid. The caller supplies an **evaluation**
+UTC time at start and resume, plus an **acquisition** time for each supplied
+cacheable result. This expiry clock is separate from the work's frozen
+`logical_time`, available through `use std.time` and
+`call time.injected_time`. On expiry the interpreter requests a new result;
+it does not rewind earlier statements. See
+[cache-ttl.alan](../tools/alan-lang/examples/cache-ttl.alan).
 
 **Compiler/runtime responsibility:** validate source against known signatures, parse to Alan AST, preserve effect mediation and serializable continuations; compilation to Inox is a planned backend, not a feature of this syntax card. Full contract: [Alan specification](alan_turing_mcp.md).

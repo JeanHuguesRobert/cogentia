@@ -31,6 +31,38 @@ function stable(v){
   return v;
 }
 const digest=v=>createHash('sha256').update(JSON.stringify(stable(v))).digest('hex');
+// Time for evaluating cache validity is explicitly supplied by the caller.
+// It is separate from context.logical_time, which stays frozen for a work packet.
+function instant(value){
+  if(typeof value!=='string'||
+      !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{3})?Z$/.test(value))
+    fault('ALAN_INVALID_INSTANT');
+  const n=Date.parse(value);
+  if(!Number.isFinite(n)||new Date(n).toISOString().replace(/\.000Z$/,'Z')!==
+     value.replace(/\.000Z$/,'Z'))fault('ALAN_INVALID_INSTANT');
+  return n;
+}
+function evaluationTime(machine,asOf){
+  if(asOf===undefined||asOf===null)return;
+  const next=instant(asOf);
+  if(machine.as_of!==null&&machine.as_of!==undefined&&next<instant(machine.as_of))
+    fault('ALAN_CLOCK_REGRESSION');
+  machine.as_of=asOf;
+}
+function cacheExpiry(observedAt,maxAge){
+  const until=instant(observedAt)+maxAge;
+  if(!Number.isSafeInteger(until)||!Number.isFinite(new Date(until).getTime()))
+    fault('ALAN_CACHE_EXPIRY_OVERFLOW');
+  return new Date(until).toISOString();
+}
+function cacheFresh(slot,asOf){
+  if(!asOf)fault('ALAN_VALIDITY_TIME_REQUIRED');
+  const atTime=instant(asOf),observed=instant(slot.observed_at);
+  if(atTime<observed)fault('ALAN_CLOCK_REGRESSION');
+  // Exactly at the expiry boundary the result is no longer reusable.
+  return atTime<instant(slot.valid_until);
+}
+
 const at=(locals,expr)=>{
   switch(expr.kind){
     case 'literal':return expr.value;
@@ -164,14 +196,43 @@ function execute(program,machine,compiled){
           const extern=scope.externs.get(op.capability);
           if(extern.policy==='P5')
             return failure(machine,'ALAN_FORBIDDEN_CAPABILITY',op.capability);
-          const suspensionId=randomUUID(),slotId=randomUUID();
           const input=clone(evaluate(frame.locals,op.args));
           checkResultSchema(input,extern.input,'ALAN_INPUT');
-          machine.slots.push({id:slotId,state:'pending',capability:op.capability});
+          const cached=extern.cache!==undefined;
+          if(cached&&!machine.as_of)fault('ALAN_VALIDITY_TIME_REQUIRED');
+          // A cache key identifies a read and its inputs within this particular
+          // work packet, not an authority to share a result between principals.
+          const cacheKey=cached?digest({capability:op.capability,input}):null;
+          const previous=cached?machine.slots.findLast(x=>x.key===cacheKey):null;
+          if(previous?.state==='resolved'){
+            if(cacheFresh(previous,machine.as_of)){
+              if(op.bind)frame.locals[op.bind]=clone(previous.value);
+              machine.trace.push({event:'slot_cache_hit',data:{
+                slot_id:previous.id,key:cacheKey,generation:previous.generation
+              }});
+              frame.pc++;
+              break;
+            }
+            previous.state='stale';
+            machine.trace.push({event:'slot_invalidated',data:{
+              slot_id:previous.id,key:cacheKey,generation:previous.generation,
+              as_of:machine.as_of,valid_until:previous.valid_until
+            }});
+          }
+          if(previous?.state==='pending')fault('ALAN_SLOT_ALREADY_PENDING');
+          const suspensionId=randomUUID(),slotId=randomUUID();
+          const generation=previous?previous.generation+1:1;
+          const slot={id:slotId,state:'pending',capability:op.capability};
+          if(cached)Object.assign(slot,{
+            key:cacheKey,generation,previous_slot_id:previous?.id||null,
+            max_age_ms:extern.cache.max_age_ms
+          });
+          machine.slots.push(slot);
           const pending={
             capability:op.capability,input,slot_id:slotId,
             policy:{level:extern.policy,effect:extern.effect,data:extern.data,mode:extern.mode||null}
           };
+          if(cached)pending.cache={key:cacheKey,generation,max_age_ms:extern.cache.max_age_ms};
           // The caller may later provide a result; this is NOT an execution receipt.
           const suspension={
             type:'alan.suspension',version:'0.2',suspension_id:suspensionId,
@@ -203,7 +264,7 @@ function execute(program,machine,compiled){
   }
   return failure(machine,'ALAN_EMPTY_STACK','No terminal result');
 }
-export function start(program,{entry='main',args={},context={},bounds={}}={}){
+export function start(program,{entry='main',args={},context={},bounds={},asOf=null}={}){
   const compiled=compile(program),f=compiled.scope.functions.get(entry);
   if(!f)fault('ALAN_MISSING_ENTRY',entry);
   if(!args||typeof args!=='object'||Array.isArray(args)||
@@ -214,7 +275,7 @@ export function start(program,{entry='main',args={},context={},bounds={}}={}){
   const machine={
     version:'0.2',codeHash:compiled.codeHash,
     frames:[{fn:entry,pc:0,locals,returnBind:null}],
-    slots:[],trace:[],steps:0,limits:limits(bounds),
+    slots:[],trace:[],steps:0,limits:limits(bounds),as_of:null,
     context:clone({
       packet_id:context.packet_id||null,
       mandate_ref:context.mandate_ref||null,
@@ -223,6 +284,7 @@ export function start(program,{entry='main',args={},context={},bounds={}}={}){
       logical_time:context.logical_time||null
     })
   };
+  evaluationTime(machine,asOf);
   return execute(program,machine,compiled);
 }
 function checkResultSchema(value,schema,prefix='ALAN_STEP'){
@@ -244,7 +306,7 @@ function checkResultSchema(value,schema,prefix='ALAN_STEP'){
   for(const name of Object.keys(value))if(!Object.hasOwn(schema,name))
     fault(prefix+'_UNKNOWN_FIELD',name);
 }
-export function resume(program,suspension,stepResult){
+export function resume(program,suspension,stepResult,{asOf=null}={}){
   const compiled=compile(program),{codeHash,scope}=compiled;
   if(suspension?.type!=='alan.suspension'||suspension.version!=='0.2')
     fault('ALAN_INVALID_CONTINUATION');
@@ -262,7 +324,12 @@ export function resume(program,suspension,stepResult){
     stepResult.trace?.caller_mediated!==true||
     stepResult.trace?.direct_invocation_by_alan!==false)
     fault('ALAN_STEP_CORRELATION');
-  const machine=clone(suspension.saved_state),frame=machine.frames.at(-1);
+  const machine=clone(suspension.saved_state);
+  if(machine.slots.some(slot=>slot.max_age_ms!==undefined)&&
+     (asOf===undefined||asOf===null))
+    fault('ALAN_VALIDITY_TIME_REQUIRED');
+  evaluationTime(machine,asOf);
+  const frame=machine.frames.at(-1);
   if(!frame||frame.fn!==suspension.resume_point?.function||
      frame.pc!==suspension.resume_point?.step_index)
     fault('ALAN_RESUME_POINT');
@@ -289,6 +356,19 @@ export function resume(program,suspension,stepResult){
   const ext=scope.externs.get(op.capability);
   checkResultSchema(stepResult.value,ext.output);
   const resolved=clone(stepResult.value);
+  if(ext.cache!==undefined){
+    if(!machine.as_of)fault('ALAN_VALIDITY_TIME_REQUIRED');
+    // Acquisition time is attested by the caller, never inferred from
+    // the current process clock or from the frozen logical time.
+    if(stepResult.observed_at===undefined)fault('ALAN_OBSERVATION_REQUIRED');
+    const observed=instant(stepResult.observed_at);
+    if(observed>instant(machine.as_of))fault('ALAN_FUTURE_OBSERVATION');
+    const until=cacheExpiry(stepResult.observed_at,ext.cache.max_age_ms);
+    if(ext.cache.max_age_ms>0&&instant(machine.as_of)>=instant(until))
+      fault('ALAN_EXPIRED_RESULT');
+    slot.observed_at=stepResult.observed_at;
+    slot.valid_until=until;
+  }
   slot.state='resolved';slot.value=resolved;
   if(op.bind)frame.locals[op.bind]=resolved;
   frame.pc++;

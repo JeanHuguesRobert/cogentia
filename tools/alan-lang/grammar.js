@@ -160,10 +160,17 @@ export function parseAlan(source){
       if(defs)error('ALAN_DECLARATION_ORDER',line);
       const ext={name:match[1]};
       while(next()&&next().text!=='end'){
-        const field=take(),m=/^(kind|effect|data|policy|mode|input|output)\s+(.+)$/s.exec(field.text);
+        const field=take(),m=/^(kind|effect|data|policy|mode|input|output|cache)\s+(.+)$/s.exec(field.text);
         if(!m||Object.hasOwn(ext,m?.[1]))error('ALAN_INVALID_EXTERN_FIELD',field.line);
-        ext[m[1]]=['input','output'].includes(m[1])?
-          signature(m[2],field.line):m[2].trim();
+        if(m[1]==='cache'){
+          const ttl=/^max_age_ms=(0|[1-9][0-9]*)$/.exec(m[2].trim());
+          if(!ttl||!Number.isSafeInteger(Number(ttl[1])))
+            error('ALAN_INVALID_CACHE_TTL',field.line);
+          ext.cache={max_age_ms:Number(ttl[1])};
+        }else{
+          ext[m[1]]=['input','output'].includes(m[1])?
+            signature(m[2],field.line):m[2].trim();
+        }
       }
       if(next()?.text!=='end')error('ALAN_MISSING_END',line);
       take();

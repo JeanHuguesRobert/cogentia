@@ -1,0 +1,31 @@
+alan 0.2
+use std.mcp
+use std.time
+
+extern catalog.read
+  kind tool
+  effect read_only
+  data public
+  policy P1
+  cache max_age_ms=60000
+  input { key: string }
+  output { value: string }
+end
+
+extern checkpoint.wait
+  kind tool
+  effect read_only
+  data public
+  policy P1
+  input { key: string }
+  output { ok: bool }
+end
+
+fn main key
+  fixed = call time.injected_time
+  first = mcp catalog.read key=$key
+  pass = mcp checkpoint.wait key=$key
+  second = mcp catalog.read key=$key
+  after = call time.injected_time
+  return first=$first.value second=$second.value before=$fixed after=$after
+end

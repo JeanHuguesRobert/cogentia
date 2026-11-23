@@ -146,7 +146,7 @@ export function validate(program){
     functions.set(f.name,f);
   }
   for(const x of program.externs){
-    own(x,'extern');keysOnly(x,['name','kind','effect','data','policy','input','output','mode'],'extern');
+    own(x,'extern');keysOnly(x,['name','kind','effect','data','policy','input','output','mode','cache'],'extern');
     name(x.name,'extern',qualified);
     if(externs.has(x.name))fail('ALAN_DUPLICATE_EXTERN',x.name);
     if(x.kind!=='tool'||!['P1','P3','P4','P5'].includes(x.policy)||
@@ -164,6 +164,13 @@ export function validate(program){
     if(levels.indexOf(x.policy)<levels.indexOf(minimum)||
       (x.effect==='repository_write'&&x.policy!=='P5'&&x.mode!=='staged_only'))
       fail('ALAN_EXTERN_POLICY_MISMATCH',x.name);
+    if(x.cache!==undefined){
+      own(x.cache,'extern.cache');
+      keysOnly(x.cache,['max_age_ms'],'extern.cache');
+      if(!Number.isSafeInteger(x.cache.max_age_ms)||x.cache.max_age_ms<0)
+        fail('ALAN_INVALID_CACHE_TTL',x.name);
+      if(x.effect!=='read_only')fail('ALAN_CACHE_EFFECT',x.name);
+    }
     externs.set(x.name,x);
   }
   const scope={functions,externs,uses:new Set(program.uses)};

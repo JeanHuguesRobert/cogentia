@@ -179,6 +179,57 @@ This is a **request for a capability**, not evidence of execution. Operationally
 
 The caller may resume with a result, refusal, narrowed scope, need for human review, or controlled failure. Authorization, completion, timeout and delivery are different states. Tool existence is not authorization; an authorization is not an execution receipt.
 
+### 7.1. Experimental work-local Slot cache and validity (2026-11-23)
+
+The Alan v0.2 **reference interpreter experiment** accepts the optional
+read-only capability declaration:
+
+```alan
+extern catalog.read
+  kind tool
+  effect read_only
+  data public
+  policy P1
+  cache max_age_ms=60000
+  input { key: string }
+  output { value: string }
+end
+```
+
+This produces a **work-local, serializable Slot** keyed by the capability and
+canonicalized input. The slot records its identity, generation, pending/resolved
+(or stale) state, acquired value, caller-reported acquisition time, expiration
+time and optional predecessor slot. Repeated identical read requests within
+the same work packet use the resolved slot while valid; they do not call or
+simulate an MCP tool. A cache miss or expired slot produces a new
+caller-mediated suspension. Revalidation creates a new generation without
+rewinding an already executed control path or retroactively changing values
+that a program previously observed.
+
+**Two explicit time axes:** the immutable work-context
+`logical_time` (observable via `time.injected_time`) is deliberately not the
+clock used to expire results. The caller supplies an `asOf` UTC instant at
+the start of cache-enabled work **and at each subsequent resume**; for a
+cacheable tool result, the caller also supplies `observed_at` (the acquisition
+instant). The result is reusable iff `asOf < observed_at + max_age_ms`; it
+expires exactly at the boundary. Regressing clocks, future-dated acquisitions,
+missing evaluation time and already-expired supplied values are rejected.
+`max_age_ms=0` permits use of a newly delivered result, but no subsequent
+cache hit. The runtime neither samples the host wall clock nor equates expiry
+with the frozen logical time.
+
+**Scope:** this is a deliberately limited Side-inspired memoization and TTL
+probe in the JavaScript Alan reference runner. Cache identity is scoped to a
+single continuation; it is not a global cache, a ReactiveSet dependency graph
+or an authorization/receipt mechanism. No automatic invalidation of derived
+bindings, cross-packet sharing, external persistence service, Fractanet
+routing, content-addressed delivery or Inox compilation is implemented.
+A cached result cannot by itself provide permission for an external act.
+The reproducible example is
+[cache-ttl.alan](../tools/alan-lang/examples/cache-ttl.alan);
+focused tests are in
+[cache.test.js](../tools/alan-lang/tests/cache.test.js).
+
 ## 8. Continuations and cognitive packets
 
 A resumable computation must be representable independently of its current host process. The logical continuation carries or refers to:
