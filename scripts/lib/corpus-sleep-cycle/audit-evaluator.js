@@ -333,9 +333,24 @@ export function evaluateDocumentPair(docA, docB, options = {}) {
     ...checkWeakHypothesis(docA, docB, contentA, contentB),
   ];
 
-  // Standardize full signal records with complete citations and provenance
+  // Preserve legacy IDs for the first finding, but distinguish additional
+  // evidence with the same pair/kind/finding. Previously, distinct paragraphs
+  // could silently collapse into one review-queue entry (#124, FBF).
+  const evidenceByLegacyId = new Map();
   return rawSignals.map((sig) => {
-    const sigId = `sig_${sha1(`${docA.id}:${docB.id}:${sig.kind}:${sig.finding}`)}`;
+    const legacyId = `sig_${sha1(`${docA.id}:${docB.id}:${sig.kind}:${sig.finding}`)}`;
+    const evidenceKey = JSON.stringify([sig.method, sig.docA_excerpt, sig.docB_excerpt]);
+    let variants = evidenceByLegacyId.get(legacyId);
+    if (!variants) {
+      variants = new Map();
+      evidenceByLegacyId.set(legacyId, variants);
+    }
+    if (!variants.has(evidenceKey)) {
+      variants.set(evidenceKey, variants.size === 0
+        ? legacyId
+        : `${legacyId}_${sha1(evidenceKey)}`);
+    }
+    const sigId = variants.get(evidenceKey);
     return {
       id: sigId,
       signal_kind: sig.kind,

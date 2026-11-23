@@ -7,6 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { AdaptivePairSampler, discoverCorpusDocuments } from "./lib/corpus-sleep-cycle/pair-sampler.js";
 import { runMonteCarloAudit } from "./lib/corpus-sleep-cycle/sleep-cycle-engine.js";
+import { evaluateDocumentPair } from "./lib/corpus-sleep-cycle/audit-evaluator.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const docs = discoverCorpusDocuments({ root, view: "public" });
@@ -53,6 +54,32 @@ try {
     "Explicit replay must not change scheduled history");
   const continued = await run({ seed: 42, checkpoint: replay1.checkpoint, maxPairs: 10 });
   assert.equal(continued.checkpoint.visitedPairs.length, 20);
+
+  // Two distinct matching paragraphs yield the same similarity/finding but
+  // must not collapse into one durable review candidate.
+  const blocks = [
+    "Alpha mountain forest river garden ocean meadow valley sunrise silver planet amber quartz memory pencil compass.",
+    "Delta station bridge harbor orchard railway tunnel engine lantern copper horizon marble signal anchor."
+  ];
+  const fixtureDir = path.join(queueRoot, "synthetic-evidence");
+  fs.mkdirSync(fixtureDir);
+  const paths = ["a.md", "b.md"].map(name => path.join(fixtureDir, name));
+  for (const filename of paths) fs.writeFileSync(filename, blocks.join("\n\n"));
+  const mkDoc = (id, fullPath) => ({
+    id, repo: "fixture", relPath: path.basename(fullPath),
+    title: id, tags: [], relatedDocs: [], status: "working", fullPath
+  });
+  const docA = mkDoc("fixture/a.md", paths[0]);
+  const docB = mkDoc("fixture/b.md", paths[1]);
+  const evidence1 = evaluateDocumentPair(docA, docB, { runId: "fixture" })
+    .filter(s => s.signal_kind === "duplication");
+  const evidence2 = evaluateDocumentPair(docA, docB, { runId: "fixture" })
+    .filter(s => s.signal_kind === "duplication");
+  assert.equal(evidence1.length, 2);
+  assert.equal(new Set(evidence1.map(s => s.id)).size, 2,
+    "Distinct paragraph evidence must yield distinct review IDs");
+  assert.deepEqual(evidence1.map(s => s.id), evidence2.map(s => s.id),
+    "Signal IDs must remain reproducible for queue idempotency");
 
   fs.writeFileSync(historyFile, JSON.stringify({
     version: 1, pairs: Array.from({ length: 5100 }, (_, i) => "obsolete_" + i)
