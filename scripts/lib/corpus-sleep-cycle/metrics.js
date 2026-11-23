@@ -45,7 +45,7 @@ export function evaluateAuditMetrics({
   const visitedDocsCount = docCountsArray.filter((c) => c > 0).length;
 
   const pairCoverageRatio = totalPossiblePairs > 0
-    ? Number((uniquePairsSampled / totalPossiblePairs).toFixed(4))
+    ? uniquePairsSampled / totalPossiblePairs
     : 0;
 
   const documentCoverageRatio = totalDocuments > 0
