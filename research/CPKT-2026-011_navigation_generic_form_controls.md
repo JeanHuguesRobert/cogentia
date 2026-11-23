@@ -7,8 +7,8 @@ created: "2026-11-22"
 date: "2026-11-22"
 last_modified_at: "2026-11-23"
 status: working-paper
-packet_status: "COP upload release tested and prepared; owner service activation and authenticated v6→v7 consent pending"
-lifecycle_state: working
+packet_status: "completed — signed v7, deploy stable, real MCP upload selection and COP receipt verified"
+lifecycle_state: completed
 visibility: public
 language: fr
 author: "Agent John / Ubikia pour Jean Hugues Noël Robert"
@@ -358,8 +358,9 @@ installe seulement deux drop-ins :
 
 puis redémarre les deux services, vérifie PID, commande, drapeau de runtime,
 `/health` et route de consentement 405. Un échec supprime ces deux nouveaux
-drop-ins et tente de rétablir les deux services antérieurs. Sur succès,
-`DEPLOY_VERIFIED=1` et `MANDATE_AMENDMENT_APPLIED=0` sont imprimés.
+drop-ins et tente de rétablir les deux services antérieurs. Sur succès, la version corrigée imprime `DEPLOY_VERIFIED=1` et
+`MANDATE_AMENDMENT_STATUS=not_checked_by_deployer`. Le contrôle de la version
+du mandat est une étape indépendante, consignée dans le bilan ci-dessous.
 
 La restauration explicite est possible par :
 
@@ -392,4 +393,166 @@ les deux services sur `d7ae50c`, relire le mandat réel
 `cogentia_john_run` par le nouvel itinéraire COP sur un onglet de
 démonstration inerte et relever son reçu et son budget. Clore alors
 CPKT-2026-011 si le test est concluant. Aucune publication sur un tiers
-n'est impliquée.
+n'est impliquée. Cette section conserve le plan **avant** le déploiement ;
+le résultat réel est établi ci-dessous.
+
+
+## Bilan de production vérifié — 23 novembre 2026 (22 h UTC)
+
+**État final : CPKT-2026-011 accompli.** Les deux opérations du Navigation
+Assistant sont opérationnelles dans la release Cogentia
+`d7ae50c997e33e0530902fedca1aee2d85aa815b`. Le paquet reste la
+source de traçabilité des incidents et décisions, mais n'exige plus
+d'intervention du Principal.
+
+### Incident initial, cause prouvée, correction de fond
+
+Le Principal a exécuté le premier script `activate-upload-cop.sh` à
+**22:15 UTC**, et a observé `DEPLOY_FAILED_ROLLBACK_IN_PROGRESS`,
+`ROLLBACK_ATTEMPTED`. Les journaux `systemd` ont permis de retrouver
+la cause précise : `ERR_MODULE_NOT_FOUND` pour
+`@supabase/supabase-js` importé depuis
+`inseme/apps/platform/scripts/lib/config.js`. Le bundle Cogentia
+figé réutilisait une copie Inseme archivée, **sans** ses dépendances npm.
+Les deux services sont effectivement revenus à leur configuration précédente
+après cet échec. Aucune perte du WIP des autres agents.
+
+**Correction du bundle, et non contournement du contrôle COP :**
+
+- Le répertoire `/srv/cogentia/releases/mcp-cogentia/d7ae50c997e33e0530902fedca1aee2d85aa815b/inseme`
+  est désormais une matérialisation du contenu Inseme épinglé
+  `f4fa82ed0f861f0f7035088109fc93390991a8a7`, avec des liens matériels
+  pour ne pas recopier les octets source. Le dépôt Inseme vivant
+  `/srv/cogentia/repos/inseme` et l'ancien bundle restent inchangés.
+- Installation **isolée**, verrouillée et minimale des dépendances runtime
+  déclarées par le `pnpm-lock.yaml` épinglé : `@supabase/supabase-js 2.117.1`
+  et `dotenv 18.0.3` (10 paquets avec transitives ; environ 9,5 Mio).
+  Le manifest et `package-lock.json` sont conservés sous
+  `inseme/.runtime-deps/` ; le code de plateforme les résout depuis
+  `inseme/apps/platform/node_modules`.
+- Le script propriétaire
+  `.../d7ae50c997e33e0530902fedca1aee2d85aa815b/activate-upload-cop.sh`
+  vérifie désormais l'importation **effective** du serveur de consentement
+  et les versions npm **avant** toute modification systemd.
+  `--preflight` est réalisable sans root : résultat vérifié
+  `CONSENT_DEPENDENCY_IMPORT=PASS`, `RELEASE_RUNTIME_PREFLIGHT_OK=1`.
+  Après redémarrage, il revalide les PID stables et les deux vrais endpoints.
+  Son SHA-256 opérationnel est
+  `a57b449f9e796eee46981f0eab774f93690e12b6fa8315c92c88f5f745bd5c8b`.
+- Essais indépendants du bundle corrigé : **15 tests ciblés réussis**,
+  service de consentement démarré sans erreur sur `127.0.0.1:18896`
+  (GET route d'amendement = HTTP 405), MCP sur
+  `127.0.0.1:18891` (`health.ok=true`). Ces deux processus de test
+  ont été arrêtés.
+
+L'évolution parallèle d'Inseme jusqu'au commit `809e647c` concerne des
+contrats HTTP MCP et ne modifie pas les fichiers COP ou le module de
+configuration nécessaires à cette correction : la version Inseme
+épinglée reste donc inchangée.
+
+### Approbation réelle du Principal
+
+La visite par le Principal de
+`https://jhn.baronsmariani.org/cop/consent/standing` a **effectivement**
+appliqué le mandat racine **v6 → v7** dans la base COP canonique
+`/var/lib/cogentia/cop/john-root-v1.sqlite`.
+
+Vérification indépendante : le vérificateur d'émetteur hors ligne a
+validé **toute la filiation signée** (`issuer_lineage_verified:true`),
+le contrôle `evaluateMandate` autorise `browser.form.upload`,
+et le budget existant est financé. Le schéma de provenance est
+`supabase_authenticated_owner_direct_intent_v1`.
+La politique reste `publication_authorized:false` :
+aucune autorisation générale de diffusion n'a été créée.
+
+### Déploiement réel et particularité du reçu de supervision
+
+L'activation du bundle corrigé a été envoyée par la capacité gouvernée
+`host.process.run(normal)` sur `node:i7-thinkpad-jhr`, via le SSH
+propriétaire vers Fracta2 et `sudo -n`. Le mandat courant autorisait
+cette opération et un test préalable de la route avait retourné l'UID 0
+sur le nœud cible.
+
+Le service `mcp-cogentia.service` a ensuite **redémarré l'exécuteur MCP
+qui pilotait cet appel** : le retour synchrone de la capacité est devenu
+une erreur de transport (code 1), alors que le déploiement lui-même s'est
+produit. Nous n'avons **pas** réessayé l'effet à l'aveugle : les vérifications
+systemd, processus, fichier de configuration et HTTP ont été refaites
+séparément.
+
+**Résultat observé à 22:25 UTC :**
+
+| Service | PID vérifié | Révision exécutée | État |
+|---|---:|---|---|
+| `mcp-cogentia.service` | `2551162` | `d7ae50c` | actif, `NRestarts=0` |
+| `cogentia-jhn-consent.service` | `2551159` | `d7ae50c` | actif, `NRestarts=0` |
+
+Les drop-ins effectifs
+`/etc/systemd/system/mcp-cogentia.service.d/99-cpkt011-upload.conf`
+et
+`/etc/systemd/system/cogentia-jhn-consent.service.d/99-cpkt011-upload.conf`
+sont présents. Les PID sont stables après délai, le premier serveur répond
+`/health.ok=true`, le second HTTP 405 sur le GET d'une route d'application
+réservée au POST. Le processus MCP porte
+`COGENTIA_JHN_CANONICAL_UPLOAD_ENABLED=1`.
+
+**FBF — comptabilisation de l'effet de redémarrage interrompu :**
+le seul appel `host.process.run` de ce déploiement avait conservé une
+réservation non soldée, créée à **22:24:27.288 UTC**. Après observation
+indépendante des deux services et de leur révision, cette **seule**
+réservation a été régularisée par `ledger.settle(max_steps=1)`,
+avec preuve d'effet et idempotence :
+`reservation:budget:mandate:jhn:john-root:standing:cb7b26ed-313c-49b0-aa19-03ee5c77c9cb`.
+Événement COP de règlement :
+`52febf54-56e8-47a9-93f2-d06ecdbf9d78`.
+Le budget est passé de **11 à 10 étapes réservées** et de **581 à 582
+étapes réglées**. Les dix réservations plus anciennes d'autres travaux
+n'ont pas été modifiées.
+
+Pour un futur **autoredémarrage** du service MCP, préférer un exécuteur
+ou un job indépendant du processus remplacé, puis recueillir son résultat
+après redémarrage. Ne pas assimiler la perte du canal de commande à une
+absence d'effet. Cette leçon appartient à l'exploitation générique,
+pas à une permission supplémentaire de téléversement.
+
+### Reality Test final : vrai MCP, vrai mandat v7
+
+Requête authentifiée
+`cogentia_john_run` :
+`request_id=cpkt011-real-mcp-20261123-final`,
+`capability=browser.form.upload`,
+`exposure=consequential`,
+`mandate_ref=mandate:jhn:john-root`, version réellement signée `v7`.
+
+Le test, exécuté dans l'onglet **inactif** de démonstration
+`https://example.org/`, a utilisé un champ HTML `input[type=file]`
+créé pour cette seule observation et un fichier local fictif :
+
+- `john.tool.receipt.status=completed` et
+  `john.run.completed` présents.
+- `john.accounting.settled` :
+  **2 étapes**, **1 appel de capacité**, **1 effet externe**, **0 effet interne** ;
+  réservation du budget canonique effectivement réglée.
+- Fichier source **43 octets** ; taille Chromium
+  **43 octets**, lecture effective confirmée, événement `change` observé.
+- `document.hasFocus()=false`, marqueur `submitted=no`,
+  `upload_completion=unverified`, **aucune soumission ni publication**.
+- Un premier script de nettoyage a échoué parce que ses variables
+  d'environnement n'avaient pas été exportées. La reprise ciblée a
+  confirmé le bon onglet `94451152`, a vérifié l'état DOM, puis l'a
+  **fermé** ; le fichier temporaire a été **supprimé**.
+  Aucun autre onglet ou fichier de l'utilisateur n'a été modifié.
+
+**Critères d'acceptation satisfaits.** Le contrat générique de sélection
+fonctionne sous une autorisation COP réelle ; le mandat et les budgets
+restent distincts de la capacité technique ; le cas de fichier illisible
+est refusé ; l'ancien mécanisme de saisie riche reste valide. Le paquet
+est clos comme **completed**. Les améliorations génériques de transmission
+des reçus à travers un autoredémarrage peuvent être traitées dans un
+chantier opérationnel ultérieur, sans retenir artificiellement ce paquet.
+
+**Intégration Git :** aucune remise à zéro, aucun stash ni commit global
+des WIP locaux. Le paquet est mis à jour par verrouillage optimiste
+du fichier GitHub. Les dépôts locaux Cogentia, Inseme, Operium et leurs
+versions ThinkPad ont été contrôlés après la synchronisation du Principal ;
+les modifications des autres agents restent préservées.
