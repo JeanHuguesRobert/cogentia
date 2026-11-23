@@ -16,7 +16,7 @@
     "press": "node scripts/living-book-press.js",
     "living-book": "node scripts/living-book.js",
     "check:package-access": "node scripts/check-package-access.js",
-    "test": "node --test test/*.test.js scripts/lib/side-effect-authorization-285.test.js scripts/lib/agent-jhn-workspace.test.js scripts/lib/mandate-continuation.test.js && node scripts/check-side-effect-authorization.js && node scripts/check-git-write.js && node scripts/check-communication-send.js && node scripts/check-effect-grant.js && node scripts/check-memsync-reality.js && node scripts/check-dependency-janus.js && pnpm test:janus-importers && node --test scripts/lib/resume-prepare.test.js && pnpm test:continuation-routing-core && node scripts/check-kys-services.mjs",
+    "test": "node --test test/*.test.js scripts/lib/side-effect-authorization-285.test.js scripts/lib/agent-jhn-workspace.test.js scripts/lib/mandate-continuation.test.js && node scripts/check-side-effect-authorization.js && node scripts/check-git-write.js && node scripts/check-communication-send.js && node scripts/check-effect-grant.js && node scripts/check-memsync-reality.js && node scripts/check-dependency-janus.js && pnpm test:janus-importers && node --test scripts/lib/resume-prepare.test.js && pnpm test:continuation-routing-core && node scripts/check-kys-services.mjs && pnpm test:alan",
     "test:memsync-reality": "node scripts/check-memsync-reality.js",
     "test:resume-prepare": "node --test scripts/lib/resume-prepare.test.js",
     "test:kys-services": "node scripts/check-kys-services.mjs",
@@ -160,7 +160,8 @@
     "mcp:inspect": "npx @modelcontextprotocol/inspector node scripts/cogentia-mcp.js",
     "mcp:inspect:2026": "node -e \"process.env.COGENTIA_MCP_FORCE_PROTOCOL='2026-07-28'; require('child_process').spawn('npx', ['@modelcontextprotocol/inspector', 'node', 'scripts/cogentia-mcp.js'], {stdio: 'inherit', shell: true})\"",
     "test:corpus-plan-scope": "node scripts/check-corpus-plan-scope.js",
-    "test:mcp-apps": "node scripts/check-mcp-app-registry.js && node scripts/check-idual-calibration-mcp-app.js && node scripts/check-idual-calibration-browser.js && node scripts/check-mcp-apps-demo.js && node scripts/check-cop-consent-surface.js"
+    "test:mcp-apps": "node scripts/check-mcp-app-registry.js && node scripts/check-idual-calibration-mcp-app.js && node scripts/check-idual-calibration-browser.js && node scripts/check-mcp-apps-demo.js && node scripts/check-cop-consent-surface.js",
+    "test:alan": "node --test tools/alan-lang/tests/*.test.js"
   },
   "devDependencies": {
     "@modelcontextprotocol/inspector": "^2.7.0",

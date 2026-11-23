@@ -1,0 +1,24 @@
+alan 0.2
+use std.list
+use std.mcp
+
+extern github.search
+  kind tool
+  effect read_only
+  data public
+  policy P1
+  input { q: string }
+  output { results: list }
+end
+
+fn main query
+  summary = call search_and_count query=$query
+  return count=$summary.count
+end
+
+fn search_and_count query
+  emit search_started query=$query
+  response = mcp github.search q=$query
+  count = call list.length items=$response.results
+  return count=$count
+end

@@ -1,9 +1,13 @@
 ---
 title: Alan — implementation and experimental validation plan (v0.2)
 author: Jean Hugues Noël Robert
+affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
+license: unknown
+language: en
 date: '2026-06-26'
-last_modified_at: '2026-11-22'
+last_modified_at: '2026-11-23'
 version: '0.2'
+status: working-paper
 document_role: source
 document_kind: documentation
 visibility: public
@@ -26,7 +30,7 @@ classification_confidence: medium
 
 # Alan — implementation and validation plan (design v0.2)
 
-This replaces the unimplemented v0.1 implementation proposal. **No Alan runtime/compiler is known to exist** at this revision. The governing source is [Alan specification](alan_turing_mcp.md), the agent-oriented [minimal syntax card](alan_syntax_card.md) is its deliberately small prompt projection, and the existing packet/issue is [Cogentia #36](https://github.com/JeanHuguesRobert/cogentia/issues/36).
+This replaces the unimplemented v0.1 implementation proposal. **A narrow experimental Alan reference parser and interpreter exists as of 2026-11-23** in [tools/alan-lang](../tools/alan-lang/); it is not a deployed runtime or an Inox backend. The governing source is [Alan specification](alan_turing_mcp.md), the agent-oriented [minimal syntax card](alan_syntax_card.md) is its deliberately small prompt projection, and the existing packet/issue is [Cogentia #36](https://github.com/JeanHuguesRobert/cogentia/issues/36).
 
 ## Objective and testable hypothesis
 
@@ -119,6 +123,16 @@ Acceptance: a nontrivial Alan program produces named Inox definitions and reprod
 Specify a relocatable artifact contract: code hash, runtime profile, symbols/constants, logical continuation, capability imports and references. The portability substrate is explicitly the **Cell + three-register (IP/TOS/CSP) interpreter** described in the specification §12.1: validate literal push, primitive dispatch, verb call and return-sentinel semantics with trace comparison against the working JS Inox interpreter, ideally using a tiny implementation in a second host language. This tests semantic portability, not yet Alan compilation. Then test serialization/resumption first across separate Node/Inox processes on one machine, then across nodes. Code may be transported once and cached by content address; state and mandate references travel separately. Runtime profile, import availability and independently applicable authority must be resolved at destination.
 
 Acceptance: same semantic result and intact packet/COP causal history after a genuine change of runtime process, then host. Timing/performance improvements and network savings must be measured, not assumed.
+
+## Executable checkpoint — 2026-11-23 (Cogentia #36)
+
+- Phase A **partially implemented**: strict v0.2 text parser (subset), discriminated JSON AST and validator; no grammar-generation pipeline, complete static type system or full schema registry yet.
+- Phase B **partially implemented**: pure JavaScript reference executor for named arguments, local bindings, library calls, recursion, loops, conditionals, trace emits, failures, resource bounds.
+- Phase C **partially implemented and Reality-tested**: mocked MCP-only suspensions, JSON-stored logical frames/slots, caller-mediated correlated step results, explicit refusals, no repeated prior instructions across a **real second Node.js process**. Logical time is caller-injected and preserved, not automatically frozen from the wall clock.
+- 17 focused test cases at this checkpoint, runnable via pnpm test:alan. P4 requests produce a review-required suspension, not a write. The implementation never invokes a real MCP tool.
+- Not yet implemented: complete external authorization/receipt ledger, structural validation for named MCP schemas, LLM comparisons (phase D), Alan→Inox assembly (phase E), image/continuation portability through Inox or Fractanet (phase F). The JS continuation digest is an integrity diagnostic, not an authentication/mandate credential.
+
+Next **FixBugsFirst** probe: subject the parser and continuation format to broader differential and adversarial fixtures before relying on them for governed execution; align the Inox JS/micro ABI before any portable image claim.
 
 ## Out of scope for this plan
 

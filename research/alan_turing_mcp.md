@@ -1,9 +1,12 @@
 ---
 title: Alan — familiar algorithmic notation, accountable continuations, portable execution (design v0.2)
 author: Jean Hugues Noël Robert
+affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
+license: unknown
+language: en
 status: working-paper
 date: '2026-06-26'
-last_modified_at: '2026-11-22'
+last_modified_at: '2026-11-23'
 version: '0.2'
 document_role: source
 document_kind: research-paper
@@ -31,7 +34,7 @@ classification_confidence: medium
 >
 > **Question fondatrice :** Quelle est la notation algorithmique minimale que les LLM comprennent presque spontanément et que nous pouvons rendre rigoureusement exécutable ?
 
-**Status (2026-11-22):** normative *design proposal*, not an implemented language or deployed runtime. This revision deliberately supersedes the unimplemented v0.1 design at this path. There is **no installed Alan codebase or compatibility obligation**. Existing research, especially [Packet/Continuation Machine](packet_continuation_machine.md), remains the architectural source for cooperative work. Work is tracked in [Cogentia #36](https://github.com/JeanHuguesRobert/cogentia/issues/36) and its cognitive packet.
+**Status (2026-11-23):** normative *design proposal* with a **first experimental JavaScript reference slice** under [tools/alan-lang](../tools/alan-lang/) (strict subset parser, discriminated AST, validator, pure execution, caller-mediated mocked MCP suspension/resume). The previously unimplemented v0.1 design is superseded. There is no deployed Alan runtime or Inox backend. Existing research, especially [Packet/Continuation Machine](packet_continuation_machine.md), remains the architectural source for cooperative work. Work is tracked in [Cogentia #36](https://github.com/JeanHuguesRobert/cogentia/issues/36).
 
 ## 1. Purpose and criterion of success
 
@@ -429,6 +432,14 @@ There is no deployed Alan runtime or installed base as of this revision. Therefo
 Implementation order is: (1) minimal source syntax card, grammar and discriminated JSON AST; (2) validator and pure JavaScript reference evaluator; (3) mocked MCP suspension/resume with COP correlations; (4) differential tests and LLM cost benchmark; (5) Alan→Inox subset compiler; (6) portable code-state/continuation tests, first across isolated processes, then across nodes. The first profile must not silently execute real external writes or request credentials.
 
 Non-goals now: full Python/JS compatibility, complete OO system, universal distributed RPC, arbitrary running-process migration, executable host pointers, and a public promise of deployed capabilities.
+
+### Implementation evidence — 23 November 2026
+
+The first bounded experimental slice implements the proposed **Alan Text → validated discriminated AST → JavaScript reference execution → serialized MCP suspension → caller-supplied step result → resumed execution** path. It includes explicit logical call frames, intermediate slots, a caller-injected stable logical-time field, continuation code identity, correlated resumes, named budget/mandate/packet references, and trace entries distinguishing requests from caller-supplied results. A two-process Node.js fixture demonstrates cold resume without replaying earlier source instructions. The focused test command is pnpm test:alan.
+
+The implementation supports a strict **subset** of the v0.2 grammar and built-in type checks; user-defined named MCP types are retained as opaque declared schema names, not fully validated as structure. It does not execute MCP tools, prove their effects, enforce external authority, implement automatic clock/random freezing, perform general cache invalidation, compile into Inox or transport packets through Fractanet. The digest over a serialized continuation detects accidental changes, **not** cryptographically authorized resumption. External policy and caller mediation remain independent execution boundaries.
+
+The demonstration is an executable proof of resumable work, not an implemented instance of the whole **Cognitive Packet Switching** architecture or of the Learning Computer. The historical **Continuation-Passing Style** is a control mechanism; **Cognitive Packet Switching** is the separate distributed cognitive-work architecture descended from it.
 
 ## 19. Future actor/cooperative-work semantics (clarification, 2026-11-10)
 

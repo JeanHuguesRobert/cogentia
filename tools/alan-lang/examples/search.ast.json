@@ -1,0 +1,35 @@
+{
+  "type": "alan.program",
+  "version": "0.2",
+  "uses": ["std.list", "std.mcp"],
+  "externs": [
+    {"name":"github.search","kind":"tool","effect":"read_only","data":"public",
+     "policy":"P1","input":{"q":"string"},"output":{"results":"list"}}
+  ],
+  "functions": [
+    {
+      "kind":"fn", "name":"main", "params":["query"],
+      "body":[
+        {"op":"call","bind":"summary","callee":"search_and_count",
+         "args":{"query":{"kind":"reference","path":["query"]}}},
+        {"op":"return","value":{"kind":"record","fields":{
+          "count":{"kind":"reference","path":["summary","count"]}
+        }}}
+      ]
+    },
+    {
+      "kind":"fn", "name":"search_and_count", "params":["query"],
+      "body":[
+        {"op":"emit","event":"search_started",
+         "args":{"query":{"kind":"reference","path":["query"]}}},
+        {"op":"mcp","bind":"response","capability":"github.search",
+         "args":{"q":{"kind":"reference","path":["query"]}}},
+        {"op":"call","bind":"count","callee":"list.length",
+         "args":{"items":{"kind":"reference","path":["response","results"]}}},
+        {"op":"return","value":{"kind":"record","fields":{
+          "count":{"kind":"reference","path":["count"]}
+        }}}
+      ]
+    }
+  ]
+}
