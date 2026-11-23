@@ -10,6 +10,7 @@
 // - Calculates dual metrics: Coverage vs Cognitive Gain
 
 import fs from "node:fs";
+import { randomBytes } from "node:crypto";
 import {continuationRepository} from "../continuation-sqlite-repository.mjs";
 import path from "node:path";
 import { qualifySystemAvailability } from "../idle-qualification.js";
@@ -25,6 +26,38 @@ import { runInteractionEvidenceMission } from "./interaction-evidence.js";
 
 function nowMs() {
   return Date.now();
+}
+
+// A bounded projection of previous exploration, not another scheduler or review queue.
+const MAX_HISTORY_PAIRS = 5000;
+function historyPath(root, view) {
+  return path.join(root, ".cogentia", "sleep_cycle_pair_history_" +
+    String(view).replace(/[^a-z0-9_-]/gi, "_") + ".json");
+}
+function readPairHistory(root, view) {
+  try {
+    const record = JSON.parse(fs.readFileSync(historyPath(root, view), "utf8"));
+    if (record.version !== 1 || !Array.isArray(record.pairs) ||
+        record.pairs.some(key => typeof key !== "string")) {
+      throw new Error("Unsupported or corrupted Sleep Cycle pair history");
+    }
+    return record.pairs.slice(-MAX_HISTORY_PAIRS);
+  } catch (error) {
+    if (error.code === "ENOENT") return [];
+    throw error; // A corrupt durable record must not silently reset exploration.
+  }
+}
+function savePairHistory(root, view, priorPairs, sampledPairs) {
+  const target = historyPath(root, view);
+  const pairs = [...new Set([...priorPairs, ...sampledPairs])].slice(-MAX_HISTORY_PAIRS);
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  const temporary = target + "." + process.pid + ".tmp";
+  try {
+    fs.writeFileSync(temporary, JSON.stringify({ version: 1, pairs }) + "\n", { flag: "wx" });
+    fs.renameSync(temporary, target);
+  } finally {
+    try { fs.unlinkSync(temporary); } catch (error) { if (error.code !== "ENOENT") throw error; }
+  }
 }
 
 /**
@@ -118,9 +151,15 @@ export async function runMonteCarloAudit(options = {}) {
     checkpoint = options.checkpoint;
   }
 
+  // An explicitly seeded run is a reproducible replay, independent of live history.
+  // A scheduled fresh cycle gets a new seed and consults durable recent coverage.
+  const persistentSampling = options.seed == null && !options.checkpoint;
+  const previousPairs = persistentSampling ? readPairHistory(queueRoot, view) : [];
+  const seed = options.seed ?? checkpoint?.seed ?? randomBytes(4).readUInt32LE(0);
   const sampler = new AdaptivePairSampler(documents, {
-    seed: options.seed ?? 42,
-    checkpoint
+    seed,
+    checkpoint,
+    historicalPairs: previousPairs
   });
 
   const generatedSignals = [...priorSignals];
@@ -186,7 +225,10 @@ export async function runMonteCarloAudit(options = {}) {
     costUnits: options.costUnits || 0
   });
 
-  const finalCheckpoint = sampler.exportCheckpoint();
+  const finalCheckpoint = { ...sampler.exportCheckpoint(), seed };
+  if (persistentSampling && evaluatedPairsThisRun > 0) {
+    savePairHistory(queueRoot, view, previousPairs, sampler.visitedPairs);
+  }
 
   // 7. Handle Preemption & Emit Continuation
   if (preemptionReason) {
