@@ -9,7 +9,7 @@ import { DatabaseSync } from "node:sqlite";
 import { createSqliteCopEventStore as createPortableCopEventStore } from
   "../../../inseme/apps/platform/mcp/cop/sqliteRuntimeStore.js";
 import { createMcpCore } from "./cogentia-mcp-core.js";
-import { createCopMcpTasksPilot } from "./mcp-tasks-cop-pilot.mjs";
+import { createCopMcpTasksPilot, packetTopicForMcpTask } from "./mcp-tasks-cop-pilot.mjs";
 import { createCopMcpTasksScheduledPilot } from "./mcp-tasks-cop-scheduler.mjs";
 import { createSqliteCopEventStore } from "../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js";
 
@@ -141,14 +141,14 @@ test("claimed outcome is not blindly replayed after a worker crash", async () =>
       name: "cogentia_pattern_list", arguments: {},
     }));
     const taskId = created.result.taskId;
-    await until(async () => f.store().listTopic("mcp-task:" + taskId)
+    await until(async () => f.store().listTopic(packetTopicForMcpTask(taskId))
       .some(x => x.payload?.phase === "claimed"));
     // Stop scheduling while the original handler is still pending.
     f.dispatch().stop();
     // Underlying storage remains open until the old work ends; release it
     // to simulate a late receipt, then assert recovery does not rerun.
     release();
-    await until(async () => f.store().listTopic("mcp-task:" + taskId)
+    await until(async () => f.store().listTopic(packetTopicForMcpTask(taskId))
       .some(x => x.payload?.phase === "completed"));
     const restart = await f.restart();
     assert.equal(restart.scheduled, 0);
@@ -208,10 +208,10 @@ test("unknown claimed outcome is reported for reconciliation without duplicate d
     }));
     const taskId = created.result.taskId;
     const event = f.store().append({
-      topic_id: "mcp-task:" + taskId,
+      topic_id: packetTopicForMcpTask(taskId),
       event_type: "cop.event/v1",
       actor_id: "cop:mcp-tasks-pilot",
-      subject_ref: "mcp-task:" + taskId,
+      subject_ref: packetTopicForMcpTask(taskId),
       epistemic_status: "observed",
       idempotency_key: "mcp-claimed:" + taskId,
       payload: { profile: "cogentia.mcp-tasks-cop-pilot/v1", phase: "claimed" },
@@ -345,7 +345,7 @@ test("MCP scheduled Tasks work with the existing Inseme portable COP SQLite stor
       return fetched.result?.status === "completed";
     });
     assert.equal(executions, 1);
-    assert.ok(store.listTopic("mcp-task:" + id).length >= 3);
+    assert.ok(store.listTopic(packetTopicForMcpTask(id)).length >= 3);
     close();
     start();
     const recovered = await dispatch.recover();

@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createServer } from "node:http";
 import { createMcpCore } from "./cogentia-mcp-core.js";
-import { createCopMcpTasksPilot } from "./mcp-tasks-cop-pilot.mjs";
+import { createCopMcpTasksPilot, packetTopicForMcpTask } from "./mcp-tasks-cop-pilot.mjs";
 import { createSqliteCopEventStore } from "../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js";
 
 const VERSION = "2026-07-28";

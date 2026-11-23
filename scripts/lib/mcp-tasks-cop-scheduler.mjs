@@ -9,6 +9,7 @@
 import { COPBus } from "../../../inseme/packages/cop-kernel/src/bus.js";
 import { COPScheduler } from "../../../inseme/packages/cop-kernel/src/scheduler.js";
 import { COPJobScheduler } from "../../../inseme/packages/cop-kernel/src/jobScheduler.js";
+import { packetTopicForMcpTask, mcpTaskIdFromPacketTopic } from "./mcp-tasks-cop-pilot.mjs";
 
 const PROFILE = "cogentia.mcp-tasks-cop-pilot/v1";
 const createdEvent = event => event.payload?.profile === PROFILE &&
@@ -17,6 +18,7 @@ const terminalPhases = new Set(["claimed", "completed", "failed", "cancelled"]);
 
 export function createCopMcpTasksScheduledPilot({
   pilot, store, authorizationForTask = null,
+  listTaskIds = null,
   startDelayMs = 20,
 } = {}) {
   if (!pilot?.adapter || typeof pilot.run !== "function" ||
@@ -80,7 +82,7 @@ export function createCopMcpTasksScheduledPilot({
       return { scheduled: false, reason: "terminal" };
     if (record.status === "input_required")
       return { scheduled: false, reason: "waiting_input" };
-    const history = store.listTopic("mcp-task:" + taskId);
+    const history = store.listTopic(packetTopicForMcpTask(taskId));
     if (history.some(e => terminalPhases.has(e.payload?.phase)))
       return { scheduled: false, reason: "claimed_or_terminal_needs_reconciliation" };
     const created = history.find(createdEvent);
@@ -95,7 +97,7 @@ export function createCopMcpTasksScheduledPilot({
       type: "continuation",
       // Only use a real Packet reference when an upstream COP record has one.
       packetRef: created.payload.packetRef || null,
-      topicId: "mcp-task:" + taskId,
+      topicId: packetTopicForMcpTask(taskId),
       resumeTo: "handler:mcp-tasks-cop-pilot",
       schedule: { type: "delay", delayMs: startDelayMs },
     });
@@ -123,24 +125,22 @@ export function createCopMcpTasksScheduledPilot({
   async function recover() {
     if (!started) throw new Error("tasks_dispatcher_not_started");
     const result = { scheduled: 0, unresolved: 0, waiting_input: 0, not_authorized: 0 };
-    for (const event of store.replay().filter(createdEvent)) {
-      const taskId = event.payload?.taskId ||
-        event.topic?.id?.replace(/^mcp-task:/, "");
+    // The production composition supplies a local-source query for only
+    // this profile. Never require a global replay of unrelated COP topics
+    // just to recover one instance's work.
+    const taskIds = typeof listTaskIds === "function"
+      ? listTaskIds()
+      : store.replay().filter(createdEvent).map(event =>
+          mcpTaskIdFromPacketTopic(event.topic.id));
+    for (const taskId of taskIds) {
       if (!taskId) continue;
-      const existing = store.listTopic("mcp-task:" + taskId);
+      const existing = store.listTopic(packetTopicForMcpTask(taskId));
       if (existing.some(x => terminalPhases.has(x.payload?.phase))) {
         if (!existing.some(x => ["completed", "failed", "cancelled"].includes(x.payload?.phase))) {
           result.unresolved++;
           // A crash after acquiring work does not authorize a second effect.
           // Make that unresolved fact visible to MCP clients, durably.
-          const receipt = store.append({
-            topic_id: "mcp-task:" + taskId, event_type: "cop.event/v1",
-            actor_id: "cop:mcp-tasks-pilot",
-            subject_ref: "mcp-task:" + taskId,
-            epistemic_status: "observed",
-            idempotency_key: "mcp-reconciliation-required:" + taskId,
-            payload: { profile: PROFILE, phase: "reconciliation_required" },
-          });
+          const receipt = pilot.recordReconciliationRequired(taskId);
           if (!receipt.ok) throw new Error("cannot_record_reconciliation_requirement");
         }
         continue;

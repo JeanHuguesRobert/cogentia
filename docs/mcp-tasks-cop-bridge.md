@@ -38,6 +38,63 @@ Ce protocole n'épuise ni la définition d'une Continuation, ni celle d'un
 Cognitive Packet, ni la coordination COP. Il rend ces notions **accessibles
 à des clients MCP qui ne connaissent pas Cogentia**.
 
+## Correction FBF — Localité du Paquet et FractaLog (23 novembre 2026)
+
+Le raccordement initial faisait du topic `mcp-task:<taskId>` une histoire
+persistante sans Paquet réel, et sa composition acceptait la projection
+SQLite portable `cop_events` sans engagements cryptographiques par topic.
+Ces deux raccourcis, motivés par la commodité d'intégration, ont été
+identifiés comme **non conformes au Principe de Localité et à FractaLog**.
+
+Le runtime corrigé réalise désormais les opérations suivantes :
+
+1. `tools/call` crée par `createPacketWithInitialContinuation` **un vrai
+   Paquet COP** (`pkt-mcp-<uuid>`) et sa continuation, dont la création
+   est le premier événement du topic source `packet:pkt-mcp-<uuid>`.
+   `task:<uuid>` est uniquement la poignée MCP, dérivée sans table
+   de correspondance mutable ni seconde histoire canonique.
+2. Les phases `created`, `claimed`, `input_received`, `completed`,
+   `cancel_requested`, `cancelled`, `failed` et
+   `reconciliation_required` sont inscrites dans cette **seule histoire
+   locale**. Les précédences causales sont résolues atomiquement avec
+   l'append COP.
+3. Chaque phase porte un `fractalog.act-record/v1` avec son empreinte de
+   document, sa référence au Paquet, son instance source explicite et
+   son prédécesseur causal. L'implémentation utilise les engagements
+   SHA-256 par topic et l'audit déjà fournis par
+   `inseme/packages/cop-core/src/sqlite-cop-event-store.js`.
+4. En production optionnelle, `COGENTIA_MCP_TASKS_COP_DATABASE` doit
+   désigner une **source COP locale préexistante, dotée de
+   `cop_topic_commitments`** ; le runtime refuse le schéma antérieur
+   utilisé comme simple projection. Il exige
+   `COGENTIA_MCP_LOCAL_INSTANCE_REF` et les conditions d'attestation
+   JHN déjà vérifiées pour ce pilote de lecture.
+5. Au redémarrage, seuls les topics de Paquets appartenant à ce profil
+   sont découverts par requête locale et audités. On ne parcourt pas tous
+   les topics du magasin partagé. Une création altérée reste découvrable
+   et échoue à l'audit ; une corruption d'un topic étranger ne paralyse
+   pas cette localité.
+
+**Reality Tests (27 tests automatiques réussis, plus un parcours du vrai
+serveur HTTP) :** exécution MCP 2026-07-28 et résultat après redémarrage,
+avec démon Cogentia et projection Supabase volontairement inaccessibles ;
+vérification du Paquet, de sa continuation et de trois événements source
+FractaLog ; refus du vieux schéma portable, refus d'une histoire du
+Paquet falsifiée, autonomie face à un topic sans rapport également
+endommagé. Le test du vrai serveur local retourne `completed` avant
+et après son redémarrage. Aucune projection fédérée n'est requise pour
+ce travail. Sa reconstruction effective sur plusieurs nœuds reste un
+test distinct.
+
+**Statut :** correction développée et testée dans le dépôt source,
+**sans activation ni changement de stockage du service public**.
+Les paragraphes antérieurs ci-dessous documentent les étapes du
+prototype, notamment sa compatibilité avec la projection portable ;
+ils ne remplacent pas cette exigence actuelle de source COP chaînée.
+Le stockage effectivement autoritaire du service de production reste
+à désigner suivant la localité du travail et la gouvernance COP,
+et non à choisir parce qu'une base globale est commode.
+
 ## Contrat de découverte et négociation
 
 La révision 2026-07-28 est **sans session de protocole** et ne demande plus
@@ -240,9 +297,9 @@ Reality Test HTTP complet vérifie ce parcours avant et après redémarrage.
 - les tâches durablement créées mais non revendiquées peuvent être
   reprogrammées après redémarrage ; celles déjà revendiquées restent
   en **issue incertaine à réconcilier**, sans nouvelle invocation aveugle ;
-- une référence de Paquet Cognitif n'est **pas fabriquée** à partir du
-  `taskId` : le journal COP est réel, mais son identifiant de Topic ne
-  prouve pas l'existence d'un Paquet canonique distinct ;
+- à cette étape historique, le prototype ne fabriquait pas une
+  référence de Paquet à partir du `taskId`. La correction FBF ci-dessus
+  crée depuis un Paquet canonique réel et lie la poignée MCP à celui-ci ;
 - le handler est résolu par COP et ne s'exécute que si l'hôte fournit
   une identité de dispatch admissible ; l'identité stockée dans un
   événement ne constitue pas un jeton d'autorisation.
@@ -279,10 +336,12 @@ composition facultative `scripts/lib/mcp-tasks-cop-runtime.mjs`. Sans
 `COGENTIA_MCP_TASKS_COP_ENABLED=1`, aucun adaptateur n'est ouvert ni
 annoncé et le comportement MCP précédent est conservé.
 
-L'activation exige **une base COP SQLite portable préexistante** désignée
-par `COGENTIA_MCP_TASKS_COP_DATABASE`, avec la table `cop_events`
-conforme à Inseme. Le démarrage refuse de créer une nouvelle base
-implicite. Il exige également l'attestation JHN déjà utilisée par
+L'activation exige maintenant **une source COP locale préexistante**
+désignée par `COGENTIA_MCP_TASKS_COP_DATABASE`, avec les tables
+`cop_events` et `cop_topic_commitments` de COP/Core. Elle exige
+également l'identité source `COGENTIA_MCP_LOCAL_INSTANCE_REF`.
+Le démarrage refuse de créer une nouvelle base implicite ou de
+promouvoir une simple projection portable en autorité. Il exige également l'attestation JHN déjà utilisée par
 Cogentia (`COGENTIA_MCP_JHN_MUTATE` et le secret JHN existant), sans
 nouveau jeton. L'interception reste limitée au seul outil en lecture
 `cogentia_pattern_list` et à un appelant effectivement attesté.
@@ -312,7 +371,8 @@ réenregistrer un timer pour la même tâche et reconstruit les travaux
 
 **Reality Test effectué sur Fracta2 :** exécution réelle du serveur
 `cogentia-mcp-http.js` sur une interface locale éphémère et une base
-portable de test ; requête MCP 2026-07-28 avec attestation factice,
+de test COP/Core chaînée pour la correction de localité (après un premier
+essai historique avec la projection portable) ; requête MCP 2026-07-28 avec attestation factice,
 `tools/call` → Task → ordonnanceurs COP → outil Cogentia →
 `tasks/get` = `completed` ; arrêt et relancement du processus puis
 `tasks/get` = `completed` sur le même `taskId`.

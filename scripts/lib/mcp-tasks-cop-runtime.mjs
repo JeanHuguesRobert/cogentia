@@ -1,15 +1,18 @@
 /**
  * Optional MCP 2026-07-28 Tasks -> COP production composition root.
- * Reuses Inseme's portable COP event log and its schedulers.
+ * Reuses Inseme's per-topic committed COP source log and its schedulers.
+ * The older portable cop_events projection is not a FractaLog authority.
  * Never enables itself from a version string or creates a new SQLite store.
  */
 import { existsSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
-import { createSqliteCopEventStore } from "../../../inseme/apps/platform/mcp/cop/sqliteRuntimeStore.js";
+import { createSqliteCopEventStore } from "../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js";
 import {
   ACTOR_META_KEY, PRINCIPAL_META_KEY, resolveCallerAuth, isResolvedCallerAuth,
 } from "./cogentia-mcp-auth.js";
-import { createCopMcpTasksPilot } from "./mcp-tasks-cop-pilot.mjs";
+import {
+  createCopMcpTasksPilot, packetTopicForMcpTask, mcpTaskIdFromPacketTopic,
+} from "./mcp-tasks-cop-pilot.mjs";
 import { createCopMcpTasksScheduledPilot } from "./mcp-tasks-cop-scheduler.mjs";
 
 const PROFILE = "cogentia.mcp-tasks-cop-pilot/v1";
@@ -35,19 +38,44 @@ export function createMcpCopTasksRuntime(env = process.env, { coreAccessor } = {
   if (String(env.COGENTIA_MCP_JHN_MUTATE || "") !== "1" ||
       !String(env.COGENTIA_MCP_JHN_TOKEN || "").trim())
     throw new Error("mcp_tasks_existing_jhn_attestation_required");
+  const ownerInstanceRef = String(env.COGENTIA_MCP_LOCAL_INSTANCE_REF || "").trim();
+  if (!/^instance:[a-zA-Z0-9][a-zA-Z0-9:._-]{1,127}$/.test(ownerInstanceRef))
+    throw new Error("mcp_tasks_local_instance_ref_required");
 
-  const db = new DatabaseSync(filename);
+  // Open read-only for schema verification: SQLite must not auto-create a
+  // missing file or promote the older portable projection into authority.
+  const preflight = new DatabaseSync(filename, { readOnly: true });
   try {
-    // Reuse the COP platform's portable event store rather than creating
-    // another table or a parallel task database.
-    const columns = new Set(db.prepare("PRAGMA table_info(cop_events)")
+    const events = new Set(preflight.prepare("PRAGMA table_info(cop_events)")
       .all().map(row => row.name));
-    if (!["id", "topic_id", "metadata", "payload"].every(key => columns.has(key)))
-      throw new Error("mcp_tasks_cop_portable_schema_required");
+    const commitments = new Set(
+      preflight.prepare("PRAGMA table_info(cop_topic_commitments)")
+        .all().map(row => row.name));
+    if (!["event_id", "topic", "seq", "envelope"].every(key => events.has(key)) ||
+        !["topic", "seq", "head"].every(key => commitments.has(key)))
+      throw new Error("mcp_tasks_local_fractalog_commitment_store_required");
+  } finally { preflight.close(); }
 
-    const store = createSqliteCopEventStore(db);
+  // Recover this locality only: the SQL query is a reconstructible
+  // projection over the first Event of packet-local histories, not a second
+  // authoritative ledger or a requirement to replay all unrelated topics.
+  function listTaskIdsForRecovery() {
+    const reader = new DatabaseSync(filename, { readOnly: true });
+    try {
+      return reader.prepare(
+        // Discover by owned packet namespace, *not* by parsing the event:
+        // a corrupted creation event must remain discoverable and fail audit.
+        "SELECT DISTINCT topic FROM cop_events " +
+        "WHERE topic LIKE 'packet:pkt-mcp-%' ORDER BY topic"
+      ).all().map(row => mcpTaskIdFromPacketTopic(row.topic));
+    } finally { reader.close(); }
+  }
+
+  const store = createSqliteCopEventStore(filename);
+  try {
     const pilot = createCopMcpTasksPilot({
       store, toolName: TOOL,
+      ownerInstanceRef,
       handler: async args => {
         const core = coreAccessor();
         if (!core || typeof core.callTool !== "function")
@@ -69,7 +97,7 @@ export function createMcpCopTasksRuntime(env = process.env, { coreAccessor } = {
     });
 
     async function authorizationForTask(taskId) {
-      const entry = store.listTopic("mcp-task:" + taskId)
+      const entry = store.listTopic(packetTopicForMcpTask(taskId))
         .find(event => event.payload?.profile === PROFILE &&
           event.payload?.phase === "created");
       if (!entry || entry.payload.toolName !== TOOL ||
@@ -90,8 +118,15 @@ export function createMcpCopTasksRuntime(env = process.env, { coreAccessor } = {
       return requireAuthorizedJhn(auth) && auth.actor === actor ? auth : null;
     }
 
+    // Only inspect packet-local source histories that this MCP runtime owns.
+    // Their FractaLog documents and COP commitments both have to validate.
+    for (const taskId of listTaskIdsForRecovery()) {
+      if (!pilot.auditPacket(taskId).ok)
+        throw new Error("mcp_tasks_local_commitments_invalid");
+    }
     const dispatch = createCopMcpTasksScheduledPilot({
-      pilot, store, authorizationForTask, startDelayMs: 35,
+      pilot, store, authorizationForTask,
+      listTaskIds: listTaskIdsForRecovery, startDelayMs: 35,
     });
     const adapter = {
       ...dispatch.adapter,
@@ -125,12 +160,12 @@ export function createMcpCopTasksRuntime(env = process.env, { coreAccessor } = {
       close() {
         if (closed) return;
         dispatch.stop();
-        db.close();
+        store.close();
         closed = true;
       },
     };
   } catch (error) {
-    db.close();
+    store.close();
     throw error;
   }
 }
