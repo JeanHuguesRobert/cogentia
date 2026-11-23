@@ -1,5 +1,6 @@
 import {listRegisteredMcpAppTools,callRegisteredMcpAppTool} from "./cogentia-mcp-app-registry.js";
 import {executeJohnCanonicalForm} from "./john-cop-form-execution.js";
+import {executeJohnCanonicalUpload} from "./john-cop-upload-execution.js";
 import {executeJohnCanonicalRead} from "./john-cop-read-execution.js";
 import {executeJohnCanonicalChatgptTurn} from "./john-cop-chatgpt-turn-execution.js";
 import {createChatgptTurnCapability} from "./browser-chatgpt-turn.js";
@@ -2439,7 +2440,13 @@ export function createMcpCore(env = process.env, extras = {}) {
         // No legacy bypass: form entry is available ONLY through the
         // separately signed canonical effect gate below.
         const formCapability=allBrowserCapabilities.find(c=>c.name==="browser.form.fill");
-        const browserCapabilities=allBrowserCapabilities.filter(c=>c.name!=="browser.form.fill");
+        const uploadCapability=allBrowserCapabilities.find(c=>c.name==="browser.form.upload");
+        // No legacy generic effect path may dispatch browser.form.upload.
+        // Its one-shot external operation requires separate canonical COP
+        // mandate+budget+issuer checks BEFORE transport execution.
+        const browserCapabilities=allBrowserCapabilities.filter(c=>
+          c.name!=="browser.form.fill"&&c.name!=="browser.form.upload");
+        const canonicalUploadRequested=req.capability==="browser.form.upload";
         const browserCapabilityNames = new Set(browserCapabilities.map((item) => item.name));
         const writeAuthorized = writeEnabled && workspaceConfigured && trustedJhn
           && configuredMandate && callOpts.auth.mandate_ref === configuredMandate
@@ -2461,7 +2468,7 @@ export function createMcpCore(env = process.env, extras = {}) {
         const requestedCapabilities = Array.isArray(req.handler.allowed_capabilities)
           ? req.handler.allowed_capabilities
           : serverAllowedCapabilities;
-        if (writeAuthorized) {
+        if (writeAuthorized && !canonicalUploadRequested) {
           req.principal = { id: callOpts.auth.principal_ref };
           req.mandate = { ...req.mandate, id: configuredMandate };
           req.budget = { id: configuredBudget };
@@ -2474,10 +2481,11 @@ export function createMcpCore(env = process.env, extras = {}) {
           );
           req.handler.allowed_capabilities = requestedCapabilities
             .filter((name) => serverAllowedCapabilities.includes(name));
-        } else if (workspaceConfigured) {
+        } else if (workspaceConfigured && !canonicalUploadRequested) {
           req.handler.allowed_capabilities = requestedCapabilities
             .filter((name) => (name === "workspace.read" || browserCapabilityNames.has(name)) && serverAllowedCapabilities.includes(name));
-        } else if (jhnCaller && req.capability !== "browser.chatgpt.turn") {
+        } else if (jhnCaller && req.capability !== "browser.chatgpt.turn"
+          && !canonicalUploadRequested) {
           req.handler.allowed_capabilities = requestedCapabilities
             .filter((name) => browserCapabilityNames.has(name));
         }
@@ -2506,6 +2514,11 @@ export function createMcpCore(env = process.env, extras = {}) {
         if(req.capability==="browser.form.fill" && requestedCapabilities.length===1
             && requestedCapabilities[0]==="browser.form.fill")
           req.handler.allowed_capabilities=["browser.form.fill"];
+        // The exact upload must survive generic allowlist filtering only
+        // for the dedicated, signed canonical authority branch below.
+        if(canonicalUploadRequested && requestedCapabilities.length===1 &&
+          requestedCapabilities[0]==="browser.form.upload")
+          req.handler.allowed_capabilities=["browser.form.upload"];
         // Standing, consent-issued, ChatGPT-origin-only browser turn.
         // The generic John handler cannot run this effect without the
         // independent canonical scope, issuer, budget and outcome checks.
@@ -2591,6 +2604,70 @@ export function createMcpCore(env = process.env, extras = {}) {
               accounting:settled?.data||null,
               canonical_accounting:{mandate_ref:result.canonical_mandate_ref,
                 settled_steps:result.settled_steps},
+              events_count:e.length,events:e};
+          }finally{canonicalStore.close()}
+        }
+        // CPKT-2026-011: file selection may start transmission immediately.
+        // This external action is NOT form.fill and cannot be dispatched
+        // through the generic John reasoner, even with a caller-supplied
+        // confirmed_capabilities entry. The signed root policy is evaluated
+        // against the CURRENT mandate version on each attempted selection.
+        if(canonicalUploadRequested){
+          if(env.COGENTIA_JHN_CANONICAL_UPLOAD_ENABLED!=="1"||
+            !jhnCaller||!trustedJhn||!uploadCapability)
+            return {ok:false,status:"failed",
+              failure:{code:"canonical_upload_not_enabled"},accounting:null};
+          const path=String(env.COGENTIA_JHN_CANONICAL_STORE_PATH||"");
+          const existing=openExistingJohnCopStore(path);
+          if(!existing.ok)return {ok:false,status:"failed",
+            failure:{code:existing.error},accounting:null};
+          existing.close();
+          const canonicalStore=createSqliteCopEventStore(path);
+          try{
+            const result=await executeJohnCanonicalUpload({
+              store:canonicalStore,
+              authorizedKeysPath:String(env.COGENTIA_JHN_ISSUER_AUTHORIZED_KEYS||""),
+              auth:callOpts.auth,request:req,
+              run:()=>runJohnRequest(req,{
+                env,capabilities:[uploadCapability],
+                allowedCapabilities:[uploadCapability.name],
+                confirmedCapabilities:[uploadCapability.name],
+                maxInternalEffects:0,requiredEvents:false,
+                // Exact one-operation handler. No model-generated page code.
+                reasoner:{nextStep:async state=>{
+                  const previous=state.observations.find(x=>
+                    x.capability===uploadCapability.name&&x.type==="capability_result");
+                  const denied=state.observations.find(x=>
+                    x.capability===uploadCapability.name&&x.type==="capability_denied");
+                  if(denied)return {kind:"stop",reason:"canonical_upload_denied"};
+                  if(previous)return previous.ok
+                    ? {kind:"answer",answer:JSON.stringify(previous.value??{})}
+                    : {kind:"stop",reason:"canonical_upload_failed"};
+                  return {kind:"capability_call",capability:uploadCapability.name,
+                    input:req.input.arguments};
+                }}
+              })
+            });
+            if(!result.ok)return {ok:false,status:"failed",
+              executed:result.executed===true,
+              failure:{code:result.error},accounting:null};
+            const e=result.events;
+            const completed=e.find(x=>x.type==="john.run.completed");
+            const settled=e.find(x=>x.type==="john.accounting.settled");
+            const admitted=e.find(x=>x.type==="john.packet.admitted");
+            const continuity=journalTurn(e);
+            return {ok:continuity?.ok!==false,
+              status:continuity?.ok===false?"continuity_journal_failed":"completed",
+              packet_status:continuity?.packet_status||"not_evaluated",
+              packet_continuity:continuity,
+              request_id:req.request_id,packet_id:admitted?.data?.packet_id||null,
+              text:completed?.data?.result?.text||"",
+              accounting:settled?.data||null,
+              canonical_accounting:{
+                mandate_ref:result.canonical_mandate_ref,
+                settled_steps:result.settled_steps,
+                external_effects:settled?.data?.external_effects??null,
+              },
               events_count:e.length,events:e};
           }finally{canonicalStore.close()}
         }

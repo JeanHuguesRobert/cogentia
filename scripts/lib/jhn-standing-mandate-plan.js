@@ -10,6 +10,7 @@ import {createEventSourcedExecutionBudgetLedger} from
   "../../../inseme/packages/cop-core/src/execution-budget.js";
 import {JHN_VAULT_INSTANCE_ID} from
   "../../../inseme/apps/platform/scripts/lib/vault-catalog.js";
+import {johnBrowserUploadMandatePlan,BROWSER_UPLOAD_CAPABILITY,BROWSER_UPLOAD_POLICY} from "./jhn-browser-upload-mandate-plan.js";
 import {STANDING_DIAGNOSTIC_PROFILE,STANDING_GENERAL_HOST_PROFILE,
   STANDING_MANDATE_REF} from "./john-standing-mission-authority.js";
 const REF=STANDING_MANDATE_REF;
@@ -144,8 +145,17 @@ export function johnStandingMandatePlan({store,at_time=new Date()}={}) {
       scope.vault_policy?.external_provider_credential_change_authorized!==false ||
       scope.vault_policy?.material_handling!=="trusted_executor_only")
       return fail("standing_v6_vault_scope_untrusted");
+    // Existing independently consented v6 becomes the base for ONE
+    // distinct browser-upload capability (not another per-file signature).
+    return johnBrowserUploadMandatePlan({store,at_time});
+  }
+  if(existing.version==="v7"){
+    const scope=existing.scope;
+    if(!scope.allowed_actions.includes(BROWSER_UPLOAD_CAPABILITY)||
+       JSON.stringify(scope.browser_upload_policy)!==JSON.stringify(BROWSER_UPLOAD_POLICY))
+      return fail("standing_v7_browser_upload_scope_untrusted");
     return {ok:true,already_authorized_in_scope:true,
-      mandate_ref:REF,version:"v6",mandate_amended:false};
+      mandate_ref:REF,version:"v7",mandate_amended:false};
   }
   if (existing.version!=="v3")
     return fail("standing_plan_version_unsupported");

@@ -7,7 +7,7 @@ created: "2026-11-22"
 date: "2026-11-22"
 last_modified_at: "2026-11-23"
 status: working-paper
-packet_status: "File receipt FBF fixed in source and Chromium-tested; source deployment and COP upload authority pending"
+packet_status: "Upload COP code tested; owner-authenticated v6→v7 amendment and release activation pending"
 lifecycle_state: working
 visibility: public
 language: fr
@@ -227,3 +227,87 @@ d'effet externe avec comptabilisation, contrôle de la cible et du fichier,
 puis le vérifier sur une destination volontairement inerte avant tout
 véritable téléversement. La porte actuelle \`browser.form.fill\` ne doit
 pas accorder cette permission par transitivité.
+
+
+## Intégration COP du 23 novembre 2026 — mandat permanent, effet comptabilisé
+
+Le Principal a mandaté le raccordement de \`browser.form.upload\` au COP canonique, avec
+une voie sûre pour ajouter cette seule capacité au mandat permanent, tester sur
+une destination inerte et effectuer un déploiement unique de Cogentia.
+
+### Constat canonique avant toute modification de l'autorité
+
+La base COP réelle sur Fracta2, \`/var/lib/cogentia/cop/john-root-v1.sqlite\`,
+contient un mandat racine **v6**, actif jusqu'au 6 novembre 2027 ; il
+ne comprend **pas** \`browser.form.upload\`. Le mandat distinct
+\`mandate:jhn:form-assist\` autorise seulement \`browser.form.fill\`.
+
+**Aucun mandat ni budget réel n'a été modifié par les essais de cette
+section.** Un simple appel MCP authentifié ne saurait ajouter cette capacité.
+
+### Réutilisation des mécanismes existants
+
+- Le catalogue général \`browserCapabilities\` exclut désormais
+  \`browser.form.upload\` en plus de \`browser.form.fill\`. Une demande
+  générique, même accompagnée d'une « confirmation » injectée par le client,
+  ne peut donc pas sélectionner de fichier.
+- Un traitement canonique dédié \`executeJohnCanonicalUpload\` valide
+  les arguments du fichier et la destination HTTPS exacte, résout le mandat
+  racine **actuel**, exige une portée \`browser_upload_policy\` précise, la
+  signature de l'émetteur déjà agréé, le Principal/acteur MCP attestés,
+  puis réserve un budget COP sur l'identifiant idempotent de la requête.
+- Le budget de l'exécution permet exactement **une action externe**,
+  aucune action interne et aucune soumission supplémentaire. Le moteur John
+  confirme la capacité au **niveau serveur après admission**, jamais sur
+  la parole du client. Le règlement est enregistré même lorsque le
+  transport échoue.
+- Le reçu \`john.accounting.settled\` et le reçu \`john.tool.receipt\`
+  comptabilisent l'effet ; le chemin local et l'URL sont masqués des
+  événements d'appel. \`upload_completion: unverified\` reste distinct
+  de « fichier sélectionné » et de « publication effective ».
+- L'amendement \`v6→v7\` du mandat existant est calculé par
+  \`johnBrowserUploadMandatePlan\` puis proposé à la **voie existante**
+  \`/api/cop/principal-consent/standing-apply\` (session Supabase
+  authentifiant effectivement le Principal). Il conserve exactement
+  durée de validité, interdictions, budget et toutes les autres capacités ;
+  seule \`browser.form.upload\` et sa politique d'effet sont ajoutées.
+  La politique lie une instance Chromium, l'URL HTTPS exacte de chaque
+  opération, la racine de fichiers configurée, la limite de 300 Mio,
+  et interdit de déduire une autorisation de publication.
+- Avant cet amendement authentifié, toute demande retourne
+  \`canonical_upload_policy_not_signed\` sans exécution ni réservation.
+
+### Preuves reproductibles
+
+1. **26 tests** sur les permissions COP, le plan de mandat,
+   l'amendement Supabase simulé, les contrôles de formulaire/lecture et
+   le parcours MCP intégral pré-amendement ; **26 réussites**.
+2. Vérification de la base COP réelle en lecture seule : version \`v6\`,
+   capacité absente, le plan proposé ne modifie pas la base.
+3. Essai Browser Reality sur un onglet *inactif* \`https://example.org/\`,
+   élément \`input[type=file]\` synthétique et fichier local fictif de
+   **44 octets** : une invocation via \`executeJohnCanonicalUpload\`
+   + le **vrai moteur COP John** + le **vrai Chromium** sélectionne le fichier,
+   comptabilise **un effet externe** et confirme 44/44 octets.
+   L'émetteur signé est simulé **uniquement dans la base COP de test
+   en mémoire**, pas dans la base de production. Aucun formulaire soumis,
+   aucune communication vers un tiers, onglet et fichier supprimés.
+4. Le code du service prévisualisé à partir de la version distante exacte
+   refuse réellement l'opération pré-amendement avec le code typé
+   \`canonical_upload_policy_not_signed\`.
+
+### Déploiement et vérification de l'activation
+
+Le branchement est publié dans le code, **pas automatiquement actif** :
+\`mcp-cogentia.service\` exécutait la release figée \`cb3e3de5\`.
+\`cogentia-jhn-consent.service\` exécutait le code du checkout historique.
+Le déploiement doit charger une nouvelle révision **épinglée** dans les deux
+services et vérifier leur santé. Le commutateur
+\`COGENTIA_JHN_CANONICAL_UPLOAD_ENABLED=1\` n'est qu'une **activation du
+chemin logiciel** : il ne remplace jamais l'amendement signé.
+
+Le dossier demeure ouvert jusqu'à :
+(a) chargement et tests de la nouvelle release en production,
+(b) approbation exacte de l'amendement \`v6→v7\` par session Supabase du
+Principal, et (c) test réel MCP avec mandat **effectivement** signé v7.
+Aucun test artificiel ne doit être présenté comme (c).

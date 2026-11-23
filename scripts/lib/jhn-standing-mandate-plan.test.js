@@ -197,7 +197,12 @@ test("FBF: one v4→v5 permanent amendment enables general existing host executi
       assert.equal(evaluateMandate(f.store,{mandate_ref:ref,version_pin:"v6",
         capability:action,at_time:NOW}).granted,false,action);
     }
-    assert.equal(f.plan().already_authorized_in_scope,true);
+    const upload=f.plan();
+    assert.equal(upload.previous_version,"v6");
+    assert.equal(upload.next_version,undefined);
+    assert.deepEqual(upload.added_capabilities,["browser.form.upload"]);
+    assert.equal(upload.mandate.scope.browser_upload_policy.publication_authorized,false);
+    assert.equal(resolveMandate(f.store,ref).version,"v6");
   }finally{f.store.close();}
 });
 
@@ -222,11 +227,14 @@ test("Supabase-linked Principal activates standing mandate in one authenticated 
     assert.equal((await third.json()).mandate_version,"v6");
     const fourth=await f.http(endpoint,"owner-session",{});
     assert.equal(fourth.status,200);
-    assert.equal((await fourth.json()).already_authorized_in_scope,true);
+    assert.equal((await fourth.json()).mandate_version,"v7");
+    assert.equal(resolveMandate(f.store,ref).scope.allowed_actions.includes("browser.form.upload"),true);
+    const fifth=await f.http(endpoint,"owner-session",{});
+    assert.equal((await fifth.json()).already_authorized_in_scope,true);
     const events=f.store.replay();
     assert.equal(events.filter(e=>e.payload?.kind==="PrincipalConsentRequested").length,0);
-    assert.equal(events.filter(e=>e.payload?.kind==="PrincipalAuthenticatedMandateIntent").length,3);
-    assert.equal(events.filter(e=>e.payload?.kind==="MandateDeclaration").length,4);
+    assert.equal(events.filter(e=>e.payload?.kind==="PrincipalAuthenticatedMandateIntent").length,4);
+    assert.equal(events.filter(e=>e.payload?.kind==="MandateDeclaration").length,5);
     assert.equal(events.filter(e=>e.payload?.kind==="MandateDeclaration")
       .at(-1).payload.metadata.amendment.approval_scheme,
       "supabase_authenticated_owner_direct_intent_v1");
