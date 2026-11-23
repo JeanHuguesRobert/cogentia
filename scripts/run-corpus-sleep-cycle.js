@@ -213,6 +213,7 @@ export async function runCorpusSleepCycle(options = {}) {
       maxWallTimeMs: budget.maxWallTimeMs === null ? 10000 : Math.max(10, budget.maxWallTimeMs - budgetStatus(budget).elapsedMs),
       resume: options.resume || null,
       seed: options.seed,
+      focusedFraction: options.focusedFraction,
       queueRoot: options.sleepStateRoot || process.env.COGENTIA_SLEEP_STATE_ROOT
     });
 
@@ -429,6 +430,9 @@ function parseCliArgs() {
       i++;
     } else if (args[i] === "--seed" && args[i + 1]) {
       options.seed = parseInt(args[i + 1], 10) || args[i + 1];
+      i++;
+    } else if (args[i] === "--focused-fraction" && args[i + 1]) {
+      options.focusedFraction = Number(args[i + 1]);
       i++;
     } else if (args[i] === "--view" && args[i + 1]) {
       options.view = args[i + 1];

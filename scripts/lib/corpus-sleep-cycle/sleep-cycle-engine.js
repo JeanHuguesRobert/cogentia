@@ -156,15 +156,21 @@ export async function runMonteCarloAudit(options = {}) {
   const persistentSampling = options.seed == null && !options.checkpoint;
   const previousPairs = persistentSampling ? readPairHistory(queueRoot, view) : [];
   const seed = options.seed ?? checkpoint?.seed ?? randomBytes(4).readUInt32LE(0);
+  const focusedFraction = options.focusedFraction ?? checkpoint?.focusedFraction ?? 0;
   const sampler = new AdaptivePairSampler(documents, {
     seed,
     checkpoint,
-    historicalPairs: previousPairs
+    historicalPairs: previousPairs,
+    focusedFraction
   });
 
   const generatedSignals = [...priorSignals];
   const newSignalsThisRun = [];
   let evaluatedPairsThisRun = 0;
+  const perChannel = {
+    random: { evaluated_pairs: 0, candidate_signals: 0, signal_yielding_pairs: 0 },
+    thematic: { evaluated_pairs: 0, candidate_signals: 0, signal_yielding_pairs: 0 }
+  };
   let preemptionReason = null;
   const auditLoopStartedAt = nowMs();
 
@@ -193,14 +199,19 @@ export async function runMonteCarloAudit(options = {}) {
     }
 
     evaluatedPairsThisRun++;
+    const channel = pair.selectionChannel || "random";
+    perChannel[channel].evaluated_pairs++;
 
     // Evaluate pair across the 6 consistency angles
     const signals = evaluateDocumentPair(pair.docA, pair.docB, {
       runId,
       node: options.node || "local",
-      capacityRef: options.capacityRef || "residual_monte_carlo"
+      capacityRef: options.capacityRef || "residual_monte_carlo",
+      selectionChannel: channel
     });
 
+    perChannel[channel].candidate_signals += signals.length;
+    if (signals.length) perChannel[channel].signal_yielding_pairs++;
     for (const sig of signals) {
       newSignalsThisRun.push(sig);
       generatedSignals.push(sig);
@@ -208,9 +219,9 @@ export async function runMonteCarloAudit(options = {}) {
   }
 
   // 5. Append New Signals into Review Queue (Zero automated file mutations)
-  if (newSignalsThisRun.length > 0) {
-    reviewQueue.appendSignals(newSignalsThisRun);
-  }
+  const queueAppend = newSignalsThisRun.length > 0
+    ? reviewQueue.appendSignals(newSignalsThisRun)
+    : { added: 0 };
 
   const elapsedMs = nowMs() - startedAt;
 
@@ -227,6 +238,16 @@ export async function runMonteCarloAudit(options = {}) {
 
   const historicalSet = new Set(previousPairs);
   const newlyExplored = [...sampler.visitedPairs].filter(key => !historicalSet.has(key)).length;
+  // These are *candidate yields*, never human-validated cognitive gain.
+  metrics.selection = {
+    strategy: focusedFraction > 0 ? "mixed" : "random",
+    requested_thematic_fraction: focusedFraction,
+    eligible_thematic_pairs: sampler.thematicPairs.length,
+    new_review_queue_signals: queueAppend.added,
+    // Acceptance requires a subsequent governed review decision.
+    validated_cognitive_gain: null,
+    channels: perChannel
+  };
   metrics.coverage.intercycle = {
     recent_pairs_before: previousPairs.length,
     novel_pairs_this_cycle: newlyExplored,
@@ -250,6 +271,7 @@ export async function runMonteCarloAudit(options = {}) {
       metrics,
       options: {
         seed: options.seed,
+        focusedFraction,
         view: options.view,
         maxPairs: options.maxPairs,
         maxWallTimeMs: options.maxWallTimeMs

@@ -220,6 +220,41 @@ export function computePairWeight(docA, docB, state) {
 }
 
 /**
+ * Bounded thematic candidates. Ignore tags present in >80 documents: generic
+ * tags would otherwise dominate and create quadratic cross-product noise.
+ * This is a per-run projection, never a second durable index.
+ */
+export function buildThematicPairs(documents, { maxCandidates = 5000 } = {}) {
+  const postings = new Map();
+  for (const doc of documents) {
+    for (const tag of new Set((doc.tags || []).map(t => String(t).trim().toLowerCase()))) {
+      if (tag.length < 4) continue;
+      if (!postings.has(tag)) postings.set(tag, []);
+      postings.get(tag).push(doc);
+    }
+  }
+  const candidates = new Map();
+  for (const docs of postings.values()) {
+    if (docs.length < 2 || docs.length > 80) continue;
+    for (let i = 0; i < docs.length; i++) {
+      for (let j = i + 1; j < docs.length; j++) {
+        const a = docs[i], b = docs[j];
+        const pairKey = [a.id, b.id].sort().join("::");
+        const existing = candidates.get(pairKey);
+        if (existing) existing.sharedTags++;
+        else if (candidates.size < maxCandidates * 4) {
+          candidates.set(pairKey, { docA: a, docB: b, pairKey, sharedTags: 1 });
+        }
+      }
+    }
+  }
+  return [...candidates.values()]
+    .filter(candidate => candidate.sharedTags >= 2)
+    .sort((a, b) => b.sharedTags - a.sharedTags || a.pairKey.localeCompare(b.pairKey))
+    .slice(0, maxCandidates);
+}
+
+/**
  * Adaptive Monte Carlo Document Pair Sampler.
  */
 export class AdaptivePairSampler {
@@ -232,6 +267,13 @@ export class AdaptivePairSampler {
     this.visitedPairs = new Set();
     this.totalSamples = 0;
     this.historicalPairs = new Set(options.historicalPairs || []);
+    this.focusedFraction = options.focusedFraction ?? 0;
+    if (!Number.isFinite(this.focusedFraction) ||
+        this.focusedFraction < 0 || this.focusedFraction > 1) {
+      throw new RangeError("focusedFraction must be between 0 and 1");
+    }
+    this.thematicPairs = this.focusedFraction > 0 ? buildThematicPairs(documents) : [];
+    this.selectionCounts = { random: 0, thematic: 0 };
 
     // Restore prior checkpoint if provided
     if (options.checkpoint) {
@@ -255,19 +297,25 @@ export class AdaptivePairSampler {
     const n = this.documents.length;
     if (n < 2) return null;
 
-    // To remain fast across thousands of documents, sample a tournament candidate pool
-    const POOL_SIZE = Math.min(24, n * (n - 1) / 2);
+    const thematic = this.focusedFraction > 0 && this.thematicPairs.length > 0 &&
+      this.rng() < this.focusedFraction;
+    const POOL_SIZE = Math.min(24, thematic ? this.thematicPairs.length : n * (n - 1) / 2);
     let bestPair = null;
     let bestScore = -1;
 
     for (let k = 0; k < POOL_SIZE; k++) {
-      const idxA = Math.floor(this.rng() * n);
-      let idxB = Math.floor(this.rng() * (n - 1));
-      if (idxB >= idxA) idxB++;
-
-      const docA = this.documents[idxA];
-      const docB = this.documents[idxB];
-      const pairKey = [docA.id, docB.id].sort().join("::");
+      let docA, docB, pairKey, sharedTags = 0;
+      if (thematic) {
+        const candidate = this.thematicPairs[Math.floor(this.rng() * this.thematicPairs.length)];
+        ({ docA, docB, pairKey, sharedTags } = candidate);
+      } else {
+        const idxA = Math.floor(this.rng() * n);
+        let idxB = Math.floor(this.rng() * (n - 1));
+        if (idxB >= idxA) idxB++;
+        docA = this.documents[idxA];
+        docB = this.documents[idxB];
+        pairKey = [docA.id, docB.id].sort().join("::");
+      }
 
       const weight = computePairWeight(docA, docB, {
         docSampleCounts: this.docSampleCounts,
@@ -275,7 +323,8 @@ export class AdaptivePairSampler {
       });
 
       // Add a stochastic jitter term from RNG
-      const score = (this.visitedPairs.has(pairKey) || this.historicalPairs.has(pairKey) ? 0 : weight) * (0.7 + 0.6 * this.rng());
+      const score = (this.visitedPairs.has(pairKey) || this.historicalPairs.has(pairKey) ? 0 : weight) *
+        (thematic ? 1 + Math.min(sharedTags, 5) / 5 : 1) * (0.7 + 0.6 * this.rng());
 
       if (score > bestScore) {
         bestScore = score;
@@ -283,16 +332,29 @@ export class AdaptivePairSampler {
       }
     }
 
-    if (!bestPair) return null;
+    // All candidate slots may refer to previously visited thematic pairs;
+    // do not repeat them just to fill the quota. Fall back to exploration.
+    if (thematic && bestScore <= 0) return this.sampleRandomPair();
+    if (!bestPair || bestScore <= 0) return null;
+    return this.acceptPair(bestPair, thematic ? "thematic" : "random");
+  }
 
-    // Record sample
+  sampleRandomPair() {
+    const originalFraction = this.focusedFraction;
+    this.focusedFraction = 0;
+    try { return this.sampleNextPair(); }
+    finally { this.focusedFraction = originalFraction; }
+  }
+
+  acceptPair(bestPair, channel) {
     this.recordSample(bestPair.docA.id, bestPair.docB.id, bestPair.pairKey);
-
+    this.selectionCounts[channel]++;
     return {
       docA: bestPair.docA,
       docB: bestPair.docB,
       pairKey: bestPair.pairKey,
-      selectionWeight: bestPair.weight
+      selectionWeight: bestPair.weight,
+      selectionChannel: channel
     };
   }
 
@@ -311,6 +373,8 @@ export class AdaptivePairSampler {
     return {
       totalSamples: this.totalSamples,
       rngState: this.rng.getState(),
+      focusedFraction: this.focusedFraction,
+      selectionCounts: { ...this.selectionCounts },
       visitedPairsCount: this.visitedPairs.size,
       visitedPairs: Array.from(this.visitedPairs),
       docSampleCounts: Object.fromEntries(this.docSampleCounts),
@@ -322,6 +386,12 @@ export class AdaptivePairSampler {
    * Restore sampler state from continuation checkpoint.
    */
   restoreCheckpoint(checkpoint = {}) {
+    if (checkpoint.focusedFraction != null && checkpoint.focusedFraction !== this.focusedFraction) {
+      throw new Error("Cannot resume with a different focusedFraction");
+    }
+    if (checkpoint.selectionCounts) {
+      this.selectionCounts = { ...this.selectionCounts, ...checkpoint.selectionCounts };
+    }
     if (checkpoint.rngState != null) this.rng.setState(checkpoint.rngState);
     if (checkpoint.totalSamples != null) this.totalSamples = Number(checkpoint.totalSamples) || 0;
     if (Array.isArray(checkpoint.visitedPairs)) {

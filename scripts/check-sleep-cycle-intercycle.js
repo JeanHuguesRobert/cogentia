@@ -55,6 +55,36 @@ try {
   const continued = await run({ seed: 42, checkpoint: replay1.checkpoint, maxPairs: 10 });
   assert.equal(continued.checkpoint.visitedPairs.length, 20);
 
+  // Opt-in dual sampler preserves both routes, bounded novelty and exact replay.
+  const mixedOptions = { seed: 20261123, focusedFraction: 0.25, maxPairs: 100 };
+  const mixed1 = await run(mixedOptions);
+  const mixed2 = await run(mixedOptions);
+  assert.equal(mixed1.status, "completed");
+  assert.equal(mixed1.metrics.selection.strategy, "mixed");
+  assert.ok(mixed1.metrics.selection.eligible_thematic_pairs > 0);
+  assert.ok(mixed1.metrics.selection.channels.thematic.evaluated_pairs > 0);
+  assert.ok(mixed1.metrics.selection.channels.random.evaluated_pairs > 0);
+  assert.equal(mixed1.metrics.selection.channels.random.evaluated_pairs +
+    mixed1.metrics.selection.channels.thematic.evaluated_pairs, 100);
+  assert.deepEqual(mixed1.checkpoint.visitedPairs, mixed2.checkpoint.visitedPairs);
+  assert.equal(mixed1.metrics.selection.channels.thematic.candidate_signals,
+    mixed2.metrics.selection.channels.thematic.candidate_signals);
+  assert.equal(mixed1.metrics.selection.validated_cognitive_gain, null,
+    "Candidate yield is not evidence of human-validated cognitive gain");
+  assert.equal(mixed1.metrics.selection.new_review_queue_signals, mixed1.new_signals_this_run);
+  const mixedQueue = fs.readFileSync(path.join(queueRoot, ".cogentia",
+    "sleep_cycle_review_queue.jsonl"), "utf8").trim().split("\n").map(JSON.parse);
+  assert.ok(mixedQueue.some(signal => signal.provenance?.selection_channel === "thematic"),
+    "Review queue must preserve the sampling channel for later accepted-yield analysis");
+  const mixResumed = await run({ ...mixedOptions, maxPairs: 20, checkpoint: mixed1.checkpoint });
+  const mixLong = await run({ ...mixedOptions, maxPairs: 120 });
+  assert.deepEqual(mixResumed.checkpoint.visitedPairs, mixLong.checkpoint.visitedPairs,
+    "Mixed mode must resume its exact PRNG/selection trajectory");
+  assert.equal(JSON.parse(fs.readFileSync(historyFile)).pairs.length, 100,
+    "Seeded experimental run must not change scheduled intercycle coverage");
+  await assert.rejects(run({ ...mixedOptions, focusedFraction: 0, maxPairs: 5,
+    checkpoint: mixed1.checkpoint }), /different focusedFraction/);
+
   // Two distinct matching paragraphs yield the same similarity/finding but
   // must not collapse into one durable review candidate.
   const blocks = [

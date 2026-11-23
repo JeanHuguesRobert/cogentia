@@ -382,6 +382,7 @@ export function evaluateDocumentPair(docA, docB, options = {}) {
         run_id: runId,
         node: options.node || "local",
         capacity_ref: options.capacityRef || "residual",
+        ...(options.selectionChannel ? { selection_channel: options.selectionChannel } : {}),
         audit_version: "cogentia.sleep_cycle.audit.v1",
       },
     };
