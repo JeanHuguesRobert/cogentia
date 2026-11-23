@@ -12,6 +12,7 @@ import { runWeeklyConsolidation } from "./lib/cogentia-core.js";
 import { runMonteCarloAudit } from "./lib/corpus-sleep-cycle/index.js";
 import { emitCopEvidence } from "./lib/cop-evidence-emitter.js";
 import { runRepoSyncPhase } from "./lib/repo-sync-phase.js";
+import { assessSleepCycleCompletion } from "./lib/repo-sync-health.js";
 import { runConfiguredInteractions } from "./lib/corpus-sleep-cycle/configured-interactions.js";
 
 function nowMs() {
@@ -331,21 +332,27 @@ export async function runCorpusSleepCycle(options = {}) {
   phases.push(assimilation);
   if (!options.json) console.log(`  ${assimilation.status}`);
 
-  const plannedCount = phases.filter((phase) => phase.status === "planned").length;
+  const completion = assessSleepCycleCompletion({phases,repoSync});
+  const plannedCount = completion.planned_count;
   const finalBudget = budgetStatus(budget);
 
   if (!options.json) {
     console.log("\n==========================================================================");
     console.log(
-      plannedCount === 0
-        ? "CORPUS SLEEP CYCLE COMPLETED"
-        : `CORPUS SLEEP CYCLE COMPLETED WITH ${plannedCount} PLANNED PHASE(S)`
+      completion.repo_sync_attention_required
+        ? "CORPUS SLEEP CYCLE: REPO SYNC NEEDS RECONCILIATION ("+completion.repo_sync_blocked_count+" BLOCKED)"
+        : plannedCount === 0
+          ? "CORPUS SLEEP CYCLE COMPLETED"
+          : `CORPUS SLEEP CYCLE COMPLETED WITH ${plannedCount} PLANNED PHASE(S)`
     );
     console.log("==========================================================================");
   }
 
   const result = {
-    status: plannedCount === 0 && !phases.some((p) => ["PARTIAL", "BLOCKED_SECURITY"].includes(p.status)) ? "completed" : "completed_partial",
+    status: completion.status,
+    attention_required: completion.attention_required,
+    repo_sync_attention_required: completion.repo_sync_attention_required,
+    repo_sync_blocked_count: completion.repo_sync_blocked_count,
     availability,
     budget: finalBudget,
     phases,
@@ -359,10 +366,14 @@ export async function runCorpusSleepCycle(options = {}) {
     try {
       const copResult = await emitCopEvidence({
         obligationId: "cogentia:sleep-cycle",
-        ok: result.status === "completed" || result.status === "completed_partial",
+        ok: !result.attention_required,
         status: "active",
         evidence: {
           status: result.status,
+          attention_required: result.attention_required,
+          repo_sync_status: repoSync.status,
+          repo_sync_attention_required: result.repo_sync_attention_required,
+          repo_sync_blocked_count: result.repo_sync_blocked_count,
           candidate_signals: result.candidate_signals,
           cognitive_gain_score: result.metrics?.cognitive_yield?.cognitive_gain_score || 0,
           elapsed_ms: finalBudget.elapsedMs || 0,

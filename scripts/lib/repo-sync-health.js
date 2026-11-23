@@ -35,3 +35,26 @@ export function declaredSyncHealth(repos) {
     })),
   };
 }
+
+
+/**
+ * A fetched-but-blocked repository is not a completed synchronization.
+ * Planned phases are distinct from real operational errors.
+ */
+export function assessSleepCycleCompletion({phases=[], repoSync=null}={}) {
+  const blockedCount = Number.isSafeInteger(repoSync?.evidence?.health?.blocked_count)
+    ? Math.max(0,repoSync.evidence.health.blocked_count) : 0;
+  const syncNeedsAttention = blockedCount>0 ||
+    ['completed_with_blocks','completed_with_errors','failed'].includes(repoSync?.status);
+  const partialPhases = phases.some(phase =>
+    ['PARTIAL','BLOCKED_SECURITY','failed','completed_with_blocks','completed_with_errors','missing']
+      .includes(phase.status));
+  const plannedCount = phases.filter(phase => phase.status==='planned').length;
+  return {
+    status: syncNeedsAttention||partialPhases||plannedCount>0 ? 'completed_partial' : 'completed',
+    attention_required:syncNeedsAttention||partialPhases,
+    repo_sync_attention_required:syncNeedsAttention,
+    repo_sync_blocked_count:blockedCount,
+    planned_count:plannedCount
+  };
+}

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,writeFile,rm,symlink,readFile} from 'node:fs/promises';
-import {cleanSyncHealth,declaredSyncHealth} from './lib/repo-sync-health.js';
+import {cleanSyncHealth,declaredSyncHealth,assessSleepCycleCompletion} from './lib/repo-sync-health.js';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
@@ -88,4 +88,41 @@ test('health receipts distinguish blocked clean-sync states and redact raw Git e
   ]);
   assert.equal(sleep.blocked_count,2);
   assert.deepEqual(sleep.blocked.map(x=>x.repo),['beta','gamma']);
+});
+
+
+test('Sleep Cycle completion and COP health expose real sync blocks without mistaking planned work for failure',()=>{
+  const success=assessSleepCycleCompletion({
+    phases:[{name:'repo_sync',status:'completed'}],
+    repoSync:{status:'completed',evidence:{health:{status:'ok',blocked_count:0}}}
+  });
+  assert.equal(success.status,'completed');
+  assert.equal(success.repo_sync_attention_required,false);
+  const blocked=assessSleepCycleCompletion({
+    phases:[{name:'repo_sync',status:'completed_with_blocks'},{name:'later_phase',status:'completed'}],
+    repoSync:{status:'completed_with_blocks',evidence:{health:{status:'attention_required',blocked_count:10}}}
+  });
+  assert.equal(blocked.status,'completed_partial');
+  assert.equal(blocked.repo_sync_attention_required,true);
+  assert.equal(blocked.repo_sync_blocked_count,10);
+  assert.equal(blocked.attention_required,true);
+  const otherFailure=assessSleepCycleCompletion({
+    phases:[{name:'repo_sync',status:'completed'},{name:'other',status:'failed'}],
+    repoSync:{status:'completed',evidence:{health:{blocked_count:0}}}
+  });
+  assert.equal(otherFailure.repo_sync_attention_required,false);
+  assert.equal(otherFailure.attention_required,true);
+  const failure=assessSleepCycleCompletion({
+    phases:[{name:'repo_sync',status:'failed'}],repoSync:{status:'failed',evidence:null}
+  });
+  assert.equal(failure.status,'completed_partial');
+  assert.equal(failure.repo_sync_attention_required,true);
+  const planned=assessSleepCycleCompletion({
+    phases:[{name:'repo_sync',status:'completed'},{name:'future',status:'planned'}],
+    repoSync:{status:'completed',evidence:{health:{blocked_count:0}}}
+  });
+  assert.equal(planned.status,'completed_partial');
+  assert.equal(planned.repo_sync_attention_required,false);
+  assert.equal(planned.attention_required,false);
+  assert.equal(planned.planned_count,1);
 });
