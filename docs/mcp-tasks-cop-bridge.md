@@ -286,8 +286,25 @@ implicite. Il exige également l'attestation JHN déjà utilisée par
 Cogentia (`COGENTIA_MCP_JHN_MUTATE` et le secret JHN existant), sans
 nouveau jeton. L'interception reste limitée au seul outil en lecture
 `cogentia_pattern_list` et à un appelant effectivement attesté.
-À chaque dispatch, l'hôte revalide cette attestation ; le propriétaire
-enregistré dans COP ne constitue pas une autorisation.
+À chaque dispatch, l'hôte revalide l'identité, puis contrôle que l'outil
+reste publiquement disponible avec `readOnlyHint: true` avant de l'invoquer.
+Le propriétaire enregistré dans COP ne constitue pas une autorisation,
+et **l'attestation JHN n'est pas en soi une MandateDeclaration COP**.
+Ce pilote se limite donc à l'autorité publique de lecture déjà disponible ;
+les opérations gouvernées exigent le rattachement à un mandat COP vérifié.
+
+**Observation du stockage autoritaire (lecture seule, 23 novembre 2026).**
+Aucune base SQLite COP portable préexistante n'a été identifiée dans
+les chemins de service inspectés sur Fracta2. Le projet Supabase JHN,
+toujours actif, contient 555 lignes dans `public.cop_event_log`,
+mais aucune dans `public.cop_mandates` ni dans
+`public.cop_accounting_budget` (et une ligne d'époque et une réservation
+d'époque). L'absence d'un mandat JHN exploitable dans ce projet reste
+donc constatée. Le protocole public de lecture fonctionne sans en
+déduire une autorisation pour des opérations gouvernées. La connexion
+de production doit réutiliser un journal COP canonique effectivement
+désigné, pas créer une base secondaire par défaut.
+La release active de `mcp-cogentia.service` n'a pas été modifiée.
 
 L'ordonnanceur COP conserve les continuations en attente, évite de
 réenregistrer un timer pour la même tâche et reconstruit les travaux

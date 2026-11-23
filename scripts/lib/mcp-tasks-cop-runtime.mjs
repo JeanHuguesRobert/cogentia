@@ -52,6 +52,17 @@ export function createMcpCopTasksRuntime(env = process.env, { coreAccessor } = {
         const core = coreAccessor();
         if (!core || typeof core.callTool !== "function")
           throw new Error("mcp_tasks_core_unavailable");
+        // The existing JHN bearer authenticates the requester; it is not
+        // a COP MandateDeclaration. The only dispatch authority used here
+        // is Cogentia's existing public, explicitly read-only tool contract.
+        // Recheck it at dispatch, not only when the Task was created.
+        const catalog = await core.handleJsonRpc({
+          jsonrpc: "2.0", id: "mcp-cop-readonly-check",
+          method: "tools/list", params: {},
+        });
+        const capability = catalog?.result?.tools?.find(tool => tool.name === TOOL);
+        if (capability?.annotations?.readOnlyHint !== true)
+          throw new Error("mcp_tasks_public_readonly_capability_unavailable");
         const data = await core.callTool(TOOL, args);
         return { content: [{ type: "text", text: JSON.stringify(data) }], isError: false };
       },
@@ -65,9 +76,9 @@ export function createMcpCopTasksRuntime(env = process.env, { coreAccessor } = {
           typeof entry.payload.owner !== "string" ||
           !entry.payload.owner.startsWith("jhn:")) return null;
       const actor = entry.payload.owner.slice("jhn:".length);
-      // Fresh host-side attestation at dispatch; a stored owner is NOT a
-      // credential. The legacy JHN service token is the existing authority,
-      // and the operation remains limited to the allowlisted read-only tool.
+      // Fresh host-side identity attestation at dispatch; a stored owner
+      // is NOT a credential, and the bearer does NOT grant COP authority.
+      // Capability authorization comes from the public read-only catalog.
       const auth = resolveCallerAuth(env, {
         view: "public",
         headers: { "x-cogentia-jhn-token": env.COGENTIA_MCP_JHN_TOKEN },
