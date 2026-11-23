@@ -98,7 +98,8 @@ test("MCP task -> COP events -> restart -> input -> result delivered", async () 
 });
 
 test("MCP task cancellation is a durable request, not fictitious termination", async () => {
-  const f = fixture(async () => ({ content: [{ type: "text", text: "done" }] }));
+  let executions = 0;
+  const f = fixture(async () => { executions++; return { content: [{ type: "text", text: "done" }] }; });
   try {
     const created = await f.core.handleJsonRpc(rpc("tools/call", {
       name: "cogentia_pattern_list", arguments: {},
@@ -110,6 +111,12 @@ test("MCP task cancellation is a durable request, not fictitious termination", a
     const pending = await newCore.handleJsonRpc(rpc("tasks/get", { taskId: id }));
     assert.equal(pending.result.status, "working");
     assert.equal(pending.result.statusMessage, "cancellation_requested");
+    const stopped = await f.pilot().run(id, { auth: "none" });
+    assert.equal(stopped.status, "cancelled");
+    assert.equal(executions, 0, "cancelled before dispatch means no execution");
+    const afterRestart = f.reopen();
+    const persisted = await afterRestart.handleJsonRpc(rpc("tasks/get", { taskId: id }));
+    assert.equal(persisted.result.status, "cancelled");
     const denied = await newCore.handleJsonRpc(rpc("tasks/get", { taskId: "task:" + "0".repeat(36) }));
     assert.equal(denied.error.code, -32602);
     assert.equal(f.audit().ok, true);
@@ -129,4 +136,29 @@ test("COP Task pilot does not activate for arbitrary tools", async () => {
     });
     assert.equal(await restricted.adapter.shouldCreate({ name: "cogentia_pattern_list", auth: { auth: "none" } }), false);
   } finally { f.close(); }
+});
+
+test("COP adapter binds task inspection to the effective authenticated caller", async () => {
+  const root = mkdtempSync(join(tmpdir(), "mcp-cop-identity-"));
+  const store = createSqliteCopEventStore(join(root, "events.sqlite"));
+  try {
+    const pilot = createCopMcpTasksPilot({
+      store, toolName: "cogentia_pattern_list",
+      handler: async () => ({ content: [] }),
+    });
+    const owner = { auth: "jhn", actor: "agent:jhn" };
+    const other = { auth: "jhn", actor: "agent:jhn.subagent:other" };
+    const { taskId } = await pilot.adapter.create({ name: "cogentia_pattern_list",
+      args: {}, auth: owner });
+    assert.equal((await pilot.adapter.get({ taskId, auth: owner })).status, "working");
+    await assert.rejects(pilot.adapter.get({ taskId, auth: other }), /unknown_task/);
+    await assert.rejects(pilot.adapter.cancel({ taskId, auth: other }), /unknown_task/);
+    await assert.rejects(pilot.adapter.update({
+      taskId, auth: other, inputResponses: {},
+    }), /unknown_task/);
+    assert.equal(await pilot.adapter.shouldCreate({
+      name: "cogentia_pattern_list", auth: { auth: "none" },
+    }), false);
+    assert.equal(store.auditCommitments().ok, true);
+  } finally { store.close(); rmSync(root, { recursive: true, force: true }); }
 });
