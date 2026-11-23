@@ -126,6 +126,43 @@ annulation et compensation causales, et retour de résultat au parent.
 La prise en charge des notifications `notifications/tasks` et des abonnements
 `subscriptions/listen` peut être ajoutée indépendamment du polling.
 
+## Point FBF — raccordement progressif au 23 novembre 2026
+
+La façade MCP Tasks est déjà intégrée au noyau Cogentia et ses tests
+utilisent le vrai journal événementiel SQLite COP. En revanche, **l'adaptateur
+persistant de production n'est pas encore installé** : annoncer le support
+effectif de Tasks sur la seule base du numéro de protocole serait un bug de
+conformité. Le test de contrat a été réaligné sur les métadonnées obligatoires
+de chaque requête MCP moderne. Ses huit tests passent.
+
+Le test COP ne se contente plus d'acquitter fictivement `tasks/update` et
+`tasks/cancel` : les demandes d'entrée et d'annulation sont journalisées,
+vérifiées après réouverture du store et distinguées de leur effet ultérieur.
+Une annulation demandée n'est pas une exécution déjà interrompue.
+
+Trois niveaux doivent être raccordés, sans créer trois identités canoniques :
+
+1. **MCP Tasks** : poignée publique `taskId`, opérations standard de
+   consultation, fourniture d'entrée et demande d'annulation, autorisées
+   pour le demandeur effectif.
+2. **COP** : Paquet Cognitif canonique, événements et résultats persistants,
+   coordination, reprise et autorisation. `COPJobScheduler` fournit une vue
+   d'ordonnancement mais sa table `jobs` en mémoire n'est pas, à elle seule,
+   une garantie de persistance.
+3. **l9 (Inox, héritier de l8)** : tâches et continuations locales. La
+   révision publique du 23 novembre comporte une `task/class` et des
+   méthodes de pause/reprise/fork/spawn ; toutefois `make.task` est encore
+   explicitement marqué *stub*. `npm run test:l9` réussit 16/16 tests de
+   bootstrap et d'exécution de base, **sans valider la tâche locale complète**.
+
+Le premier test d'intégration pertinent est donc **MCP ↔ COP**, sur un
+Paquet existant et un journal COP durable, avec retour `taskId` uniquement
+après création attestée, `tasks/get` après redémarrage, `tasks/update`
+journalisé, `tasks/cancel` coopératif et même autorité contrôlée à chaque
+appel. Le lien **COP ↔ l9** doit ensuite être testé à une frontière locale
+effective, après stabilisation du constructeur l9. Ce découpage n'impose
+ni nouveau scheduler global, ni identité de travail supplémentaire.
+
 ## Analogie avec les codes de procédure
 
 Un code de procédure juridique est également un **protocole de mise en œuvre
