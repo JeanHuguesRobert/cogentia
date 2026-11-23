@@ -163,6 +163,47 @@ appel. Le lien **COP ↔ l9** doit ensuite être testé à une frontière locale
 effective, après stabilisation du constructeur l9. Ce découpage n'impose
 ni nouveau scheduler global, ni identité de travail supplémentaire.
 
+## Reality Test MCP ↔ COP — 23 novembre 2026
+
+**État : validé en bac-à-sable, pas activé sur le serveur de production.**
+
+Le pilote `scripts/lib/mcp-tasks-cop-pilot.mjs` relie désormais le contrat
+MCP 2026-07-28 au **journal événementiel SQLite COP existant**, sans nouveau
+stockage, sans nouveau scheduler et sans identité canonique de Job.
+`taskId` est une poignée opaque ; le travail conserve sa référence de
+Paquet Cognitif dans l'événement de création. L'adaptateur n'est pas branché
+automatiquement dans `scripts/cogentia-mcp-http.js`.
+
+Le test `scripts/lib/mcp-tasks-cop-pilot.test.mjs` exerce :
+
+- création d'une Task par `tools/call`, annoncée seulement avec un adaptateur
+  configuré et l'extension client déclarée ;
+- relecture `tasks/get` après fermeture et réouverture du journal COP
+  et recréation du noyau MCP ;
+- demande d'entrée `input_required`, réponse `tasks/update` journalisée ;
+- exécution d'un **vrai outil Cogentia en lecture seule**, stockage COP du
+  résultat, livraison par `tasks/get`, et non-réexécution après résultat ;
+- `tasks/cancel` comme demande coopérative durable ; si la demande précède
+  l'acquisition du travail, le worker confirme `cancelled` sans l'exécuter ;
+- lecture et modification limitées à l'identité de l'appelant dans
+  l'adaptateur (le mode anonyme n'est autorisé que par le banc de test) ;
+- véritable échange HTTP MCP avant et après recréation du serveur de test.
+
+**Résultat observé : 13/13 tests réussis** en exécutant ensemble le pilote
+et les tests du contrat existant. Le test HTTP utilise un serveur éphémère
+lié au noyau MCP de test, pas le déploiement Cogentia en production.
+
+Limites restantes pour un premier déploiement : adapter le pilote au
+routage COP du travail réel, à la récupération des exécutions interrompues
+sans double effet, au registre des capacités autorisées et à l'attestation
+du Principal et des acteurs du transport HTTP effectif. Le worker de pilote
+est déclenché explicitement ; une simple création de Task ne constitue
+donc pas encore un ordonnancement autonome. Aucun support Tasks ne doit être
+annoncé publiquement avant l'intégration et le test de ces raccordements.
+
+Le raccordement l9 demeure séparé : la suite de bootstrap Inox ne prouve
+pas encore le fonctionnement complet de `make.task` et de son scheduling.
+
 ## Analogie avec les codes de procédure
 
 Un code de procédure juridique est également un **protocole de mise en œuvre
