@@ -9,7 +9,11 @@ import {clientSupportsMcpTasks,formatMcpTask,MCP_TASKS_EXTENSION_ID}
   from './mcp-tasks-2026-contract.mjs';
 
 const modern='2026-07-28';
-const meta={
+const noTaskMeta={
+ 'io.modelcontextprotocol/protocolVersion':modern,
+ 'io.modelcontextprotocol/clientCapabilities':{},
+};
+const meta=
  'io.modelcontextprotocol/protocolVersion':modern,
  'io.modelcontextprotocol/clientCapabilities':{
    extensions:{[MCP_TASKS_EXTENSION_ID]:{}},
@@ -57,7 +61,7 @@ function fixture(){
 test('2026-07-28 is stateless; initialize and protocol version do not grant Tasks capability',()=>{
  assert.equal(clientSupportsMcpTasks(meta),true);
  assert.equal(clientSupportsMcpTasks(meta,{protocolEra:'legacy'}),false);
- assert.equal(clientSupportsMcpTasks({'io.modelcontextprotocol/protocolVersion':modern}),false);
+ assert.equal(clientSupportsMcpTasks(noTaskMeta),false);
  assert.equal(clientSupportsMcpTasks({
   'io.modelcontextprotocol/clientCapabilities':{extensions:{[MCP_TASKS_EXTENSION_ID]:true}},
  }),false);
@@ -82,7 +86,7 @@ test('a configured durable adapter advertises Tasks, and the client opts in PER 
   assert.deepEqual(discovery.result.capabilities.extensions[MCP_TASKS_EXTENSION_ID],{});
   const noOptIn=await core.handleJsonRpc(rpc('tools/call',{
     name:'cogentia_pattern_list',arguments:{}},
-   {'io.modelcontextprotocol/protocolVersion':modern}));
+   noTaskMeta));
   assert.equal(noOptIn.result.resultType,'complete');
   assert.equal(f.createCalls,0);
   const task=await core.handleJsonRpc(rpc('tools/call',{
@@ -93,7 +97,7 @@ test('a configured durable adapter advertises Tasks, and the client opts in PER 
   assert.equal(Object.hasOwn(task.result,'internal_secret'),false);
   assert.equal(f.createCalls,1);
   const noOptInGet=await core.handleJsonRpc(rpc('tasks/get',{
-    taskId:task.result.taskId},{'io.modelcontextprotocol/protocolVersion':modern}));
+    taskId:task.result.taskId},noTaskMeta));
   assert.equal(noOptInGet.error.code,-32021);
   const read=await core.handleJsonRpc(rpc('tasks/get',{taskId:task.result.taskId}));
   assert.equal(read.result.resultType,'complete');
@@ -117,7 +121,7 @@ test('task update and cancellation use standard complete acknowledgements, not a
   assert.equal(b.result.resultType,'complete');
   const mismatch=await core.handleJsonRpc(rpc('tasks/get',{taskId:'task:mcp-test-1'}),{
     mcpName:'task:other'});
-  assert.equal(mismatch.error.code,-32600);
+  assert.equal(mismatch.error.code,-32020);
  }finally{f.close()}
 });
 
