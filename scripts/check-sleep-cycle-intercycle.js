@@ -37,6 +37,10 @@ try {
   assert.equal(seen1.size, 50);
   assert.equal(seen2.size, 50);
   assert.equal(overlap, 0, "Fresh scheduled cycles should not repeat explored pairs");
+  assert.equal(cycle1.metrics.coverage.intercycle.novel_pairs_this_cycle, 50);
+  assert.equal(cycle2.metrics.coverage.intercycle.novel_pairs_this_cycle, 50);
+  assert.equal(cycle2.metrics.coverage.intercycle.revisited_recent_pairs_this_cycle, 0);
+  assert.equal(cycle2.metrics.coverage.intercycle.recent_pairs_before, 50);
   assert.ok(cycle1.metrics.coverage.pair_coverage_ratio > 0);
 
   const historyFile = path.join(queueRoot, ".cogentia", "sleep_cycle_pair_history_public.json");
