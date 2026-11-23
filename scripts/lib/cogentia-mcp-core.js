@@ -1992,16 +1992,28 @@ export function createMcpCore(env = process.env, extras = {}) {
           };
           if (resolved.era === "modern") {
             result = attachModernMeta(result, resolved.protocolVersion);
+            // FBF 2026-11-23: an unsuccessful tool invocation still belongs
+            // to the same trace; never erase correlation at the error boundary.
+            if (correlation.traceparent) {
+              result._meta = {
+                ...result._meta,
+                traceparent: correlation.traceparent,
+                ...(correlation.tracestate ? { tracestate: correlation.tracestate } : {}),
+              };
+            }
           }
           return jsonRpcResult(message.id, result);
         }
       }
       return jsonRpcError(message.id, -32601, "Method not found");
     } catch (error) {
-      return jsonRpcResult(message.id, {
+      const result = {
         content: [{ type: "text", text: error.message }],
         isError: true,
-      });
+      };
+      // FBF: even unexpected tool exceptions require the modern resultType.
+      return jsonRpcResult(message.id, resolved.era === "modern"
+        ? attachModernMeta(result, resolved.protocolVersion) : result);
     }
   }
 
