@@ -13,7 +13,7 @@ const noTaskMeta={
  'io.modelcontextprotocol/protocolVersion':modern,
  'io.modelcontextprotocol/clientCapabilities':{},
 };
-const meta=
+const meta={
  'io.modelcontextprotocol/protocolVersion':modern,
  'io.modelcontextprotocol/clientCapabilities':{
    extensions:{[MCP_TASKS_EXTENSION_ID]:{}},
