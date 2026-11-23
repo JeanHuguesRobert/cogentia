@@ -7,7 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { AdaptivePairSampler, discoverCorpusDocuments } from "./lib/corpus-sleep-cycle/pair-sampler.js";
 import { runMonteCarloAudit } from "./lib/corpus-sleep-cycle/sleep-cycle-engine.js";
-import { evaluateDocumentPair } from "./lib/corpus-sleep-cycle/audit-evaluator.js";
+import { evaluateDocumentPair, checkMissingLink } from "./lib/corpus-sleep-cycle/audit-evaluator.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const docs = discoverCorpusDocuments({ root, view: "public" });
@@ -84,6 +84,31 @@ try {
     "Seeded experimental run must not change scheduled intercycle coverage");
   await assert.rejects(run({ ...mixedOptions, focusedFraction: 0, maxPairs: 5,
     checkpoint: mixed1.checkpoint }), /different focusedFraction/);
+
+  // A shared tag set does not imply a missing link when canonical frontmatter
+  // or inline Markdown already declares the document relationship.
+  const linkDocA = {
+    id: "fixture/a.md", relPath: "fixture/a.md",
+    relatedDocs: [], tags: ["alpha", "beta", "gamma"]
+  };
+  const linkDocB = {
+    id: "fixture/b.md", relPath: "fixture/b.md",
+    relatedDocs: [], tags: ["alpha", "beta", "gamma"]
+  };
+  assert.equal(checkMissingLink(linkDocA, linkDocB).length, 1);
+  assert.equal(checkMissingLink(linkDocA, linkDocB, "See [B](b.md)").length, 0);
+  assert.equal(checkMissingLink({ ...linkDocA,
+    relatedDocs: ["fixture/b.md"] }, linkDocB).length, 0);
+  const realA = docs.find(doc =>
+    doc.id === "cogentia/research/agent_configuration_layer.md");
+  const realB = docs.find(doc =>
+    doc.id === "cogentia/research/blocked_tool_rule.md");
+  assert.ok(realA && realB);
+  assert.ok(realA.relatedDocs.some(ref => ref.endsWith("blocked_tool_rule.md")),
+    "Discovery must recognize related_research as an existing relationship");
+  assert.equal(checkMissingLink(realA, realB,
+    fs.readFileSync(realA.fullPath, "utf8"),
+    fs.readFileSync(realB.fullPath, "utf8")).length, 0);
 
   // Two distinct matching paragraphs yield the same similarity/finding but
   // must not collapse into one durable review candidate.

@@ -105,7 +105,7 @@ export function checkDuplication(docA, docB, contentA, contentB) {
 /**
  * Check for missing cross-reference links between tightly-coupled documents.
  */
-export function checkMissingLink(docA, docB) {
+export function checkMissingLink(docA, docB, contentA = "", contentB = "") {
   const signals = [];
   const relatedA = (docA.relatedDocs || []).map((r) => path.basename(String(r ?? "")).toLowerCase());
   const relatedB = (docB.relatedDocs || []).map((r) => path.basename(String(r ?? "")).toLowerCase());
@@ -113,8 +113,15 @@ export function checkMissingLink(docA, docB) {
   const baseA = path.basename(docA.relPath).toLowerCase();
   const baseB = path.basename(docB.relPath).toLowerCase();
 
-  const linksAtoB = relatedA.includes(baseB);
-  const linksBtoA = relatedB.includes(baseA);
+  // Related frontmatter paths and inline Markdown links are both evidence of
+  // an existing relationship. A tag match alone cannot establish an absence.
+  const hasMarkdownLink = (content, target) => {
+    const basename = path.basename(target).toLowerCase();
+    return [...content.matchAll(/\]\(([^)]+)\)/g)]
+      .some(match => match[1].toLowerCase().includes(basename));
+  };
+  const linksAtoB = relatedA.includes(baseB) || hasMarkdownLink(contentA, docB.relPath);
+  const linksBtoA = relatedB.includes(baseA) || hasMarkdownLink(contentB, docA.relPath);
 
   const sharedTags = (docA.tags || []).filter((t) =>
     (docB.tags || []).map((x) => String(x ?? "").toLowerCase()).includes(String(t ?? "").toLowerCase())
@@ -328,7 +335,7 @@ export function evaluateDocumentPair(docA, docB, options = {}) {
     ...checkContradictions(docA, docB, contentA, contentB),
     ...checkDuplication(docA, docB, contentA, contentB),
     ...checkSemanticDrift(docA, docB, contentA, contentB),
-    ...checkMissingLink(docA, docB),
+    ...checkMissingLink(docA, docB, contentA, contentB),
     ...checkOvergeneralization(docA, docB, contentA, contentB),
     ...checkWeakHypothesis(docA, docB, contentA, contentB),
   ];

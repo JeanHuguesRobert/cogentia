@@ -109,7 +109,9 @@ export function discoverCorpusDocuments(options = {}) {
 
             // Extract tags, related documents, concepts
             const tags = Array.isArray(data?.tags) ? data.tags.map(String) : [];
-            const relatedDocs = Array.isArray(data?.related_documents) ? data.related_documents.map(String) : [];
+            // Both Corpus frontmatter conventions designate documentary links.
+            const relatedDocs = ["related_documents", "related_research", "related"]
+              .flatMap(field => Array.isArray(data?.[field]) ? data[field].map(String) : []);
             const status = data?.status || data?.lifecycle_state || "working";
             const isUnreviewed = data?.review?.status === "unreviewed" || data?.review === "unreviewed";
             const hasTension = isUnreviewed || /TODO|FIXME|hypothesis|unresolved|contradict|superseded/i.test(header);
