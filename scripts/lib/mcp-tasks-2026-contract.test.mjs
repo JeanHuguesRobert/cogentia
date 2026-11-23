@@ -47,11 +47,36 @@ function fixture(){
     const initial=events.find(x=>x.payload?.phase==='durably_created');
     if(!initial)throw Object.assign(Error('unknown_task'),{code:'unknown_task'});
     const result=events.find(x=>x.payload?.phase==='completion');
-    return result?{...initial.payload.task,status:'completed',
-      lastUpdatedAt:'2026-11-17T12:30:00Z',result:result.payload.result}:initial.payload.task;
+    const cancelRequested=events.find(x=>x.payload?.phase==='cancel_requested');
+    if(result)return {...initial.payload.task,status:'completed',
+      lastUpdatedAt:'2026-11-17T12:30:00Z',result:result.payload.result};
+    if(cancelRequested)return {...initial.payload.task,
+      statusMessage:'cancellation_requested',
+      lastUpdatedAt:'2026-11-17T12:31:00Z'};
+    return initial.payload.task;
   },
-  async update(){return {ok:true}},
-  async cancel(){return {ok:true}},
+  async update({taskId,inputResponses}){
+    const existing=store.listTopic('mcp-task:'+taskId);
+    if(!existing.some(x=>x.payload?.phase==='durably_created'))
+      return {status:'not_found'};
+    const event=store.append({topic_id:'mcp-task:'+taskId,
+      event_type:'cop.event/v1',actor_id:'cop:mcp-tasks-fixture',
+      subject_ref:'mcp-task:'+taskId,epistemic_status:'observed',
+      idempotency_key:'mcp-test-input:'+taskId+':'+JSON.stringify(inputResponses),
+      payload:{profile:'test.mcp-tasks/v1',phase:'input_received',inputResponses}});
+    return {ok:event.ok===true};
+  },
+  async cancel({taskId}){
+    const existing=store.listTopic('mcp-task:'+taskId);
+    if(!existing.some(x=>x.payload?.phase==='durably_created'))
+      return {status:'not_found'};
+    const event=store.append({topic_id:'mcp-task:'+taskId,
+      event_type:'cop.event/v1',actor_id:'cop:mcp-tasks-fixture',
+      subject_ref:'mcp-task:'+taskId,epistemic_status:'observed',
+      idempotency_key:'mcp-test-cancel:'+taskId,
+      payload:{profile:'test.mcp-tasks/v1',phase:'cancel_requested'}});
+    return {ok:event.ok===true};
+  },
  };
  return {adapter,path,store:()=>store,get createCalls(){return createCalls},
    reopen(){store.close();store=createSqliteCopEventStore(path)},
@@ -119,6 +144,18 @@ test('task update and cancellation use standard complete acknowledgements, not a
   assert.equal(a.result.resultType,'complete');
   const b=await core.handleJsonRpc(rpc('tasks/cancel',{taskId:'task:mcp-test-1'}));
   assert.equal(b.result.resultType,'complete');
+  // An acknowledgement is not proof of termination: it must durably
+  // record the cancellation request and preserve the Task's work status.
+  const events=f.store().listTopic('mcp-task:task:mcp-test-1');
+  assert.ok(events.some(x=>x.payload?.phase==='input_received'));
+  assert.ok(events.some(x=>x.payload?.phase==='cancel_requested'));
+  const pendingCancel=await core.handleJsonRpc(rpc('tasks/get',{taskId:'task:mcp-test-1'}));
+  assert.equal(pendingCancel.result.status,'working');
+  assert.equal(pendingCancel.result.statusMessage,'cancellation_requested');
+  f.reopen();
+  assert.equal(f.store().auditCommitments().ok,true);
+  const replay=await core.handleJsonRpc(rpc('tasks/get',{taskId:'task:mcp-test-1'}));
+  assert.equal(replay.result.statusMessage,'cancellation_requested');
   const mismatch=await core.handleJsonRpc(rpc('tasks/get',{taskId:'task:mcp-test-1'}),{
     mcpName:'task:other'});
   assert.equal(mismatch.error.code,-32020);
