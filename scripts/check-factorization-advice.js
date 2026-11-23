@@ -81,3 +81,29 @@ test("central CLI rejects incomplete pair", t => {
   assert.notEqual(run.status,0);
   assert.match(run.stderr,/--a and --b must be provided together/);
 });
+
+test("SleepCycle stats and review use the registered Cogentia repository, not cwd", t => {
+  const root=mk();t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+  const repo=path.join(root,"cogentia"), other=path.join(root,"elsewhere");
+  fs.mkdirSync(path.join(repo,".cogentia"),{recursive:true});
+  fs.mkdirSync(other);
+  const registry=path.join(root,".cogentia.json");
+  fs.writeFileSync(registry,JSON.stringify({repos:[{name:"cogentia",path:"./cogentia"}]}));
+  const q=path.join(repo,".cogentia","sleep_cycle_review_queue.jsonl");
+  const record={...signal("cogentia/a.md","cogentia/b.md"),review_status:"pending_review"};
+  fs.writeFileSync(q,JSON.stringify(record)+"\n");
+  const cli=path.resolve("scripts/cogentia.js");
+  const env={...process.env,COGENTIA_REGISTRY:registry};
+  for(const [sub,field] of [["stats","stats"],["review","items"]]) {
+    const run=spawnSync(process.execPath,[cli,"sleep-cycle",sub,"--json"],
+      {cwd:other,encoding:"utf8",env,timeout:20000});
+    assert.equal(run.status,0,run.stderr);
+    const result=JSON.parse(run.stdout);
+    if(sub==="stats") {
+      assert.equal(result.stats.total_signals,1);
+      assert.equal(result.stats.queue_file,q);
+    } else assert.equal(result.items[0].id,"sig-test");
+  }
+  assert.equal(fs.existsSync(path.join(other,".cogentia")),false);
+  assert.equal(fs.readFileSync(q,"utf8"),JSON.stringify(record)+"\n");
+});

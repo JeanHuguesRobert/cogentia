@@ -2919,7 +2919,10 @@ async function cmdSleepCycle(subcommand = "run") {
     const report = { ok: true, mode: "read_only", count: results.length, results };
     return output(report, JSON.stringify(report, null, 2));
   }
-  const root = loadContext().rootPath;
+  // The registry context provides per-repository paths, not rootPath.
+  // Resolve the SleepCycle owner explicitly; never create a queue in cwd.
+  const root = loadContext().repos.find(repo => repo.name === "cogentia")?.path;
+  if (!root) throw new Error("sleep-cycle requires the cogentia repository in the configured registry");
   const queue = new SleepCycleReviewQueue({ root });
 
   if (subcommand === "review" || subcommand === "list") {
