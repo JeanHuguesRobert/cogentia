@@ -3,6 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { spawnSync } from "node:child_process";
 import { adviseFactorization } from "./lib/factorization-advice.js";
 const mk = () => fs.mkdtempSync(path.join(os.tmpdir(), "factorization-advice-"));
 const signal = (a,b) => ({ id: "sig-test", signal_kind: "duplication", method: "ngram_paragraph_similarity", review_status: "pending_review", doc_a: {path:a}, doc_b:{path:b} });
@@ -54,4 +55,29 @@ test("derived product retains declared source relation", t => {
   const r=adviseFactorization(signal(a,b),{corpusRoot:root});
   assert.equal(r.recommendation,"preserve_declared_derivation");
   assert.equal(r.relation.declared_relations[0].predicate,"source_document");
+});
+
+test("central CLI advises direct pairs without registry or changing sources", t => {
+  const root=mk();t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+  const a="cogentia/docs/a.md", b="cogentia/docs/b.md";
+  for (const p of [a,b]) {fs.mkdirSync(path.dirname(path.join(root,p)),{recursive:true});fs.writeFileSync(path.join(root,p),"---\ntitle: Example\n---\nIdentical content\n");}
+  const before=[a,b].map(p=>fs.readFileSync(path.join(root,p),"utf8"));
+  const cli=path.resolve("scripts/cogentia.js");
+  const run=spawnSync(process.execPath,[cli,"sleep-cycle","advise","--a",a,"--b",b,"--corpus-root",root,"--json"],
+    {cwd:root,encoding:"utf8",env:{...process.env,COGENTIA_REGISTRY:""},timeout:20000});
+  assert.equal(run.status,0,run.stderr);
+  const result=JSON.parse(run.stdout);
+  assert.equal(result.mode,"read_only");
+  assert.equal(result.count,1);
+  assert.equal(result.results[0].recommendation,"inspect_identity_and_authority");
+  assert.deepEqual([a,b].map(p=>fs.readFileSync(path.join(root,p),"utf8")),before);
+});
+
+test("central CLI rejects incomplete pair", t => {
+  const root=mk();t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+  const cli=path.resolve("scripts/cogentia.js");
+  const run=spawnSync(process.execPath,[cli,"sleep-cycle","advise","--a","cogentia/docs/a.md","--corpus-root",root],
+    {cwd:root,encoding:"utf8",env:{...process.env,COGENTIA_REGISTRY:""},timeout:20000});
+  assert.notEqual(run.status,0);
+  assert.match(run.stderr,/--a and --b must be provided together/);
 });

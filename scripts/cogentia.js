@@ -28,7 +28,7 @@ import {readHostedInstanceDirectory} from "./lib/hosted-instance-directory.js";
 import {projectAgentToSupabase} from "./lib/agent-supabase-projection.js";
 import { once } from "node:events";
 import { finished } from "node:stream/promises";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { createGunzip, createGzip } from "node:zlib";
 import * as js_yaml from "js-yaml";
 import { DAEMON_PLUGINS, DAEMON_PLUGIN_ROUTES, loadDaemonPlugins, dispatchPluginRoute } from "./daemon_plugins/registry.js";
@@ -1031,6 +1031,11 @@ Core commands:
                            --instance jhn
   interactions get <id>    Show one projected Interaction Case by packet_id.
                            Flags: --json --instance jhn
+
+Sleep Cycle:
+  sleep-cycle advise       Read-only factorization recommendations from existing evidence.
+                           Flags: --limit <1..100>, --a <repo/file.md> --b <repo/file.md>,
+                           --corpus-root <path>, --json. Does not run the audit.
 
 Document commands:
   docs summary             Numeric corpus summaries.
@@ -2898,6 +2903,22 @@ registerModule({
 });
 
 async function cmdSleepCycle(subcommand = "run") {
+  if (subcommand === "advise") {
+    // Read-only projection of existing SleepCycle evidence; no queue constructor,
+    // scheduler invocation or source mutation. The repo path is script-relative.
+    const { adviseFromQueue, adviseFactorization } = await import("./lib/factorization-advice.js");
+    const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+    const corpusRoot = path.resolve(valueFlag("--corpus-root") || path.dirname(repoRoot));
+    const limit = Number(valueFlag("--limit") || 10);
+    if (!Number.isInteger(limit) || limit < 1 || limit > 100) throw new Error("--limit must be an integer in [1,100]");
+    const a = valueFlag("--a"), b = valueFlag("--b");
+    if (Boolean(a) !== Boolean(b)) throw new Error("--a and --b must be provided together");
+    const results = a && b
+      ? [adviseFactorization({ id: "direct_pair", signal_kind: "duplication", method: "direct_inspection", doc_a: { path: a }, doc_b: { path: b } }, { corpusRoot })]
+      : adviseFromQueue({ corpusRoot, queueFile: path.join(repoRoot, ".cogentia", "sleep_cycle_review_queue.jsonl"), limit });
+    const report = { ok: true, mode: "read_only", count: results.length, results };
+    return output(report, JSON.stringify(report, null, 2));
+  }
   const root = loadContext().rootPath;
   const queue = new SleepCycleReviewQueue({ root });
 
