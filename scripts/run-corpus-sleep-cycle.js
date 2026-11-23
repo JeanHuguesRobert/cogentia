@@ -212,7 +212,7 @@ export async function runCorpusSleepCycle(options = {}) {
       maxPairs: options.maxPairs || 30,
       maxWallTimeMs: budget.maxWallTimeMs === null ? 10000 : Math.max(10, budget.maxWallTimeMs - budgetStatus(budget).elapsedMs),
       resume: options.resume || null,
-      seed: options.seed ?? 42,
+      seed: options.seed,
       queueRoot: options.sleepStateRoot || process.env.COGENTIA_SLEEP_STATE_ROOT
     });
 
@@ -228,7 +228,7 @@ export async function runCorpusSleepCycle(options = {}) {
     console.log(`  Status: ${candidateLearning.status}`);
     if (candidateLearning.evidence?.metrics) {
       const { coverage, cognitive_yield } = candidateLearning.evidence.metrics;
-      console.log(`  Pairs evaluated: ${coverage.unique_pairs_sampled} / ${coverage.total_possible_pairs} (${(coverage.pair_coverage_ratio * 100).toFixed(1)}% coverage)`);
+      console.log(`  Pairs evaluated: ${coverage.unique_pairs_sampled} / ${coverage.total_possible_pairs} (${(coverage.pair_coverage_ratio * 100).toFixed(4)}% coverage)`);
       console.log(`  Candidate signals: ${cognitive_yield.total_signals} (Cognitive Gain: ${cognitive_yield.cognitive_gain_score})`);
     }
   }
