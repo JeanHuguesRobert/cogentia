@@ -25,14 +25,17 @@ import {
  * Guarantees reproducibility across platforms and node versions.
  */
 export function createRng(seed = 123456789) {
-  let s = typeof seed === "string" ? hashString(seed) : (Number(seed) || 123456789) >>> 0;
-  return function next() {
+  let s = typeof seed === "string" ? hashString(seed) : (Number(seed) >>> 0);
+  function next() {
     s |= 0;
     s = (s + 0x6d2b79f5) | 0;
     let t = Math.imul(s ^ (s >>> 15), 1 | s);
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
+  }
+  next.getState = () => s >>> 0;
+  next.setState = value => { if (Number.isInteger(value)) s = value >>> 0; };
+  return next;
 }
 
 export function hashString(str) {
@@ -228,6 +231,7 @@ export class AdaptivePairSampler {
     this.pairSampleCounts = new Map();
     this.visitedPairs = new Set();
     this.totalSamples = 0;
+    this.historicalPairs = new Set(options.historicalPairs || []);
 
     // Restore prior checkpoint if provided
     if (options.checkpoint) {
@@ -271,7 +275,7 @@ export class AdaptivePairSampler {
       });
 
       // Add a stochastic jitter term from RNG
-      const score = weight * (0.7 + 0.6 * this.rng());
+      const score = (this.visitedPairs.has(pairKey) || this.historicalPairs.has(pairKey) ? 0 : weight) * (0.7 + 0.6 * this.rng());
 
       if (score > bestScore) {
         bestScore = score;
@@ -306,6 +310,7 @@ export class AdaptivePairSampler {
   exportCheckpoint() {
     return {
       totalSamples: this.totalSamples,
+      rngState: this.rng.getState(),
       visitedPairsCount: this.visitedPairs.size,
       visitedPairs: Array.from(this.visitedPairs),
       docSampleCounts: Object.fromEntries(this.docSampleCounts),
@@ -317,6 +322,7 @@ export class AdaptivePairSampler {
    * Restore sampler state from continuation checkpoint.
    */
   restoreCheckpoint(checkpoint = {}) {
+    if (checkpoint.rngState != null) this.rng.setState(checkpoint.rngState);
     if (checkpoint.totalSamples != null) this.totalSamples = Number(checkpoint.totalSamples) || 0;
     if (Array.isArray(checkpoint.visitedPairs)) {
       this.visitedPairs = new Set(checkpoint.visitedPairs);
