@@ -7,7 +7,7 @@ created: "2026-11-22"
 date: "2026-11-22"
 last_modified_at: "2026-11-23"
 status: working-paper
-packet_status: "Upload COP code tested; owner-authenticated v6→v7 amendment and release activation pending"
+packet_status: "COP upload release tested and prepared; owner service activation and authenticated v6→v7 consent pending"
 lifecycle_state: working
 visibility: public
 language: fr
@@ -311,3 +311,85 @@ Le dossier demeure ouvert jusqu'à :
 (b) approbation exacte de l'amendement \`v6→v7\` par session Supabase du
 Principal, et (c) test réel MCP avec mandat **effectivement** signé v7.
 Aucun test artificiel ne doit être présenté comme (c).
+
+
+## Release opérationnelle préparée — 23 novembre 2026
+
+La source COP a été intégrée directement dans `main`, avec verrouillage
+optimiste, au commit **d7ae50c997e33e0530902fedca1aee2d85aa815b**,
+sans écraser les modifications MCP d'autres paquets. Le paquet comprend
+le correctif antérieur de lecture réelle du fichier
+(`4a6b91e03deff1b853a75ac0ac4d3489513754ed`).
+
+**Bundle vérifié, non encore déployé :**
+
+`/srv/cogentia/releases/mcp-cogentia/d7ae50c997e33e0530902fedca1aee2d85aa815b/`
+
+- Code Cogentia archivé depuis le commit exact `d7ae50c`.
+- Dépendance COP Inseme épinglée à `f4fa82ed0f861f0f7035088109fc93390991a8a7`,
+  réutilisée depuis le bundle précédent. Les dépendances Node sont également
+  réutilisées plutôt que dupliquées. Ce lien implique de conserver l'ancien
+  bundle tant que le nouveau l'utilise.
+- **20 tests du bundle** réussis, puis **18 tests supplémentaires** sur
+  les routes de consentement, les mandats et le contrôle COP. Les tests du
+  Navigation Assistant et le test d'intégration réelle avant publication
+  sont consignés ci-dessus.
+- Démarrage isolé du serveur MCP sur `127.0.0.1:18891` :
+  `/health.ok=true`, 67 outils, puis extinction et nettoyage du test.
+- La page publique d'entrée
+  `https://jhn.baronsmariani.org/cop/consent/standing` répond HTTP **200**.
+  Le service de consentement actuel répond 405 à un GET non authentifié
+  sur `/api/cop/principal-consent/standing-apply`, ce qui établit
+  l'existence de la route sans consommer de consentement.
+
+**Basculement en une seule opération d'administration par le Principal :**
+
+```sh
+sudo /bin/sh /srv/cogentia/releases/mcp-cogentia/d7ae50c997e33e0530902fedca1aee2d85aa815b/activate-upload-cop.sh
+```
+
+Le script vérifie les révisions et deux services actifs avant écriture,
+installe seulement deux drop-ins :
+
+- `/etc/systemd/system/mcp-cogentia.service.d/99-cpkt011-upload.conf`
+  (exécution du nouveau bundle, activation technique du routeur COP upload),
+- `/etc/systemd/system/cogentia-jhn-consent.service.d/99-cpkt011-upload.conf`
+  (exécution de la nouvelle version du consentement propriétaire),
+
+puis redémarre les deux services, vérifie PID, commande, drapeau de runtime,
+`/health` et route de consentement 405. Un échec supprime ces deux nouveaux
+drop-ins et tente de rétablir les deux services antérieurs. Sur succès,
+`DEPLOY_VERIFIED=1` et `MANDATE_AMENDMENT_APPLIED=0` sont imprimés.
+
+La restauration explicite est possible par :
+
+```sh
+sudo /bin/sh /srv/cogentia/releases/mcp-cogentia/d7ae50c997e33e0530902fedca1aee2d85aa815b/rollback-upload-cop.sh
+```
+
+**Étape séparée de souveraineté du Principal :** après le déploiement,
+le Principal ouvre `https://jhn.baronsmariani.org/cop/consent/standing`
+dans sa session Supabase JHN. La page existante appelle elle-même
+`POST /api/cop/principal-consent/standing-apply` avec un jeton Supabase
+de l'utilisateur authentifié ; l'émetteur indépendant revalide le Principal
+et applique uniquement la proposition calculée depuis le mandat courant
+`v6→v7`. Le jeton ne doit jamais être copié vers l'agent. Le POST n'émet
+pas d'email et ne publie aucun fichier. Aucun nouveau consentement n'est
+nécessaire pour chaque sélection ultérieure, mais chaque effet conserve
+sa propre réservation et trace COP.
+
+**Point d'arrêt constaté avant activation :** MCP encore en service depuis
+le bundle `cb3e3de5` (PID observé `2420792`), consentement encore depuis
+le checkout historique (PID observé `1508560`), aucun des deux nouveaux
+drop-ins 99 présent, mandat réel toujours **v6** et
+`browser.form.upload` absent de `allowed_actions`.
+Le test réel sous mandat synthétique ne doit pas être confondu avec une
+autorisation en production.
+
+**Suite de vérification** après les deux gestes du Principal : constater
+les deux services sur `d7ae50c`, relire le mandat réel
+`v7` et la provenance du consentement, puis appeler
+`cogentia_john_run` par le nouvel itinéraire COP sur un onglet de
+démonstration inerte et relever son reçu et son budget. Clore alors
+CPKT-2026-011 si le test est concluant. Aucune publication sur un tiers
+n'est impliquée.
