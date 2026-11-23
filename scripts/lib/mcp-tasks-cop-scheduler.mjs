@@ -85,6 +85,11 @@ export function createCopMcpTasksScheduledPilot({
       return { scheduled: false, reason: "claimed_or_terminal_needs_reconciliation" };
     const created = history.find(createdEvent);
     if (!created) throw new Error("mcp_task_creation_missing");
+    // A deferred COP continuation already owns its timer. Re-registering
+    // the same id on tasks/update would replace its Map entry while leaving
+    // the previous timeout pending in COPScheduler.
+    if (jobs.jobs.has(taskId))
+      return { scheduled: false, reason: "already_registered" };
     await jobs.schedule({
       jobId: taskId,
       type: "continuation",

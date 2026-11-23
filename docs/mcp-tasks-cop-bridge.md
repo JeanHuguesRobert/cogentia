@@ -272,6 +272,45 @@ n'est pas une preuve de conformité de ces composants de production ;
 l'extension Tasks doit rester non annoncée tant que le montage n'est
 pas effectivement déployé et contrôlé.
 
+## Raccordement effectif à l'entrée HTTP — pilote activable, non déployé
+
+Le serveur réel `scripts/cogentia-mcp-http.js` accepte maintenant une
+composition facultative `scripts/lib/mcp-tasks-cop-runtime.mjs`. Sans
+`COGENTIA_MCP_TASKS_COP_ENABLED=1`, aucun adaptateur n'est ouvert ni
+annoncé et le comportement MCP précédent est conservé.
+
+L'activation exige **une base COP SQLite portable préexistante** désignée
+par `COGENTIA_MCP_TASKS_COP_DATABASE`, avec la table `cop_events`
+conforme à Inseme. Le démarrage refuse de créer une nouvelle base
+implicite. Il exige également l'attestation JHN déjà utilisée par
+Cogentia (`COGENTIA_MCP_JHN_MUTATE` et le secret JHN existant), sans
+nouveau jeton. L'interception reste limitée au seul outil en lecture
+`cogentia_pattern_list` et à un appelant effectivement attesté.
+À chaque dispatch, l'hôte revalide cette attestation ; le propriétaire
+enregistré dans COP ne constitue pas une autorisation.
+
+L'ordonnanceur COP conserve les continuations en attente, évite de
+réenregistrer un timer pour la même tâche et reconstruit les travaux
+éligibles depuis le journal lors du redémarrage.
+
+**Reality Test effectué sur Fracta2 :** exécution réelle du serveur
+`cogentia-mcp-http.js` sur une interface locale éphémère et une base
+portable de test ; requête MCP 2026-07-28 avec attestation factice,
+`tools/call` → Task → ordonnanceurs COP → outil Cogentia →
+`tasks/get` = `completed` ; arrêt et relancement du processus puis
+`tasks/get` = `completed` sur le même `taskId`.
+Le test ne dépend ni d'une invocation directe du worker ni d'un
+environnement d'authentification simulé dans le noyau MCP.
+
+**État opérationnel :** le service public `mcp-cogentia.service`
+charge toujours une release figée distincte du dépôt de développement.
+Aucun chemin existant de base COP partagée n'a encore été configuré
+pour cette extension, et aucun redéploiement ni redémarrage n'a été
+effectué. Le déploiement est à poursuivre par le contrôle de plan
+de déploiement Operium, désignation du stockage COP effectivement
+autoritaire et vérification de la capacité effective d'administration
+du service. Un simple `git pull` n'active pas ces fonctionnalités.
+
 ## Analogie avec les codes de procédure
 
 Un code de procédure juridique est également un **protocole de mise en œuvre

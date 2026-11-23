@@ -83,6 +83,9 @@ test("MCP Tasks dispatch through COPJobScheduler and COPScheduler autonomously",
     }));
     assert.equal(created.result.resultType, "task");
     const taskId = created.result.taskId;
+    const repeat = await f.dispatch().schedule(taskId, AUTH);
+    assert.deepEqual(repeat, { scheduled: false, reason: "already_registered" },
+      "existing COP continuation must not gain duplicate timeout registrations");
     await until(async () => {
       const fetched = await f.core().handleJsonRpc(rpc("tasks/get", { taskId }));
       return fetched.result?.status === "completed" ? fetched : null;

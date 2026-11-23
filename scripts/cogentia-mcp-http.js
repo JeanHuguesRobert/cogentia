@@ -19,6 +19,7 @@ import {
   transportFromHttpRequest,
 } from "./lib/cogentia-mcp-core.js";
 import { createRegistryAwareMcpCore } from "./lib/cogentia-mcp-registries.js";
+import { createMcpCopTasksRuntime } from "./lib/mcp-tasks-cop-runtime.mjs";
 import {createAgentMailRuntime} from "./lib/agent-mail-runtime.js";
 import {createMcpJudgmentResultRuntime} from "./lib/cogentia-mcp-judgment-result-runtime.js";
 import {createMcpStandingMissionRuntime} from "./lib/cogentia-mcp-standing-mission-runtime.js";
@@ -86,7 +87,12 @@ const blackboard = createBlackboardStore();
 const agentMailRuntime=createAgentMailRuntime(process.env);
 const judgmentResultRuntime=createMcpJudgmentResultRuntime(process.env);
 const standingMissionRuntime=createMcpStandingMissionRuntime(process.env);
-const core = createRegistryAwareMcpCore(process.env, {
+let core;
+const mcpTasksRuntime = createMcpCopTasksRuntime(process.env, {
+  coreAccessor: () => core,
+});
+core = createRegistryAwareMcpCore(process.env, {
+  ...mcpTasksRuntime.extras,
   ...agentMailRuntime.extras,
   ...judgmentResultRuntime.extras,
   ...standingMissionRuntime.extras,
@@ -461,6 +467,11 @@ const server = http.createServer(async (req, res) => {
     });
   }
 });
+
+// A configured Tasks runtime must complete durable COP recovery before
+// exposing the MCP extension. With no opt-in this is a no-op.
+await mcpTasksRuntime.start();
+process.on("exit", () => mcpTasksRuntime.close());
 
 server.listen(port, host, () => {
   console.error(`Cogentia MCP HTTP server listening on ${host}:${port}`);
