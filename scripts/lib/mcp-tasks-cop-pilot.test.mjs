@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { createServer } from "node:http";
 import { createMcpCore } from "./cogentia-mcp-core.js";
 import { createCopMcpTasksPilot } from "./mcp-tasks-cop-pilot.mjs";
 import { createSqliteCopEventStore } from "../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js";
@@ -161,4 +162,69 @@ test("COP adapter binds task inspection to the effective authenticated caller", 
     }), false);
     assert.equal(store.auditCommitments().ok, true);
   } finally { store.close(); rmSync(root, { recursive: true, force: true }); }
+});
+
+test("real HTTP MCP round trip survives server restart and returns COP result", async () => {
+  const f = fixture(async () => ({
+    content: [{ type: "text", text: "COP delivered through HTTP" }],
+    isError: false,
+  }));
+  let server;
+  async function start(core) {
+    server = createServer(async (req, res) => {
+      const chunks = [];
+      for await (const chunk of req) chunks.push(chunk);
+      const msg = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+      const output = await core.handleJsonRpc(msg, {
+        protocolVersionHeader: req.headers["mcp-protocol-version"],
+        mcpMethod: req.headers["mcp-method"],
+        mcpName: req.headers["mcp-name"],
+      });
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify(output));
+    });
+    await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+    return "http://127.0.0.1:" + server.address().port;
+  }
+  async function stop() {
+    if (server) await new Promise((resolve, reject) =>
+      server.close(error => error ? reject(error) : resolve()));
+    server = null;
+  }
+  async function call(url, method, params) {
+    const request = rpc(method, params);
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "mcp-protocol-version": VERSION,
+        "mcp-method": method,
+        ...(method === "tools/call" ? { "mcp-name": params.name } :
+          method.startsWith("tasks/") ? { "mcp-name": params.taskId } : {}),
+      },
+      body: JSON.stringify(request),
+    });
+    assert.equal(response.status, 200);
+    return response.json();
+  }
+  try {
+    let url = await start(f.core);
+    const created = await call(url, "tools/call", {
+      name: "cogentia_pattern_list", arguments: {},
+    });
+    assert.equal(created.result.resultType, "task");
+    const taskId = created.result.taskId;
+    await stop();
+    url = await start(f.reopen());
+    const pending = await call(url, "tasks/get", { taskId });
+    assert.equal(pending.result.status, "working");
+    await f.pilot().run(taskId, { auth: "none" });
+    const done = await call(url, "tasks/get", { taskId });
+    assert.equal(done.result.status, "completed");
+    assert.equal(done.result.result.content[0].text, "COP delivered through HTTP");
+    assert.equal(f.audit().ok, true);
+  } finally {
+    await stop();
+    f.close();
+  }
 });
