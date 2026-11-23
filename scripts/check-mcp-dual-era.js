@@ -435,18 +435,6 @@ try {
   live.daemon_error = error.message;
 }
 
-console.log(JSON.stringify({
-  ok: true,
-  dual_era: true,
-  legacy_initialize: PROTOCOL_VERSION,
-  modern_discover: PROTOCOL_VERSION_MODERN,
-  supported: [...SUPPORTED_PROTOCOLS],
-  public_tool_count: publicNames.length,
-  full_mutate_tool_count: fullNames.length,
-  mutate_tools: [...MUTATE_TOOLS],
-  live,
-}, null, 2));
-
 // FBF 2026-11-23: modern request metadata and removed legacy methods.
 const modernPing = await publicCore.handleJsonRpc({
   jsonrpc: "2.0", id: 801, method: "ping",
@@ -469,3 +457,16 @@ const headerMismatch = await publicCore.handleJsonRpc({
   } },
 }, { protocolVersionHeader: PROTOCOL_VERSION_MODERN, mcpMethod: "tools/call" });
 assert.equal(headerMismatch.error?.code, -32020);
+
+console.log(JSON.stringify({
+  ok: true,
+  dual_era: true,
+  legacy_initialize: PROTOCOL_VERSION,
+  modern_discover: PROTOCOL_VERSION_MODERN,
+  supported: [...SUPPORTED_PROTOCOLS],
+  public_tool_count: publicNames.length,
+  full_mutate_tool_count: fullNames.length,
+  mutate_tools: [...MUTATE_TOOLS],
+  live,
+}, null, 2));
+
