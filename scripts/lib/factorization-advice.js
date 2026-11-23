@@ -57,6 +57,29 @@ function resolvePublicFile(root, locator) {
     return full;
   } catch { return null; }
 }
+// Existing COP-Host layout: apps/<host>/public/briques/<brique>/X
+// corresponds to packages/brique-<brique>/public/X. This is a structural
+// candidate, not a declaration of editorial authority or a deployed build.
+function existingPackageSource(corpusRoot, a, b, readFile) {
+  const parse = locator => locator.match(/^([^/]+)\/apps\/([^/]+)\/public\/briques\/([a-zA-Z0-9_-]+)\/(.+\.md)$/);
+  const pa = parse(a), pb = parse(b);
+  if (!pa || !pb || pa[1] !== pb[1] || pa[3] !== pb[3] || pa[4] !== pb[4] || pa[2] === pb[2]) return null;
+  const candidate = `${pa[1]}/packages/brique-${pa[3]}/public/${pa[4]}`;
+  const target = resolvePublicFile(corpusRoot, candidate);
+  if (!target) return null;
+  const source = readFile(target, "utf8");
+  const sourceMeta = documentMetadata(source);
+  return {
+    path: candidate,
+    basis: "cop_host_brique_public_path_convention",
+    source_sha256: digest(source),
+    source_body_sha256: digest(normalized(body(source))),
+    source_metadata_status: sourceMeta.status,
+    authority: "unverified",
+    build_connection: "unverified"
+  };
+}
+
 export function adviseFactorization(signal, { corpusRoot, readFile = fs.readFileSync } = {}) {
   if (signal?.signal_kind !== "duplication") return { status: "unsupported_signal", signal_id: signal?.id || null };
   const a = signal.doc_a?.path, b = signal.doc_b?.path;
@@ -77,6 +100,13 @@ export function adviseFactorization(signal, { corpusRoot, readFile = fs.readFile
   const peerReciprocal = declared.filter(e => e.predicate === "language_peer").length === 2;
   const sameFull = hashA === hashB;
   const sameBody = bodyA === bodyB;
+  const packageSource = existingPackageSource(corpusRoot, a, b, readFile);
+  const projected = packageSource && sameBody
+    && packageSource.source_body_sha256 === bodyA
+    ? { ...packageSource, matches_both_bodies: true,
+        matches_full_bytes: [hashA === packageSource.source_sha256, hashB === packageSource.source_sha256],
+        metadata_drift: [hashA !== packageSource.source_sha256, hashB !== packageSource.source_sha256] }
+    : null;
   const projects = [a, b].map(s => s.match(/^([^/]+)\/apps\/([^/]+)\//)?.[2] || null);
   const distinctApps = projects[0] && projects[1] && projects[0] !== projects[1];
   let recommendation = "preserve_and_review";
@@ -87,6 +117,9 @@ export function adviseFactorization(signal, { corpusRoot, readFile = fs.readFile
   } else if (declared.some(e => e.predicate === "source_document")) {
     recommendation = "preserve_declared_derivation";
     reason = "A declared source_document relation establishes lineage, not duplicate authority or safe substitution.";
+  } else if (projected) {
+    recommendation = "inspect_existing_package_projection";
+    reason = "A brique package source already has the same document body as both application copies; inspect the existing compiler/profile and metadata drift before proposing any new source or changing published copies.";
   } else if (sameBody && distinctApps) {
     recommendation = "consider_shared_source_with_independent_projections";
     reason = "The document bodies match but serve distinct applications; retain both published endpoints and consider a conventional shared build source.";
@@ -96,7 +129,8 @@ export function adviseFactorization(signal, { corpusRoot, readFile = fs.readFile
   }
   return {
     ...base, status: "analyzed",
-    evidence: { same_full_bytes: sameFull, same_normalized_body: sameBody, sha256: [hashA, hashB], distinct_applications: Boolean(distinctApps), application_ids: projects, scope: "document" },
+    evidence: { same_full_bytes: sameFull, same_normalized_body: sameBody, sha256: [hashA, hashB], distinct_applications: Boolean(distinctApps), application_ids: projects, scope: "document",
+      existing_package_source: projected || (packageSource ? { ...packageSource, matches_both_bodies: false } : null) },
     relation: { kind: sameBody ? "content_equivalence" : "partial_overlap_candidate", semantic_equivalence: "unverified", authority: "not_inferred", declared_relations: declared },
     metadata: { parse_status: [metaA.status, metaB.status], document_role: [metaA.frontmatter.document_role || null, metaB.frontmatter.document_role || null], visibility: [metaA.frontmatter.visibility || null, metaB.frontmatter.visibility || null] },
     recommendation, reason,

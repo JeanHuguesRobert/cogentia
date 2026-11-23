@@ -107,3 +107,38 @@ test("SleepCycle stats and review use the registered Cogentia repository, not cw
   assert.equal(fs.existsSync(path.join(other,".cogentia")),false);
   assert.equal(fs.readFileSync(q,"utf8"),JSON.stringify(record)+"\n");
 });
+
+test("existing brique package source is preferred over inventing a new shared source", t => {
+  const root=mk();t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+  const src="inseme/packages/brique-ophelia/public/prompts/identity/origin.md";
+  const a="inseme/apps/inseme/public/briques/ophelia/prompts/identity/origin.md";
+  const b="inseme/apps/oleole/public/briques/ophelia/prompts/identity/origin.md";
+  for(const [p,c] of [
+    [src,"---\ndocument_role: operational\n---\nShared text\n"],
+    [a,"---\ndocument_role: archive\n---\nShared text\n"],
+    [b,"---\ndocument_role: operational\n---\nShared text\n"]
+  ]) {
+    fs.mkdirSync(path.dirname(path.join(root,p)),{recursive:true});
+    fs.writeFileSync(path.join(root,p),c);
+  }
+  const r=adviseFactorization(signal(a,b),{corpusRoot:root});
+  assert.equal(r.recommendation,"inspect_existing_package_projection");
+  assert.equal(r.evidence.existing_package_source.path,src);
+  assert.equal(r.evidence.existing_package_source.matches_both_bodies,true);
+  assert.deepEqual(r.evidence.existing_package_source.metadata_drift,[true,false]);
+  assert.equal(r.evidence.existing_package_source.authority,"unverified");
+});
+
+test("package file with divergent body does not justify factorizing the copies", t => {
+  const root=mk();t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+  const src="inseme/packages/brique-ophelia/public/prompts/a.md";
+  const a="inseme/apps/inseme/public/briques/ophelia/prompts/a.md";
+  const b="inseme/apps/oleole/public/briques/ophelia/prompts/a.md";
+  for(const [p,c] of [[src,"Updated source"],[a,"Old shared body"],[b,"Old shared body"]]){
+    fs.mkdirSync(path.dirname(path.join(root,p)),{recursive:true});
+    fs.writeFileSync(path.join(root,p),c);
+  }
+  const r=adviseFactorization(signal(a,b),{corpusRoot:root});
+  assert.notEqual(r.recommendation,"inspect_existing_package_projection");
+  assert.equal(r.evidence.existing_package_source.matches_both_bodies,false);
+});
