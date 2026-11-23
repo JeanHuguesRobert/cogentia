@@ -53,10 +53,11 @@ export function createCopMcpTasksPilot({ store, toolName, handler, allowAnonymou
     const last = events.at(-1);
     const completed = events.find(x => x.payload?.phase === "completed");
     const failed = events.find(x => x.payload?.phase === "failed");
+    const cancelled = events.find(x => x.payload?.phase === "cancelled");
     const input = events.findLast(x => x.payload?.phase === "input_required");
     const answered = events.findLast(x => x.payload?.phase === "input_received");
     const cancel = events.find(x => x.payload?.phase === "cancel_requested");
-    const status = completed ? "completed" : failed ? "failed" :
+    const status = completed ? "completed" : failed ? "failed" : cancelled ? "cancelled" :
       input && (!answered || answered.topic.seq < input.topic.seq)
         ? "input_required" : "working";
     const result = {
@@ -107,12 +108,24 @@ export function createCopMcpTasksPilot({ store, toolName, handler, allowAnonymou
   // side-effecting handler after an uncertain crash or lost acknowledgement.
   async function run(taskId, auth) {
     const { created, events } = history(taskId, auth);
-    if (events.some(x => x.payload?.phase === "completed"))
+    if (events.some(x => ["completed", "failed", "cancelled"].includes(x.payload?.phase)))
       return project(taskId, auth);
     const claim = store.transaction(tx => {
       const rows = tx.listTopic(topic(taskId));
-      if (rows.some(x => ["claimed", "completed", "failed"].includes(x.payload?.phase)))
-        return false;
+      if (rows.some(x => ["claimed", "completed", "failed", "cancelled"].includes(x.payload?.phase)))
+        return "already_claimed";
+      // A cancellation received before dispatch can be honored without
+      // executing the handler. For a claimed job it stays an intent.
+      if (rows.some(x => x.payload?.phase === "cancel_requested")) {
+        const stopped = tx.append({
+          topic_id: topic(taskId), event_type: "cop.event/v1",
+          actor_id: "cop:mcp-tasks-pilot", subject_ref: topic(taskId),
+          epistemic_status: "observed", idempotency_key: "mcp-cancelled:" + taskId,
+          payload: { profile, phase: "cancelled" },
+        });
+        if (!stopped.ok) throw new Error("cannot_cancel");
+        return "cancelled";
+      }
       const ev = tx.append({
         topic_id: topic(taskId), event_type: "cop.event/v1",
         actor_id: "cop:mcp-tasks-pilot", subject_ref: topic(taskId),
@@ -120,10 +133,10 @@ export function createCopMcpTasksPilot({ store, toolName, handler, allowAnonymou
         payload: { profile, phase: "claimed" },
       });
       if (!ev.ok) throw new Error("cannot_claim");
-      return true;
+      return "claimed";
     });
     if (!claim.ok) throw new Error(claim.error);
-    if (!claim.value) return project(taskId, auth);
+    if (claim.value !== "claimed") return project(taskId, auth);
     try {
       const result = await handler(created.args);
       // A tool-level isError is a completed Task, not failed transport.
