@@ -57,6 +57,7 @@ export function createCopMcpTasksPilot({ store, toolName, handler, allowAnonymou
     const input = events.findLast(x => x.payload?.phase === "input_required");
     const answered = events.findLast(x => x.payload?.phase === "input_received");
     const cancel = events.find(x => x.payload?.phase === "cancel_requested");
+    const unresolved = events.find(x => x.payload?.phase === "reconciliation_required");
     const status = completed ? "completed" : failed ? "failed" : cancelled ? "cancelled" :
       input && (!answered || answered.topic.seq < input.topic.seq)
         ? "input_required" : "working";
@@ -64,7 +65,10 @@ export function createCopMcpTasksPilot({ store, toolName, handler, allowAnonymou
       taskId, status, createdAt: created.createdAt,
       lastUpdatedAt: last?.time?.recorded_at || created.createdAt,
       ttlMs: 86_400_000, pollIntervalMs: 200,
-      ...(cancel && status === "working" ? { statusMessage: "cancellation_requested" } : {}),
+      ...(unresolved && status === "working"
+        ? { statusMessage: "outcome_unknown_reconciliation_required" }
+        : cancel && status === "working"
+          ? { statusMessage: "cancellation_requested" } : {}),
       ...(completed ? { result: completed.payload.result } : {}),
       ...(failed ? { error: failed.payload.error } : {}),
       ...(status === "input_required" ? { inputRequests: input.payload.inputRequests } : {}),
@@ -81,8 +85,10 @@ export function createCopMcpTasksPilot({ store, toolName, handler, allowAnonymou
       if (name !== toolName || identity(auth) === null) throw new Error("not_authorized");
       const taskId = "task:" + randomUUID();
       const createdAt = new Date().toISOString();
+      // The MCP handle and COP topic are real, but neither is automatically
+      // an independent canonical Cognitive Packet. Do not mint a fake PacketRef.
       commit(taskId, "created", { owner: identity(auth), toolName: name, args,
-        createdAt, packetRef: "cognitive-packet:" + taskId },
+        createdAt },
       "mcp-created:" + taskId);
       return { taskId };
     },

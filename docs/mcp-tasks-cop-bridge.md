@@ -1,12 +1,26 @@
 ---
 title: "MCP Tasks 2026-07-28 — façade de continuations COP"
 subtitle: "Négociation standard, suivi durable et interopérabilité avec les agents"
+author: unknown
+affiliation: unknown
+date: null
+license: unknown
 status: working-paper
-last_modified_at: 2026-11-17
+last_modified_at: 2026-11-23
 language: fr
 visibility: public
-document_role: architecture
+document_role: source
 document_kind: technical-note
+update_policy: UP-DEFAULT-REVIEWED
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
 ---
 
 # MCP Tasks : standardiser un savoir-faire d'interaction
@@ -203,6 +217,50 @@ annoncé publiquement avant l'intégration et le test de ces raccordements.
 
 Le raccordement l9 demeure séparé : la suite de bootstrap Inox ne prouve
 pas encore le fonctionnement complet de `make.task` et de son scheduling.
+
+## Raccordement à l'ordonnanceur COP — Reality Test du 23 novembre 2026
+
+L'étape suivante du pilote utilise **les deux ordonnanceurs existants dans
+Inseme** : `COPJobScheduler` enregistre la vue d'ordonnancement et
+`COPScheduler` invoque le handler. L'adaptateur
+`scripts/lib/mcp-tasks-cop-scheduler.mjs` projette dans ces composants
+les demandes déjà durables dans le journal événementiel COP. Il n'ajoute
+ni nouveau scheduler, ni seconde base de données, ni autorité d'exécution.
+
+Un appel MCP `tools/call` peut désormais produire un `taskId` puis, sans
+appel manuel au worker, provoquer le dispatch COP d'un véritable outil en
+lecture seule et la livraison différée du résultat par `tasks/get`. Le
+Reality Test HTTP complet vérifie ce parcours avant et après redémarrage.
+
+**Invariants désormais testés :**
+
+- un état `input_required` bloque effectivement l'admission par COP,
+  reste suspendu après redémarrage et ne reprend qu'après
+  `tasks/update` et journalisation de la réponse ;
+- les tâches durablement créées mais non revendiquées peuvent être
+  reprogrammées après redémarrage ; celles déjà revendiquées restent
+  en **issue incertaine à réconcilier**, sans nouvelle invocation aveugle ;
+- une référence de Paquet Cognitif n'est **pas fabriquée** à partir du
+  `taskId` : le journal COP est réel, mais son identifiant de Topic ne
+  prouve pas l'existence d'un Paquet canonique distinct ;
+- le handler est résolu par COP et ne s'exécute que si l'hôte fournit
+  une identité de dispatch admissible ; l'identité stockée dans un
+  événement ne constitue pas un jeton d'autorisation.
+
+**Périmètre :** banc d'essai, ordonnanceurs COP et journal SQLite COP ;
+la programmation d'une Task ne requiert plus l'appel direct à
+`pilot.run()` dans le scénario HTTP. Le banc utilise uniquement
+`allowAnonymous` et un résolveur d'identité fictif dans son
+environnement isolé. Les suites de contrat, du premier pilote et de
+l'ordonnanceur doivent passer ensemble avant intégration.
+
+**Frontière suivante :** choisir un store et un routeur COP déployés,
+fournir au worker la résolution effective des mandats et des capacités,
+réconcilier les claims interrompus par un résultat observable ou un
+jugement, et raccorder le bootstrap du service HTTP réel. Le pilote
+n'est pas une preuve de conformité de ces composants de production ;
+l'extension Tasks doit rester non annoncée tant que le montage n'est
+pas effectivement déployé et contrôlé.
 
 ## Analogie avec les codes de procédure
 

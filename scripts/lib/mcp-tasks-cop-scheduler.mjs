@@ -27,6 +27,24 @@ export function createCopMcpTasksScheduledPilot({
 
   const bus = new COPBus({ name: "mcp-tasks-cop-pilot" });
   const scheduler = new COPScheduler(bus, {
+    // COP admission, not the timer, determines eligibility to wake.
+    // A suspended judgment must remain suspended until an input response.
+    admissionResolver: async continuation => {
+      const taskId = continuation?.meta?.jobId;
+      if (!taskId) return { admitted: false, reason: "missing_task_id" };
+      const auth = await authorizationForTask?.(taskId);
+      if (!auth) return { admitted: false, reason: "no_verified_dispatch_authority" };
+      try {
+        const state = await pilot.adapter.get({ taskId, auth });
+        if (state.status === "input_required")
+          return { admitted: false, reason: "task_waiting_for_input" };
+        if (["completed", "failed", "cancelled"].includes(state.status))
+          return { admitted: false, reason: "task_terminal" };
+        return true;
+      } catch {
+        return { admitted: false, reason: "task_not_authorized_or_missing" };
+      }
+    },
     handlerResolver: async resumeTo => {
       if (resumeTo !== "handler:mcp-tasks-cop-pilot")
         throw new Error("unknown_tasks_handler");
@@ -60,6 +78,8 @@ export function createCopMcpTasksScheduledPilot({
     const record = await pilot.adapter.get({ taskId, auth });
     if (["completed", "failed", "cancelled"].includes(record.status))
       return { scheduled: false, reason: "terminal" };
+    if (record.status === "input_required")
+      return { scheduled: false, reason: "waiting_input" };
     const history = store.listTopic("mcp-task:" + taskId);
     if (history.some(e => terminalPhases.has(e.payload?.phase)))
       return { scheduled: false, reason: "claimed_or_terminal_needs_reconciliation" };
@@ -68,7 +88,8 @@ export function createCopMcpTasksScheduledPilot({
     await jobs.schedule({
       jobId: taskId,
       type: "continuation",
-      packetRef: created.payload.packetRef || "mcp-task:" + taskId,
+      // Only use a real Packet reference when an upstream COP record has one.
+      packetRef: created.payload.packetRef || null,
       topicId: "mcp-task:" + taskId,
       resumeTo: "handler:mcp-tasks-cop-pilot",
       schedule: { type: "delay", delayMs: startDelayMs },
@@ -86,25 +107,44 @@ export function createCopMcpTasksScheduledPilot({
       await schedule(receipt.taskId, context.auth);
       return receipt;
     },
+    async update(context) {
+      const receipt = await pilot.adapter.update(context);
+      // The response is durably journaled before new dispatch eligibility.
+      if (receipt.ok) await schedule(context.taskId, context.auth);
+      return receipt;
+    },
   };
 
   async function recover() {
     if (!started) throw new Error("tasks_dispatcher_not_started");
-    const result = { scheduled: 0, unresolved: 0, not_authorized: 0 };
+    const result = { scheduled: 0, unresolved: 0, waiting_input: 0, not_authorized: 0 };
     for (const event of store.replay().filter(createdEvent)) {
       const taskId = event.payload?.taskId ||
         event.topic?.id?.replace(/^mcp-task:/, "");
       if (!taskId) continue;
       const existing = store.listTopic("mcp-task:" + taskId);
       if (existing.some(x => terminalPhases.has(x.payload?.phase))) {
-        if (!existing.some(x => ["completed", "failed", "cancelled"].includes(x.payload?.phase)))
+        if (!existing.some(x => ["completed", "failed", "cancelled"].includes(x.payload?.phase))) {
           result.unresolved++;
+          // A crash after acquiring work does not authorize a second effect.
+          // Make that unresolved fact visible to MCP clients, durably.
+          const receipt = store.append({
+            topic_id: "mcp-task:" + taskId, event_type: "cop.event/v1",
+            actor_id: "cop:mcp-tasks-pilot",
+            subject_ref: "mcp-task:" + taskId,
+            epistemic_status: "observed",
+            idempotency_key: "mcp-reconciliation-required:" + taskId,
+            payload: { profile: PROFILE, phase: "reconciliation_required" },
+          });
+          if (!receipt.ok) throw new Error("cannot_record_reconciliation_requirement");
+        }
         continue;
       }
       const auth = await authorizationForTask?.(taskId);
       if (!auth) { result.not_authorized++; continue; }
       const scheduled = await schedule(taskId, auth);
       if (scheduled.scheduled) result.scheduled++;
+      if (scheduled.reason === "waiting_input") result.waiting_input++;
     }
     return result;
   }
