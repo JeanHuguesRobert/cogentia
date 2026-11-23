@@ -109,6 +109,15 @@ try {
   assert.equal(checkMissingLink(realA, realB,
     fs.readFileSync(realA.fullPath, "utf8"),
     fs.readFileSync(realB.fullPath, "utf8")).length, 0);
+  const older = docs.find(doc => doc.id ===
+    "barons-Mariani/research/patrimoine/bleu_chine_denim_nimes_corse_v0.1.md");
+  const newer = docs.find(doc => doc.id ===
+    "barons-Mariani/research/patrimoine/bleu_chine_denim_nimes_corse_v0.2.md");
+  assert.ok(older && newer);
+  assert.ok(newer.relatedDocs.some(ref =>
+    ref.endsWith("bleu_chine_denim_nimes_corse_v0.1.md")),
+    "Previous version is an explicit relationship, not a missing link");
+  assert.equal(checkMissingLink(older, newer).length, 0);
 
   // Two distinct matching paragraphs yield the same similarity/finding but
   // must not collapse into one durable review candidate.
