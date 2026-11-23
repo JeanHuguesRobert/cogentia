@@ -91,6 +91,48 @@ continuité locale partiellement prouvée
 ≠ disparition du besoin de coordination globale
 ~~~
 
+## Incident métacognitif — MCP Tasks ↔ COP (23 novembre 2026)
+
+**Observation de correction :** durant le raccordement MCP Tasks ↔ COP, l'agent
+a spontanément cherché *le* magasin COP de production et proposé Supabase JHN
+comme destination privilégiée, **avant** d'examiner l'histoire du Paquet
+Cognitif local, FractaLog et l'autonomie en perte de projection fédérée.
+Cette priorité inversée est un biais d'optimisation de la commodité
+d'intégration, non une contrainte imposée par l'architecture. L'utilisateur
+l'a détecté. Il faut corriger la sélection du **niveau d'autorité**, pas
+simplement renommer le magasin choisi.
+
+**Contre-mesure située, réutilisant la grille ci-dessous plutôt qu'une
+nouvelle constitution :** avant de choisir la persistance d'une Task, un
+acteur ou agent examine d'abord (1) l'objet propriétaire du fait, (2) la
+plus petite localité où son histoire et ses dépendances restent intelligibles,
+(3) ce qui fonctionne sans vue/hub global, (4) la nécessité *prouvée*
+d'une promotion de l'autorité. Le transport MCP, la base partagée, l'index
+de fédération et le tableau de bord ne deviennent pas des foyers de
+vérité par commodité technique.
+
+**Test qui réfute une justification centralisatrice :** le travail local
+continue, les faits FractaLog restent vérifiables et les résultats restent
+livrables alors que la projection fédérée est inaccessible ; les vues
+sont reconstructibles ensuite sans réécrire les actes source. Si ce test
+échoue, documenter le lien manquant et l'invariant qui nécessite réellement
+un franchissement de frontière ; ne pas postuler une base globale comme
+solution par défaut.
+
+**Falsifiabilité de la correction métacognitive :** une future proposition
+de stockage qui ne nomme pas sa localité source, sa projection dérivée et
+son test de coupure reproduit le même défaut, même si elle est rapide à
+implémenter. À l'inverse, utiliser physiquement un serveur ou une base
+partagée n'est pas en soi centralisateur si les localités logiques, la
+gouvernance et la reconstruction restent indépendantes.
+
+**Conséquence FBF :** le pilote MCP actuel conserve son intérêt
+fonctionnel, mais son topic `mcp-task:<id>` et sa table `cop_events`
+ne prouvent pas encore la localité du Paquet ni les engagements FractaLog.
+Avant activation publique, relier les événements au vrai Paquet propriétaire,
+utiliser l'append et l'audit FractaLog locaux, puis exécuter le test sans
+projection fédérée. Aucun mandat supplémentaire n'est créé par cette note.
+
 ## Matrice initiale des risques
 
 | Domaine | Indice tiré du corpus | Risque | Priorité | Test discriminant |
