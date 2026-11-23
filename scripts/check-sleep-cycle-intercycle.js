@@ -80,6 +80,12 @@ try {
     "Distinct paragraph evidence must yield distinct review IDs");
   assert.deepEqual(evidence1.map(s => s.id), evidence2.map(s => s.id),
     "Signal IDs must remain reproducible for queue idempotency");
+  for (const filename of paths) fs.writeFileSync(filename,
+    [blocks[0], blocks[1], blocks[0]].join("\n\n"));
+  const repeatedEvidence = evaluateDocumentPair(docA, docB, { runId: "fixture" })
+    .filter(s => s.signal_kind === "duplication");
+  assert.equal(repeatedEvidence.length, 2,
+    "Identical repeated evidence must count only once");
 
   fs.writeFileSync(historyFile, JSON.stringify({
     version: 1, pairs: Array.from({ length: 5100 }, (_, i) => "obsolete_" + i)

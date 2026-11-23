@@ -337,6 +337,7 @@ export function evaluateDocumentPair(docA, docB, options = {}) {
   // evidence with the same pair/kind/finding. Previously, distinct paragraphs
   // could silently collapse into one review-queue entry (#124, FBF).
   const evidenceByLegacyId = new Map();
+  const observedSignalIds = new Set();
   return rawSignals.map((sig) => {
     const legacyId = `sig_${sha1(`${docA.id}:${docB.id}:${sig.kind}:${sig.finding}`)}`;
     const evidenceKey = JSON.stringify([sig.method, sig.docA_excerpt, sig.docB_excerpt]);
@@ -384,5 +385,9 @@ export function evaluateDocumentPair(docA, docB, options = {}) {
         audit_version: "cogentia.sleep_cycle.audit.v1",
       },
     };
+  }).filter(signal => {
+    if (observedSignalIds.has(signal.id)) return false;
+    observedSignalIds.add(signal.id);
+    return true;
   });
 }
