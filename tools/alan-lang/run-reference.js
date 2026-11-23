@@ -55,12 +55,12 @@ function cacheExpiry(observedAt,maxAge){
     fault('ALAN_CACHE_EXPIRY_OVERFLOW');
   return new Date(until).toISOString();
 }
-function cacheFresh(slot,asOf){
+function cacheFresh(entry,asOf){
   if(!asOf)fault('ALAN_VALIDITY_TIME_REQUIRED');
-  const atTime=instant(asOf),observed=instant(slot.observed_at);
+  const atTime=instant(asOf),observed=instant(entry.observed_at);
   if(atTime<observed)fault('ALAN_CLOCK_REGRESSION');
-  // Exactly at the expiry boundary the result is no longer reusable.
-  return atTime<instant(slot.valid_until);
+  // Expiry is a property of the external cache entry, never of a Side slot.
+  return atTime<instant(entry.valid_until);
 }
 
 const at=(locals,expr)=>{
@@ -200,39 +200,51 @@ function execute(program,machine,compiled){
           checkResultSchema(input,extern.input,'ALAN_INPUT');
           const cached=extern.cache!==undefined;
           if(cached&&!machine.as_of)fault('ALAN_VALIDITY_TIME_REQUIRED');
-          // A cache key identifies a read and its inputs within this particular
-          // work packet, not an authority to share a result between principals.
           const cacheKey=cached?digest({capability:op.capability,input}):null;
-          const previous=cached?machine.slots.findLast(x=>x.key===cacheKey):null;
-          if(previous?.state==='resolved'){
-            if(cacheFresh(previous,machine.as_of)){
-              if(op.bind)frame.locals[op.bind]=clone(previous.value);
-              machine.trace.push({event:'slot_cache_hit',data:{
-                slot_id:previous.id,key:cacheKey,generation:previous.generation
+          // Side-style identity: a slot is its ordinal in the action, not a
+          // hash of the inputs. The longer-lived result cache is separate.
+          const ordinal=machine.slot_cursor++;
+          const input_hash=digest(input);
+          if(ordinal<machine.slots.length){
+            const previous=machine.slots[ordinal];
+            if(previous.ordinal!==ordinal||previous.capability!==op.capability||
+               previous.input_hash!==input_hash)
+              fault('ALAN_SLOT_ORDER_DIVERGENCE');
+            if(previous.state!=='resolved')fault('ALAN_REPLAY_UNRESOLVED_SLOT');
+            if(op.bind)frame.locals[op.bind]=clone(previous.value);
+            machine.trace.push({event:'slot_replayed',data:{ordinal,slot_id:previous.id}});
+            frame.pc++;
+            break;
+          }
+          if(ordinal!==machine.slots.length)fault('ALAN_SLOT_SEQUENCE_GAP');
+          const slot={id:randomUUID(),ordinal,state:'pending',
+            capability:op.capability,input_hash,request_key:cacheKey};
+          const entry=cached?machine.cache[cacheKey]:null;
+          if(entry){
+            if(cacheFresh(entry,machine.as_of)){
+              slot.state='resolved';
+              slot.value=clone(entry.value);
+              slot.cache_source='external_cache';
+              machine.slots.push(slot);
+              if(op.bind)frame.locals[op.bind]=clone(entry.value);
+              machine.trace.push({event:'slot_filled_from_cache',data:{
+                slot_id:slot.id,ordinal,cache_key:cacheKey,
+                observed_at:entry.observed_at,valid_until:entry.valid_until
               }});
               frame.pc++;
               break;
             }
-            previous.state='stale';
-            machine.trace.push({event:'slot_invalidated',data:{
-              slot_id:previous.id,key:cacheKey,generation:previous.generation,
-              as_of:machine.as_of,valid_until:previous.valid_until
+            machine.trace.push({event:'external_cache_expired',data:{
+              cache_key:cacheKey,as_of:machine.as_of,valid_until:entry.valid_until
             }});
           }
-          if(previous?.state==='pending')fault('ALAN_SLOT_ALREADY_PENDING');
-          const suspensionId=randomUUID(),slotId=randomUUID();
-          const generation=previous?previous.generation+1:1;
-          const slot={id:slotId,state:'pending',capability:op.capability};
-          if(cached)Object.assign(slot,{
-            key:cacheKey,generation,previous_slot_id:previous?.id||null,
-            max_age_ms:extern.cache.max_age_ms
-          });
+          const suspensionId=randomUUID();
           machine.slots.push(slot);
           const pending={
-            capability:op.capability,input,slot_id:slotId,
+            capability:op.capability,input,slot_id:slot.id,slot_ordinal:ordinal,
             policy:{level:extern.policy,effect:extern.effect,data:extern.data,mode:extern.mode||null}
           };
-          if(cached)pending.cache={key:cacheKey,generation,max_age_ms:extern.cache.max_age_ms};
+          if(cached)pending.cache={key:cacheKey,max_age_ms:extern.cache.max_age_ms};
           // The caller may later provide a result; this is NOT an execution receipt.
           const suspension={
             type:'alan.suspension',version:'0.2',suspension_id:suspensionId,
@@ -275,7 +287,9 @@ export function start(program,{entry='main',args={},context={},bounds={},asOf=nu
   const machine={
     version:'0.2',codeHash:compiled.codeHash,
     frames:[{fn:entry,pc:0,locals,returnBind:null}],
-    slots:[],trace:[],steps:0,limits:limits(bounds),as_of:null,
+    origin:{entry,args:clone(args)},
+    slots:[],slot_cursor:0,cache:{},trace:[],trace_history:[],
+    steps:0,limits:limits(bounds),as_of:null,
     context:clone({
       packet_id:context.packet_id||null,
       mandate_ref:context.mandate_ref||null,
@@ -306,11 +320,11 @@ function checkResultSchema(value,schema,prefix='ALAN_STEP'){
   for(const name of Object.keys(value))if(!Object.hasOwn(schema,name))
     fault(prefix+'_UNKNOWN_FIELD',name);
 }
-export function resume(program,suspension,stepResult,{asOf=null}={}){
-  const compiled=compile(program),{codeHash,scope}=compiled;
+function verifySuspension(compiled,suspension){
   if(suspension?.type!=='alan.suspension'||suspension.version!=='0.2')
     fault('ALAN_INVALID_CONTINUATION');
-  if(suspension.code_hash!==codeHash||suspension.saved_state?.codeHash!==codeHash)
+  if(suspension.code_hash!==compiled.codeHash||
+     suspension.saved_state?.codeHash!==compiled.codeHash)
     fault('ALAN_CODE_MISMATCH');
   if(digest({
     version:suspension.version,code_hash:suspension.code_hash,
@@ -318,6 +332,10 @@ export function resume(program,suspension,stepResult,{asOf=null}={}){
     pending_call:suspension.pending_call,resume_point:suspension.resume_point,
     saved_state:suspension.saved_state
   })!==suspension.state_digest)fault('ALAN_STATE_CORRUPTED');
+}
+export function resume(program,suspension,stepResult,{asOf=null}={}){
+  const compiled=compile(program),{scope}=compiled;
+  verifySuspension(compiled,suspension);
   if(stepResult?.type!=='alan.step_result'||
     stepResult.for_suspension!==suspension.suspension_id||
     stepResult.supplied_by!=='caller'||
@@ -325,7 +343,7 @@ export function resume(program,suspension,stepResult,{asOf=null}={}){
     stepResult.trace?.direct_invocation_by_alan!==false)
     fault('ALAN_STEP_CORRELATION');
   const machine=clone(suspension.saved_state);
-  if(machine.slots.some(slot=>slot.max_age_ms!==undefined)&&
+  if(machine.slots.some(slot=>slot.request_key!==null)&&
      (asOf===undefined||asOf===null))
     fault('ALAN_VALIDITY_TIME_REQUIRED');
   evaluationTime(machine,asOf);
@@ -337,7 +355,9 @@ export function resume(program,suspension,stepResult,{asOf=null}={}){
   if(!op||op.op!=='mcp'||op.capability!==suspension.pending_call?.capability||
      (op.bind||null)!==(suspension.resume_point.bind||null))fault('ALAN_RESUME_POINT');
   const slot=machine.slots.find(x=>x.id===suspension.pending_call?.slot_id);
-  if(!slot||slot.state!=='pending')fault('ALAN_SLOT_MISMATCH');
+  if(!slot||slot.state!=='pending'||
+     slot.ordinal!==suspension.pending_call.slot_ordinal)
+    fault('ALAN_SLOT_MISMATCH');
   if(stepResult.outcome!==undefined&&!['resolved','refused'].includes(stepResult.outcome))
     fault('ALAN_INVALID_STEP_OUTCOME');
   machine.trace.push({
@@ -358,20 +378,54 @@ export function resume(program,suspension,stepResult,{asOf=null}={}){
   const resolved=clone(stepResult.value);
   if(ext.cache!==undefined){
     if(!machine.as_of)fault('ALAN_VALIDITY_TIME_REQUIRED');
-    // Acquisition time is attested by the caller, never inferred from
-    // the current process clock or from the frozen logical time.
     if(stepResult.observed_at===undefined)fault('ALAN_OBSERVATION_REQUIRED');
     const observed=instant(stepResult.observed_at);
     if(observed>instant(machine.as_of))fault('ALAN_FUTURE_OBSERVATION');
     const until=cacheExpiry(stepResult.observed_at,ext.cache.max_age_ms);
     if(ext.cache.max_age_ms>0&&instant(machine.as_of)>=instant(until))
       fault('ALAN_EXPIRED_RESULT');
-    slot.observed_at=stepResult.observed_at;
-    slot.valid_until=until;
+    // Only the external reusable cache entry has an expiry. Slot contents
+    // remain stable for the lifetime of this logical action.
+    machine.cache[slot.request_key]={
+      value:clone(resolved),observed_at:stepResult.observed_at,valid_until:until
+    };
+    slot.cache_source='caller_result';
   }
   slot.state='resolved';slot.value=resolved;
   if(op.bind)frame.locals[op.bind]=resolved;
   frame.pc++;
+  return execute(program,machine,compiled);
+}
+// Explicit Side-style deterministic restart, not ordinary cold resume.
+// Rewind to the root only when a caller invalidates a positional slot; the
+// prefix is replayed from resolved slots, the invalidated suffix is discarded.
+// Read-only pending operations are cancelled by the caller, not by this VM.
+export function restart(program,suspension,{invalidFrom,asOf=null}={}){
+  const compiled=compile(program);
+  verifySuspension(compiled,suspension);
+  const machine=clone(suspension.saved_state);
+  if(!machine.origin||!Number.isSafeInteger(invalidFrom)||
+     invalidFrom<0||invalidFrom>=machine.slots.length)
+    fault('ALAN_INVALID_SLOT_INDEX');
+  const pendingIndex=machine.slots.findIndex(x=>x.state==='pending');
+  if(pendingIndex>=0&&invalidFrom>pendingIndex)
+    fault('ALAN_RESTART_CANNOT_PRESERVE_PENDING_SLOT');
+  // Side allows retries under a frozen logical time; a separate caller asOf
+  // controls eligibility of longer-lived external caches at new lookups.
+  if(machine.slots.some(x=>x.request_key!==null)&&asOf===null)
+    fault('ALAN_VALIDITY_TIME_REQUIRED');
+  evaluationTime(machine,asOf);
+  const removed=machine.slots.splice(invalidFrom);
+  for(const slot of removed){
+    if(slot.request_key!==null)delete machine.cache[slot.request_key];
+  }
+  machine.trace_history.push(clone(machine.trace));
+  machine.trace=[{event:'ordered_restart',data:{
+    invalid_from:invalidFrom,discarded_slots:removed.length
+  }}];
+  machine.frames=[{fn:machine.origin.entry,pc:0,
+    locals:clone(machine.origin.args),returnBind:null}];
+  machine.slot_cursor=0;
   return execute(program,machine,compiled);
 }
 export function sourceHash(program){return compile(program).codeHash}

@@ -196,15 +196,35 @@ extern catalog.read
 end
 ```
 
-This produces a **work-local, serializable Slot** keyed by the capability and
-canonicalized input. The slot records its identity, generation, pending/resolved
-(or stale) state, acquired value, caller-reported acquisition time, expiration
-time and optional predecessor slot. Repeated identical read requests within
-the same work packet use the resolved slot while valid; they do not call or
-simulate an MCP tool. A cache miss or expired slot produces a new
-caller-mediated suspension. Revalidation creates a new generation without
-rewinding an already executed control path or retroactively changing values
-that a program previously observed.
+The prototype now distinguishes **two separate objects**. A Side-style
+**Slot** has an ordinal in the deterministic sequence of requests made by
+one logical work action; different slots can request identical data. Once a
+slot is filled, its value is stable for this action. Its identity is **not**
+derived from the requested capability or its arguments.
+
+A separate **reusable result cache**, serialized alongside the action in
+this first reference implementation, is keyed by the capability and
+canonicalized inputs. An entry has an acquisition timestamp and TTL. Every
+new slot may be filled immediately from that cache if the entry is valid
+at the lookup time, or may instead yield a caller-mediated MCP suspension.
+**An external cache expiry does not invalidate a slot already filled.**
+This corrects the initial experiment, which had mistakenly made result-cache
+keys the identities of Side slots and allowed a slot itself to expire.
+
+The experimental explicit `restart(program, suspension, {invalidFrom, asOf})`
+operation applies a *positional suffix invalidation*: when slot `i` is
+invalidated, slots `i, i+1, ...` are discarded and the program is restarted
+from its entry point. Slots `0...i-1` are replayed in their original order,
+without issuing those requests again; later slots are rebuilt. The frozen
+logical time and packet identity are retained. A normal cold `resume()` still
+continues at the stored instruction, without restarting. The historical
+[Side implementation](https://github.com/virteal/side/blob/master/index.js)
+already established positional slot allocation and retry ordering;
+general ordinal-suffix invalidation is the new extension being prototyped
+here, not a claim about the original implementation. Side's
+[README](https://github.com/virteal/side/blob/master/README.md)
+explicitly distinguishes the per-action slot table from optional
+longer-lived memoization caches.
 
 **Two explicit time axes:** the immutable work-context
 `logical_time` (observable via `time.injected_time`) is deliberately not the
@@ -218,13 +238,22 @@ missing evaluation time and already-expired supplied values are rejected.
 cache hit. The runtime neither samples the host wall clock nor equates expiry
 with the frozen logical time.
 
-**Scope:** this is a deliberately limited Side-inspired memoization and TTL
-probe in the JavaScript Alan reference runner. Cache identity is scoped to a
-single continuation; it is not a global cache, a ReactiveSet dependency graph
-or an authorization/receipt mechanism. No automatic invalidation of derived
-bindings, cross-packet sharing, external persistence service, Fractanet
-routing, content-addressed delivery or Inox compilation is implemented.
-A cached result cannot by itself provide permission for an external act.
+**Scope:** this is a deliberately limited Side-inspired ordered-slot and
+result-cache experiment in the JavaScript Alan reference runner. The cache is
+**physically stored in the serialized work state**, not yet an independently
+shared or globally persistent cache service. It does not implement a
+ReactiveSet dependency graph or cross-packet cache governance. A positional
+restart keeps an audit `trace_history` of earlier attempts, but does not
+revoke the previous serialized continuation in an external registry or
+automatically cancel outstanding tool requests. No general side-effect
+replay or production scheduling contract is claimed. A cached value does
+not supply authorization for any act.
+
+The cache TTL is evaluated against the caller-supplied **evaluation time**,
+not automatically against the frozen logical time. This permits reads of
+fresh live data during a long-lived logical action. A strict historical
+snapshot *as of the frozen logical time* instead needs a separately defined
+versioned/as-of source; freezing a clock alone does not freeze external data.
 The reproducible example is
 [cache-ttl.alan](../tools/alan-lang/examples/cache-ttl.alan);
 focused tests are in

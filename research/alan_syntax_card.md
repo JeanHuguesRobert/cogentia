@@ -59,14 +59,20 @@ extern github.search
 end
 ```
 
-**Experimental read-only Slot cache (optional):** a declaration may include
-`cache max_age_ms=60000` (one minute). Identical reads inside one suspended
-work can reuse their slot while valid. The caller supplies an **evaluation**
-UTC time at start and resume, plus an **acquisition** time for each supplied
-cacheable result. This expiry clock is separate from the work's frozen
-`logical_time`, available through `use std.time` and
-`call time.injected_time`. On expiry the interpreter requests a new result;
-it does not rewind earlier statements. See
+**Experimental Side slots and reusable results:** the interpreter assigns each
+slot an ordinal in the program's deterministic execution order (`0,1,2,...`).
+The optional `cache max_age_ms=60000` declaration configures a **separate
+result cache**, keyed by capability and arguments: it may fill a newly
+allocated slot without an MCP request. Cache expiry **never** invalidates
+slots already filled. Explicit `restart` at slot `i` discards all later
+slots and re-executes from the beginning using the preceding slots in order.
+Normal `resume` continues from the saved instruction.
+
+The caller supplies an evaluation UTC time at cache lookup/resume, plus
+an acquisition time for a supplied cacheable result. This expiry clock is
+separate from frozen `logical_time`, exposed through `use std.time` and
+`call time.injected_time`. Frozen time does **not** by itself establish an
+external historical snapshot. See
 [cache-ttl.alan](../tools/alan-lang/examples/cache-ttl.alan).
 
 **Compiler/runtime responsibility:** validate source against known signatures, parse to Alan AST, preserve effect mediation and serializable continuations; compilation to Inox is a planned backend, not a feature of this syntax card. Full contract: [Alan specification](alan_turing_mcp.md).
