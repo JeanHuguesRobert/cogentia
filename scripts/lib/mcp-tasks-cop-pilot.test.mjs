@@ -26,7 +26,7 @@ function fixture(handler) {
   function open() {
     pilot = createCopMcpTasksPilot({
       store, toolName: "cogentia_pattern_list",
-      handler, allowAnonymous: true, // Only for this isolated test.
+      handler, allowAnonymous: true, primaryStoreId: "sqlite:test-node-a", // Only for this isolated test.
     });
     return createMcpCore({ COGENTIA_MCP_VIEW: "public" }, {
       mcpTasksAdapter: pilot.adapter,
@@ -134,6 +134,7 @@ test("COP Task pilot does not activate for arbitrary tools", async () => {
     const restricted = createCopMcpTasksPilot({
       store: { append() {}, listTopic() {}, transaction() {} },
       toolName: "cogentia_pattern_list", handler: async () => null,
+      primaryStoreId: "sqlite:test-node-a",
     });
     assert.equal(await restricted.adapter.shouldCreate({ name: "cogentia_pattern_list", auth: { auth: "none" } }), false);
   } finally { f.close(); }
@@ -146,6 +147,7 @@ test("COP adapter binds task inspection to the effective authenticated caller", 
     const pilot = createCopMcpTasksPilot({
       store, toolName: "cogentia_pattern_list",
       handler: async () => ({ content: [] }),
+      primaryStoreId: "sqlite:test-node-a",
     });
     const owner = { auth: "jhn", actor: "agent:jhn" };
     const other = { auth: "jhn", actor: "agent:jhn.subagent:other" };

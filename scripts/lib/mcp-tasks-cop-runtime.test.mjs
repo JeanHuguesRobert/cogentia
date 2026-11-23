@@ -81,6 +81,7 @@ test("local COP work survives unavailable federated Supabase/daemon, dispatch an
     COGENTIA_MCP_JHN_MUTATE: "1",
     COGENTIA_MCP_JHN_TOKEN: TOKEN,
     COGENTIA_MCP_LOCAL_INSTANCE_REF: "instance:fracta2-mcp-test",
+    COGENTIA_MCP_LOCAL_STORE_ID: "sqlite:fracta2-test",
     COGENTIA_DAEMON_URL: "http://127.0.0.1:1",
     SUPABASE_URL: "http://127.0.0.1:1",
   };
@@ -145,6 +146,13 @@ test("local COP work survives unavailable federated Supabase/daemon, dispatch an
       "io.modelcontextprotocol/clientCapabilities": META["io.modelcontextprotocol/clientCapabilities"],
     }));
     assert.equal(outsider.error.code, -32602);
+    // A different node's store identity cannot silently take over an
+    // existing packet simply by pointing at the same SQLite file.
+    runtime.close();
+    runtime = null;
+    assert.throws(() => createMcpCopTasksRuntime({
+      ...env, COGENTIA_MCP_LOCAL_STORE_ID: "sqlite:other-locality",
+    }, { coreAccessor: () => core }), /local_commitments_invalid/);
   } finally {
     runtime?.close();
     f.close();
@@ -167,6 +175,7 @@ test("locality: portable projection cannot masquerade as a FractaLog source stor
       COGENTIA_MCP_JHN_MUTATE: "1",
       COGENTIA_MCP_JHN_TOKEN: TOKEN,
       COGENTIA_MCP_LOCAL_INSTANCE_REF: "instance:fracta2",
+    COGENTIA_MCP_LOCAL_STORE_ID: "sqlite:fracta2-test",
     }, { coreAccessor: () => null }), /local_fractalog_commitment_store_required/);
   } finally { f.close(); }
 });
@@ -179,6 +188,7 @@ test("locality: forged local trace is detected before a COP runtime restart", as
     COGENTIA_MCP_JHN_MUTATE: "1",
     COGENTIA_MCP_JHN_TOKEN: TOKEN,
     COGENTIA_MCP_LOCAL_INSTANCE_REF: "instance:fracta2",
+    COGENTIA_MCP_LOCAL_STORE_ID: "sqlite:fracta2-test",
   };
   let runtime;
   try {
@@ -190,6 +200,7 @@ test("locality: forged local trace is detected before a COP runtime restart", as
     const pilot = createCopMcpTasksPilot({
       store, toolName: TOOL, allowAnonymous: true,
       handler: async () => ({ content: [] }),
+      primaryStoreId: "sqlite:test-node-a",
     });
     const created = await pilot.adapter.create({
       name: TOOL, args: {}, auth: { auth: "none" },
@@ -221,6 +232,7 @@ test("locality: unrelated corrupt topic does not make Task locality unavailable"
     COGENTIA_MCP_JHN_MUTATE: "1",
     COGENTIA_MCP_JHN_TOKEN: TOKEN,
     COGENTIA_MCP_LOCAL_INSTANCE_REF: "instance:fracta2",
+    COGENTIA_MCP_LOCAL_STORE_ID: "sqlite:fracta2-test",
   };
   let runtime;
   try {
@@ -258,12 +270,14 @@ test("FractaLog and COP envelope reject an altered Packet even after recalculate
     COGENTIA_MCP_JHN_MUTATE: "1",
     COGENTIA_MCP_JHN_TOKEN: TOKEN,
     COGENTIA_MCP_LOCAL_INSTANCE_REF: "instance:fracta2",
+    COGENTIA_MCP_LOCAL_STORE_ID: "sqlite:fracta2-test",
   };
   try {
     const store = createSqliteCopEventStore(f.path);
     const pilot = createCopMcpTasksPilot({
       store, toolName: TOOL, allowAnonymous: true,
       handler: async () => ({ content: [] }),
+      primaryStoreId: "sqlite:test-node-a",
     });
     const { taskId } = await pilot.adapter.create({
       name: TOOL, args: {}, auth: { auth: "none" },

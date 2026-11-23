@@ -41,6 +41,9 @@ export function createMcpCopTasksRuntime(env = process.env, { coreAccessor } = {
   const ownerInstanceRef = String(env.COGENTIA_MCP_LOCAL_INSTANCE_REF || "").trim();
   if (!/^instance:[a-zA-Z0-9][a-zA-Z0-9:._-]{1,127}$/.test(ownerInstanceRef))
     throw new Error("mcp_tasks_local_instance_ref_required");
+  const primaryStoreId = String(env.COGENTIA_MCP_LOCAL_STORE_ID || "").trim();
+  if (!/^sqlite:[a-zA-Z0-9:._-]+$/.test(primaryStoreId))
+    throw new Error("mcp_tasks_local_store_id_required");
 
   // Open read-only for schema verification: SQLite must not auto-create a
   // missing file or promote the older portable projection into authority.
@@ -75,7 +78,7 @@ export function createMcpCopTasksRuntime(env = process.env, { coreAccessor } = {
   try {
     const pilot = createCopMcpTasksPilot({
       store, toolName: TOOL,
-      ownerInstanceRef,
+      ownerInstanceRef, primaryStoreId,
       handler: async args => {
         const core = coreAccessor();
         if (!core || typeof core.callTool !== "function")

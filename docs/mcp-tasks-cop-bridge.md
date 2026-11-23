@@ -95,6 +95,82 @@ Le stockage effectivement autoritaire du service de production reste
 à désigner suivant la localité du travail et la gouvernance COP,
 et non à choisir parce qu'une base globale est commode.
 
+## Reality Test à deux localités : placement, référence et reconstruction
+
+**Observation du 23 novembre 2026.** Un contrôle de l'intégration
+MCP Tasks ↔ COP a découvert que le Paquet, bien que durable, était créé
+avec un manifeste de `placements` vide. Cela empêchait le résolveur
+existant `createPrimaryPlacementPacketClaimResolver` de déterminer
+son autorité locale, même lorsque l'histoire restait correctement
+enregistrée.
+
+**Correction FBF :** la création du Paquet exige désormais un
+`primaryStoreId` explicite (magasin de source, pas URL de hub).
+Elle persiste un unique placement primaire `sqlite` avec un
+`locator`, et en transmet le témoin à sa Continuation. Dans
+la composition HTTP, l'hôte fournit cet identifiant par
+`COGENTIA_MCP_LOCAL_STORE_ID` ; la réouverture avec une identité
+de magasin différente échoue à l'audit des Paquets déjà présents.
+La désignation ne crée pas à elle seule une autorité de mandat :
+les revendications gouvernées restent du ressort du résolveur COP.
+
+Le test `scripts/lib/mcp-tasks-cop-federation.test.mjs` instancie deux
+magasins COP et deux bus COP distincts, A et B, sur le même hôte
+de test. Il vérifie l'enchaînement suivant :
+
+1. A crée un Paquet et une Continuation avec `sqlite:node-a` comme
+   placement primaire. B apprend seulement `packet_ref`,
+   `primary_store_id` et `topic_ref` par la fédération des bus.
+   Le magasin de B ne reçoit aucun événement source.
+2. Le résolveur de revendication de B refuse de substituer
+   `sqlite:node-b` à l'autorité de `sqlite:node-a`.
+3. B est isolé ; A termine le travail et conserve son journal
+   FractaLog source sans bus fédéré.
+4. Lorsque la communication revient, un serveur HTTP de test
+   *en lecture seule* sur A fournit les enveloppes du topic et
+   l'engagement local `topicCommitment`. B vérifie les enveloppes,
+   les empreintes FractaLog, la causalité et le chaînage SHA-256 ;
+   il reconstruit ensuite une projection jetable `completed`.
+5. La projection de B est supprimée puis reconstruite une seconde
+   fois sans modifier A. Un résultat falsifié est refusé.
+
+**Preuves :** 28 tests MCP/COP verts dans Cogentia, auxquels s'ajoutent
+6 tests Inseme verts sur la résolution de localité, l'outbox FractaLog,
+les accusés HTTP et les reprises après perte d'ACK.
+
+**Frontière démontrée :** la référence peut circuler tandis que la
+source, l'histoire, la continuation et l'autorité de revendication
+restent dans leur localité ; une vue distante peut se reconstruire
+depuis des événements vérifiables. Le transport HTTP du test est
+temporaire et ne constitue **pas** un protocole de récupération de
+Paquets déployé. Les deux magasins sont simulés sur un seul hôte :
+ceci n'est pas encore un essai sur deux FractaNodes physiques.
+
+**Frontières restant à résoudre, avant raccordement réseau réel :**
+
+- authentification et autorisation des demandes inter-localités de
+  lecture, minimisation du contexte divulgué et application de la
+  visibilité du Paquet ;
+- convention de référence, manifeste de placement et découverte du
+  bon pair, sans autorité de catalogue globale ;
+- transport durable des preuves relatives aux Paquets (y compris
+  lorsqu'une réponse HTTP manque), réutilisant l'outbox FractaLog
+  existante et ses receipts, sans confondre réplication et transfert
+  d'autorité ;
+- vérification de l'identité de la source et de son engagement
+  indépendamment de la seule réponse du serveur HTTP ; en
+  particulier, une empreinte fournie et vérifiée par le même serveur
+  n'est pas une preuve d'origine indépendante ;
+- reconstruction d'une projection réceptrice persistante, contrôle
+  des trous d'événements, rejeu et déduplication après partitions ;
+- transfert primaire **explicite et gouverné** si l'autorité d'un
+  Paquet doit réellement changer de localité. Une copie distante
+  ne devient jamais primaire par simple réception.
+
+Ces points sont des frontières d'intégration identifiées, et non des
+raisons pour introduire d'emblée une base, un ordonnanceur ou un hub
+central supplémentaire.
+
 ## Contrat de découverte et négociation
 
 La révision 2026-07-28 est **sans session de protocole** et ne demande plus

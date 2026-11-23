@@ -41,7 +41,7 @@ function fixture(handler, { delay = 25 } = {}) {
   let dispatch, core, pilot;
   function start() {
     pilot = createCopMcpTasksPilot({ store, toolName: "cogentia_pattern_list",
-      handler, allowAnonymous: true });
+      handler, allowAnonymous: true, primaryStoreId: "sqlite:test-node-a" });
     dispatch = createCopMcpTasksScheduledPilot({
       pilot, store, startDelayMs: delay,
       authorizationForTask: async () => AUTH, // only in isolated fixture
@@ -172,7 +172,7 @@ test("input-required task remains parked across restart and resumes only after u
     const taskId = created.result.taskId;
     const pilotInput = createCopMcpTasksPilot({
       store: f.store(), toolName: "cogentia_pattern_list",
-      handler: async () => null, allowAnonymous: true,
+      handler: async () => null, allowAnonymous: true, primaryStoreId: "sqlite:test-node-a",
     });
     await pilotInput.requireInput(taskId, AUTH, {
       consent: { type: "text", prompt: "Continue this work?" },
@@ -321,6 +321,7 @@ test("MCP scheduled Tasks work with the existing Inseme portable COP SQLite stor
         executions++;
         return { content: [{ type: "text", text: "portable COP store" }] };
       },
+      primaryStoreId: "sqlite:test-node-a",
     });
     dispatch = createCopMcpTasksScheduledPilot({
       pilot, store, startDelayMs: 40,

@@ -34,12 +34,15 @@ const unknown = () => Object.assign(new Error("unknown_task"), { code: "unknown_
 export function createCopMcpTasksPilot({
   store, toolName, handler, allowAnonymous = false,
   ownerInstanceRef = "instance:mcp-tasks-cop-pilot",
+  primaryStoreId = null,
 } = {}) {
   if (!store || typeof store.append !== "function" ||
       typeof store.transaction !== "function" || typeof store.listTopic !== "function")
     throw new TypeError("COP event store required");
   if (typeof toolName !== "string" || !toolName || typeof handler !== "function")
     throw new TypeError("explicit pilot tool and handler required");
+  if (typeof primaryStoreId !== "string" || !/^sqlite:[a-zA-Z0-9:._-]+$/.test(primaryStoreId))
+    throw new TypeError("explicit local primaryStoreId required");
 
   function identity(auth) {
     if (auth?.auth === "jhn" && auth.actor) return "jhn:" + auth.actor;
@@ -130,7 +133,11 @@ export function createCopMcpTasksPilot({
     const hasPacket = events.some(e =>
       e.payload?.profile === profile && e.payload?.phase === "created" &&
       e.payload?.packet?.packet_id === packetRefForMcpTask(taskId) &&
-      e.payload?.continuation?.packetRef === packetRefForMcpTask(taskId));
+      e.payload?.continuation?.packetRef === packetRefForMcpTask(taskId) &&
+      e.payload?.packet?.placements?.length === 1 &&
+      e.payload.packet.placements[0].is_primary === true &&
+      e.payload.packet.placements[0].store_id === primaryStoreId &&
+      e.payload.continuation.packetPlacementWitness?.[0]?.store_id === primaryStoreId);
     const failedFractaLog = events.filter(e =>
       e.payload?.profile === profile &&
       (!e.payload.fractalog ||
@@ -170,6 +177,12 @@ export function createCopMcpTasksPilot({
         packetKind: "work",
         packetEnvelope: { createdAt, status: "pending",
           trace: { correlationId: taskId } },
+        placements: [{
+          store_id: primaryStoreId,
+          store_kind: "sqlite",
+          locator: primaryStoreId + "#" + packetRef,
+          is_primary: true,
+        }],
         resumeTo: "handler:mcp-tasks-cop-pilot",
         resumeIntent: "Deliver MCP Task result via COP",
         taskId, state: { toolName: name, args }, emit: false,
