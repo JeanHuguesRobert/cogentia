@@ -41,6 +41,10 @@ update_policy: UP-DEFAULT-REVIEWED
 >
 > Prefer `cogentia.js` over ad hoc filesystem scans when you need the corpus view. It knows the registry, local policies, ignored files, source/derived distinctions, index gaps and cross-repo coupling.
 
+## Orientation: start from familiar work, not jargon
+
+For a first encounter with Cognitive Packet Switching, use the [short order-and-parcel introduction](../research/cognitive_packet_switching.md#a-familiar-starting-point-orders-parcels-and-cooperation) before its protocol details, and the [one-order/several-deliveries example](../research/cognitive_packets.md#a-concrete-intuition-one-order-several-deliveries) before packet schemas. These analogies reuse ordinary knowledge of commissioning, forwarding, collecting, and resuming work; they do not add permission or replace the existing packet/continuation contracts.
+
 ## 1. Tool Discovery
 
 To understand the current command surface, run:
