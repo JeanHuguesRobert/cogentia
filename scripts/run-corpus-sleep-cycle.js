@@ -12,7 +12,8 @@ import { runWeeklyConsolidation } from "./lib/cogentia-core.js";
 import { runMonteCarloAudit } from "./lib/corpus-sleep-cycle/index.js";
 import { emitCopEvidence } from "./lib/cop-evidence-emitter.js";
 import { runRepoSyncPhase } from "./lib/repo-sync-phase.js";
-import { assessSleepCycleCompletion } from "./lib/repo-sync-health.js";
+import { cadencedRepoSync, DEFAULT_REPO_SYNC_INTERVAL_MS } from "./lib/repo-sync-cadence.js";
+import { assessSleepCycleCompletion, sleepCycleCliExitCode } from "./lib/repo-sync-health.js";
 import { runConfiguredInteractions } from "./lib/corpus-sleep-cycle/configured-interactions.js";
 
 function nowMs() {
@@ -158,7 +159,13 @@ export async function runCorpusSleepCycle(options = {}) {
     const remainingBudgetMs = budget.maxWallTimeMs !== null
       ? Math.max(5000, budget.maxWallTimeMs - budgetStatus(budget).elapsedMs)
       : null;
-    const syncResult = await runRepoSyncPhase({
+    const syncResult = await cadencedRepoSync({
+      scope: options.repoSyncScope || "all",
+      includePrivate: !!options.repoSyncIncludePrivate,
+      intervalMs: options.repoSyncIntervalMs ?? DEFAULT_REPO_SYNC_INTERVAL_MS,
+      stateFile: options.repoSyncCadenceFile,
+      force: !!options.repoSyncForce,
+      run: () => runRepoSyncPhase({
       repo: options.repoSyncScope || "all",
       includePrivate: !!options.repoSyncIncludePrivate,
       // A full multi-repo network sync genuinely takes minutes, not seconds.
@@ -167,6 +174,7 @@ export async function runCorpusSleepCycle(options = {}) {
       // meant to run during idle/background time, not on a tight interactive
       // budget).
       timeoutMs: options.repoSyncTimeoutMs ?? remainingBudgetMs ?? 10 * 60 * 1000,
+      }),
     });
     repoSync = { name: "repo_sync", status: syncResult.status, evidence: syncResult.evidence, error: syncResult.error };
   }
@@ -398,6 +406,7 @@ function parseCliArgs() {
     skipConsolidation: args.includes("--skip-consolidation"),
     skipRepoSync: args.includes("--skip-repo-sync"),
     repoSyncIncludePrivate: args.includes("--repo-sync-include-private"),
+    repoSyncForce: args.includes("--repo-sync-force"),
     noCopEvidence: args.includes("--no-cop-evidence"),
     interactionsOnly: args.includes("--interactions-only"),
   };
@@ -405,6 +414,9 @@ function parseCliArgs() {
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--repo-sync-scope" && args[i + 1]) {
       options.repoSyncScope = args[i + 1];
+      i++;
+    } else if (args[i] === "--repo-sync-interval-hours" && args[i + 1]) {
+      options.repoSyncIntervalMs = Math.floor(Number(args[i + 1]) * 3600000);
       i++;
     } else if (args[i] === "--max-pairs" && args[i + 1]) {
       options.maxPairs = parseInt(args[i + 1], 10);
@@ -432,6 +444,7 @@ if (process.argv[1] && process.argv[1].includes("run-corpus-sleep-cycle.js")) {
     if (cliOptions.json) {
       console.log(JSON.stringify(res, null, 2));
     }
+    process.exitCode=sleepCycleCliExitCode(res);
   }).catch((err) => {
     console.error("SLEEP CYCLE ERROR:", err);
     process.exit(1);

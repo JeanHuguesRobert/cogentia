@@ -45,7 +45,9 @@ export function assessSleepCycleCompletion({phases=[], repoSync=null}={}) {
   const blockedCount = Number.isSafeInteger(repoSync?.evidence?.health?.blocked_count)
     ? Math.max(0,repoSync.evidence.health.blocked_count) : 0;
   const syncNeedsAttention = blockedCount>0 ||
-    ['completed_with_blocks','completed_with_errors','failed'].includes(repoSync?.status);
+    ['completed_with_blocks','completed_with_errors','failed'].includes(repoSync?.status) ||
+    (repoSync?.evidence?.cached===true &&
+     ['completed_with_blocks','completed_with_errors','failed'].includes(repoSync.evidence.last_status));
   const partialPhases = phases.some(phase =>
     ['PARTIAL','BLOCKED_SECURITY','failed','completed_with_blocks','completed_with_errors','missing']
       .includes(phase.status));
@@ -57,4 +59,20 @@ export function assessSleepCycleCompletion({phases=[], repoSync=null}={}) {
     repo_sync_blocked_count:blockedCount,
     planned_count:plannedCount
   };
+}
+
+
+/**
+ * A fresh blocked sweep should be visible to the systemd service supervisor.
+ * A cached historical block remains in COP evidence, but does not mark each
+ * two-hourly non-sweep run as a new failed attempt.
+ */
+export function sleepCycleCliExitCode(result){
+ if(!result?.attention_required)return 0;
+ if(result?.repoSync?.status==='deferred_by_cadence'){
+  const otherIssue=(result.phases||[]).some(p=>p.name!=='repo_sync' &&
+    ['PARTIAL','BLOCKED_SECURITY','failed','completed_with_blocks','completed_with_errors','missing'].includes(p.status));
+  return otherIssue?1:0;
+ }
+ return 1;
 }

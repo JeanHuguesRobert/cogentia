@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,writeFile,rm,symlink,readFile} from 'node:fs/promises';
-import {cleanSyncHealth,declaredSyncHealth,assessSleepCycleCompletion} from './lib/repo-sync-health.js';
+import {cleanSyncHealth,declaredSyncHealth,assessSleepCycleCompletion,sleepCycleCliExitCode} from './lib/repo-sync-health.js';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
@@ -125,4 +125,29 @@ test('Sleep Cycle completion and COP health expose real sync blocks without mist
   assert.equal(planned.repo_sync_attention_required,false);
   assert.equal(planned.attention_required,false);
   assert.equal(planned.planned_count,1);
+  const carried=assessSleepCycleCompletion({
+    phases:[{name:'repo_sync',status:'deferred_by_cadence'}],
+    repoSync:{status:'deferred_by_cadence',evidence:{cached:true,checked_at:'2026-11-22T00:00:00Z',health:{
+      status:'attention_required',blocked_count:10
+    }}}
+  });
+  assert.equal(carried.status,'completed_partial');
+  assert.equal(carried.repo_sync_attention_required,true);
+  assert.equal(carried.repo_sync_blocked_count,10);
+  const staleFailure=assessSleepCycleCompletion({
+    phases:[{name:'repo_sync',status:'deferred_by_cadence'}],
+    repoSync:{status:'deferred_by_cadence',evidence:{cached:true,last_status:'failed',health:{blocked_count:0}}}
+  });
+  assert.equal(staleFailure.repo_sync_attention_required,true);
+  assert.equal(staleFailure.status,'completed_partial');
+});
+
+
+test('Only a fresh blocked sweep marks the oneshot service failed, cached attention remains visible',()=>{
+ const attention={attention_required:true,repoSync:{status:'completed_with_blocks'},phases:[{name:'repo_sync',status:'completed_with_blocks'}]};
+ assert.equal(sleepCycleCliExitCode(attention),1);
+ const cached={...attention,repoSync:{status:'deferred_by_cadence'},phases:[{name:'repo_sync',status:'deferred_by_cadence'}]};
+ assert.equal(sleepCycleCliExitCode(cached),0);
+ assert.equal(sleepCycleCliExitCode({...cached,phases:[...cached.phases,{name:'other',status:'failed'}]}),1);
+ assert.equal(sleepCycleCliExitCode({attention_required:false,repoSync:{status:'completed'},phases:[]}),0);
 });

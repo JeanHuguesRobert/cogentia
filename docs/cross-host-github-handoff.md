@@ -51,3 +51,72 @@ A Windows LastTaskResult of 0 means that the scan ran, **not** that every reposi
 Fracta2's existing cogentia-sleep-cycle.timer records the declared-repository sync phase with an additional evidence.health summary. A fetched_dirty_skip_pull remains a protective skip but produces completed_with_blocks rather than a clean success. This phase can have a different set of declared repositories from the local git-sync-clean-repos.js --root /srv/cogentia/repos scan; never treat one as proof of complete coverage by the other. The operator may also obtain the same local receipt by running node scripts/ops/git-sync-clean-repos.js --root PATH --apply --receipt PATH_TO_PRIVATE_JSON.
 
 The periodic safe fast-forward does not publish WIP: that requires an identified cognitive packet, privacy-aware destination and scoped commit. A public issue or commit can notify third parties or trigger CI; automatic WIP publishing is not authorized by the sync timer.
+
+## Événements Git et contrôle basse fréquence — CPKT #344 (23 novembre 2026)
+
+La réconciliation est **événementielle en premier** : l'auteur d'un travail
+conserve les chemins propres à son paquet, vérifie la version distante à son
+début, avant le commit, puis avant le push. Le suivi régulier subsiste pour
+détecter les modifications produites hors de cette voie (API GitHub,
+automatisations, autres hôtes, publications sans hooks).
+
+Utilisation depuis le checkout Cogentia, sous mandat du paquet :
+
+    node scripts/ops/git-incremental-reconcile.js --repo PATH --phase start --apply --json
+    node scripts/ops/git-incremental-reconcile.js --repo PATH --phase commit --json
+    node scripts/ops/git-incremental-reconcile.js --repo PATH --phase push --json
+
+La phase start --apply n'effectue qu'une **avance rapide sûre** de la branche :
+pas de commit local unique, pas de fichier distant touchant des modifications
+locales ; un échec de Git laisse le WIP sous la garde de Git. La phase
+commit inspecte uniquement les fichiers préparés à ce commit. Une
+modification locale d'un autre paquet n'interdit pas un commit indépendant.
+Pour des modifications concurrentes du même fichier, Git merge-file -p
+évalue une réconciliation à trois voies **sans modifier le fichier** :
+AUTO_RECONCILABLE invite à intégrer puis tester cette fusion ; un
+ARBITRATION_REQUIRED doit être adressé d'abord au détenteur du paquet
+responsable avant d'impliquer le Principal. La phase push est plus
+stricte : aucune histoire locale obsolète n'est publiée sans réconciliation.
+Une mise à jour distante survenue après le fetch reste arrêtée par le refus
+natif non-fast-forward de Git, ou par le compare-and-swap expected_sha
+des opérations GitHub API.
+
+Les hooks standards pre-commit et pre-push peuvent activer les deux
+contrôles automatiquement, mais doivent être installés **localement et
+explicitement**, car Git ne transporte pas le dossier .git/hooks :
+
+    node scripts/ops/git-install-reconcile-hooks.js --repo PATH
+    node scripts/ops/git-install-reconcile-hooks.js --repo PATH --apply
+    node scripts/ops/git-install-reconcile-hooks.js --root /srv/cogentia/repos --apply
+
+Le mode --root inspecte les checkouts existants, déduplique les symlinks
+et ne clone aucun dépôt. Un chemin hooksPath personnalisé est laissé intact.
+L'installateur refuse de remplacer un hook préexistant. Il ne masque ni
+l'origine du changement ni le référentiel GitHub, et ne confère **aucune
+autorisation de commit ou de push**. Les appels GitHub API ne déclenchent
+pas les hooks : leurs rédacteurs doivent continuer à utiliser
+expected_sha et une réconciliation optimiste ciblée.
+
+**Balayage résiduel :** le timer du Sleep Cycle conserve son passage toutes
+les deux heures pour ses autres fonctions, mais sa phase repo_sync est
+contrôlée par scripts/lib/repo-sync-cadence.js :
+**24 heures** entre deux tentatives normales, **2 heures** si la dernière
+a échoué techniquement, avec conservation privée du dernier statut et de la
+liste réduite des dépôts bloqués. Le fichier d'état est
+$XDG_STATE_HOME/cogentia/repo-sync-cadence.json ou
+~/.local/state/cogentia/repo-sync-cadence.json.
+Un balayage fraîchement bloqué donne un code de sortie non nul à systemd.
+Une exécution intermédiaire ne transforme pas un blocage historique en
+nouvel échec systemd. Le bilan COP continue de signaler attention_required en cas de
+blocage constaté au dernier balayage, même lorsqu'une exécution intermédiaire
+ne fait que relire son reçu. L'option --repo-sync-force du Sleep Cycle
+force un nouveau balayage ; --repo-sync-interval-hours N ajuste sa cadence.
+
+**Garanties / limites :** aucune réécriture automatique de commits divergents,
+aucun stash, aucun reset et aucune incorporation silencieuse de fichiers
+indépendants. Une fusion Git sans marqueurs de conflit nécessite encore les
+tests sémantiques du paquet. Le contrôle incrémental réduit les conflits ;
+il ne remplace pas le dernier verrou atomique à la publication ni le balayage
+quotidien des effets produits par d'autres moyens.
+
+Paquet responsable : [Cogentia #344](https://github.com/JeanHuguesRobert/cogentia/issues/344).

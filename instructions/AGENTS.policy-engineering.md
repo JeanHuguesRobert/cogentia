@@ -3,7 +3,7 @@ title: "Engineering and publication operations"
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: '2026-11-20'
-last_modified_at: '2026-11-22'
+last_modified_at: '2026-11-23'
 status: "working-paper — active operational documentation"
 document_role: operational
 document_kind: agent-instructions
@@ -41,6 +41,24 @@ For ordinary bounded changes:
 2. Refresh the canonical baseline. Use optimistic locking: blob-SHA / expected version for remote file updates, and `fetch`, `pull --ff-only`, and narrowly staged diffs for local Git workflows as applicable. Never reset, discard, `stash` indiscriminately, or overwrite someone else's uncommitted work to achieve a clean tree.
 3. Make the smallest useful edit directly on `main`; validate; stage **only task-owned files**; commit promptly and push. Preserve an agent/mandate trace. If a real conflict occurs, inspect, reconcile, repair, and retry against the new version. A later correction or revert is legitimate; pretending no accidents are possible is not.
 4. Treat stabilization as completion: avoid long-lived unmerged branches and forgotten local commits. At milestones, inspect unpushed commits, dirty files, and existing branches/worktrees; surface actionable leftovers rather than automatically creating a new isolation surface.
+
+**Incremental Git reconciliation (2026-11-23; Cogentia #344).**
+At work start, refresh and safely fast-forward when possible using
+scripts/ops/git-incremental-reconcile.js --phase start --apply.
+Before local commits, compare the staged packet-owned paths with the current
+upstream; the presence of unrelated WIP does not alone bar a scoped commit.
+Do not auto-stage a three-way merge merely because Git reports no textual
+conflict: keep tests and packet attribution. Before push, require a fresh
+upstream ancestry check; a rejected non-fast-forward or GitHub API
+expected_sha lease requires reconciliation, never force-pushing.
+Where installed, the standard pre-commit and pre-push hooks automate these
+checks; the hooks do not intercept commits written via the GitHub API.
+The Sleep Cycle retains a daily redacted sweep for out-of-band changes,
+independent of its more frequent cognitive audit. Details:
+[cross-host handoff](../docs/cross-host-github-handoff.md).
+Installation of a hook is separate from source publication and must be
+verified on each host. Never treat an unavailable network or untracked packet
+author as proof of a conflict with another agent.
 
 **Cross-machine WIP handoff (ThinkPad ↔ Fracta2, 2026-11-13).** GitHub, not a machine-local stash or uncommitted working tree, is the default durable handoff for **publishable** unfinished work. Before changing machines, run the observational preflight from Cogentia (node scripts/ops/git-handoff-preflight.js --repo PATH --fetch), review exact dirty files, privacy and CI/deployment effects, then commit only task-owned publishable material to main with a scoped WIP message and linked issue; push after fetch and optimistic reconciliation, and verify the remote SHA. A WIP commit is a recoverable checkpoint, **not** acceptance, human review, green tests, operational readiness or deployment authorization. On the receiving machine, preflight and fast-forward only if the checkout is clean; never reset or automatically stash someone else's work. Do not publish confidential inputs or work that would trigger consequential deployment on public main merely for convenience. An authorized private destination or demonstrably necessary short-lived issue-owned branch is the exception, with closure owner and condition. See [Cross-host GitHub-first WIP handoff](../docs/cross-host-github-handoff.md); the helper does not grant COP or publication rights.
 
