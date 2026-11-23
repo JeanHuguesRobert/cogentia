@@ -735,6 +735,22 @@ async function handleMcpPost(req, res) {
     return sendJson(res, 400, jsonRpcError(null, -32700, "Parse error"));
   }
   const transport = transportFromHttpRequest(req);
+  // FBF 2026-11-23: SEP-2243 requires modern HTTP routing headers to be
+  // present and consistent; legacy clients retain their previous behavior.
+  const modernHeaderError = message => {
+    const declared = message?.params?._meta?.["io.modelcontextprotocol/protocolVersion"];
+    if (declared !== "2026-07-28" && transport.protocolVersionHeader !== "2026-07-28")
+      return null;
+    const method = String(message?.method || "");
+    const name = ["tools/call", "prompts/get"].includes(method) ? message?.params?.name
+      : method === "resources/read" ? message?.params?.uri
+      : ["tasks/get", "tasks/update", "tasks/cancel"].includes(method) ? message?.params?.taskId : null;
+    if (transport.protocolVersionHeader !== "2026-07-28" ||
+        transport.mcpMethod !== method ||
+        (name != null && transport.mcpName !== String(name)))
+      return jsonRpcError(message?.id ?? null, -32020, "MCP HTTP headers missing or inconsistent");
+    return null;
+  };
   const issuer = String(process.env.COGENTIA_MCP_OAUTH_ISSUER || "").trim();
   const audience = String(process.env.COGENTIA_MCP_OAUTH_RESOURCE || "").trim();
   const jwksUrl = String(process.env.COGENTIA_MCP_OAUTH_JWKS_URL || "").trim();
@@ -759,16 +775,17 @@ async function handleMcpPost(req, res) {
     res.setHeader("Cache-Control", "no-store");
   }
   if (Array.isArray(payload)) {
-    const responses = (await Promise.all(payload.map(message => core.handleJsonRpc(message, transport)))).filter(Boolean);
+    const responses = (await Promise.all(payload.map(message =>
+      modernHeaderError(message) || core.handleJsonRpc(message, transport)))).filter(Boolean);
     if (!responses.length) return sendNoContent(res, 202);
     return sendJson(res, 200, responses);
   }
-  const response = await core.handleJsonRpc(payload, transport);
+  const response = modernHeaderError(payload) || await core.handleJsonRpc(payload, transport);
   if (!response) return sendNoContent(res, 202);
   const version = response?.result?._meta?.["io.modelcontextprotocol/protocolVersion"]
     || transport.protocolVersionHeader;
   if (version) res.setHeader("MCP-Protocol-Version", version);
-  return sendJson(res, 200, response);
+  return sendJson(res, response?.error?.code === -32020 ? 400 : 200, response);
 }
 
 async function handleToolPost(req, res) {
