@@ -116,6 +116,8 @@ Two initial implementations are acceptable: (a) a simple textual Inox assembly d
 
 **Before claiming portability**, reconcile the actual JS `run()` zero-cell return semantics and primitive-name dispatch with the draft micro-runtime's zero-`VOID` no-op and primitive-value dispatch; this is a target ABI divergence, not an Alan concern. Differential tests must cover literal pushes, primitive lookup, nested verb calls/returns, resolved symbols, branches, data, failures, suspensions and resume points. The JS reference interpreter remains the semantic oracle, and a second minimal Inox runtime is a useful conformance target.
 
+**Priority clarification — 2026-11-23 (Micro parked, no second Inox machine language).** The July Micro v0 specification is a draft, not an accepted replacement for the historic Inox ABI. The original Cell encoding uses three bits for its eight valid primary types; type_invalid = 8 is a sentinel, not a ninth encoded type. The original compiled zero-info Cell means return and primitives dispatch through the name field, unlike the Micro v0 host-only prototype. ESP32/C++ porting is **not a current priority**. Preserve its image/delta, cache, reduced-library and flash/RAM ideas for future study, but do not block the Alan reference semantics and resumable-work experiments on reconciling or implementing Micro. The default target for any next Inox compilation probe is the existing historical Inox execution semantics. Physical image portability and cross-device ABI tests remain a later independent milestone, with any necessary format change explicitly versioned. See the open review checkpoint in [Inox Micro and Images](https://github.com/JeanHuguesRobert/Inox/blob/master/research/inox-cpp-micro-runtime-and-images.md).
+
 Acceptance: a nontrivial Alan program produces named Inox definitions and reproduces the reference semantics in a bounded test suite, **without invoking the full Inox source grammar**.
 
 ## Phase F — portable execution and Fractanet
@@ -132,7 +134,7 @@ Acceptance: same semantic result and intact packet/COP causal history after a ge
 - 17 focused test cases at this checkpoint, runnable via pnpm test:alan. P4 requests produce a review-required suspension, not a write. The implementation never invokes a real MCP tool.
 - Not yet implemented: complete external authorization/receipt ledger, structural validation for named MCP schemas, LLM comparisons (phase D), Alan→Inox assembly (phase E), image/continuation portability through Inox or Fractanet (phase F). The JS continuation digest is an integrity diagnostic, not an authentication/mandate credential.
 
-Next **FixBugsFirst** probe: subject the parser and continuation format to broader differential and adversarial fixtures before relying on them for governed execution; align the Inox JS/micro ABI before any portable image claim.
+Next **FixBugsFirst** probe: subject the Alan parser, frozen logical-time context and serialized continuation/slot format to broader differential and adversarial fixtures. Reproduce Side-style time and capitalization semantics before adding the full Alan-to-Inox backend. Align with the historical Inox machine loop when building that backend; Micro ABI reconciliation is deferred and is not a prerequisite for the reference interpreter.
 
 ## Out of scope for this plan
 
