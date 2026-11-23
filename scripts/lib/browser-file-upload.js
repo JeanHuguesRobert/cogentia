@@ -113,12 +113,39 @@ export function createBrowserFileUploadCapability({
           // Site code may submit the file as soon as the change event fires.
           // This capability makes no promise about completion or visibility.
           await send('DOM.setFileInputFiles',{nodeId:selected,files:[file.resolved]});
-          return {selected:true};
+          // CDP acknowledges the selection even if Chromium cannot read the
+          // named file (observed: host file 49 bytes, browser File.size=0).
+          // Query the SAME native input inside the tab-bound CDP session.
+          // Do not infer successful selection from a change event or a CDP ack.
+          const resolved = await send('DOM.resolveNode',{nodeId:selected});
+          const objectId = resolved?.object?.objectId;
+          if(typeof objectId!=='string'||!objectId)
+            throw error('BROWSER_UPLOAD_BROWSER_FILE_UNVERIFIED');
+          let observed;
+          try{
+            const result = await send('Runtime.callFunctionOn',{
+              objectId,
+              functionDeclaration:'async function(){if(!this.isConnected||this.tagName!=="INPUT"||this.type!=="file")return null;const f=this.files;if(!f||f.length!==1)return {count:f?.length??0,bytes:null,readable:false};const file=f[0];try{const b=await file.slice(0,1).arrayBuffer();return {count:1,bytes:file.size,readable:b.byteLength===1}}catch{return {count:1,bytes:file.size,readable:false}}}',
+              returnByValue:true,awaitPromise:true,
+            });
+            observed=result?.result?.value;
+          }finally{
+            await send('Runtime.releaseObject',{objectId}).catch(()=>{});
+          }
+          if(!observed||observed.count!==1||!Number.isSafeInteger(observed.bytes))
+            throw error('BROWSER_UPLOAD_BROWSER_FILE_UNVERIFIED');
+          if(observed.bytes!==file.bytes)
+            throw error('BROWSER_UPLOAD_BROWSER_SIZE_MISMATCH');
+          if(observed.readable!==true)
+            throw error('BROWSER_UPLOAD_BROWSER_READ_FAILED');
+          return {selected:true,browserBytes:observed.bytes};
         }
       });
-      if (receipt?.selected !== true) throw error('BROWSER_UPLOAD_UNCONFIRMED');
+      if (receipt?.selected !== true||receipt.browserBytes!==file.bytes)
+        throw error('BROWSER_UPLOAD_UNCONFIRMED');
       return {
         ok:true,tab_id,file_index,selected_file_bytes:file.bytes,
+        browser_verified_bytes:receipt.browserBytes,
         file_selected:true,submitted:false,upload_completion:'unverified'
       };
     }

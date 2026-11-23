@@ -7,7 +7,7 @@ created: "2026-11-22"
 date: "2026-11-22"
 last_modified_at: "2026-11-23"
 status: working-paper
-packet_status: "Production active and real-browser validated; external upload governed mandate remains separate"
+packet_status: "File receipt FBF fixed in source and Chromium-tested; source deployment and COP upload authority pending"
 lifecycle_state: working
 visibility: public
 language: fr
@@ -180,3 +180,50 @@ Correction persistante **ciblée** : ACL d'accès sur `/srv/cogentia/artifacts/b
 **Point FBF de robustesse restant :** le reçu interne du transport de fichier se fonde actuellement sur la réussite de `DOM.setFileInputFiles`, qui peut répondre sans erreur pour un fichier illisible par Chromium. Il faut vérifier la taille visible dans le `FileList` du navigateur avant de considérer la sélection comme une réussite, avec test de non-régression pour l'absence de permission. Cette amélioration ne doit pas être confondue avec le défaut ACL déjà corrigé. Le transport est opérationnel pour les fichiers effectivement lisibles ; toute déclaration d'envoi réussi dépendra des observations du navigateur et de la plateforme de destination.
 
 **État :** l'activation du service et les deux capacités techniques sont vérifiées ; le volet d'autorisation d'un téléversement externe reste séparé, et le renforcement de la confirmation de taille est identifié. Le paquet reste ouvert pour ces deux derniers points, sans bloquer l'utilisation de la saisie riche.
+
+
+## FBF complémentaire du 23 novembre 2026 — preuve de lisibilité du fichier
+
+La version opérationnelle du transport en production reconnaissait la
+sélection \`DOM.setFileInputFiles\` comme suffisante. Le premier bug connu
+était un reçu positif alors que \`File.size\` valait zéro dans Brave.
+
+**Test discriminant supplémentaire :** un fichier déplacé dans le répertoire
+d'import sans hériter des ACL peut indiquer dans Chromium une taille nominale
+égale à sa taille source tout en restant **illisible** par le navigateur.
+Le seul contrôle \`File.size\` est donc insuffisant pour affirmer que la
+sélection est matériellement valide.
+
+**Correction du contrat dans le Core** (\`scripts/lib/browser-file-upload.js\`) :
+
+1. Sélection CDP inchangée et déjà liée à l'identité de l'onglet.
+2. Résolution du **même élément HTML** par \`DOM.resolveNode\`.
+3. \`Runtime.callFunctionOn\` vérifie \`files.length===1\`, la taille
+   du fichier vue par Chromium et **la lecture effective de son premier octet**
+   avec \`File.slice(0,1).arrayBuffer()\`, \`awaitPromise:true\`.
+4. Rejet typé \`BROWSER_UPLOAD_BROWSER_FILE_UNVERIFIED\`,
+   \`BROWSER_UPLOAD_BROWSER_SIZE_MISMATCH\` ou
+   \`BROWSER_UPLOAD_BROWSER_READ_FAILED\`, sans divulgation du chemin ni
+   du contenu. Un succès transporte \`browser_verified_bytes\`.
+5. Le reçu continue de distinguer **sélection du fichier** et
+   **téléversement effectivement achevé sur la plateforme** ; sélectionner
+   un fichier peut déjà déclencher un événement ou une requête externe.
+
+**Preuves :** 55 tests du sous-système navigateur et des portes COP passés,
+incluant le succès, les décalages de taille, les comptes invalides et
+le refus d'un fichier illisible. Reality Test Brave : fichier lisible de
+25 octets accepté avec lecture réelle ; fichier déplacé sans ACL de lecture
+refusé par \`BROWSER_UPLOAD_BROWSER_READ_FAILED\`, sans requête à un tiers.
+Onglets et fichiers de test supprimés.
+
+**Frontière de déploiement :** le nouveau code est une correction source
+à intégrer dans une nouvelle release explicitement versionnée. La release
+existante \`cb3e3de5\`, chargée par \`mcp-cogentia.service\`, ne bénéficie
+pas automatiquement de ce commit ; ne pas déclarer le défaut corrigé
+en production avant vérification du processus exécuté.
+
+**Suite distincte :** admettre \`browser.form.upload\` par un mandat COP
+d'effet externe avec comptabilisation, contrôle de la cible et du fichier,
+puis le vérifier sur une destination volontairement inerte avant tout
+véritable téléversement. La porte actuelle \`browser.form.fill\` ne doit
+pas accorder cette permission par transitivité.
