@@ -7,7 +7,7 @@ created: "2026-11-22"
 date: "2026-11-22"
 last_modified_at: "2026-11-23"
 status: working-paper
-packet_status: "Release bundle verified; privileged service activation pending owner action"
+packet_status: "Production active and real-browser validated; external upload governed mandate remains separate"
 lifecycle_state: working
 visibility: public
 language: fr
@@ -157,3 +157,26 @@ sudo /bin/sh /srv/cogentia/releases/mcp-cogentia/cb3e3de52b6131556a2771fba6670e3
 Ce script doit afficher `DEPLOY_VERIFIED=1` si la nouvelle version et le service sont corrects. Il installe uniquement `/etc/systemd/system/mcp-cogentia.service.d/98-cogentia-nav-release.conf`, définit `WorkingDirectory` et `ExecStart` sur cette release et `COGENTIA_BROWSER_UPLOAD_ROOTS` sur la racine préparée, conserve tous les autres drop-ins, et annule sa modification du service si le contrôle de santé échoue. La commande retour arrière est `sudo /bin/sh /srv/cogentia/releases/mcp-cogentia/cb3e3de52b6131556a2771fba6670e33e9b8dcbc/rollback.sh`.
 
 **État factuel :** code publié et testé ; bundle prêt ; racine d'import prête ; configuration et redémarrage du service **non réalisés** ; test post-activation MCP **à effectuer après** la commande privilégiée. Le paquet ne peut pas être marqué terminé avant la vérification de l'effet réel.
+
+## Vérification finale de production — 23 novembre 2026
+
+**Déploiement effectivement réalisé par le Principal :** exécution manuelle de `activate.sh` sur Fracta2, avec `DEPLOY_VERIFIED=1`. Observations indépendantes sur le processus de production :
+
+- `mcp-cogentia.service` : **active/running**, PID **2420792**, lancé le **23 novembre 2026 à 12:03:21 UTC**, `NRestarts=0`, `Result=success`.
+- `ExecStart` et `WorkingDirectory` correspondent à la release Cogentia **cb3e3de52b6131556a2771fba6670e33e9b8dcbc** ; l'ancienne copie locale et son WIP ne sont pas utilisés pour exécuter ce service.
+- Drop-in réellement présent : `/etc/systemd/system/mcp-cogentia.service.d/98-cogentia-nav-release.conf`. L'endpoint local `http://127.0.0.1:8791/health` confirme `ok:true`. Le catalogue MCP public contient toujours **67 outils**.
+- `COGENTIA_BROWSER_UPLOAD_ROOTS=/srv/cogentia/artifacts/browser-uploads` est bien chargé dans l'environnement **du processus**.
+
+**Test de bout en bout par le vrai serveur MCP :** l'Agent John authentifié accède en lecture seule au Navigation Assistant et observe deux instances enregistrées : `fracta2-hosted` et `thinkpad-chrome`. Sur un onglet de test **inactif** de `https://example.org/`, l'appel MCP `cogentia_john_run` sous la capacité `browser.form.fill`, avec `field_kind:contenteditable`, a été admis par le **mandat canonique de formulaire** `mandate:jhn:form-assist`. Reçu `nav-rich-deployed-20261123-01` : `status:completed`, deux étapes comptabilisées, **une action interne**, **zéro effet externe**. Lecture DOM indépendante : texte Unicode final exactement attendu (50 caractères), aucun formulaire soumis.
+
+**Défaut d'import découvert et corrigé par FBF :** le service et le navigateur Brave hébergé exécutent sous des UID distincts (`ubuntu:1001` et `hosted-jeanhuguesrobert:1002`). Le répertoire initialement en mode `0700` et le fichier de test en `0600` étaient invisibles au navigateur ; `DOM.setFileInputFiles` déclenchait pourtant `change` et donnait un `File.size=0`. Le réglage initial était donc insuffisant.
+
+Correction persistante **ciblée** : ACL d'accès sur `/srv/cogentia/artifacts/browser-uploads` autorisant le **seul UID 1002** à traverser/lire (pas à écrire) ; ACL par défaut permettant aux nouveaux fichiers de mode ordinaire, créés dans ce répertoire, d'être lus par ce même navigateur. Les droits « autres » restent nuls. Après ACL, la source de **49 octets** a été reconnue par Brave à **49 octets**. Nouvelle création indépendante dans le répertoire pour tester l'héritage : source **45 octets**, navigateur **45 octets**, `change` observé, onglet resté inactif. Un fichier créé explicitement en mode `0600` peut toujours nécessiter une ACL spécifique avant import.
+
+**Frontière COP du téléversement :** le transport `browser.form.upload` a passé le test matériel CDP, mais sa permission n'est pas assimilée à celle du formulaire. Une tentative MCP volontairement cantonnée à un handler `read_only` a été refusée avec `read_only_capability_required` : **zéro effet externe et zéro appel de capacité**. L'autorité COP indépendante pour un véritable téléversement sur une plateforme tierce reste à configurer au moment de ce travail ; aucune nouvelle vidéo ni fichier n'a été envoyé à un site.
+
+**Nettoyage vérifié :** l'onglet temporaire `94451118`, les deux fichiers temporaires de test dans le répertoire d'import et `/tmp/cogentia-deployed-navigation-probe-20261123.json` ont été supprimés. Le répertoire d'import demeure prêt pour les travaux futurs. Service de production toujours actif sur le même PID, santé positive après essais.
+
+**Point FBF de robustesse restant :** le reçu interne du transport de fichier se fonde actuellement sur la réussite de `DOM.setFileInputFiles`, qui peut répondre sans erreur pour un fichier illisible par Chromium. Il faut vérifier la taille visible dans le `FileList` du navigateur avant de considérer la sélection comme une réussite, avec test de non-régression pour l'absence de permission. Cette amélioration ne doit pas être confondue avec le défaut ACL déjà corrigé. Le transport est opérationnel pour les fichiers effectivement lisibles ; toute déclaration d'envoi réussi dépendra des observations du navigateur et de la plateforme de destination.
+
+**État :** l'activation du service et les deux capacités techniques sont vérifiées ; le volet d'autorisation d'un téléversement externe reste séparé, et le renforcement de la confirmation de taille est identifié. Le paquet reste ouvert pour ces deux derniers points, sans bloquer l'utilisation de la saisie riche.
