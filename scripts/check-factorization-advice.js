@@ -33,3 +33,25 @@ test("path traversal is rejected", t => {
  const r=adviseFactorization(signal("inseme/../../secret.md","inseme/a.md"),{corpusRoot:root});
  assert.equal(r.status,"source_unavailable");
 });
+test("reciprocal co-sovereign language peers are preserved", t => {
+  const root=mk();t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+  const a="cogentia/research/fr.md", b="cogentia/research/en.md";
+  for (const [p,peer] of [[a,"research/en.md"],[b,"research/fr.md"]]) {
+    fs.mkdirSync(path.dirname(path.join(root,p)),{recursive:true});
+    fs.writeFileSync(path.join(root,p),`---\ndocument_role: source\nlanguage_peer: ${peer}\n---\nSome text\n`);
+  }
+  const r=adviseFactorization(signal(a,b),{corpusRoot:root});
+  assert.equal(r.recommendation,"preserve_co_sovereign_language_peers");
+  assert.equal(r.relation.declared_relations.length,2);
+});
+test("derived product retains declared source relation", t => {
+  const root=mk();t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+  const a="cogentia/research/derived_products/article.md", b="cogentia/research/source.md";
+  for (const [p,front] of [[a,"document_role: derived\nsource_document: research/source.md"],[b,"document_role: source"]]) {
+    fs.mkdirSync(path.dirname(path.join(root,p)),{recursive:true});
+    fs.writeFileSync(path.join(root,p),`---\n${front}\n---\nSome text\n`);
+  }
+  const r=adviseFactorization(signal(a,b),{corpusRoot:root});
+  assert.equal(r.recommendation,"preserve_declared_derivation");
+  assert.equal(r.relation.declared_relations[0].predicate,"source_document");
+});
