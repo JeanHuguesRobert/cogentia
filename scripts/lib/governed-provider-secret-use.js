@@ -53,6 +53,15 @@ export function createGovernedProviderSecretUse({vault, authorize, providers, se
         grant.provider!==name || grant.capability!==capability ||
         grant.credential_ref!==descriptor.credential_ref)
       throw fail('PROVIDER_AUTHORITY_DENIED');
+    // Legacy settlement callbacks return undefined on success. An explicit
+    // negative acknowledgment is never equivalent to a successful settlement.
+    async function settleEffect(outcome) {
+      try {
+        const ack = await settle({grant,outcome,provider:name,capability});
+        if (ack === false || (ack != null && typeof ack === 'object' && ack.ok === false))
+          throw fail('PROVIDER_SETTLEMENT_FAILED');
+      } catch { throw fail('PROVIDER_SETTLEMENT_FAILED'); }
+    }
     let providerReceipt;
     try {
       providerReceipt=await vault.withSecret(descriptor.credential_ref,async (secret)=>{
@@ -62,15 +71,13 @@ export function createGovernedProviderSecretUse({vault, authorize, providers, se
     } catch {
       // Provider error bodies may repeat API keys or submitted content.
       // Catch-and-sanitize even if Vault's adapter has its own redaction.
-      try { await settle({grant,outcome:'failed',provider:name,capability}); } catch {}
+      await settleEffect('failed');
       throw fail('PROVIDER_EXECUTION_FAILED');
     }
     // Any receipt from a provider is untrusted. Only take constant schema and
     // explicitly typed booleans/identifiers; never spread provider data.
     const ok = providerReceipt?.ok === true;
-    try {
-      await settle({grant,outcome:ok?'completed':'failed',provider:name,capability});
-    } catch {throw fail('PROVIDER_SETTLEMENT_FAILED');}
+    await settleEffect(ok?'completed':'failed');
     if (!ok) throw fail('PROVIDER_EXECUTION_FAILED');
     return Object.freeze({
       ok:true,schema:'cogentia.provider_secret_use_receipt.v1',

@@ -34,3 +34,17 @@ test('fail-closed when adapters are missing and redact backend failures',async()
  const bad=build({settle:async()=>{throw Error(SECRET)}});
  await assert.rejects(bad.invoke(base),e=>e.code==='PROVIDER_SETTLEMENT_FAILED'&&!JSON.stringify(e).includes(SECRET));
 });
+
+
+test('explicit negative settlement acknowledgment never produces a success receipt',async()=>{
+ for(const ack of [false,{ok:false,error:SECRET}]) {
+   const c=build({settle:async()=>ack});
+   await assert.rejects(c.invoke(base),e=>e.code==='PROVIDER_SETTLEMENT_FAILED'&&!JSON.stringify(e).includes(SECRET));
+ }
+});
+test('failed execution with failed settlement exposes the accounting gap',async()=>{
+ for(const execute of [async()=>({ok:false}),async()=>{throw Error(SECRET)}]) {
+   const c=build({execute,settle:async()=>({ok:false})});
+   await assert.rejects(c.invoke(base),e=>e.code==='PROVIDER_SETTLEMENT_FAILED');
+ }
+});
