@@ -60,4 +60,15 @@ await assert.rejects(async()=> {
   catch (e) {assert.equal(e.retryAfterSeconds,33);assert.equal(e.status,429);throw e;}
 },/cloudflare_rate_limited/);
 assert.equal(calls.length,2);
+// Match the actual Magistral projection: no Retry-After header, JSON delay.
+for (const [seconds, expected] of [[47,47],[100000,86400],[-1,undefined],["47",undefined]]) {
+  const projected = async url => String(url).endsWith("/status") ? fake(url,{method:"GET"}) :
+    new Response(JSON.stringify({error:{code:"embedding_provider_http_error",retry_after_seconds:seconds,private:"NOT SAFE FOR LOGGING"}}),{status:429});
+  await assert.rejects(requestFreeCloudflareEmbeddings({...base,fetchImpl:projected}),e=>{
+    assert.equal(e.retryAfterSeconds,expected);
+    assert.equal(e.status,429);
+    assert.equal(JSON.stringify(e).includes("NOT SAFE FOR LOGGING"),false);
+    return e.message === "cloudflare_rate_limited";
+  });
+}
 console.log("Cloudflare free transport: PASS (mocked, no external network, gated, no paid fallback)");

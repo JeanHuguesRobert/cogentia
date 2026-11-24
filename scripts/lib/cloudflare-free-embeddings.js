@@ -54,6 +54,14 @@ export async function requestFreeCloudflareEmbeddings({
     err.status = response.status;
     const retryAfter = response.headers?.get?.("Retry-After");
     if (/^\d{1,6}$/.test(retryAfter || "")) err.retryAfterSeconds = Math.min(86400,Number(retryAfter));
+    // Magistral projects the upstream delay into its JSON error envelope.
+    // Read only the bounded numeric field, never expose the upstream body.
+    if (response.status === 429 && err.retryAfterSeconds === undefined) {
+      const envelope = await response.json().catch(() => null);
+      const seconds = envelope?.error?.retry_after_seconds;
+      if (Number.isSafeInteger(seconds) && seconds >= 0)
+        err.retryAfterSeconds = Math.min(86400, seconds);
+    }
     throw err;
   }
   const result = await response.json().catch(() => null);
