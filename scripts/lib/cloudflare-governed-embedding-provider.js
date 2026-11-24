@@ -85,13 +85,23 @@ export function createCloudflareFreeEmbeddingProvider({
         if(!token.ok||token.result?.status!=='active'||!subscriptions.ok||
            !Array.isArray(subscriptions.result)||subscriptions.result.length!==0||
            !settings.ok||!settings.result)return refuse();
-        const response=await fetchImpl(
+        let response;
+        try { response=await fetchImpl(
           `${API}/accounts/${accountId}/ai/run/${CF_EMBEDDING_MODEL}`,{
             method:'POST',headers:{...headers,'Content-Type':'application/json'},
             redirect:'error',signal:AbortSignal.timeout(25000),
             body:JSON.stringify({input:pending.map(c=>`title: none | text: ${c.text}`)}),
           });
-        if(!response.ok)return refuse();
+        } catch { return {ok:false,outcome:'uncertain'}; }
+        if(!response.ok) {
+          const body=await response.json().catch(()=>null);
+          const codes=Array.isArray(body?.errors)?body.errors.map(e=>e?.code):[];
+          const retry=response.headers?.get('Retry-After');
+          const outcome=response.status===429
+            ? codes.includes(3036)?'daily_quota_exhausted':codes.includes(3040)?'capacity_unavailable':'rate_limited'
+            : response.status>=500?'uncertain':'refused';
+          return {ok:false,outcome,...(/^\d{1,6}$/.test(retry||'')?{retry_after_seconds:Math.min(86400,Number(retry))}:{})};
+        }
         const body=await response.json().catch(()=>null);
         const data=body?.success===true&&body.result?.model===CF_EMBEDDING_MODEL
           ?body.result.data:null;

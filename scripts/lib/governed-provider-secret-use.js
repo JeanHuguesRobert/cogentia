@@ -78,7 +78,16 @@ export function createGovernedProviderSecretUse({vault, authorize, providers, se
     // explicitly typed booleans/identifiers; never spread provider data.
     const ok = providerReceipt?.ok === true;
     await settleEffect(ok?'completed':'failed');
-    if (!ok) throw fail('PROVIDER_EXECUTION_FAILED');
+    if (!ok) {
+      const error=fail('PROVIDER_EXECUTION_FAILED');
+      // The trusted descriptor may project bounded scheduling metadata, not
+      // arbitrary response bodies, credentials or exception messages.
+      if (['daily_quota_exhausted','capacity_unavailable','rate_limited','uncertain','refused'].includes(providerReceipt?.outcome))
+        error.outcome=providerReceipt.outcome;
+      if (Number.isSafeInteger(providerReceipt?.retry_after_seconds) && providerReceipt.retry_after_seconds>=0)
+        error.retry_after_seconds=Math.min(86400,providerReceipt.retry_after_seconds);
+      throw error;
+    }
     return Object.freeze({
       ok:true,schema:'cogentia.provider_secret_use_receipt.v1',
       provider:name,capability,credential_ref:descriptor.credential_ref,

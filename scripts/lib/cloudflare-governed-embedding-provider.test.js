@@ -7,7 +7,7 @@ const token='PRIVATE_TOKEN_NOT_FOR_OUTPUT';
 const account='0123456789abcdef0123456789abcdef';
 const ref={chunk_id:1,content_hash:'hash_abc123'};
 const chunks=[{id:1,content_hash:ref.content_hash,searchable_public:1,text:'public text'}];
-function fixture({authorized=true,publicChunk=true,paid=false}={}) {
+function fixture({authorized=true,publicChunk=true,paid=false,inferenceFailure=null}={}) {
   const calls=[],settlements=[],saved=[];
   const vault={async withSecret(r,callback){
     calls.push('vault:'+r);
@@ -32,6 +32,7 @@ function fixture({authorized=true,publicChunk=true,paid=false}={}) {
       if(url.endsWith('/workers/account-settings'))return new Response(JSON.stringify({success:true,result:{default_usage_model:'bundled'}}));
       assert.equal(url.includes('/ai/run/'),true);
       assert.equal(JSON.parse(init.body).input[0],'title: none | text: public text');
+      if(inferenceFailure)return inferenceFailure();
       return new Response(JSON.stringify({success:true,result:{model:CF_EMBEDDING_MODEL,
         data:[{index:0,embedding:Array(768).fill(.2)}]}}));
     },
@@ -195,4 +196,21 @@ test('generic host-process grant is restricted to the actual node and normal mod
     assert.equal(result.ok,false);
   }
   assert.deepEqual(calls,[]);
+});
+
+
+test('native Cloudflare failure outcomes survive the governed bridge without leaking bodies',async()=>{
+  for(const [status,code,outcome] of [[429,3036,'daily_quota_exhausted'],[429,3040,'capacity_unavailable'],[429,9999,'rate_limited'],[503,0,'uncertain'],[403,0,'refused']]){
+    const f=fixture({inferenceFailure:()=>new Response(JSON.stringify({errors:[{code,message:token}]}),{status,headers:{'Retry-After':'37'}})});
+    await assert.rejects(f.driver.invoke(req),e=>{
+      assert.equal(e.code,'PROVIDER_EXECUTION_FAILED');assert.equal(e.outcome,outcome);
+      assert.equal(e.retry_after_seconds,37);assert.equal(JSON.stringify(e).includes(token),false);return true;
+    });
+    assert.equal(f.saved.length,0);assert.equal(f.settlements[0].outcome,'failed');
+  }
+});
+test('lost inference response is uncertain and must not claim durable success',async()=>{
+  const f=fixture({inferenceFailure:()=>{throw new Error(token)}});
+  await assert.rejects(f.driver.invoke(req),e=>e.outcome==='uncertain'&&!JSON.stringify(e).includes(token));
+  assert.equal(f.saved.length,0);
 });
