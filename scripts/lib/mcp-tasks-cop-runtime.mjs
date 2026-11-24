@@ -124,6 +124,14 @@ export function createMcpCopTasksRuntime(env = process.env, { coreAccessor } = {
     // Only inspect packet-local source histories that this MCP runtime owns.
     // Their FractaLog documents and COP commitments both have to validate.
     for (const taskId of listTaskIdsForRecovery()) {
+      const events = store.listTopic(packetTopicForMcpTask(taskId));
+      const creation = events.find(event => event.payload?.phase === "created");
+      // A shared COP source hosts distinct local Task families. A verified
+      // program-family Packet must not be audited as a pattern-list Task;
+      // unknown or corrupted creations remain subject to this audit.
+      if (creation?.payload?.toolName === "multimcp_program_execute" &&
+          String(env.COGENTIA_MCP_MULTIMCP_ENABLED || "") === "1")
+        continue;
       if (!pilot.auditPacket(taskId).ok)
         throw new Error("mcp_tasks_local_commitments_invalid");
     }

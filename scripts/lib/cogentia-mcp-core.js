@@ -1613,9 +1613,14 @@ export function createMcpCore(env = process.env, extras = {}) {
       if(TOOLS.some(base=>base.name===t.name))
         throw new Error('MCP App tool conflicts with existing core tool: '+t.name);
     }
+    const optInProgramTools = extras.mcpProgramSurface?.tools || [];
     const visibleTools = [
       ...(oauthDiscoveryEnabled ? TOOLS : toolsForAuth(auth)),
       ...registeredTools,
+      ...optInProgramTools.filter(tool =>
+        tool.name !== "multimcp_program_execute" ||
+        (isMcpTasksAdapterReady(extras.mcpTasksAdapter) &&
+          auth?.auth === "jhn" && auth?.allowMutate === true)),
     ];
     const callerTools = visibleTools.map((tool) => ({
       ...tool,
@@ -1625,7 +1630,7 @@ export function createMcpCore(env = process.env, extras = {}) {
             ? ["cogentia.mutate"] : ["cogentia.private.read"] }]
           : [{ type: "noauth" }],
       } : {}),
-      annotations: {
+      annotations: tool.annotations || {
         readOnlyHint: !MUTATE_TOOLS.has(tool.name),
         destructiveHint: MUTATE_TOOLS.has(tool.name),
         openWorldHint: false,
@@ -1936,7 +1941,10 @@ export function createMcpCore(env = process.env, extras = {}) {
           // Preserve the existing MCP tool visibility/authority boundary
           // before a task adapter can intercept the call. Task creation is
           // NEVER a back door into private/mutating or unknown capabilities.
-          const taskableTool=TOOLS.some(tool=>tool.name===name)&&
+          const taskableTool=(TOOLS.some(tool=>tool.name===name) ||
+            (extras.mcpProgramSurface?.tools?.some(tool=>tool.name===name) &&
+              (name!== "multimcp_program_execute" ||
+                extras.mcpProgramSurface.verifiedTaskCaller(auth)===true)))&&
             (!MUTATE_TOOLS.has(name)||auth.allowMutate===true)&&
             (!PRIVATE_READ_TOOLS.has(name)||view==="full"||auth.auth==="jhn")&&
             (name!=="cogentia_memory_capture"||auth?.lockers?.private?.read===true);
@@ -1964,6 +1972,19 @@ export function createMcpCore(env = process.env, extras = {}) {
               return jsonRpcError(message.id,-32603,
                 "Task creation outcome uncertain: reconciliation required");
             }
+          }
+          const programSurface = extras.mcpProgramSurface;
+          if (programSurface?.tools?.some(tool => tool.name === name)) {
+            // Execution is never silently downgraded to a synchronous tool
+            // when its durable COP Tasks adapter or caller authority is absent.
+            if (name === "multimcp_program_execute")
+              return jsonRpcError(message.id,-32603,
+                "MultiMCP execution requires a verified COP Task");
+            const data = await programSurface.call({name,args,auth,correlation});
+            let result = mcpToolResult(wrapToolResult(name, data, ctx));
+            if(resolved.era==="modern")
+              result=attachModernMeta(result,resolved.protocolVersion);
+            return jsonRpcResult(message.id,result);
           }
           const data = await callTool(name, args, { correlation, auth });
           const envelope = wrapToolResult(name, data, ctx);

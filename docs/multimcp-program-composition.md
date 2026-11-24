@@ -49,6 +49,16 @@ No new global registry, scheduler, model router, or work ledger.
   the canonical COP Task pilot, COPScheduler and COPJobScheduler. It uses a
   host-supplied source journal and verified dispatch-authority resolver; it
   creates no competing ledger or scheduler.
+- **scripts/lib/multimcp-mcp-surface.mjs** supplies the opt-in
+  multimcp_search, multimcp_describe and multimcp_program_execute MCP tool
+  descriptions. The execution tool can only return a Task created via COP;
+  it cannot fall through to an unjournaled synchronous invocation.
+- **scripts/lib/mcp-tasks-adapter-compose.mjs** composes existing and
+  program-specific MCP Tasks adapters by their packet-owned creation
+  events, without synthesizing authority or task identities.
+- **scripts/lib/multimcp-service-runtime.mjs** connects that surface
+  to the existing HTTP Cogentia Core and uses the pre-existing local
+  committed COP SQLite source. It never creates a store, secret or mandate.
 - **Alan v0.2** uses its existing parser and state machine. Its tool
   suspension is fulfilled by the very same MCP host invocation, and
   the resulting step is returned to the interpreter with the original
@@ -103,8 +113,49 @@ autonomous scheduled dispatch, durable Task results, restart without
 duplicate execution, separate verified dispatch and per-capability
 admission, and skipping foreign-tool packets in the same source store.
 
-**Status: local, Linux-only prototype — not deployed or advertised as a
-public MCP tool.** Linux Bubblewrap provides mount and network namespace
+### Optional HTTP composition and observed tests
+
+The HTTP source service now constructs the MultiMCP runtime only when the
+literal flag COGENTIA_MCP_MULTIMCP_ENABLED=1 is present. Without it, all
+MultiMCP extras are absent, and no COP file is opened for that feature.
+
+When enabled, it requires the already existing values
+COGENTIA_MCP_TASKS_COP_DATABASE, COGENTIA_MCP_LOCAL_INSTANCE_REF,
+COGENTIA_MCP_LOCAL_STORE_ID, COGENTIA_MCP_JHN_MUTATE=1 and
+COGENTIA_MCP_JHN_TOKEN. The SQLite file must already be a committed COP
+source with cop_events and cop_topic_commitments. Its source provider
+is the local Cogentia MCP core, excluding its own MultiMCP tools to
+prevent recursive catalog discovery; additional local providers may be
+injected by the host. The JHN credential authenticates the caller;
+this demonstration does not claim a signed COP mandate for write
+operations, and execution is limited to supplier-declared read-only tools.
+
+The two informational tools are discoverable to anonymous callers.
+Execution is advertised only to JHN-attested callers when a durable
+Task adapter exists, and per-request checks revalidate the identity.
+A caller cannot read another caller's Task simply by guessing its id.
+Each program's capability invocation is individually checked at dispatch.
+
+The regular MCP Tasks adapter and the MultiMCP adapter share the same
+COP source file and are composed into the Core's one Tasks interface.
+Their own creation events distinguish Task families during recovery.
+No second scheduler or catalog is introduced.
+
+The tests include:
+- source-level tool discovery and a complete Task cycle through the
+  actual Cogentia MCP Core;
+- a temporary real HTTP MCP process, a local COP journal, unavailable
+  external daemon, a completed JavaScript program, and result retrieval
+  after process restart;
+- concurrent support for ordinary pattern-list Tasks and MultiMCP
+  program Tasks, both verified after restart in the same journal;
+- rejection of anonymous Task reads, invalid Tasks and missing
+  activation prerequisites.
+
+**Status: tested in source and a temporary local HTTP process. The
+live mcp-cogentia.service has not been upgraded or enabled.**
+
+**Status: local, Linux-only execution prototype.** Linux Bubblewrap provides mount and network namespace
 isolation, and Node --permission supplies additional capability
 restrictions. node:vm is not treated as the isolation boundary. Execution
 fails rather than silently removing isolation when Bubblewrap is
