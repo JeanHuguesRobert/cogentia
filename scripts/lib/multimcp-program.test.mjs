@@ -23,10 +23,14 @@ test("reads real tool descriptions from two MCP suppliers, not an auxiliary regi
   const described = await runtime.describe({provider:"ritornu",name:"ritornu_boundaries"});
   assert.equal(described.description, b[0].description);
   assert.deepEqual(described.inputSchema, b[0].inputSchema);
-  await assert.rejects(runtime.describe({
+  const governed=await runtime.describe({
     provider:"ritornu",name:"ritornu_prepare_substack"
-  }), /mcp_capability_not_found/);
-  assert.ok(!(await runtime.search({query:"ritornu_prepare_substack"})).length);
+  });
+  assert.equal(governed.executionClass,"governed_effect");
+  assert.equal(governed.name,"ritornu_prepare_substack");
+  assert.equal((await runtime.search({
+    query:"ritornu_prepare_substack"
+  }))[0].executionClass,"governed_effect");
 });
 
 test("one JS program composes actual Cogentia and Ritornu MCP tools", async () => {
@@ -114,7 +118,7 @@ test("Alan v0.2 uses the same two real MCP suppliers through caller-mediated con
   assert.equal(typeof result.value.ritornu, "object");
 });
 
-test("a mediated ChatGPT capability is a provider contract, not a fictitious MCP catalog export", async () => {
+test("ChatGPT delegation is discoverable as a governed effect, never misrepresented as read-only", async () => {
   const calls = [];
   const delegated = {
     async handleJsonRpc(request) {
@@ -123,7 +127,7 @@ test("a mediated ChatGPT capability is a provider contract, not a fictitious MCP
           name: "delegate",
           description: "An explicitly mediated public-data task via an injected handler",
           inputSchema: {type:"object", properties:{prompt:{type:"string"}}},
-          annotations: {readOnlyHint:true}
+          annotations: {readOnlyHint:false}
         }]} };
       }
       calls.push(request.params);
@@ -137,17 +141,20 @@ test("a mediated ChatGPT capability is a provider contract, not a fictitious MCP
     authorizeCall: async ({provider, context}) =>
       provider === "chatgpt" && context?.admitted === true,
   });
-  const result = await runtime.execute({
+  const discovery=await runtime.search({query:"delegate"});
+  assert.equal(discovery.length,1);
+  assert.equal(discovery[0].executionClass,"governed_effect");
+  const description=await runtime.describe({provider:"chatgpt",name:"delegate"});
+  assert.equal(description.annotations.readOnlyHint,false);
+  // Even a true host-side identity/admission flag does NOT upgrade an
+  // effectful tool to a read-only capability. Its own CPS/mandate pathway
+  // must be integrated separately before a program may dispatch it.
+  await assert.rejects(runtime.execute({
     language:"javascript",
     context:{admitted:true},
     code:"return await tools.chatgpt.delegate({prompt:'Test only'});",
-  });
-  assert.deepEqual(result.value, {ok:true,status:"mocked",message:"synthetic receipt"});
-  assert.equal(calls.length,1);
-  assert.equal(calls[0].name,"delegate");
-  await assert.rejects(runtime.execute({
-    code:"return await tools.chatgpt.delegate({prompt:'No mandate'});",
-  }), /program_tool_authority_denied/);
+  }));
+  assert.equal(calls.length,0);
 });
 
 test("Alan returns deadline if the MCP provider never answers", async () => {

@@ -52,15 +52,20 @@ export function createMultiMcpProgramRuntime({ providers, authorizeCall } = {}) 
       const response = await core.handleJsonRpc(method("tools/list"));
       if (response?.error || !Array.isArray(response?.result?.tools))
         throw new Error("mcp_catalog_unavailable:" + provider);
+      // Inventory is not authorization. Keep every source-advertised tool
+      // visible to search/describe, including ones that require a separately
+      // governed effect. Admission is checked only at actual dispatch.
       const entries = response.result.tools.filter(tool =>
-        typeof tool.name === "string" &&
-        tool.annotations?.readOnlyHint === true);
+        typeof tool.name === "string" && tool.name.length > 0);
       const map = new Map();
       for (const tool of entries) {
         if (map.has(tool.name)) throw new Error("mcp_catalog_duplicate_tool:" + provider);
         map.set(tool.name, {
           provider, name: tool.name, description: tool.description || "",
           inputSchema: tool.inputSchema || { type: "object" },
+          annotations: tool.annotations || {},
+          executionClass: tool.annotations?.readOnlyHint === true
+            ? "read_only" : "governed_effect",
         });
       }
       available[provider] = map;
@@ -120,7 +125,8 @@ export function createMultiMcpProgramRuntime({ providers, authorizeCall } = {}) 
         const provider = capability.slice(0, dot);
         const name = capability.slice(dot + 1);
         const tool = snapshot[provider]?.get(name);
-        if (!tool || state.pending_call.policy?.effect !== "read_only")
+        if (!tool || tool.executionClass !== "read_only" ||
+            state.pending_call.policy?.effect !== "read_only")
           throw new Error("tool_not_available_or_budget_exhausted");
         if (authorizeCall && await withinDeadline(
           Promise.resolve(authorizeCall({
@@ -154,7 +160,9 @@ export function createMultiMcpProgramRuntime({ providers, authorizeCall } = {}) 
     }
 
     const names = Object.fromEntries(Object.entries(snapshot)
-      .map(([id, values]) => [id, [...values.keys()]]));
+      .map(([id, values]) => [id, [...values.values()]
+        .filter(tool => tool.executionClass === "read_only")
+        .map(tool => tool.name)]));
     const childScript = fileURLToPath(
       new URL("./multimcp-program-worker.mjs", import.meta.url));
     // Do not share credentials, filesystem, network or process spawning
@@ -201,7 +209,7 @@ export function createMultiMcpProgramRuntime({ providers, authorizeCall } = {}) 
         if (message?.type !== "invoke" || settled) return;
         const { provider, name, id } = message;
         const tool = snapshot[provider]?.get(name);
-        if (!tool || remaining <= 0) {
+        if (!tool || tool.executionClass !== "read_only" || remaining <= 0) {
           if (child.connected) child.send({ type: "tool-result", id,
             error: "tool_not_available_or_budget_exhausted" });
           return;

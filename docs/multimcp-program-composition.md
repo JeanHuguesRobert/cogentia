@@ -91,14 +91,25 @@ without altering the concurrent l9 work-in-progress.
 
 ## Reality Tests and limits
 
+Catalog discovery reports every tool the source MCP advertises, regardless
+of its current admissibility. The described source annotations are retained:
+readOnlyHint=true identifies a candidate for the current read-only executor;
+all other tools are classified governed_effect. The host checks admissibility
+at invocation; a missing/unsigned mandate never makes the capability
+disappear from discovery. A synthetic ChatGPT delegate is tested as an
+effectful (non-read-only) capability: it is visible but NOT callable by the
+current read-only program executor. ChatGPT's actual CPS dispatcher requires
+its own signed provider permission, budget, submission receipt and correlated
+MCP result; discovery alone authorizes none of those acts.
+
 The executable test exercises the actual Cogentia and Ritornu MCP cores
 without any separate registry. It verifies both languages, multiple
-sequential and parallel calls, read-only discovery, per-call admission,
+sequential and parallel calls, full source-owned discovery, per-call admission,
 budget refusal, unsupported languages and a worker deadline. The
 existing Alan and Ritornu tests are validated independently. The same
-call boundary also accepts a synthetic mediated ChatGPT provider, deliberately
-limited to a declared delegation capability and a fake result receipt;
-this is not a ChatGPT integration or an export of its private tool catalog.
+catalog boundary also describes a synthetic mediated ChatGPT provider,
+deliberately limited to a declared delegation capability without executing
+it; it does not export ChatGPT's private tool catalog.
 Both JavaScript and Alan have bounded program deadlines; a late response
 from a provider is not treated as a completed program. A late authorization
 response cannot trigger a new tool dispatch after the program deadline.
