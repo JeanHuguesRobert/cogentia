@@ -3,7 +3,8 @@
  * Providers own their MCP catalogs and authority; no second registry.
  * This does not install an independent scheduler or durable work ledger.
  */
-import { Worker } from "node:worker_threads";
+import { spawn } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { parseAlan } from "../../tools/alan-lang/grammar.js";
 import { start as startAlan, resume as resumeAlan } from "../../tools/alan-lang/run-reference.js";
 
@@ -121,10 +122,12 @@ export function createMultiMcpProgramRuntime({ providers, authorizeCall } = {}) 
         const tool = snapshot[provider]?.get(name);
         if (!tool || state.pending_call.policy?.effect !== "read_only")
           throw new Error("tool_not_available_or_budget_exhausted");
-        if (authorizeCall && await authorizeCall({
-          provider, tool, context, args: state.pending_call.input,
-        }) !== true)
+        if (authorizeCall && await withinDeadline(
+          Promise.resolve(authorizeCall({
+            provider, tool, context, args: state.pending_call.input,
+          })), deadline) !== true)
           throw new Error("program_tool_authority_denied");
+        if (Date.now() >= deadline) throw new Error("program_deadline_exceeded");
         calls++;
         const response = await withinDeadline(
           providers[provider].handleJsonRpc(
@@ -152,9 +155,31 @@ export function createMultiMcpProgramRuntime({ providers, authorizeCall } = {}) 
 
     const names = Object.fromEntries(Object.entries(snapshot)
       .map(([id, values]) => [id, [...values.keys()]]));
-    const worker = new Worker(new URL("./multimcp-program-worker.mjs", import.meta.url), {
-      workerData: { code, catalog: names, syncTimeoutMs: Math.min(1000, timeoutMs) },
-      resourceLimits: { maxOldGenerationSizeMb: 48 },
+    const childScript = fileURLToPath(
+      new URL("./multimcp-program-worker.mjs", import.meta.url));
+    // Do not share credentials, filesystem, network or process spawning
+    // with the code interpreter. The parent keeps full authority.
+    // Linux bwrap creates a separate filesystem and network namespace.
+    // The sandbox only sees node + shared libraries + its own source file.
+    // No source repository, host configuration or network is mounted.
+    const parts = childScript.split("/").slice(1);
+    const parents = parts.slice(0, -1).map((_, i) =>
+      "/" + parts.slice(0, i + 1).join("/"));
+    const child = spawn("/usr/bin/bwrap", [
+      "--unshare-all", "--die-with-parent",
+      "--ro-bind", "/usr", "/usr",
+      "--ro-bind", "/lib", "/lib",
+      "--proc", "/proc", "--dev", "/dev", "--tmpfs", "/tmp",
+      ...parents.flatMap(parent => ["--dir", parent]),
+      "--ro-bind", childScript, childScript,
+      "--chdir", "/tmp",
+      "--",
+      process.execPath,
+      "--permission", "--allow-fs-read=" + childScript,
+      "--max-old-space-size=64", childScript,
+    ], {
+      env: { PATH: "/usr/bin:/bin", LANG: "C" },
+      stdio: ["ignore", "pipe", "pipe", "ipc"],
     });
     let remaining = maxCalls;
     const outcome = await new Promise((resolve, reject) => {
@@ -168,7 +193,7 @@ export function createMultiMcpProgramRuntime({ providers, authorizeCall } = {}) 
       };
       const timer = setTimeout(() => finish(new Error("program_deadline_exceeded")),
         timeoutMs);
-      worker.on("message", async message => {
+      child.on("message", async message => {
         if (message?.type === "finished") return finish(null, {
           language, value: asJson(message.value ?? null), calls: maxCalls - remaining,
         });
@@ -176,14 +201,19 @@ export function createMultiMcpProgramRuntime({ providers, authorizeCall } = {}) 
         if (message?.type !== "invoke" || settled) return;
         const { provider, name, id } = message;
         const tool = snapshot[provider]?.get(name);
-        if (!tool || remaining-- <= 0) {
-          worker.postMessage({ type: "tool-result", id, error: "tool_not_available_or_budget_exhausted" });
+        if (!tool || remaining <= 0) {
+          if (child.connected) child.send({ type: "tool-result", id,
+            error: "tool_not_available_or_budget_exhausted" });
           return;
         }
+        remaining--;
         try {
           if (authorizeCall && await authorizeCall({ provider, tool, context,
             args: message.args }) !== true)
             throw new Error("program_tool_authority_denied");
+          // Authorization may finish after the program deadline. It never
+          // licenses a new provider dispatch after the child was terminated.
+          if (settled) return;
           const response = await providers[provider].handleJsonRpc(
             method("tools/call", { name, arguments: message.args || {} }));
           if (response.error || response.result?.isError)
@@ -191,16 +221,24 @@ export function createMultiMcpProgramRuntime({ providers, authorizeCall } = {}) 
           const result = response.result?.structuredContent ??
             response.result?.content?.[0]?.text ??
             response.result;
-          worker.postMessage({ type: "tool-result", id, value: asJson(result ?? null) });
+          if (child.connected && !settled) child.send({ type: "tool-result",
+            id, value: asJson(result ?? null) });
         } catch (error) {
-          worker.postMessage({ type: "tool-result", id, error: String(error.message || error) });
+          if (child.connected && !settled) child.send({ type: "tool-result",
+            id, error: String(error.message || error) });
         }
       });
-      worker.on("error", error => finish(error));
-      worker.on("exit", code => {
-        if (!settled) finish(new Error("program_worker_exited:" + code));
+      child.on("error", error => finish(error));
+      child.on("exit", code => {
+        if (!settled) finish(new Error("program_child_exited:" + code));
       });
-    }).finally(() => worker.terminate());
+      child.send({ type: "start", code, catalog: names,
+        syncTimeoutMs: Math.min(1000, timeoutMs) });
+    }).finally(() => {
+      // Terminate the entire permission-restricted process, including code
+      // with unresolved async work; no live sandbox state survives the call.
+      child.kill("SIGKILL");
+    });
     return outcome;
   }
   return { search, describe, execute };

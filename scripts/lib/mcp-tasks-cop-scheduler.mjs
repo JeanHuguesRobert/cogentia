@@ -62,6 +62,8 @@ export function createCopMcpTasksScheduledPilot({
     },
   });
   const jobs = new COPJobScheduler({ scheduler, bus });
+  const belongsToPilot = event => createdEvent(event) &&
+    event.payload.toolName === pilot.toolName;
   let started = false;
   function start() {
     if (!started) {
@@ -85,8 +87,8 @@ export function createCopMcpTasksScheduledPilot({
     const history = store.listTopic(packetTopicForMcpTask(taskId));
     if (history.some(e => terminalPhases.has(e.payload?.phase)))
       return { scheduled: false, reason: "claimed_or_terminal_needs_reconciliation" };
-    const created = history.find(createdEvent);
-    if (!created) throw new Error("mcp_task_creation_missing");
+    const created = history.find(belongsToPilot);
+    if (!created) throw new Error("mcp_task_creation_missing_or_foreign");
     // A deferred COP continuation already owns its timer. Re-registering
     // the same id on tasks/update would replace its Map entry while leaving
     // the previous timeout pending in COPScheduler.
@@ -130,11 +132,14 @@ export function createCopMcpTasksScheduledPilot({
     // just to recover one instance's work.
     const taskIds = typeof listTaskIds === "function"
       ? listTaskIds()
-      : store.replay().filter(createdEvent).map(event =>
+      : store.replay().filter(belongsToPilot).map(event =>
           mcpTaskIdFromPacketTopic(event.topic.id));
     for (const taskId of taskIds) {
       if (!taskId) continue;
       const existing = store.listTopic(packetTopicForMcpTask(taskId));
+      // A packet from a different MCP tool may share the same physical
+      // journal and profile; it must not become this dispatcher's work.
+      if (!existing.some(belongsToPilot)) continue;
       if (existing.some(x => terminalPhases.has(x.payload?.phase))) {
         if (!existing.some(x => ["completed", "failed", "cancelled"].includes(x.payload?.phase))) {
           result.unresolved++;

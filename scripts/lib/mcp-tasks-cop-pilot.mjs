@@ -55,7 +55,8 @@ export function createCopMcpTasksPilot({
     if (typeof taskId !== "string" || !/^task:[0-9a-f-]{36}$/.test(taskId)) throw unknown();
     const events = store.listTopic(topic(taskId));
     const created = events.find(x => x.payload?.profile === profile && x.payload.phase === "created");
-    if (!created || created.payload.owner !== identity(auth)) throw unknown();
+    if (!created || created.payload.owner !== identity(auth) ||
+      created.payload.toolName !== toolName) throw unknown();
     return { events, created: created.payload };
   }
 
@@ -132,6 +133,7 @@ export function createCopMcpTasksPilot({
     const events = store.listTopic(topic(taskId));
     const hasPacket = events.some(e =>
       e.payload?.profile === profile && e.payload?.phase === "created" &&
+      e.payload?.toolName === toolName &&
       e.payload?.packet?.packet_id === packetRefForMcpTask(taskId) &&
       e.payload?.continuation?.packetRef === packetRefForMcpTask(taskId) &&
       e.payload?.packet?.placements?.length === 1 &&
@@ -237,7 +239,11 @@ export function createCopMcpTasksPilot({
     if (!claim.ok) throw new Error(claim.error);
     if (claim.value !== "claimed") return project(taskId, auth);
     try {
-      const result = await handler(created.args);
+      // The effective caller was revalidated by the COP dispatcher before
+      // this invocation. Pass its identity to adapters that enforce
+      // program-level and per-capability permissions; old handlers can
+      // ignore the additional contextual argument.
+      const result = await handler(created.args, { taskId, auth });
       // A tool-level isError is a completed Task, not failed transport.
       commit(taskId, "completed", { result }, "mcp-completed:" + taskId);
     } catch (error) {
@@ -257,5 +263,6 @@ export function createCopMcpTasksPilot({
     return project(taskId, auth);
   }
 
-  return { adapter, run, requireInput, auditPacket, recordReconciliationRequired };
+  return { toolName, adapter, run, requireInput,
+    auditPacket, recordReconciliationRequired };
 }

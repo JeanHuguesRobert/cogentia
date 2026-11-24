@@ -38,8 +38,17 @@ No new global registry, scheduler, model router, or work ledger.
   execute over injected MCP connections. The connections supply
   their own tool descriptions through tools/list and execute through
   tools/call. Each provider retains its own authority.
-- **scripts/lib/multimcp-program-worker.mjs** performs local JS composition
-  with callable tool stubs. Each call returns to the host for admission.
+- **scripts/lib/multimcp-program-worker.mjs** runs inside a Linux
+  Bubblewrap process with its own filesystem and network namespace.
+  The host only mounts Node, its shared libraries and the child's single
+  source file. Node's permission model additionally disables filesystem
+  writes, network, spawning, workers and the inspector; environment variables
+  are deliberately reduced to PATH and LANG. Every tool request returns
+  to the separate host process for admission.
+- **scripts/lib/multimcp-cop-bridge.mjs** composes this existing runtime with
+  the canonical COP Task pilot, COPScheduler and COPJobScheduler. It uses a
+  host-supplied source journal and verified dispatch-authority resolver; it
+  creates no competing ledger or scheduler.
 - **Alan v0.2** uses its existing parser and state machine. Its tool
   suspension is fulfilled by the very same MCP host invocation, and
   the resulting step is returned to the interpreter with the original
@@ -81,20 +90,36 @@ call boundary also accepts a synthetic mediated ChatGPT provider, deliberately
 limited to a declared delegation capability and a fake result receipt;
 this is not a ChatGPT integration or an export of its private tool catalog.
 Both JavaScript and Alan have bounded program deadlines; a late response
-from a provider is not treated as a completed program.
+from a provider is not treated as a completed program. A late authorization
+response cannot trigger a new tool dispatch after the program deadline.
+An explicit intrusion test attempts to escape node:vm through the tool
+stub's host-realm constructor; kernel network and filesystem namespaces,
+the minimal process environment, and Node permissions deny access to
+the host's source files, network services and credentials.
 
-**Status: internal prototype only.** Node worker threads and node:vm are
-not a security sandbox for hostile JavaScript, particularly where
-host-realm callbacks are exposed across contexts. This module is NOT
-mounted as a public MCP code-execution tool. Before enabling arbitrary
-externally generated JavaScript, add an effective process/OS execution
-boundary, or a restricted interpreter. A worker timeout does not revoke
-a provider invocation already sent.
+The COP bridge has end-to-end tests for both languages using genuine
+Cogentia and Ritornu MCP tools, a local committed COP/FractaLog source,
+autonomous scheduled dispatch, durable Task results, restart without
+duplicate execution, separate verified dispatch and per-capability
+admission, and skipping foreign-tool packets in the same source store.
 
-Programs are not yet attached to canonical COP Task persistence, and
-Inox is not yet an enabled engine. Reuse #336 and Inseme #186 for
-continuations, and the existing MCP Tasks/COP/FractaLog bridge for
-durable, governed work. Avoid another task store or scheduler.
+**Status: local, Linux-only prototype — not deployed or advertised as a
+public MCP tool.** Linux Bubblewrap provides mount and network namespace
+isolation, and Node --permission supplies additional capability
+restrictions. node:vm is not treated as the isolation boundary. Execution
+fails rather than silently removing isolation when Bubblewrap is
+unavailable. The host still controls the actual MCP operation; a deadline
+cannot revoke a provider call that was already dispatched. Authoritative
+admission remains the responsibility of the host's existing COP authority
+chain, not the tool annotation.
+
+Programs can now be attached to canonical packet-local COP Task persistence
+**internally** through the bridge. A production MCP surface, actual actor
+and mandate resolver, sharing of source histories among tool families,
+and cross-instance deployment remain separate integration steps. Alan's
+current same-process interpreter is governed by the host and its own bounds;
+only JavaScript executes inside Bubblewrap. Inox is not yet enabled.
+Do not invent another task store or scheduler.
 
 ChatGPT is a mediated capability rather than a direct export of the
 private catalog of its connected tools. Cogentia #342 owns mediated

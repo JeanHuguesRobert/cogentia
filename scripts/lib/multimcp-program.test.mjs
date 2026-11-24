@@ -178,3 +178,80 @@ test("Alan returns deadline if the MCP provider never answers", async () => {
     language:"alan",code:source,timeoutMs:150,
   }), /program_deadline_exceeded/);
 });
+
+test("Linux sandbox cannot read host files, inherit secrets or open a host listener", async () => {
+  const { createServer } = await import("node:net");
+  const server = createServer();
+  await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  const port = server.address().port;
+  let accepted = 0;
+  server.on("connection", socket => { accepted++; socket.destroy(); });
+  try {
+    const runtime = create();
+    const checked = await runtime.execute({
+      language: "javascript",
+      code: [
+        // Deliberately reach the host-realm tool closure's Function constructor.
+        // This confirms the isolation does not rely on vm's context boundary.
+        "const p = tools.cogentia.cogentia_pattern_list.constructor('return process')();",
+        "const fs = p.getBuiltinModule('node:fs');",
+        "const net = p.getBuiltinModule('node:net');",
+        "let hostRead = false;",
+        "try { fs.readFileSync('/srv/cogentia/repos/cogentia/AGENTS.md'); hostRead = true; } catch {}",
+        "const reachable = await new Promise(resolve => {",
+        "  const s = net.connect(" + port + ", '127.0.0.1');",
+        "  s.once('connect', () => {s.destroy();resolve(true)});",
+        "  s.once('error', () => resolve(false));",
+        "});",
+        "return { hostRead, reachable, noSecrets: !p.env.COGENTIA_MCP_JHN_TOKEN,",
+        "  fsDenied: !p.permission.has('fs.read', '/srv/cogentia/repos/cogentia/AGENTS.md'),",
+        "  networkDenied: !p.permission.has('net') };",
+      ].join("\n"),
+    });
+    assert.deepEqual(checked.value, {
+      hostRead: false, reachable: false, noSecrets: true,
+      fsDenied: true, networkDenied: true,
+    });
+    assert.equal(accepted, 0);
+  } finally {
+    await new Promise(resolve => server.close(resolve));
+  }
+});
+
+test("late host authorization cannot dispatch an MCP call after program expiry", async () => {
+  let executions = 0;
+  const provider = {
+    async handleJsonRpc(request) {
+      if (request.method === "tools/list") return {result:{tools:[{
+        name:"read", annotations:{readOnlyHint:true}, inputSchema:{type:"object"}
+      }]}};
+      executions++;
+      return { result: { structuredContent:{ok:true} } };
+    }
+  };
+  const runtime = createMultiMcpProgramRuntime({
+    providers:{slow: provider},
+    authorizeCall: () => new Promise(resolve => setTimeout(() => resolve(true), 240)),
+  });
+  await assert.rejects(runtime.execute({
+    code: "return await tools.slow.read({});",
+    timeoutMs: 100,
+  }), /program_deadline_exceeded/);
+  await new Promise(resolve => setTimeout(resolve, 260));
+  assert.equal(executions, 0);
+});
+
+test("catching an exhausted-budget error does not inflate the count of admitted calls", async () => {
+  const runtime = create();
+  const value = await runtime.execute({
+    language:"javascript",
+    maxCalls:1,
+    code: [
+      "await tools.cogentia.cogentia_pattern_list({});",
+      "try { await tools.ritornu.ritornu_health({}); } catch {}",
+      "return 'completed_after_denial';",
+    ].join("\n"),
+  });
+  assert.equal(value.value,"completed_after_denial");
+  assert.equal(value.calls,1);
+});
