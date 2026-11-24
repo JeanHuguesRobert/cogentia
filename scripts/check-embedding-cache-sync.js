@@ -6,6 +6,8 @@ import os from "node:os";
 import path from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { createHash } from "node:crypto";
+import { gunzipSync } from "node:zlib";
 import { DatabaseSync } from "node:sqlite";
 
 const execFileAsync = promisify(execFile);
@@ -18,8 +20,8 @@ const artifact = path.join(tempRoot, "embeddings.jsonl.gz");
 try {
   createIndexFixture(sourceRoot, {
     chunks: [
-      { id: 1, hash: "hash-shared", text: "Shared public chunk." },
-      { id: 2, hash: "hash-source-only", text: "Source-only public chunk." },
+      { id: 1, hash: "hash-shared", text: "Shared public chunk. ".repeat(10) },
+      { id: 2, hash: "hash-source-only", text: "Source-only public chunk. ".repeat(10) },
     ],
     embeddings: [
       { chunk_id: 1, hash: "hash-shared", vector: [0.1, 0.2, 0.3, 0.4] },
@@ -28,8 +30,8 @@ try {
   });
   createIndexFixture(targetRoot, {
     chunks: [
-      { id: 10, hash: "hash-shared", text: "Shared public chunk." },
-      { id: 11, hash: "hash-target-only", text: "Target-only public chunk." },
+      { id: 10, hash: "hash-shared", text: "Shared public chunk. ".repeat(10) },
+      { id: 11, hash: "hash-target-only", text: "Target-only public chunk. ".repeat(10) },
     ],
     embeddings: [],
   });
@@ -82,6 +84,57 @@ try {
   assert.equal(status.providers[0].model_name, "text-embedding-3-small");
   assert.equal(status.providers[0].dimensions, 4);
 
+  const targetDbPath=path.join(targetRoot,".cogentia","index","corpus.sqlite");
+  const sourceDbPath=path.join(sourceRoot,".cogentia","index","corpus.sqlite");
+  const targetDb=new DatabaseSync(targetDbPath);
+  assert.equal(targetDb.prepare("SELECT policy FROM embeddings").get().policy,null);
+  targetDb.close();
+  // A known policy is transported verbatim, not inferred from the CLI filters.
+  const sourceDb=new DatabaseSync(sourceDbPath);
+  sourceDb.exec("ALTER TABLE embeddings ADD COLUMN policy TEXT; UPDATE embeddings SET policy='document-v1'");
+  sourceDb.close();
+  const knownArtifact=path.join(tempRoot,"known.jsonl");
+  assert.equal((await runCogentia(sourceRoot,["embeddings","export-cache","--output",knownArtifact,"--json"])).rows,2);
+  const knownRows=fs.readFileSync(knownArtifact,"utf8").trim().split("\n").map(JSON.parse);
+  assert.ok(knownRows.filter(r=>r.type==="embedding").every(r=>r.policy==="document-v1"));
+  const conflict=await runCogentia(targetRoot,["embeddings","sync-plan",knownArtifact,"--json"]);
+  assert.equal(conflict.incompatible_existing,1);
+  assert.equal(conflict.importable,0);
+  const freshRoot=path.join(tempRoot,"fresh");
+  createIndexFixture(freshRoot,{chunks:[{id:20,hash:"hash-shared",text:"Shared public chunk. ".repeat(10)}],embeddings:[]});
+  const corrupt=path.join(tempRoot,"corrupt.jsonl");
+  const corrupted=knownRows.map(r=>r.type==="summary"?{...r,rows_hash:"0".repeat(64)}:r);
+  fs.writeFileSync(corrupt,corrupted.map(r=>JSON.stringify(r)).join("\n")+"\n");
+  const refusal=await runCogentia(freshRoot,["embeddings","import-cache",corrupt,"--json"]);
+  assert.equal(refusal.ok,false);
+  const freshPath=path.join(freshRoot,".cogentia","index","corpus.sqlite");
+  const freshDb=new DatabaseSync(freshPath);
+  assert.equal(freshDb.prepare("SELECT count(*) AS n FROM embeddings").get().n,0);
+  freshDb.close();
+  assert.equal((await runCogentia(freshRoot,["embeddings","import-cache",knownArtifact,"--json"])).imported,1);
+  const verifiedDb=new DatabaseSync(freshPath);
+  assert.equal(verifiedDb.prepare("SELECT policy FROM embeddings").get().policy,"document-v1");
+  verifiedDb.close();
+  const unknownRows=gunzipSync(fs.readFileSync(artifact)).toString().trim().split("\n").map(JSON.parse);
+  assert.ok(unknownRows.filter(r=>r.type==="embedding").every(r=>r.policy===null));
+  // Legacy wire identity is verified without inventing stored provenance.
+  const stable = v => JSON.stringify(v, (_k, x) => x && typeof x === "object" && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map(k => [k,x[k]])) : x);
+  const digest = v => createHash("sha256").update(v).digest("hex");
+  const legacyRows=unknownRows.filter(r=>r.type==="embedding").map(r=>{
+    const {policy,...old}=r;
+    old.embedding_key=digest(stable({content_hash:r.content_hash,provider:r.provider,model_name:r.model_name,dimensions:r.dimensions,policy:`${r.provider}/${r.model_name}/${r.dimensions}`}));
+    return old;
+  });
+  const legacyArtifact=path.join(tempRoot,"legacy.jsonl");
+  fs.writeFileSync(legacyArtifact,[unknownRows[0],...legacyRows,{...unknownRows.at(-1),rows_hash:digest(legacyRows.map(stable).join(""))}].map(r=>JSON.stringify(r)).join("\n")+"\n");
+  const legacyRoot=path.join(tempRoot,"legacy");
+  createIndexFixture(legacyRoot,{chunks:[{id:30,hash:"hash-shared",text:"Shared public chunk. ".repeat(10)}],embeddings:[]});
+  const legacyResult=await runCogentia(legacyRoot,["embeddings","import-cache",legacyArtifact,"--json"]);
+  assert.equal(legacyResult.ok,true);
+  assert.equal(legacyResult.imported,1);
+  const legacyDb=new DatabaseSync(path.join(legacyRoot,".cogentia","index","corpus.sqlite"));
+  assert.equal(legacyDb.prepare("SELECT policy FROM embeddings").get().policy,null);
+  legacyDb.close();
   console.log(JSON.stringify({ ok: true, exported: exported.rows, imported: imported.imported, already_present: secondPlan.already_present }, null, 2));
 } finally {
   fs.rmSync(tempRoot, { recursive: true, force: true });
@@ -97,7 +150,7 @@ async function runCogentia(dataRoot, args) {
       COGENTIA_DATA_DIR: dataRoot,
     },
     maxBuffer: 1024 * 1024,
-  });
+  }).catch(error=>{if(error.stdout)return {stdout:error.stdout};throw error;});
   return JSON.parse(stdout);
 }
 
