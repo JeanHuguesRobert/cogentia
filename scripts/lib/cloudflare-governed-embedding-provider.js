@@ -5,7 +5,7 @@
  * obtains a public chunk only through trusted indexed content lookup and
  * persists its vector before returning a redacted receipt.
  *
- * The already-signed JHN v5 mandate covers the general host.process.run
+ * The already-signed JHN standing mandate covers the general host.process.run
  * operation on node:fracta2. Cloudflare is a selected implementation of a
  * permitted task, not another capability, mandate, or autonomous entitlement.
  * Composition injects the existing independently verified host-process COP
@@ -43,29 +43,49 @@ export function createCloudflareFreeEmbeddingProvider({
          input.chunk_refs.length<1||input.chunk_refs.length>8||
          input.chunk_refs.some(ref=>!safeChunkId(ref?.chunk_id)||!safeHash(ref?.content_hash)))
         return refuse();
-      const seen=new Set();
-      for(const ref of input.chunk_refs) {
-        if(seen.has(ref.chunk_id))return refuse();
-        seen.add(ref.chunk_id);
-      }
-      // Source data comes exclusively from the local indexed public projection.
-      const chunks=await loadPublicChunks(input.chunk_refs);
-      if(!Array.isArray(chunks)||chunks.length!==input.chunk_refs.length)
-        return refuse();
-      let totalChars=0;
-      for(let i=0;i<chunks.length;i++) {
-        const expected=input.chunk_refs[i],chunk=chunks[i];
-        if(chunk?.id!==expected.chunk_id||chunk.content_hash!==expected.content_hash||
-           chunk.searchable_public!==1||typeof chunk.text!=='string'||
-           chunk.text.length<1||chunk.text.length>7000) return refuse();
-        totalChars+=chunk.text.length;
-      }
-      if(totalChars>24000)return refuse();
-      const pending = chunks.filter(chunk=>chunk.existing_valid_embedding!==true);
-      // Replays of valid same-hash vectors never contact Cloudflare.
-      if(!pending.length)return {ok:true};
-      // No credential material leaves the callback, process logs or result.
-      return vault.withSecret('jhn-vault:cloudflare_account_id',async accountId=>{
+      return runCloudflareEmbeddingBatch({
+        vault:{withSecret:(ref,callback)=>ref==='jhn-vault:cloudflare_api_key'
+          ?callback(secret):vault.withSecret(ref,callback)},
+        loadPublicChunks,persist:rows=>persist(rows,{grant}),fetchImpl,
+        chunkRefs:input.chunk_refs,
+      });
+    },
+  };
+  return Object.freeze(descriptor);
+}
+
+/** Bounded recipe executed inside an already admitted host process.
+ * Does not issue authority, reserve COP steps or accept caller claims of authority.
+ * The caller owns admission and settlement; this function owns provider work.
+ */
+export async function runCloudflareEmbeddingBatch({vault,loadPublicChunks,persist,fetchImpl=fetch,chunkRefs}={}) {
+  if(typeof vault?.withSecret!=='function'||typeof loadPublicChunks!=='function'||typeof persist!=='function')throw new TypeError('cloudflare_recipe_dependencies_required');
+  if(!Array.isArray(chunkRefs)||chunkRefs.length<1||chunkRefs.length>8||chunkRefs.some(ref=>!safeChunkId(ref?.chunk_id)||!safeHash(ref?.content_hash)))return refuse();
+  const seen=new Set();
+  for(const ref of chunkRefs) {
+    if(seen.has(ref.chunk_id))return refuse();
+    seen.add(ref.chunk_id);
+  }
+  // Source data comes exclusively from the local indexed public projection.
+  const chunks=await loadPublicChunks(chunkRefs);
+  if(!Array.isArray(chunks)||chunks.length!==chunkRefs.length)
+    return refuse();
+  let totalChars=0;
+  for(let i=0;i<chunks.length;i++) {
+    const expected=chunkRefs[i],chunk=chunks[i];
+    if(chunk?.id!==expected.chunk_id||chunk.content_hash!==expected.content_hash||
+       chunk.searchable_public!==1||typeof chunk.text!=='string'||
+       chunk.text.length<1||chunk.text.length>7000) return refuse();
+    totalChars+=chunk.text.length;
+  }
+  if(totalChars>24000)return refuse();
+  const pending = chunks.filter(chunk=>chunk.existing_valid_embedding!==true);
+  // Replays of valid same-hash vectors never contact Cloudflare.
+  if(!pending.length)return {ok:true,stored:0,reused:chunks.length,usage:null};
+  // No credential material leaves the callback, process logs or result.
+  return vault.withSecret('jhn-vault:cloudflare_api_key',async secret=>{
+    if(typeof secret!=='string'||!secret.trim())return refuse();
+    return vault.withSecret('jhn-vault:cloudflare_account_id',async accountId=>{
         if(!accountPattern.test(accountId))return refuse();
         const headers={Authorization:`Bearer ${secret}`,Accept:'application/json'};
         async function get(path) {
@@ -125,15 +145,17 @@ export function createCloudflareFreeEmbeddingProvider({
           provider:'cloudflare',model_name:CF_EMBEDDING_MODEL,
           dimensions:CF_EMBEDDING_DIMENSIONS,embedding:rows[i].embedding,
           embedding_policy_version:'cloudflare-gemma2-public-search-v1',
-        })),{grant});
+        })));
         // A stale/partial/unknown DB acknowledgment is NOT success: replay
         // from the durable projection must decide what remains to be done.
+        const usage=Object.fromEntries(Object.entries(body.result.usage||{}).filter(([key,value])=>
+          ['prompt_tokens','total_tokens','neurons'].includes(key)&&Number.isFinite(value)&&value>=0));
         return {ok:result?.ok===true && result.stale===0 &&
-          Number(result.stored||0)+Number(result.reused||0)===pending.length};
-      });
-    },
-  };
-  return Object.freeze(descriptor);
+          Number(result.stored||0)+Number(result.reused||0)===pending.length,
+          stored:result?.stored??0,reused:(result?.reused??0)+chunks.length-pending.length,
+          stale:result?.stale??0,usage};
+    });
+  });
 }
 
 /** Bind to the existing SQLite index; current source hashes are checkpoints. */
