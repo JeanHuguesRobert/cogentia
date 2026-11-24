@@ -6,6 +6,8 @@
  * then re-bind to the rebuilt IDs. A modified chunk gets no old embedding.
  * The snapshot is TEMP and the entire cycle runs within the caller's transaction.
  */
+import {ensureEmbeddingPolicyColumn} from "./embedding-store-safety.js";
+
 const TEMP_TABLE = "cogentia_preserved_chunk_embeddings";
 
 export function snapshotChunkEmbeddings(db) {
@@ -13,11 +15,12 @@ export function snapshotChunkEmbeddings(db) {
     "SELECT 1 AS present FROM sqlite_master WHERE type='table' AND name='embeddings'"
   ).get();
   if (!exists) return { available: false, preserved: 0 };
+  ensureEmbeddingPolicyColumn(db);
   db.exec(`DROP TABLE IF EXISTS temp.${TEMP_TABLE}`);
   db.exec(`
     CREATE TEMP TABLE ${TEMP_TABLE} AS
     SELECT c.repo, c.path, c.content_hash, e.provider, e.model_name,
-           e.dimensions, e.embedding, e.created_at
+           e.dimensions, e.policy, e.embedding, e.created_at
     FROM embeddings AS e
     JOIN chunks AS c ON c.id = e.chunk_id
     WHERE c.content_hash = e.content_hash
@@ -33,9 +36,9 @@ export function restoreChunkEmbeddings(db, snapshot) {
   const result = db.prepare(`
     INSERT OR IGNORE INTO embeddings
       (chunk_id, content_hash, provider, repo, path, start_line, end_line,
-       embedding, model_name, dimensions, created_at)
+       embedding, model_name, dimensions, policy, created_at)
     SELECT c.id, c.content_hash, s.provider, c.repo, c.path, c.start_line,
-           c.end_line, s.embedding, s.model_name, s.dimensions, s.created_at
+           c.end_line, s.embedding, s.model_name, s.dimensions, s.policy, s.created_at
     FROM temp.${TEMP_TABLE} AS s
     JOIN chunks AS c
       ON c.repo = s.repo AND c.path = s.path

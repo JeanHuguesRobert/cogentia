@@ -19,6 +19,7 @@ export const CF_FREE_EMBEDDING_PROVIDER = 'cloudflare_workers_free';
 export const HOST_PROCESS_RUN_CAPABILITY = 'host.process.run';
 export const CF_EMBEDDING_MODEL = '@cf/google/embeddinggemma-2';
 export const CF_EMBEDDING_DIMENSIONS = 768;
+export const CF_EMBEDDING_POLICY = 'cloudflare-gemma2-public-search-v1';
 const API='https://api.cloudflare.com/client/v4';
 const accountPattern=/^[a-f0-9]{32}$/i;
 const safeChunkId=n=>Number.isSafeInteger(n)&&n>0;
@@ -74,7 +75,7 @@ export async function runCloudflareEmbeddingBatch({vault,loadPublicChunks,persis
   for(let i=0;i<chunks.length;i++) {
     const expected=chunkRefs[i],chunk=chunks[i];
     if(chunk?.id!==expected.chunk_id||chunk.content_hash!==expected.content_hash||
-       chunk.searchable_public!==1||typeof chunk.text!=='string'||
+       chunk.searchable_public!==1||chunk.incompatible_embedding_space===true||typeof chunk.text!=='string'||
        chunk.text.length<1||chunk.text.length>7000) return refuse();
     totalChars+=chunk.text.length;
   }
@@ -144,7 +145,7 @@ export async function runCloudflareEmbeddingBatch({vault,loadPublicChunks,persis
           chunk_id:chunk.id,content_hash:chunk.content_hash,
           provider:'cloudflare',model_name:CF_EMBEDDING_MODEL,
           dimensions:CF_EMBEDDING_DIMENSIONS,embedding:rows[i].embedding,
-          embedding_policy_version:'cloudflare-gemma2-public-search-v1',
+          embedding_policy_version:CF_EMBEDDING_POLICY,
         })));
         // A stale/partial/unknown DB acknowledgment is NOT success: replay
         // from the durable projection must decide what remains to be done.
@@ -162,15 +163,23 @@ export async function runCloudflareEmbeddingBatch({vault,loadPublicChunks,persis
 export function createSqliteCloudflareEmbeddingProjection(db) {
   if(typeof db?.prepare!=='function')throw new TypeError('sqlite_index_required');
   const chunk=db.prepare('SELECT id,content_hash,text,searchable_public FROM chunks WHERE id = ?');
-  const existing=db.prepare(`SELECT 1 AS present FROM embeddings
-    WHERE chunk_id = ? AND content_hash = ? AND provider = 'cloudflare'
-      AND model_name = ? AND dimensions = ? LIMIT 1`);
+  // Legacy rows with unknown policy are not equivalent to this recipe.
   return Object.freeze({
     async loadPublicChunks(refs) {
+      // Resolve schema at each load: the first persistence may add the column.
+      const hasPolicy=db.prepare('PRAGMA table_info(embeddings)').all().some(c=>c.name==='policy');
+      const policyExpr=hasPolicy?'policy':'NULL';
+      const existing=db.prepare(`SELECT 1 AS present FROM embeddings
+        WHERE chunk_id = ? AND content_hash = ? AND provider = 'cloudflare'
+          AND model_name = ? AND dimensions = ? AND ${policyExpr} = ? LIMIT 1`);
+      const incompatible=db.prepare(`SELECT 1 AS present FROM embeddings
+        WHERE provider='cloudflare' AND model_name=?
+          AND (dimensions<>? OR ${policyExpr} IS NOT ?) LIMIT 1`);
+      const conflict=Boolean(incompatible.get(CF_EMBEDDING_MODEL,CF_EMBEDDING_DIMENSIONS,CF_EMBEDDING_POLICY));
       return refs.map(ref=>{
         const row=chunk.get(ref.chunk_id);
-        return row ? {...row,existing_valid_embedding:Boolean(
-          existing.get(row.id,row.content_hash,CF_EMBEDDING_MODEL,CF_EMBEDDING_DIMENSIONS))}:null;
+        return row ? {...row,incompatible_embedding_space:conflict,existing_valid_embedding:Boolean(
+          existing.get(row.id,row.content_hash,CF_EMBEDDING_MODEL,CF_EMBEDDING_DIMENSIONS,CF_EMBEDDING_POLICY))}:null;
       });
     },
     async persist(rows) {

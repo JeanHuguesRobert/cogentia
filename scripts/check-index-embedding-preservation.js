@@ -29,6 +29,7 @@ function dbWithFixtures() {
   return db;
 }
 const db=dbWithFixtures();
+db.exec("ALTER TABLE embeddings ADD COLUMN policy TEXT; UPDATE embeddings SET policy='document-v1' WHERE chunk_id=1");
 db.exec("BEGIN");
 const snapshot=snapshotChunkEmbeddings(db);
 assert.equal(snapshot.preserved,2);
@@ -41,10 +42,11 @@ db.exec(`
 const retained=restoreChunkEmbeddings(db,snapshot);
 db.exec("COMMIT");
 assert.equal(retained.restored,1);
-const rows=db.prepare("SELECT chunk_id,content_hash,embedding FROM embeddings").all();
+const rows=db.prepare("SELECT chunk_id,content_hash,embedding,policy FROM embeddings").all();
 assert.equal(rows.length,1);
 assert.equal(rows[0].chunk_id,100);
 assert.equal(rows[0].embedding,"[0.1,0.2]");
 assert.equal(rows[0].content_hash,"unchanged-hash");
+assert.equal(rows[0].policy,"document-v1");
 db.close();
 console.log("Index embedding preservation across cascade: PASS");

@@ -8,6 +8,16 @@
  *
  * This is a reconstructible index projection, not a second continuation store.
  */
+// Additive migration: unknown legacy provenance stays NULL. Until the full
+// space-key migration lands, reject policy conflicts instead of overwriting.
+export function ensureEmbeddingPolicyColumn(db) {
+  if (!db.prepare("PRAGMA table_info(embeddings)").all().some(c => c.name === "policy")) {
+    db.exec("ALTER TABLE embeddings ADD COLUMN policy TEXT");
+    return true;
+  }
+  return false;
+}
+
 export function storeEmbeddingsSafely(db, incoming) {
   if (!Array.isArray(incoming)) throw new TypeError("embeddings must be an array");
 
@@ -25,11 +35,14 @@ export function storeEmbeddingsSafely(db, incoming) {
         || item.embedding.length !== dimensions || !item.embedding.every(v => typeof v === "number" && Number.isFinite(v))) {
       throw new Error("invalid_embedding_row");
     }
+    const policy = item.embedding_policy_version ?? item.policy ?? null;
+    if (policy !== null && (typeof policy !== "string" || !policy.trim() || policy.length > 256)) throw new Error("invalid_embedding_policy");
+    if (item.policy != null && item.embedding_policy_version != null && item.policy !== item.embedding_policy_version) throw new Error("conflicting_embedding_policy");
     const key = JSON.stringify([chunkId, provider, model]);
-    const normalized = { chunkId, provider, model, hash, dimensions, embedding: JSON.stringify(item.embedding) };
+    const normalized = { chunkId, provider, model, hash, dimensions, policy, embedding: JSON.stringify(item.embedding) };
     const previous = byKey.get(key);
     if (previous) {
-      if (previous.hash !== hash || previous.dimensions !== dimensions || previous.embedding !== normalized.embedding) {
+      if (previous.hash !== hash || previous.dimensions !== dimensions || previous.policy !== policy || previous.embedding !== normalized.embedding) {
         throw new Error("conflicting_duplicate_embedding");
       }
       repeatedInputs++;
@@ -38,22 +51,24 @@ export function storeEmbeddingsSafely(db, incoming) {
     }
   }
 
-  const chunkLookup = db.prepare("SELECT repo, path, start_line, end_line, content_hash FROM chunks WHERE id = ?");
-  const existingLookup = db.prepare("SELECT content_hash, dimensions FROM embeddings WHERE chunk_id = ? AND provider = ? AND model_name = ?");
-  const insert = db.prepare(`
-    INSERT INTO embeddings
-    (chunk_id, content_hash, provider, repo, path, start_line, end_line, embedding, model_name, dimensions, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
-    ON CONFLICT(chunk_id, provider, model_name) DO UPDATE SET
-      content_hash=excluded.content_hash, repo=excluded.repo, path=excluded.path,
-      start_line=excluded.start_line, end_line=excluded.end_line,
-      embedding=excluded.embedding, dimensions=excluded.dimensions,
-      created_at=excluded.created_at
-    WHERE embeddings.content_hash <> excluded.content_hash
-  `);
   const outcome = { stored: 0, reused: 0, stale: 0, repeated_inputs: repeatedInputs };
   db.exec("BEGIN IMMEDIATE");
   try {
+    ensureEmbeddingPolicyColumn(db);
+    const chunkLookup = db.prepare("SELECT repo, path, start_line, end_line, content_hash FROM chunks WHERE id = ?");
+    const existingLookup = db.prepare("SELECT content_hash, dimensions, policy FROM embeddings WHERE chunk_id = ? AND provider = ? AND model_name = ?");
+    const insert = db.prepare(`
+      INSERT INTO embeddings
+      (chunk_id, content_hash, provider, repo, path, start_line, end_line, embedding, model_name, dimensions, policy, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+      ON CONFLICT(chunk_id, provider, model_name) DO UPDATE SET
+        content_hash=excluded.content_hash, repo=excluded.repo, path=excluded.path,
+        start_line=excluded.start_line, end_line=excluded.end_line,
+        embedding=excluded.embedding, dimensions=excluded.dimensions, policy=excluded.policy,
+        created_at=excluded.created_at
+      WHERE embeddings.content_hash <> excluded.content_hash
+    `);
+    const incompatibleSpace = db.prepare("SELECT 1 FROM embeddings WHERE provider = ? AND model_name = ? AND (policy IS NOT ? OR dimensions <> ?) LIMIT 1");
     for (const item of byKey.values()) {
       const chunk = chunkLookup.get(item.chunkId);
       if (!chunk || chunk.content_hash !== item.hash) {
@@ -64,13 +79,17 @@ export function storeEmbeddingsSafely(db, incoming) {
       if (existing && Number(existing.dimensions) !== item.dimensions) {
         throw new Error("embedding_space_dimension_conflict");
       }
+      if (existing && existing.policy !== item.policy) throw new Error("embedding_space_policy_conflict");
+      // Until policy becomes part of the unique key, one provider/model pair
+      // must not accumulate heterogeneous policies across different chunks.
+      if (incompatibleSpace.get(item.provider,item.model,item.policy,item.dimensions)) throw new Error("embedding_space_policy_conflict");
       if (existing?.content_hash === item.hash) {
         outcome.reused++;
         continue;
       }
       const result = insert.run(
         item.chunkId, item.hash, item.provider, chunk.repo, chunk.path,
-        chunk.start_line, chunk.end_line, item.embedding, item.model, item.dimensions,
+        chunk.start_line, chunk.end_line, item.embedding, item.model, item.dimensions, item.policy,
       );
       if (Number(result.changes) !== 1) throw new Error("embedding_store_race");
       outcome.stored++;

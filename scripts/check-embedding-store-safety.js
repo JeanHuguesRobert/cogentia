@@ -45,5 +45,14 @@ const newRow=item(2,"hash-b","cloudflare","qwen3-0.6b",[0.1,0.9]);
 assert.throws(()=>storeEmbeddingsSafely(db,[newRow,item(1,"hash-a-new","cloudflare","qwen3-0.6b",[0.4,0.3,0.3])]),/dimension_conflict/);
 assert.equal(db.prepare("SELECT count(*) AS n FROM embeddings WHERE chunk_id=2").get().n,0);
 assert.equal(db.prepare("SELECT embedding FROM embeddings WHERE provider='openai'").get().embedding,existing);
+// Known policy is retained; legacy provenance is never invented.
+const known={...item(1,"hash-a-new","cloudflare","gemma-policy-test",[0.1,0.9]),embedding_policy_version:"document-v1"};
+assert.equal(storeEmbeddingsSafely(db,[known]).stored,1);
+assert.equal(storeEmbeddingsSafely(db,[known]).reused,1);
+assert.equal(db.prepare("SELECT policy FROM embeddings WHERE model_name='gemma-policy-test'").get().policy,"document-v1");
+assert.equal(db.prepare("SELECT policy FROM embeddings WHERE provider='openai'").get().policy,null);
+assert.throws(()=>storeEmbeddingsSafely(db,[{...known,embedding_policy_version:"document-v2"}]),/policy_conflict/);
+assert.throws(()=>storeEmbeddingsSafely(db,[{...known,chunk_id:2,content_hash:"hash-b",embedding_policy_version:"document-v2"}]),/policy_conflict/);
+assert.throws(()=>storeEmbeddingsSafely(db,[{...known,policy:"different"}]),/conflicting_embedding_policy/);
 db.close();
 console.log("embedding-store-safety: PASS (replay, stale-hash, rollback, model coexistence, baseline)");

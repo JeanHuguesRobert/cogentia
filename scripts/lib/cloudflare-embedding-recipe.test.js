@@ -28,3 +28,17 @@ test('private or obsolete references are refused before Vault access',async()=>{
  const result=await runCloudflareEmbeddingBatch({chunkRefs:[ref],loadPublicChunks:async()=>[row],persist:()=>assert.fail('persist'),vault:{withSecret:()=>assert.fail('vault')},fetchImpl:()=>assert.fail('network')});assert.equal(result.ok,false);
  }
 });
+
+test('legacy or different policy is refused before Vault even on same hash',async()=>{
+ const db=new DatabaseSync(':memory:');
+ try {
+ db.exec('CREATE TABLE chunks(id INTEGER PRIMARY KEY,content_hash TEXT,text TEXT,searchable_public INTEGER); CREATE TABLE embeddings(chunk_id INTEGER,content_hash TEXT,provider TEXT,model_name TEXT,dimensions INTEGER);');
+ db.prepare('INSERT INTO chunks VALUES(1,?,?,1)').run(ref.content_hash,'public fixture');
+ db.prepare('INSERT INTO embeddings VALUES(1,?,?,?,768)').run(ref.content_hash,'cloudflare',CF_EMBEDDING_MODEL);
+ const projection=createSqliteCloudflareEmbeddingProjection(db);
+ const invoke=()=>runCloudflareEmbeddingBatch({...projection,chunkRefs:[ref],vault:{withSecret:()=>assert.fail('vault')},fetchImpl:()=>assert.fail('network')});
+ assert.equal((await invoke()).ok,false);
+ db.exec("ALTER TABLE embeddings ADD COLUMN policy TEXT; UPDATE embeddings SET policy='other-policy'");
+ assert.equal((await invoke()).ok,false);
+ }finally{db.close();}
+});
