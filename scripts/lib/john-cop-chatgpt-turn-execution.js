@@ -76,7 +76,9 @@ export async function executeJohnCanonicalChatgptTurn({
    const failed=events.find(x=>x.type==='john.run.failed');
    const raw=failed?.data?.data?.handler_error?.code||
      failed?.data?.data?.code||null;
-   const safe=typeof raw==='string'&&/^[a-z][a-z0-9_]{1,79}$/.test(raw)
+   // The harness serializes numeric JSON-RPC errors as strings. Preserve
+   // standard and implementation-defined JSON-RPC error codes, not messages.
+   const safe=typeof raw==='string'&&/^(?:[a-z][a-z0-9_]{1,79}|-32[0-6][0-9]{2}|-32700)$/.test(raw)
      ?raw:null;
    return {ok:false,executed:true,error:'chatgpt_turn_failed',
      ...(safe?{failure_code:safe}:{}),events};

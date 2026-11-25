@@ -116,3 +116,19 @@ test('terminal browser failure exposes only a sanitized reason from John receipt
    assert.equal(result.executed,true);
  }finally{store.close()}
 });
+
+
+test('JSON-RPC diagnostic codes survive John receipt projection without error messages',async()=>{
+ for(const code of ['-32020','-32023','-32024','-32601','-32602','-32700','-99999','-32020 secret']){
+  const store=fixture(true);
+  try{
+   const result=await executeJohnCanonicalChatgptTurn({store,auth,request,
+    verifyIssuer:verifier,run:async()=>[
+     {type:'john.accounting.settled',data:{observed_steps:2}},
+     {type:'john.run.failed',data:{data:{handler_error:{code,message:'private detail'}}}},
+    ]});
+   assert.equal(result.error,'chatgpt_turn_failed');
+   assert.equal(result.failure_code,/^(-32[0-6][0-9]{2}|-32700)$/.test(code)?code:undefined);
+  }finally{store.close()}
+ }
+});
