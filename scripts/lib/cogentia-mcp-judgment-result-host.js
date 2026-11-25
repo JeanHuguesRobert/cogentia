@@ -50,6 +50,7 @@ function hasActiveBudgetReservation(store, budgetId, reservationId) {
 export function createCanonicalMcpJudgmentResultHost({
   store, mandate_ref, budget_id, transport_mandate_label,
   verifyIssuer, channelPermission, autoProcess = false,
+  onAcceptedCpsReturn = null,
 } = {}) {
   if (!store || store.kind !== "sqlite" ||
       typeof store.listTopic !== "function" ||
@@ -58,6 +59,8 @@ export function createCanonicalMcpJudgmentResultHost({
       typeof verifyIssuer !== "function" ||
       typeof channelPermission !== "function")
     throw new TypeError("canonical_result_authority_configuration_required");
+  if(onAcceptedCpsReturn!==null&&typeof onAcceptedCpsReturn!=="function")
+    throw new TypeError("optional_cps_result_observer_must_be_function");
   const receiptStore = createSqliteMcpResultReceiptStore(store);
   return async function resultHost({ auth } = {}) {
     return {
@@ -120,9 +123,33 @@ export function createCanonicalMcpJudgmentResultHost({
           const evaluation=await evaluate(id);
           // If the evaluator cannot proceed, leave the durable wake for
           // reconciliation rather than disguising an evaluation as success.
+          // Event-driven projection only: the CPS source remains here,
+          // and the receiving program owns its distinct local Packet log.
+          // An observer failure must not invalidate an already committed
+          // MCP receipt or turn a delivered result into an apparent retry.
+          let programResumeStatus="not_applicable";
+          const assignment=continuation.state?.assignment_ref;
+          if(evaluation.status==="handler_completed"&&
+             typeof assignment==="string"&&
+             /^packet:pkt-mcp-[0-9a-f-]{36}:slot:[0-9]+$/.test(assignment)&&
+             onAcceptedCpsReturn){
+            try {
+              const res=await onAcceptedCpsReturn({
+                continuation_id:id,assignment_ref:assignment,
+                source_receipt_ref:returned.idempotency_key,
+              });
+              programResumeStatus=res?.status||"not_confirmed";
+            }catch {
+              // The separate source journals still permit later read-only
+              // reconciliation without a second provider/browser submission.
+              programResumeStatus="needs_reconciliation";
+            }
+          }
           return {status:"returned",autonomous_handler:false,
             scheduler_wake_receipt:wake.receipt_ref,
-            local_cps_evaluation:evaluation.status};
+            local_cps_evaluation:evaluation.status,
+            ...(programResumeStatus!=="not_applicable"
+              ? {multimcp_resume_status:programResumeStatus}:{})};
         }
         // Dispatch only the trusted, no-external-effects local fixture handler.
         // Production agents need a separately configured governed resolver.

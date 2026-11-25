@@ -148,13 +148,31 @@ export function createMultiMcpServiceRuntime(env=process.env,{
         continuation_id,
       });
     }
+    async function acceptAssignedCpsReturn({
+      assignment_ref,continuation_id,
+    }={}) {
+      if(!cpsStore)return {status:"not_connected"};
+      const match=/^packet:pkt-mcp-([0-9a-f-]{36}):slot:([0-9]+)$/
+        .exec(assignment_ref||"");
+      if(!match)return {status:"not_applicable"};
+      const taskId="task:"+match[1];
+      const auth=await authorizationForTask(taskId);
+      if(!auth)return {status:"not_authorized"};
+      try {
+        const receipt=await acceptCanonicalCpsReturn({
+          taskId,auth,continuation_id,
+        });
+        return {status:receipt.duplicate
+          ? "already_resumed" : receipt.ok?"resume_scheduled":"not_confirmed"};
+      }catch{return {status:"needs_reconciliation"}}
+    }
     return {
       enabled:true,extras:{
 
         mcpProgramSurface:surface,
         mcpTasksAdapter:adapter,
       },
-      pendingCps,acceptCanonicalCpsReturn,
+      pendingCps,acceptCanonicalCpsReturn,acceptAssignedCpsReturn,
       async start() {
         if (closed)throw new Error("multimcp_runtime_closed");
         if (started)return;

@@ -328,7 +328,10 @@ test("signed ChatGPT browser result is recognized and settles the real reserved 
      expected_result:{schema:"cogentia.step_result/v1"},
      provider:"chatgpt",channel:"browser",
      resumeTo:"handler:chatgpt-browser-result-observer",
+     state:{assignment_ref:
+       "packet:pkt-mcp-12345678-1234-1234-1234-123456789abc:slot:0"},
    })).ok,true);
+   const notifications=[];
    const core=createMcpCore({
      COGENTIA_MCP_VIEW:"public",COGENTIA_MCP_JHN_MUTATE:"1",
      COGENTIA_MCP_JHN_TOKEN:"test-token",
@@ -338,6 +341,10 @@ test("signed ChatGPT browser result is recognized and settles the real reserved 
      verifyIssuer:createOfflineJohnIssuerVerifier({trustedPublicKeyPem:pem,now:()=>NOW}),
      channelPermission:({provider,channel})=>provider==="chatgpt"&&channel==="browser",
      autoProcess:true,
+     onAcceptedCpsReturn:async event=>{
+       notifications.push(event);
+       return {status:"resume_scheduled"};
+     },
    })});
    const auth=resolveCallerAuth({
      COGENTIA_MCP_JHN_MUTATE:"1",COGENTIA_MCP_JHN_TOKEN:"test-token",
@@ -349,6 +356,10 @@ test("signed ChatGPT browser result is recognized and settles the real reserved 
    assert.equal(first.ok,true,JSON.stringify(first));
    assert.equal(first.continuation_status,"returned");
    assert.equal(ledger.snapshot().settled.max_steps,1);
+   assert.equal(notifications.length,1);
+   assert.equal(notifications[0].continuation_id,"ctn_browser_test");
+   assert.equal(notifications[0].assignment_ref,
+     "packet:pkt-mcp-12345678-1234-1234-1234-123456789abc:slot:0");
    const final=store.listTopic("continuation:ctn_browser_test")
      .filter(x=>x.payload?.profile==="cop.continuation-result/v1"&&x.payload.phase==="returned");
    assert.equal(final.length,1);
@@ -373,6 +384,8 @@ test("signed ChatGPT browser result is recognized and settles the real reserved 
    const duplicate=await core.callTool(TOOL,args,{auth});
    assert.equal(duplicate.ok,true);
    assert.equal(duplicate.duplicate,true);
+   assert.equal(notifications.length,1,
+     "duplicate result never emits a second program wake");
    assert.equal(ledger.snapshot().settled.max_steps,1);
    assert.equal(store.listTopic("continuation:ctn_browser_test")
      .filter(x=>x.payload?.profile==="cop.continuation-scheduler-wake/v1").length,1);

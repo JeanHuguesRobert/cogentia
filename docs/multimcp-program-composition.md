@@ -245,13 +245,40 @@ Reality Tests:
   resumption, with cryptographic source commitment audits in each.
   There is no live ChatGPT submission in these tests.
 
-Integration frontier: connect the already-running CPS result ingress/wake
-in its owner service to the internal acceptCanonicalCpsReturn callback
-after receipt evaluation, using the actual currently signed
-MandateDeclaration and provider permissions. No browser or provider
-effect is enabled by this source publication. The service MCP remains
-opt-in; JavaScript does not yet have a durable Side-style suspension
-equivalent, while Alan does.
+## Event-driven connection with the existing CPS result ingress
+
+The canonical MCP result host (cogentia-mcp-judgment-result-host.js)
+now optionally emits an onAcceptedCpsReturn event only after the
+actual CPS result has been recognized, accepted and processed by its
+own handler, with its COP budget settled. Only a canonical continuation
+whose assignment_ref addresses a MultiMCP Packet and an Alan slot
+is routed. The normal Cogentia MCP HTTP composition passes that event
+to the same optional MultiMCP service runtime, not to an independent
+service or a new scheduler.
+
+The MultiMCP service resolves the owning Task and effective caller
+locally, recomputes the expected continuation identifier from its
+suspended Alan state, reads the original CPS source receipts, and calls
+acceptVerifiedExternalResult to commit the resumption to its own
+Packet. The callback reports resume_scheduled rather than claiming a
+terminal program result. Existing duplicate results cannot initiate a
+second provider turn or a second program resumption.
+
+The CPS runtime continues to own the signed local John source. When
+its existing authority configuration is disabled, the composition
+provides no CPS source to MultiMCP. When MultiMCP is disabled the
+observer callback is inert. A failed callback cannot invalidate an
+already received and accounted-for ChatGPT MCP result: the source
+histories retain the evidence for later explicit reconciliation.
+
+**Remaining integration:** program-initiated preparation and governed
+dispatch of assigned CPS continuations from pendingCps is separate,
+and must use the existing signed mandate, budget and provider-channel
+permissions. Do not silently start a browser turn from a program
+description or return notification. A resident reconciliation trigger
+after a crash between CPS receipt and MultiMCP wake is not yet wired.
+The service MCP remains opt-in and is not deployed; JavaScript does
+not yet have a durable Side-style suspension equivalent, while Alan does.
 
 ChatGPT is a mediated capability rather than a direct export of the
 private catalog of its connected tools. Cogentia #342 owns mediated

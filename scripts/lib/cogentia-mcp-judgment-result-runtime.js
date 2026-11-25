@@ -18,7 +18,9 @@ const fail = (code) => {
   throw Object.assign(new Error(code), { error_class: code });
 };
 
-export function createMcpJudgmentResultRuntime(env = process.env) {
+export function createMcpJudgmentResultRuntime(env = process.env,{
+  onAcceptedCpsReturn = null,
+}={}) {
   if (env.COGENTIA_MCP_JUDGMENT_RESULT_ENABLED !== "1")
     return { enabled: false, extras: {}, close() {} };
 
@@ -61,12 +63,16 @@ export function createMcpJudgmentResultRuntime(env = process.env) {
       transport_mandate_label: "mandate:chatgpt-corpus-coding",
       verifyIssuer,
       autoProcess: true,
+      onAcceptedCpsReturn,
       channelPermission: ({ provider, channel }) =>
         allowedChannels.has(String(provider || "") + ":" + String(channel || "")),
     });
     return {
       enabled: true, extras: { mcpContinuationResultHost: provider,
         packetTurnContinuity: createJohnPacketTurnContinuity({store}) },
+      // Internal source handle for a separately governed COP projection,
+      // not a credential, MCP API or a duplicated central journal.
+      cpsSourceStore:store,
       close() { store.close(); },
     };
   } catch (e) {

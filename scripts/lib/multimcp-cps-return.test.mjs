@@ -253,10 +253,10 @@ test("two independent COP localities: MCP Alan suspension -> signed CPS assignme
       usage:{max_steps:1},
     });
     assert.equal(settled.ok,true);
-    const accepted=await live.acceptCanonicalCpsReturn({
-      taskId,auth,continuation_id:id,
+    const accepted=await live.acceptAssignedCpsReturn({
+      assignment_ref:pending.task_ref,continuation_id:id,
     });
-    assert.equal(accepted.ok,true);
+    assert.equal(accepted.status,"resume_scheduled");
     const finished=await until(async()=>{
       const x=await core.handleJsonRpc(request("tasks/get",{taskId}));
       return x.result?.status==="completed"?x:null;

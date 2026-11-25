@@ -87,14 +87,22 @@ loadOptionalEnvFiles([
 
 const blackboard = createBlackboardStore();
 const agentMailRuntime=createAgentMailRuntime(process.env);
-const judgmentResultRuntime=createMcpJudgmentResultRuntime(process.env);
+let multiMcpRuntime;
+const judgmentResultRuntime=createMcpJudgmentResultRuntime(process.env,{
+  // The already authorized CPS return host emits this only after its own
+  // local source receipts and budget settlement are committed.
+  onAcceptedCpsReturn:async event=>
+    multiMcpRuntime?.acceptAssignedCpsReturn?.(event)||
+      {status:"multimcp_not_enabled"},
+});
 const standingMissionRuntime=createMcpStandingMissionRuntime(process.env);
 let core;
 const mcpTasksRuntime = createMcpCopTasksRuntime(process.env, {
   coreAccessor: () => core,
 });
-const multiMcpRuntime = createMultiMcpServiceRuntime(process.env, {
+multiMcpRuntime = createMultiMcpServiceRuntime(process.env, {
   coreAccessor: () => core,
+  cpsStore: judgmentResultRuntime.cpsSourceStore || null,
 });
 const taskAdapters = [
   mcpTasksRuntime.extras.mcpTasksAdapter,
