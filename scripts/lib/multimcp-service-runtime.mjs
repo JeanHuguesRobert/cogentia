@@ -12,7 +12,10 @@ import {
 import {createMultiMcpProgramRuntime} from "./multimcp-program.mjs";
 import {createMultiMcpCopBridge} from "./multimcp-cop-bridge.mjs";
 import {createMultiMcpMcpSurface} from "./multimcp-mcp-surface.mjs";
-import {packetTopicForMcpTask,mcpTaskIdFromPacketTopic} from "./mcp-tasks-cop-pilot.mjs";
+import {packetTopicForMcpTask,mcpTaskIdFromPacketTopic,
+  packetRefForMcpTask} from "./mcp-tasks-cop-pilot.mjs";
+import {assignedCpsReference,createCanonicalChatgptCpsReturnVerifier}
+  from "./multimcp-cps-return.js";
 
 function verifiedJhn(auth) {
   return isResolvedCallerAuth(auth) && auth.auth==="jhn" &&
@@ -21,7 +24,7 @@ function verifiedJhn(auth) {
 }
 
 export function createMultiMcpServiceRuntime(env=process.env,{
-  coreAccessor,additionalProviders={},
+  coreAccessor,additionalProviders={},cpsStore=null,
 }={}) {
   if (String(env.COGENTIA_MCP_MULTIMCP_ENABLED||"")!=="1")
     return {enabled:false,extras:{},async start(){},close(){}};
@@ -96,6 +99,10 @@ export function createMultiMcpServiceRuntime(env=process.env,{
     const bridge=createMultiMcpCopBridge({
       runtime,store,primaryStoreId,ownerInstanceRef,
       authorizationForTask,listTaskIds:taskIds,
+      // The canonical CPS source can be in another locality. Its reader is
+      // supplied by the host; never copy it into a second central ledger.
+      verifyExternalResult:cpsStore
+        ? createCanonicalChatgptCpsReturnVerifier({cpsStore}) : null,
     });
     // Preserve the authority boundary for Task creation even if used from
     // another host composition; the Core also checks this exact identity.
@@ -112,11 +119,42 @@ export function createMultiMcpServiceRuntime(env=process.env,{
       },
     };
     let closed=false,started=false;
+    // Source-local projection for the existing signed CPS assignment API.
+    // This does not dispatch a browser turn or create a new continuation.
+    async function pendingCps({taskId,auth}={}) {
+      const task=await bridge.adapter.get({taskId,auth});
+      if(task.status!=="input_required")
+        return null;
+      const events=store.listTopic(packetTopicForMcpTask(taskId));
+      const open=events.findLast(x=>x.payload?.phase==="input_required");
+      const pending=open?.payload?.pending;
+      if(open?.payload?.verified_external_result_required!==true ||
+        pending?.capability!=="chatgpt.delegate" ||
+        typeof pending.input?.prompt!=="string" ||
+        !pending.input.prompt.trim())
+        return null;
+      const ref=assignedCpsReference({
+        packetRef:packetRefForMcpTask(taskId),pending,
+      });
+      return {...ref,question:pending.input.prompt,
+        task_id:taskId,source_event_ref:open.idempotency_key};
+    }
+    async function acceptCanonicalCpsReturn({taskId,auth,continuation_id}={}) {
+      if(!cpsStore)throw new Error("canonical_cps_source_not_connected");
+      const expected=await pendingCps({taskId,auth});
+      if(!expected||expected.continuation_id!==continuation_id)
+        throw new Error("cps_task_correlation_mismatch");
+      return bridge.adapter.acceptVerifiedExternalResult(taskId,auth,{
+        continuation_id,
+      });
+    }
     return {
       enabled:true,extras:{
+
         mcpProgramSurface:surface,
         mcpTasksAdapter:adapter,
       },
+      pendingCps,acceptCanonicalCpsReturn,
       async start() {
         if (closed)throw new Error("multimcp_runtime_closed");
         if (started)return;

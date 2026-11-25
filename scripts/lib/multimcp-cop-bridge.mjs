@@ -13,6 +13,7 @@ export const MULTIMCP_PROGRAM_TOOL = "multimcp_program_execute";
 export function createMultiMcpCopBridge({
   runtime, store, primaryStoreId, ownerInstanceRef,
   authorizationForTask, listTaskIds, allowAnonymous = false,
+  verifyExternalResult = null,
   startDelayMs = 20,
 } = {}) {
   if (!runtime || typeof runtime.execute !== "function")
@@ -22,21 +23,36 @@ export function createMultiMcpCopBridge({
   const pilot = createCopMcpTasksPilot({
     store, primaryStoreId, ownerInstanceRef,
     toolName: MULTIMCP_PROGRAM_TOOL, allowAnonymous,
-    handler: async (args, {taskId, auth}) => {
+    verifyExternalResult,
+    handler: async (args, {taskId, auth, resume}) => {
       if (!args || !["javascript", "alan"].includes(args.language) ||
         typeof args.code !== "string")
         throw new TypeError("invalid_multimcp_program");
-      const result = await runtime.execute({
+      const common={
+        language:args.language,
+        code:args.code,
+        inputs:args.inputs||{},
+        timeoutMs:args.timeoutMs??5000,
+        maxCalls:args.maxCalls??32,
+        context:{taskId,auth,...(args.alanContext
+          ? {alanContext:args.alanContext}:{} )},
+      };
+      if(resume) {
+        if(args.language!=="alan"||resume.verified!==true||
+          !resume.receipt_ref||!resume.checkpoint)
+          throw new Error("trusted_alan_cps_resume_required");
+      }
+      const result=args.language==="alan"
+        ? await runtime.stepAlan({...common,
+          ...(resume?{resume:{
+            checkpoint:resume.checkpoint,
+            value:resume.inputResponses,
+          }}:{})})
+        : await runtime.execute({
         language: args.language,
-        code: args.code,
-        inputs: args.inputs || {},
-        timeoutMs: args.timeoutMs ?? 5_000,
-        maxCalls: args.maxCalls ?? 32,
-        // The verified dispatch identity is carried into each capability
-        // check; a stored Packet owner is not by itself an authorization.
-        context: { taskId, auth, ...(args.alanContext ?
-          { alanContext: args.alanContext } : {}) },
+        ...common,
       });
+      if(result?.type==="cop.task.suspension/v1")return result;
       return { content: [{ type: "text", text: JSON.stringify(result) }],
         structuredContent: result, isError: false };
     },

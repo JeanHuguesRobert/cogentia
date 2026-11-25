@@ -95,6 +95,88 @@ export function createMultiMcpProgramRuntime({ providers, authorizeCall } = {}) 
     return asJson(tool);
   }
 
+  /**
+   * A bounded Alan step returns either a terminal value or a serialized
+   * native suspension. In particular, a governed-effect suspension DOES
+   * NOT invoke its provider; the COP parent owns its delegated effect.
+   * Only a host-verified CPS return may be supplied at resume time.
+   */
+  async function stepAlan({code,inputs={},context=null,resume=null,
+    timeoutMs=5000,maxCalls=MAX_CALLS}={}) {
+    if(typeof code!=="string"||!code.trim()||code.length>MAX_CODE)
+      throw new TypeError("invalid_program_code");
+    if(!Number.isSafeInteger(timeoutMs)||timeoutMs<100||timeoutMs>30000||
+       !Number.isSafeInteger(maxCalls)||maxCalls<1||maxCalls>MAX_CALLS)
+      throw new TypeError("invalid_program_budget");
+    const program=parseAlan(code);
+    const snapshot=await catalog();
+    const deadline=Date.now()+timeoutMs;
+    let state=resume
+      ? resumeAlan(program,resume.checkpoint,{
+        type:"alan.step_result",
+        for_suspension:resume.checkpoint?.suspension_id,
+        supplied_by:"caller",
+        trace:{caller_mediated:true,direct_invocation_by_alan:false,
+          execution_performed:true},
+        value:resume.value,
+      })
+      : startAlan(program,{
+        args:inputs,context:context?.alanContext||{},
+        bounds:{maxSteps:1000,maxStateBytes:131072},
+      });
+    // Alan's saved Side slots are the logical history of this program.
+    // The program budget spans restarts rather than resetting per stage.
+    let calls=resume?.checkpoint?.saved_state?.slots?.length||0;
+    if(calls>maxCalls)
+      throw new Error("tool_not_available_or_budget_exhausted");
+    while(state.type==="alan.suspension") {
+      if(Date.now()>=deadline)throw new Error("program_deadline_exceeded");
+      const capability=state.pending_call?.capability||"";
+      const dot=capability.indexOf(".");
+      const provider=capability.slice(0,dot),name=capability.slice(dot+1);
+      const tool=snapshot[provider]?.get(name);
+      if(!tool)throw new Error("mcp_capability_not_found:"+capability);
+      if(calls>=maxCalls)
+        throw new Error("tool_not_available_or_budget_exhausted");
+      if(tool.executionClass!=="read_only"||
+        state.pending_call.policy?.effect!=="read_only") {
+        return {type:"cop.task.suspension/v1",
+          checkpoint:state,
+          pending:{
+            provider,name,capability,input:state.pending_call.input,
+            slot_ordinal:state.pending_call.slot_ordinal,
+            executionClass:tool.executionClass,
+            policy:state.pending_call.policy,
+          },calls};
+      }
+      if(calls>=maxCalls)throw new Error("tool_not_available_or_budget_exhausted");
+      if(authorizeCall&&await withinDeadline(Promise.resolve(
+        authorizeCall({provider,tool,context,args:state.pending_call.input})
+      ),deadline)!==true)throw new Error("program_tool_authority_denied");
+      if(Date.now()>=deadline)throw new Error("program_deadline_exceeded");
+      calls++;
+      const response=await withinDeadline(
+        providers[provider].handleJsonRpc(method("tools/call",{
+          name,arguments:state.pending_call.input,
+        })),deadline);
+      if(response.error||response.result?.isError)
+        throw new Error("mcp_tool_failed:"+provider+":"+name);
+      const result=response.result?.structuredContent??
+        response.result?.content?.[0]?.text??response.result;
+      state=resumeAlan(program,state,{
+        type:"alan.step_result",
+        for_suspension:state.suspension_id,
+        supplied_by:"caller",
+        trace:{caller_mediated:true,direct_invocation_by_alan:false,
+          execution_performed:true},
+        value:{value:asJson(result??null)},
+      });
+    }
+    if(state.type!=="alan.terminal")
+      throw new Error(state.error?.code||"alan_execution_failed");
+    return {language:"alan",value:asJson(state.result??null),calls};
+  }
+
   async function execute({ language = "javascript", code, timeoutMs = 5_000,
     maxCalls = MAX_CALLS, context = null, inputs = {} } = {}) {
     if (!["javascript", "alan"].includes(language))
@@ -249,5 +331,5 @@ export function createMultiMcpProgramRuntime({ providers, authorizeCall } = {}) 
     });
     return outcome;
   }
-  return { search, describe, execute };
+  return { search, describe, execute, stepAlan };
 }

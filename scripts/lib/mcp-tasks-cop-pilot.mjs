@@ -34,7 +34,7 @@ const unknown = () => Object.assign(new Error("unknown_task"), { code: "unknown_
 export function createCopMcpTasksPilot({
   store, toolName, handler, allowAnonymous = false,
   ownerInstanceRef = "instance:mcp-tasks-cop-pilot",
-  primaryStoreId = null,
+  primaryStoreId = null, verifyExternalResult = null,
 } = {}) {
   if (!store || typeof store.append !== "function" ||
       typeof store.transaction !== "function" || typeof store.listTopic !== "function")
@@ -43,6 +43,8 @@ export function createCopMcpTasksPilot({
     throw new TypeError("explicit pilot tool and handler required");
   if (typeof primaryStoreId !== "string" || !/^sqlite:[a-zA-Z0-9:._-]+$/.test(primaryStoreId))
     throw new TypeError("explicit local primaryStoreId required");
+  if (verifyExternalResult !== null && typeof verifyExternalResult !== "function")
+    throw new TypeError("trusted external result verifier required");
 
   function identity(auth) {
     if (auth?.auth === "jhn" && auth.actor) return "jhn:" + auth.actor;
@@ -204,7 +206,16 @@ export function createCopMcpTasksPilot({
         return { ok: true };
       const open = events.findLast(x => x.payload?.phase === "input_required");
       if (!open) throw new Error("no_pending_input_request");
-      commit(taskId, "input_received", { inputResponses }, "mcp-input:" + taskId + ":" + open.event_id);
+      if (events.some(x => x.payload?.phase === "input_received" &&
+        x.payload?.suspension_event_ref === open.event_id))
+        return {ok:true};
+      // MCP tasks/update from a client is not evidence that a governed
+      // external effect occurred. Only a host-side verifier may release it.
+      if (open.payload?.verified_external_result_required)
+        throw new Error("trusted_cps_return_required");
+      commit(taskId, "input_received", { inputResponses,
+        suspension_event_ref: open.event_id },
+      "mcp-input:" + taskId + ":" + open.event_id);
       return { ok: true };
     },
     async cancel({ taskId, auth }) {
@@ -214,15 +225,75 @@ export function createCopMcpTasksPilot({
     },
   };
 
-  // Pilot worker: claim once, do not automatically rerun a potentially
-  // side-effecting handler after an uncertain crash or lost acknowledgement.
+  // A verified external return is ingested ONLY through the host, after
+  // checking the original CPS source. It must not be injected by MCP
+  // tasks/update or by the program. The idempotency fence is packet-local.
+  async function acceptVerifiedExternalResult(taskId, auth, candidate) {
+    if (!verifyExternalResult) throw new Error("external_result_verifier_unconfigured");
+    history(taskId, auth);
+    const events = store.listTopic(topic(taskId));
+    const open = events.findLast(x => x.payload?.phase === "input_required" &&
+      x.payload?.verified_external_result_required === true);
+    if (!open) throw new Error("verified_external_suspension_missing");
+    if (events.some(x => x.payload?.phase === "input_received" &&
+      x.payload?.suspension_event_ref === open.event_id))
+      return {ok:true,duplicate:true};
+    // The injected verifier must derive the result and receipt from the
+    // canonical CPS source. Never trust candidate.result as a receipt.
+    const verified = await verifyExternalResult({
+      taskId, packetRef:packetRefForMcpTask(taskId), candidate,
+      suspension:open.payload.checkpoint, pending:open.payload.pending,
+    });
+    if (verified?.verified !== true ||
+      typeof verified.receipt_ref !== "string" || !verified.receipt_ref ||
+      !valid(verified.value))
+      throw new Error("verified_cps_result_required");
+    const saved = store.transaction(tx => {
+      const rows = tx.listTopic(topic(taskId));
+      if (rows.some(x => x.payload?.phase === "input_received" &&
+        x.payload?.suspension_event_ref === open.event_id))
+        return "duplicate";
+      if (rows.some(x => ["cancelled","failed","completed"].includes(x.payload?.phase)))
+        throw new Error("task_already_terminal");
+      const latest = rows.findLast(x => x.payload?.phase === "input_required");
+      if (latest?.event_id !== open.event_id)
+        throw new Error("suspension_changed");
+      return commit(taskId,"input_received",{
+        inputResponses:verified.value,
+        suspension_event_ref:open.event_id,
+        external_receipt_ref:verified.receipt_ref,
+        verified_external_result:true,
+      },"mcp-verified-input:"+taskId+":"+open.event_id,tx);
+    });
+    if (!saved.ok)throw new Error("verified_external_result_commit_failed");
+    return {ok:true,duplicate:saved.value==="duplicate"};
+  }
+
+  // Pilot worker: claims each continuation stage once. Never blindly
+  // rerun a stage whose effect result is uncertain after a crash.
   async function run(taskId, auth) {
     const { created, events } = history(taskId, auth);
     if (events.some(x => ["completed", "failed", "cancelled"].includes(x.payload?.phase)))
       return project(taskId, auth);
+    const suspended = events.findLast(x => x.payload?.phase === "input_required");
+    const answered = suspended && events.find(x =>
+      x.payload?.phase === "input_received" &&
+      x.payload?.suspension_event_ref === suspended.event_id);
+    if (suspended && !answered) return project(taskId, auth);
     const claim = store.transaction(tx => {
       const rows = tx.listTopic(topic(taskId));
-      if (rows.some(x => ["claimed", "completed", "failed", "cancelled"].includes(x.payload?.phase)))
+      const currentSuspension=rows.findLast(x=>x.payload?.phase==="input_required");
+      const currentAnswer=currentSuspension && rows.find(x=>
+        x.payload?.phase==="input_received" &&
+        x.payload?.suspension_event_ref===currentSuspension.event_id);
+      if (rows.some(x => ["completed","failed","cancelled"].includes(x.payload?.phase)))
+        return "already_claimed";
+      if (currentSuspension && !currentAnswer) return "waiting_input";
+      const claimKey=currentAnswer
+        ? "mcp-claimed-resume:"+taskId+":"+currentAnswer.event_id
+        : "mcp-claimed:"+taskId;
+      if (rows.some(x=>x.idempotency_key===claimKey)) return "already_claimed";
+      if (!currentAnswer && rows.some(x=>x.payload?.phase==="claimed"))
         return "already_claimed";
       // A cancellation received before dispatch can be honored without
       // executing the handler. For a claimed job it stays an intent.
@@ -232,7 +303,9 @@ export function createCopMcpTasksPilot({
         if (!stopped.ok) throw new Error("cannot_cancel");
         return "cancelled";
       }
-      const ev = commit(taskId, "claimed", {}, "mcp-claimed:" + taskId, tx);
+      const ev = commit(taskId, "claimed", {
+        ...(currentAnswer ? {resume_from_event:currentAnswer.event_id} : {}),
+      }, claimKey, tx);
       if (!ev.ok) throw new Error("cannot_claim");
       return "claimed";
     });
@@ -243,9 +316,31 @@ export function createCopMcpTasksPilot({
       // this invocation. Pass its identity to adapters that enforce
       // program-level and per-capability permissions; old handlers can
       // ignore the additional contextual argument.
-      const result = await handler(created.args, { taskId, auth });
-      // A tool-level isError is a completed Task, not failed transport.
-      commit(taskId, "completed", { result }, "mcp-completed:" + taskId);
+      const result = await handler(created.args, {taskId,auth,
+        ...(answered ? {resume:{
+          checkpoint:suspended.payload.checkpoint,
+          pending:suspended.payload.pending,
+          inputResponses:answered.payload.inputResponses,
+          receipt_ref:answered.payload.external_receipt_ref||null,
+          verified:answered.payload.verified_external_result===true,
+        }} : {}),
+      });
+      if (result?.type === "cop.task.suspension/v1") {
+        if (!valid(result.checkpoint)||!valid(result.pending))
+          throw new Error("invalid_program_suspension");
+        const stage=events.filter(x=>x.payload?.phase==="input_required").length;
+        commit(taskId,"input_required",{
+          inputRequests:{external_cps_result:{
+            type:"text",prompt:"Await verified external CPS result",
+          }},
+          verified_external_result_required:true,
+          checkpoint:result.checkpoint,
+          pending:result.pending,
+        },"mcp-input-required:"+taskId+":"+stage);
+      } else {
+        // A tool-level isError is a completed Task, not failed transport.
+        commit(taskId, "completed", { result }, "mcp-completed:" + taskId);
+      }
     } catch (error) {
       commit(taskId, "failed",
         { error: { code: -32603, message: error?.message || "worker_failed" } },
@@ -264,5 +359,5 @@ export function createCopMcpTasksPilot({
   }
 
   return { toolName, adapter, run, requireInput,
-    auditPacket, recordReconciliationRequired };
+    acceptVerifiedExternalResult, auditPacket, recordReconciliationRequired };
 }

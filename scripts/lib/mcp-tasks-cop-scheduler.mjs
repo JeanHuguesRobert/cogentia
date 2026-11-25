@@ -14,7 +14,21 @@ import { packetTopicForMcpTask, mcpTaskIdFromPacketTopic } from "./mcp-tasks-cop
 const PROFILE = "cogentia.mcp-tasks-cop-pilot/v1";
 const createdEvent = event => event.payload?.profile === PROFILE &&
   event.payload?.phase === "created";
-const terminalPhases = new Set(["claimed", "completed", "failed", "cancelled"]);
+const terminalPhases = new Set(["completed", "failed", "cancelled"]);
+function stageEligibility(rows) {
+  if (rows.some(x=>terminalPhases.has(x.payload?.phase))) return "terminal";
+  const waiting=rows.findLast(x=>x.payload?.phase==="input_required");
+  if (!waiting)
+    return rows.some(x=>x.payload?.phase==="claimed")
+      ? "claimed_or_uncertain" : "ready";
+  const answer=rows.find(x=>x.payload?.phase==="input_received" &&
+    x.payload?.suspension_event_ref===waiting.event_id);
+  if (!answer) return "waiting_input";
+  if (rows.some(x=>x.payload?.phase==="claimed" &&
+      x.payload?.resume_from_event===answer.event_id))
+    return "claimed_or_uncertain";
+  return "ready";
+}
 
 export function createCopMcpTasksScheduledPilot({
   pilot, store, authorizationForTask = null,
@@ -85,17 +99,23 @@ export function createCopMcpTasksScheduledPilot({
     if (record.status === "input_required")
       return { scheduled: false, reason: "waiting_input" };
     const history = store.listTopic(packetTopicForMcpTask(taskId));
-    if (history.some(e => terminalPhases.has(e.payload?.phase)))
+    if (stageEligibility(history) !== "ready")
       return { scheduled: false, reason: "claimed_or_terminal_needs_reconciliation" };
     const created = history.find(belongsToPilot);
     if (!created) throw new Error("mcp_task_creation_missing_or_foreign");
-    // A deferred COP continuation already owns its timer. Re-registering
-    // the same id on tasks/update would replace its Map entry while leaving
-    // the previous timeout pending in COPScheduler.
-    if (jobs.jobs.has(taskId))
+    // Scheduling identity is (Packet, resume stage), not just the opaque
+    // Task id. A prior stage completed before a verified external result
+    // arrived, so its in-memory scheduler projection must not mask the new
+    // continuation. Still reject duplicate registration of the SAME stage.
+    const stage = history.findLast(e =>
+      e.payload?.phase === "input_received")?.event_id || "initial";
+    const prior = jobs.jobs.get(taskId);
+    if (prior?.sourceStage === stage)
       return { scheduled: false, reason: "already_registered" };
+    if (prior) jobs.jobs.delete(taskId);
     await jobs.schedule({
       jobId: taskId,
+      sourceStage: stage,
       type: "continuation",
       // Only use a real Packet reference when an upstream COP record has one.
       packetRef: created.payload.packetRef || null,
@@ -122,6 +142,11 @@ export function createCopMcpTasksScheduledPilot({
       if (receipt.ok) await schedule(context.taskId, context.auth);
       return receipt;
     },
+    async acceptVerifiedExternalResult(taskId,auth,candidate) {
+      const receipt=await pilot.acceptVerifiedExternalResult(taskId,auth,candidate);
+      if (receipt.ok && !receipt.duplicate)await schedule(taskId,auth);
+      return receipt;
+    },
   };
 
   async function recover() {
@@ -140,14 +165,17 @@ export function createCopMcpTasksScheduledPilot({
       // A packet from a different MCP tool may share the same physical
       // journal and profile; it must not become this dispatcher's work.
       if (!existing.some(belongsToPilot)) continue;
-      if (existing.some(x => terminalPhases.has(x.payload?.phase))) {
-        if (!existing.some(x => ["completed", "failed", "cancelled"].includes(x.payload?.phase))) {
-          result.unresolved++;
-          // A crash after acquiring work does not authorize a second effect.
-          // Make that unresolved fact visible to MCP clients, durably.
-          const receipt = pilot.recordReconciliationRequired(taskId);
-          if (!receipt.ok) throw new Error("cannot_record_reconciliation_requirement");
-        }
+      const eligibility=stageEligibility(existing);
+      if (eligibility==="terminal")continue;
+      if (eligibility==="waiting_input") {
+        result.waiting_input++;
+        continue;
+      }
+      if (eligibility==="claimed_or_uncertain") {
+        result.unresolved++;
+        // A crashed stage may already have dispatched an external effect.
+        const receipt=pilot.recordReconciliationRequired(taskId);
+        if (!receipt.ok) throw new Error("cannot_record_reconciliation_requirement");
         continue;
       }
       const auth = await authorizationForTask?.(taskId);

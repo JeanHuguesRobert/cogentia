@@ -183,6 +183,76 @@ current same-process interpreter is governed by the host and its own bounds;
 only JavaScript executes inside Bubblewrap. Inox is not yet enabled.
 Do not invent another task store or scheduler.
 
+## Governed effect continuations (Alan / COP / CPS)
+
+Alan now has an explicit internal stepAlan pathway in the existing
+MultiMCP execution engine. It runs read-only calls through the ordinary
+host admission checks and returns a serialized native Alan suspension
+when encountering a non-read-only capability. It never invokes that
+provider merely because its tool appeared in MCP discovery.
+
+The existing createCopMcpTasksPilot recognizes this suspension as an
+input_required Event in the same Task Packet local FractaLog history.
+It retains Alan's complete saved state and Side positional slots, plus
+the source MCP name and input arguments. Generic MCP tasks/update
+cannot pretend to satisfy this externally governed checkpoint.
+
+The host-only acceptVerifiedExternalResult checks the trusted
+result verifier, journals a causal receipt in the same Packet and wakes
+the existing COPScheduler. It uses one claim per continuation stage,
+so a crash after a claim cannot silently repeat an uncertain effect.
+Multi-stage jobs are identified in the scheduler by their Packet AND
+their current resume stage; this is an in-memory projection, not a
+new scheduler or identity authority. Alan resume() validates the code
+hash, checkpoint digest, saved slots and response schema.
+
+For ChatGPT, multimcp-cps-return.js projects a stage-specific
+CPS assignment reference from the Task Packet and Alan slot ordinal.
+The canonical CPS assignment API already exists in
+chatgpt-cps-assignment.js; it checks the current signed John mandate,
+reserves the existing COP budget and claims its OWN CPS continuation.
+The MultiMCP verifier observes the separate CPS source journal,
+requiring a correlated declared continuation, source history commitments,
+a browser dispatch receipt, recognized and accepted result events in
+their canonical order, scheduler wake, completed handler receipt and
+actual execution budget settlement. It derives the answer from the
+accepted result Event, NEVER from the invoker's candidate text.
+
+createMultiMcpServiceRuntime accepts an optional host-supplied
+cpsStore (which may be in a different logical locality), and exposes
+internal pendingCps({taskId,auth}) and
+acceptCanonicalCpsReturn({taskId,auth,continuation_id}). These APIs
+reuse the already resolved caller and existing Packet histories; they
+do not register another MCP tool or create a broker, browser session,
+central ledger, mandate or scheduler. Without a supplied canonical
+CPS source the external return remains unresolvable, not silently
+accepted.
+
+Reality Tests:
+- The first program executes a read-only MCP call, suspends on
+  chatgpt.delegate, restarts the process, rejects forged
+  tasks/update and an unverified return, then resumes with a
+  verified fixture receipt; the already acquired slot is not replayed.
+- A two-step Alan program proves that consecutive governed suspensions
+  retain ordered slots, one total call budget and distinct scheduling
+  stages without duplicate provider dispatch.
+- A verifier fixture uses the real signed John root issuance and
+  CPS assignment to show that a click, candidate answer, incomplete
+  correlation or unsettled budget do not complete the suspension.
+  Only synthetic test receipts emulate the browser return.
+- Two independent SQLite COP localities demonstrate a complete
+  local Task to signed CPS assignment to accepted receipt to Task
+  resumption, with cryptographic source commitment audits in each.
+  There is no live ChatGPT submission in these tests.
+
+Integration frontier: connect the already-running CPS result ingress/wake
+in its owner service to the internal acceptCanonicalCpsReturn callback
+after receipt evaluation, using the actual currently signed
+MandateDeclaration and provider permissions. No browser or provider
+effect is enabled by this source publication. The service MCP remains
+opt-in; JavaScript does not yet have a durable Side-style suspension
+equivalent, while Alan does.
+
 ChatGPT is a mediated capability rather than a direct export of the
 private catalog of its connected tools. Cogentia #342 owns mediated
 capabilities; #335 owns the OpenAI-compatible ChatGPT provider, and
