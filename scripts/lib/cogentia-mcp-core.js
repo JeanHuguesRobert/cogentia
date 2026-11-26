@@ -2179,13 +2179,7 @@ export function createMcpCore(env = process.env, extras = {}) {
           no_store_probe: args.no_store_probe === true ? "1" : undefined,
         });
       case "cogentia_search":
-        requireString(args.query, "query");
-        return daemonGet("/api/context/search", {
-          q: args.query,
-          repo: args.repo,
-          limit: boundedOptional(args.limit, 1, 50),
-          mode: enumOptional(args.mode, ["keyword", "hybrid", "semantic"], "mode"),
-        });
+        return searchCorpus(args);
       case "cogentia_context_pack":
         requireString(args.query, "query");
         return daemonGet("/api/context/pack", {
@@ -2484,7 +2478,37 @@ export function createMcpCore(env = process.env, extras = {}) {
           : [];
         const scopedWorkspaceCapabilities = workspaceCapabilities
           .filter((capability) => capability.name === "workspace.read" || writeAuthorized);
-        const scopedCapabilities = [...scopedWorkspaceCapabilities, ...browserCapabilities];
+        // #342: project the existing public Context Search into John's
+        // governed registry. Do not infer private disclosure from a John request.
+        const corpusCapabilities = view === "public" ? [{
+          name: "corpus.search",
+          kind: "tool",
+          risk: "read_only",
+          resultVisibility: "reasoner",
+          costUnits: 1,
+          description: "Search the public corpus and return citable Context Search results.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              query: { type: "string" },
+              repo: { type: "string" },
+              limit: { type: "integer", minimum: 1, maximum: 50 },
+              mode: { type: "string", enum: ["keyword", "hybrid", "semantic"] },
+            },
+            additionalProperties: false,
+          },
+          async execute(input = {}, context = {}) {
+            const query = input.query ?? context.turnInput?.text;
+            const result = await searchCorpus({
+              query, repo: input.repo, limit: input.limit ?? 8, mode: input.mode ?? "keyword",
+            });
+            if (result?.ok !== true || result.view !== "public" || !Array.isArray(result.results))
+              throw Object.assign(new Error("Public corpus search failed"), { code: "public_corpus_search_failed" });
+            return result;
+          },
+        }] : [];
+        const corpusCapabilityNames = new Set(corpusCapabilities.map(c => c.name));
+        const scopedCapabilities = [...scopedWorkspaceCapabilities, ...browserCapabilities, ...corpusCapabilities];
         const serverAllowedCapabilities = scopedCapabilities.map((capability) => capability.name);
         const requestedCapabilities = Array.isArray(req.handler.allowed_capabilities)
           ? req.handler.allowed_capabilities
@@ -2504,11 +2528,11 @@ export function createMcpCore(env = process.env, extras = {}) {
             .filter((name) => serverAllowedCapabilities.includes(name));
         } else if (workspaceConfigured && !canonicalUploadRequested) {
           req.handler.allowed_capabilities = requestedCapabilities
-            .filter((name) => (name === "workspace.read" || browserCapabilityNames.has(name)) && serverAllowedCapabilities.includes(name));
+            .filter((name) => (name === "workspace.read" || browserCapabilityNames.has(name) || corpusCapabilityNames.has(name)) && serverAllowedCapabilities.includes(name));
         } else if (jhnCaller && req.capability !== "browser.chatgpt.turn"
           && !canonicalUploadRequested) {
           req.handler.allowed_capabilities = requestedCapabilities
-            .filter((name) => browserCapabilityNames.has(name));
+            .filter((name) => browserCapabilityNames.has(name) || corpusCapabilityNames.has(name));
         }
         // A coordination lease is an internal recoverable effect.  Give it the
         // same bounded accounting path as browser interaction, without
@@ -3037,6 +3061,16 @@ export function createMcpCore(env = process.env, extras = {}) {
       default:
         throw new Error(`Unknown tool: ${name}`);
     }
+  }
+
+  async function searchCorpus(args) {
+    requireString(args.query, "query");
+    return daemonGet("/api/context/search", {
+      q: args.query,
+      repo: args.repo,
+      limit: boundedOptional(args.limit, 1, 50),
+      mode: enumOptional(args.mode, ["keyword", "hybrid", "semantic"], "mode"),
+    });
   }
 
   async function daemonGet(route, params, options = {}) {
