@@ -375,8 +375,8 @@ export async function runJohnRequest(request, options = {}) {
       } else {
         reasoner = {
           nextStep: async () => ({
-            kind: "answer",
-            answer: `Governed step processed: ${request.input.prompt}`,
+            kind: "stop",
+            reason: "reasoner_not_configured",
           }),
         };
       }

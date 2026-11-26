@@ -189,6 +189,7 @@ assert.equal(missingOrientation.at(-1).data.data.code, "required_event_handler_m
 
 let orientationCalls = 0;
 const oriented = await runJohnRequest(orientationRequest, {
+  reasoner: { nextStep: async () => ({ kind: "answer", answer: "orientation fixture" }) },
   requiredEventHandlers: {
     "orientation.required": async () => {
       orientationCalls += 1;
