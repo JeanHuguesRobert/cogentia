@@ -7,6 +7,7 @@ import {resolveMandate,invokeGovernedCapability} from '../../../inseme/packages/
 import {createEventSourcedExecutionBudgetLedger} from '../../../inseme/packages/cop-core/src/execution-budget.js';
 import {reserveEventSourcedDelegatedBudget} from '../../../inseme/packages/cop-core/src/delegated-budget.js';
 import {projectPacketWorkAssignment} from '../../../inseme/packages/cop-core/src/packet-work-assignment.js';
+import {buildWorkCommissioningContract,compareWorkCommissioningContract} from './work-commissioning-contract.js';
 import {assessJohnCopAuthority} from './john-cop-authority-preflight.js';
 import {isResolvedCallerAuth} from './cogentia-mcp-auth.js';
 import {createCopMcpTasksPilot,packetRefForMcpTask,packetTopicForMcpTask} from './mcp-tasks-cop-pilot.mjs';
@@ -73,14 +74,15 @@ export function assessCanonicalPublicJohnWork({store,verifyIssuer,resolveContext
     context.request_hash!==normalized.request_hash||context.result_visibility!=='public'||
     !ref(context.destination_ref)||!ref(context.commissioning_ref))
    return deny('verified_commissioning_and_public_destination_required');
- const access_context={
-   principal_ref:context.principal_ref,destination_ref:context.destination_ref,
-   commissioning_ref:context.commissioning_ref,request_hash:context.request_hash,
-   result_visibility:'public',mandate_version:mandate.version,
- };
- return {ok:true,admitted:true,submission_key:r.request_id,access_context,
-   assignment:{responsible_agent_ref:'agent:jhn',commissioned_by_principal_ref:'principal:jhn',
-     source_ref:context.commissioning_ref},request:r};
+ const built=buildWorkCommissioningContract({intent:{
+   principal_ref:'principal:jhn',responsible_agent_ref:'agent:jhn',
+   submission_key:r.request_id,request_hash:normalized.request_hash,capability:CAPABILITY,
+   mandate_ref:STANDING_MANDATE_REF,mandate_version:mandate.version,
+   parent_budget_ref:STANDING_BUDGET_ID,allocation:{max_steps:STEPS},
+ },context});
+ if(!built.ok)return deny(built.error);
+ return {ok:true,admitted:true,submission_key:r.request_id,access_context:built.contract,
+   contract_hash:built.contract_hash,assignment:built.assignment,request:r};
 }
 
 export function createCanonicalJohnPublicWorkPilot({store,verifyIssuer,resolveContext,publicCore,primaryStoreId,ownerInstanceRef,now=()=>new Date()}={}){
@@ -95,11 +97,11 @@ export function createCanonicalJohnPublicWorkPilot({store,verifyIssuer,resolveCo
    const c=creation(taskId);
    if(!c||c.owner!=='jhn:'+auth?.actor||!c.access_context)fail('unknown_task');
    const a=check(auth,c.args,operation);
-   if(!a.admitted||hashPayload(a.access_context)!==hashPayload(c.access_context))fail('unknown_task');
+   if(!a.admitted||!compareWorkCommissioningContract(c.access_context,{ok:a.ok,contract:a.access_context,contract_hash:a.contract_hash}).ok)fail('unknown_task');
    const assignment=projectPacketWorkAssignment(store,{packet_ref:packetTopicForMcpTask(taskId)});
    if(!assignment.ok||assignment.responsible_agent_ref!=='agent:jhn'||
       assignment.commissioned_by_principal_ref!=='principal:jhn'||
-      assignment.history?.at(-1)?.source_ref!==c.access_context.commissioning_ref)
+      assignment.history?.at(-1)?.source_ref!==c.access_context.assignment.source_ref)
      fail('unknown_task');
    return a;
  }
@@ -116,7 +118,7 @@ export function createCanonicalJohnPublicWorkPilot({store,verifyIssuer,resolveCo
      const allocation=reserveEventSourcedDelegatedBudget({store,parent_ledger:parent,
        child_budget_id:'budget:'+packetRef,child_mandate_ref:STANDING_MANDATE_REF,
        principal_ref:'principal:jhn',child_source_ref:primaryStoreId+'#'+packetRef,
-       allocation:{max_steps:STEPS},idempotency_key:packetRef});
+       allocation:a.access_context.funding.allocation,idempotency_key:packetRef});
      if(!allocation.ok)throw Error(allocation.error||'public_work_allocation_failed');
      let governed;
      try{

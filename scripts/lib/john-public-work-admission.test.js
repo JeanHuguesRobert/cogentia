@@ -39,12 +39,13 @@ function fixture({allowed=true,steps=12}={}){
   trustedPublicKeyPem:pem,now});
  assert.equal(issued.ok,true,JSON.stringify(issued));
  const verifyIssuer=createOfflineJohnIssuerVerifier({trustedPublicKeyPem:pem,now:()=>now});
- const state={destination:'destination:fixture-personal',verified:true};
+ const state={destination:'destination:fixture-personal',recipient:'principal:jhn',verified:true};
  // Fixture for the independently verified Principal's exact commissioning
  // and destination context. A transport token alone cannot satisfy this.
  const resolveContext=({request_hash})=>({verified:state.verified,
    principal_ref:'principal:jhn',commissioned_by_principal_ref:'principal:jhn',
    request_hash,result_visibility:'public',destination_ref:state.destination,
+   requesting_agent_ref:'agent:jhn',recipient_ref:state.recipient,
    commissioning_ref:'fixture:principal-exact-commissioning'});
  return {store,verifyIssuer,resolveContext,state,ledger:()=>createEventSourcedExecutionBudgetLedger({store,budget_id:BUDGET,require_authority_grant:true})};
 }
@@ -95,6 +96,12 @@ test('one canonical public work, packet-local act chain, funded steps, destinati
   await assert.rejects(p.run(id,auth));
   assert.equal(calls,0);
   f.state.destination='destination:fixture-personal';
+  // A different destination or recipient cannot acquire the same work
+  // through the stable submission key, even if the transport is identical.
+  f.state.recipient='principal:other';
+  await assert.rejects(p.adapter.create(c));
+  await assert.rejects(p.adapter.get({taskId:id,auth}));
+  f.state.recipient='principal:jhn';
   const done=await p.run(id,auth);
   assert.equal(done.status,'completed',JSON.stringify(done));
   const result=JSON.parse(done.result.content[0].text);
@@ -107,6 +114,11 @@ test('one canonical public work, packet-local act chain, funded steps, destinati
   const child=createEventSourcedExecutionBudgetLedger({store:f.store,budget_id:'budget:'+packetRefForMcpTask(id),require_authority_grant:true});
   assert.equal(child.snapshot().settled.max_steps,result.accounting.settled_steps);
   assert.equal(child.snapshot().reserved.max_steps,0);
+  const persisted=f.store.listTopic(topic).find(e=>e.payload?.phase==='created').payload.access_context;
+  assert.equal(persisted.schema,'cogentia.work-commissioning/v1');
+  assert.equal(persisted.delivery.recipient_ref,'principal:jhn');
+  assert.equal(persisted.authority.mandate_ref,REF);
+  assert.deepEqual(persisted.funding.allocation,{max_steps:3});
   assert.ok(f.store.listTopic(topic).some(e=>e.payload?.kind==='Imputation'));
   assert.equal(f.store.auditTopicCommitment(topic).ok,true);
   assert.equal(make().auditPacket(id).ok,true);

@@ -553,3 +553,43 @@ commissioning from the transport token. Before activation, use #327's existing
 OAuth/Principal identity components and an explicit commissioning/destination
 contract, and decide the generic work authority under #299/#341 rather than
 issuing per-search mandates.
+
+## 2026-11-26 — Transport-independent commissioning contract (#342/#341)
+
+`scripts/lib/work-commissioning-contract.js` factors the work-order value
+out of the public John admission pilot. It is a candidate application contract,
+not a new canonical COP event family, mandate, or work registry. The pilot
+persists it as the existing Packet creation's `access_context` and includes
+it in the submission digest. The assignment remains the existing Inseme
+assignment projection; funding remains the existing delegated COP budget.
+
+The contract separates the governing Principal, commissioning Principal
+(root) or commissioning agent and parent work (delegation), original requesting
+agent, responsible logical agent, request hash, mandate/version/capability,
+parent budget and bounded allocation, and delivery recipient/destination.
+Subject, Twin and destination provider account are separate optional references;
+unknown values remain null, never inferred from a Principal or token.
+Delivery currently means retrieval by reference, not a permission to send a
+message or publish. The original requesting agent is immutable historical
+context, not a declaration of the current retrieving caller's identity.
+
+The trusted host must independently verify commissioning evidence, including
+the parent relationship for delegated work, and the recipient/destination
+entitlement. The generic constructor checks consistency and returns
+`grants_authority:false`; it does not authenticate the input. Current
+John admission still checks signed semantic authority, rechecks the
+resolved contract at dispatch and retrieval, and settles the existing
+packet-local budget. Contract mismatch does not silently redirect delivery
+or increase funding. The current John pilot remains root-only; the delegated
+form is exercised by generic value-level tests, not a live delegation.
+
+Validation: 46 focused tests passed, plus a separate run against the actual
+public Corpus daemon using the independently signed fixture mandate. That
+run returned three CCC results, one provider call and two settled steps.
+Tests cover root and delegated shape, missing evidence, inconsistent
+commissioners, changed subject/Twin/account, recipient, destination, mandate
+and budget, collision on stable submission, and source-packet persistence.
+The generic contract is not yet a production identity resolver. The two
+remaining integration boundaries are independent caller/commissioner/destination
+resolution (#327) and actual semantic authority for funded work (#299).
+Do not amend v8 automatically or require a new human mandate per search.
