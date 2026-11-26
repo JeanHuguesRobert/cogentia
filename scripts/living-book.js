@@ -18,6 +18,7 @@ import {
   extractMagazineItemFromMarkdown,
   renderFederatedFeedHtml
 } from './lib/living-book-factory/syndication.js';
+import { renderResourceProjections } from './lib/living-book-factory/resource-projections.js';
 import { renderLivingBookProjections } from './lib/living-book-factory/render-projections.js';
 
 function printUsage() {
@@ -32,6 +33,8 @@ Commands:
   inspect <manifest_or_dir>         Inspect an existing Living Book implementation.
   scaffold <manifest> [options]     Generate minimal common shell & projections for a Living Book.
   syndicate [options]               Syndicate a Magazine delta from one Living Book to another.
+  render-resources <dir> --out <new_dir> [--selection <local_yaml>]
+                                     Build selected public resource pages and receipt.
   render <manifest_or_dir>          Generate working projections in preparation (HTML, PDF, EPUB).
 
 Options:
@@ -226,6 +229,11 @@ async function main() {
         console.log(`✓ Syndicated item "${syndicated.title}" from "${sourceBook}" to "${recipientBookId}".`);
         console.log(`   Saved: ${path.relative(process.cwd(), outFile)}`);
       }
+    } else if (command === 'render-resources') {
+      const res = renderResourceProjections(positional[1] || '.', {
+        selection: flags.selection, out: flags.out
+      });
+      console.log(JSON.stringify(res, null, 2));
     } else if (command === 'render') {
       const target = positional[1] || '.';
       if (!flags.json) console.log(`Rendering projections in preparation (HTML, PDF, EPUB) for ${target}...`);

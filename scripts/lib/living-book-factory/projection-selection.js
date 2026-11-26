@@ -30,7 +30,45 @@ function resolveSelectedMarkdown(projectDir, declaredPath) {
   return real;
 }
 
-export function loadWorkingSelection(projectDir, manifest) {
+// Addressable resources deliberately have a stricter disclosure contract than
+// the legacy manuscript selection. Sources are corpus-relative, not routes.
+function loadResources(projectReal, data) {
+  const values = data.resources ?? [];
+  if (!Array.isArray(values)) throw new Error('Selection resources must be an array');
+  const root = path.basename(path.dirname(projectReal)) === 'projects'
+    ? fs.realpathSync(path.resolve(projectReal, '..', '..')) : projectReal;
+  const ids = new Set(), routes = new Set(), sources = new Set();
+  return values.map(entry => {
+    const { id, route, source } = entry || {};
+    if (typeof id !== 'string' || !/^[a-z0-9][a-z0-9-]*$/.test(id))
+      throw new Error('Invalid public resource identity');
+    if (typeof route !== 'string' || !/^\/ressources\/[a-z0-9][a-z0-9-]*\.html$/.test(route) ||
+        route === '/ressources/index.html')
+      throw new Error('Invalid or reserved public resource route: ' + route);
+    if (typeof source !== 'string' || !/\.md$/i.test(source) ||
+        source.includes('\\') || source.includes(':') ||
+        source.split('/').some(part => !part || part === '.' || part === '..'))
+      throw new Error('Invalid corpus-relative resource source');
+    const absolute = fs.realpathSync(path.resolve(root, source));
+    if (!within(root, absolute) || !fs.statSync(absolute).isFile() ||
+        path.extname(absolute).toLowerCase() !== '.md')
+      throw new Error('Resource source outside admitted Markdown scope: ' + source);
+    if (ids.has(id) || routes.has(route) || sources.has(absolute))
+      throw new Error('Duplicate resource identity, route or source: ' + id);
+    ids.add(id); routes.add(route); sources.add(absolute);
+    const raw = fs.readFileSync(absolute, 'utf8');
+    const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
+    const metadata = match ? jsYaml.load(match[1]) : null;
+    if (metadata?.visibility !== 'public' || typeof metadata.title !== 'string' ||
+        !metadata.title.trim())
+      throw new Error('Resource requires explicit public visibility and title: ' + id);
+    return { id, route, source, absolute, title: metadata.title,
+      body: raw.slice(match[0].length),
+      sha256: crypto.createHash('sha256').update(raw).digest('hex') };
+  });
+}
+
+export function loadWorkingSelection(projectDir, manifest, { resourcesOnly = false } = {}) {
   const rel = manifest.projection?.selection;
   if (!rel) return null;
   if (typeof rel !== 'string' || path.isAbsolute(rel) || rel.includes('\\')) {
@@ -66,12 +104,13 @@ export function loadWorkingSelection(projectDir, manifest) {
       sources.push({ absolute, declaredPath, part });
     }
   }
-  if (!sources.some(x => x.part === 'Livre')) {
+  if (!resourcesOnly && !sources.some(x => x.part === 'Livre')) {
     throw new Error('Projection selection requires at least one chapter');
   }
   return {
     selectionFile: file,
     selectionSha256: crypto.createHash('sha256').update(buffer).digest('hex'),
-    sources
+    sources,
+    resources: loadResources(projectReal, data)
   };
 }
