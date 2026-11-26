@@ -30,8 +30,13 @@ EXPECTED={
     'issuer/repos/inseme/packages/cop-core/src/resource-assessment.js',
     'issuer/repos/inseme/packages/cop-core/src/sqlite-budget-projection.js',
     'issuer/repos/inseme/packages/cop-core/src/sqlite-cop-event-store.js',
+    'issuer/repos/inseme/packages/cop-core/src/fractalog.js',
 }
-PREVIOUS_EXPECTED=EXPECTED-{'issuer/repos/cogentia/scripts/super/root-bounded-mcp-restart.mjs'}
+# Preserve the exact historical initial-install recovery archive shape.
+PREVIOUS_EXPECTED=EXPECTED-{
+    'issuer/repos/cogentia/scripts/super/root-bounded-mcp-restart.mjs',
+    'issuer/repos/inseme/packages/cop-core/src/fractalog.js',
+}
 def verify_bundle(filename, expected_sha, *, previous=False):
     required=PREVIOUS_EXPECTED if previous else EXPECTED
     raw=pathlib.Path(filename).read_bytes()

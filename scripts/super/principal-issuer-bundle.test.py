@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Nonprivileged unit checks of exact verified root-issuer install inputs."""
-import hashlib, importlib.util, pathlib, tempfile, unittest
+import hashlib, importlib.util, pathlib, subprocess, tempfile, unittest
 
 def module(filename,name):
     p=pathlib.Path(__file__).with_name(filename)
@@ -25,6 +25,8 @@ class BundleChecks(unittest.TestCase):
             self.assertIn('issuer/repos/cogentia/scripts/super/root-super-prepare.mjs',trusted['members'])
             self.assertIn('issuer/repos/cogentia/scripts/super/root-bounded-mcp-restart.mjs',trusted['members'])
             self.assertIn('issuer/repos/cogentia/scripts/super/root-effect-reconcile.mjs',trusted['members'])
+            self.assertIn('issuer/repos/inseme/packages/cop-core/src/fractalog.js',trusted['members'])
+            self.assertTrue(install.verify_bundle(a,digest)['ok'])
             corrupt=bytearray(a.read_bytes());corrupt[len(corrupt)//2]^=1
             a.write_bytes(corrupt)
             self.assertFalse(verify.verify_bundle(a,digest)['ok'])
@@ -35,10 +37,13 @@ class BundleChecks(unittest.TestCase):
             legacy=pathlib.Path(td)/'previous.tar.gz'
             with tarfile.open(b,'r:gz') as tar:
                 members={m.name:tar.extractfile(m).read() for m in tar if m.isfile()}
-            removed='issuer/repos/cogentia/scripts/super/root-bounded-mcp-restart.mjs'
-            members.pop(removed)
             manifest=json.loads(members['issuer/manifest.json'])
-            manifest['files'].pop(removed)
+            for removed in [
+                'issuer/repos/cogentia/scripts/super/root-bounded-mcp-restart.mjs',
+                'issuer/repos/inseme/packages/cop-core/src/fractalog.js',
+            ]:
+                members.pop(removed)
+                manifest['files'].pop(removed)
             members['issuer/manifest.json']=(json.dumps(manifest,sort_keys=True,indent=2)+'\n').encode()
             with legacy.open('wb') as out, gzip.GzipFile(fileobj=out,mode='wb',mtime=0,filename='') as gz:
                 with tarfile.open(fileobj=gz,mode='w',format=tarfile.PAX_FORMAT) as target:
@@ -50,6 +55,48 @@ class BundleChecks(unittest.TestCase):
             self.assertFalse(install.verify_bundle(legacy,old_hash)['ok'])
             self.assertTrue(install.verify_bundle(legacy,old_hash,previous=True)['ok'])
             self.assertFalse(install.verify_bundle(b,digest,previous=True)['ok'])
+    def test_verified_archive_imports_and_runs_cop_store_without_checkout(self):
+        # All code loaded from the verified extracted archive, as ordinary
+        # user. No installed broker, real authority store or root execution.
+        with tempfile.TemporaryDirectory() as td:
+            root=pathlib.Path(td)
+            archive=root/'bundle.tar.gz'
+            build.build(archive)
+            verified=verify.verify_bundle(archive,hashlib.sha256(archive.read_bytes()).hexdigest())
+            self.assertTrue(verified['ok'],verified)
+            for name,data in verified['members'].items():
+                target=root/name
+                target.parent.mkdir(parents=True,exist_ok=True)
+                target.write_bytes(data)
+            cogentia=root/'issuer/repos/cogentia/scripts/super'
+            cop=root/'issuer/repos/inseme/packages/cop-core/src'
+            script='''
+import assert from 'node:assert/strict';
+import {pathToFileURL} from 'node:url';
+import {join} from 'node:path';
+const [issuer,core]=process.argv.slice(1);
+const load=(dir,name)=>import(pathToFileURL(join(dir,name)));
+for(const name of ['broker.mjs','root-principal-effect-issue.mjs',
+ 'root-maintenance-mandate.mjs','root-bounded-mcp-restart.mjs',
+ 'root-super-prepare.mjs','root-effect-reconcile.mjs']){
+ await load(issuer,name);
+}
+const {createSqliteCopEventStore}=await load(core,'sqlite-cop-event-store.js');
+const {createFractalogActRecord}=await load(core,'fractalog.js');
+const store=createSqliteCopEventStore(':memory:');
+try{
+ const payload=createFractalogActRecord({record_id:'fixture:r',act_id:'fixture:a',
+ act_kind:'fixture',owner_instance_ref:'fixture:node'});
+ assert.equal(store.append({topic_id:'packet:fixture',payload}).ok,true);
+ assert.equal(store.auditTopicCommitment('packet:fixture').ok,true);
+}finally{store.close()}
+console.log('ISSUER_ARCHIVE_IMPORT_AND_COP_OK');
+'''
+            result=subprocess.run(['node','--input-type=module','-e',script,str(cogentia),str(cop)],
+                cwd=root,capture_output=True,text=True,timeout=20)
+            self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+            self.assertIn('ISSUER_ARCHIVE_IMPORT_AND_COP_OK',result.stdout)
+
     def test_partial_verified_root_source_can_be_completed_only_if_exact(self):
         import os
         with tempfile.TemporaryDirectory() as td:

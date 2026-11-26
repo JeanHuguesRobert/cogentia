@@ -31,6 +31,7 @@ FILES = [
     'inseme/packages/cop-core/src/resource-assessment.js',
     'inseme/packages/cop-core/src/sqlite-budget-projection.js',
     'inseme/packages/cop-core/src/sqlite-cop-event-store.js',
+    'inseme/packages/cop-core/src/fractalog.js',
 ]
 PREFIX = 'issuer/repos/'
 
