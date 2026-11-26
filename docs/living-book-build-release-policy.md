@@ -55,7 +55,7 @@ returns CURRENT_VERIFIED without copying or switching the site.
 
 On Fracta2, verified active release receipts currently reside outside the
 document root in
-\`/var/lib/cogentia/state/living-book-resource-receipts/<release>/receipt.json\`.
+`/var/lib/cogentia/state/living-book-resource-receipts/<release>/receipt.json`.
 The operational record belongs to Operium; the build and release evidence
 is traced by [#348](https://github.com/JeanHuguesRobert/cogentia/issues/348).
 The Super Agile regime favors forward correction, not routine rollback

@@ -881,14 +881,14 @@ repository, not a prerequisite for reading the book. A public source can
 participate in several books without duplicating its canonical text.
 
 The implemented working-resource extension uses an explicit
-\`projects/<book>/projections/resources-working.yml\` selection:
+`projects/<book>/projections/resources-working.yml` selection:
 stable resource ID, public route and Corpus-relative source. Reject missing,
 unclassified, private or duplicate inputs. A bounded selection is not a
 claim of exhaustive Corpus coverage. Record unresolved references and editorial
 Delta Dispositions; deepen coverage by informed selection, not recursive
 automatic disclosure.
 
-The Factory's \`build-resources\` command fingerprints each book's selected
+The Factory's `build-resources` command fingerprints each book's selected
 sources, revisions, metadata, selection and implementation. A verified cache
 hit is reuse, not reconstruction. The CI transfer carries source revisions,
 digests and artifact manifests; the existing static release assembler
