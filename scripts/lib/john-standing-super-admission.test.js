@@ -17,6 +17,7 @@ import {BROWSER_UPLOAD_POLICY} from './jhn-browser-upload-mandate-plan.js';
 import {createJhnCanonicalConsentWorkflow} from './jhn-canonical-consent-workflow.js';
 import {canonicalPayloadHash,buildEffectPayload} from './side-effect-authorization.js';
 import {assessStandingSuperEffect,claimStandingSuperEffect} from './john-standing-super-admission.js';
+import {recordStandingSuperResult} from './john-standing-super-result.js';
 const ref='mandate:jhn:john-root',now=new Date('2026-11-26T12:00:00Z'),owner='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const auth=resolveCallerAuth({COGENTIA_MCP_JHN_MUTATE:'1',COGENTIA_MCP_JHN_TOKEN:'fixture-only'},{
  headers:{authorization:'Bearer fixture-only'},meta:{'cogentia.actor':'agent:jhn','cogentia.mandate_ref':'mandate:chatgpt-corpus-coding'}});
@@ -178,5 +179,106 @@ test('several local acts use one allocation; only a summary returns to the paren
   assert.equal(parent.snapshot().settled.max_steps,2);
   assert.equal(parent.snapshot().available.max_steps,1);
   assert.equal(claimStandingSuperEffect({...f.input,request:{...f.request,request_id:'after-close'}}).ok,false);
+ }finally{f.close()}
+});
+
+function prepareReturn(f,{ok=true,timeout=false}={}){
+ const prepared=claimStandingSuperEffect(f.input);
+ assert.equal(prepared.ok,true,JSON.stringify(prepared));
+ const q=f.request;
+ const receipt={schema:'cogentia.super.packet-receipt/v1',
+   packet_ref:q.packet_ref,packet_claim_event_id:prepared.packet_claim_event_id,
+   target:q.target,payload_hash:q.payload_hash,principal_ref:q.principal_ref,
+   actor_ref:q.actor_ref,mandate_ref:q.mandate_ref,mandate_version:q.mandate_version,
+   budget_reservation_id:prepared.budget_reservation_id,before_state_hash:q.before_state_hash,
+   after_state_hash:'sha256:'+'b'.repeat(64),
+   authorization_id:'sea_4944ba77-7140-4bbd-af6c-278bb0030704',
+   receipt_ref:'fixture:node:fracta2:receipt:1',attempted:true,ok,timeout,
+   exit_code:ok?0:timeout?null:1,observed_at:'2026-11-26T12:00:04Z',
+   stdout:'fixture-not-for-packet',stderr:'fixture-not-for-packet'};
+ const input={resolvePacketContext:f.input.resolvePacketContext,
+   packet_ref:q.packet_ref,packet_claim_event_id:prepared.packet_claim_event_id,
+   // The fixture stands in for the node's trusted receipt source, NOT a
+   // production verifier or a root execution.
+   receipt_candidate:{receipt_ref:receipt.receipt_ref},
+   verifyBrokerReceipt:({candidate})=>({verified:candidate?.receipt_ref===receipt.receipt_ref,
+     receipt:structuredClone(receipt)})};
+ return {prepared,receipt,input};
+}
+test('verified node result settles locally and links causal act; duplicate delivery is harmless',async()=>{
+ const f=await fixture({steps:3});try{
+  const {input,prepared,receipt}=prepareReturn(f);
+  const rootBefore=f.store.replay(),localBefore=f.packetStore.replay().length;
+  const result=recordStandingSuperResult(input);
+  assert.equal(result.ok,true,JSON.stringify(result));assert.equal(result.executed_ok,true);
+  assert.equal(result.grants_authority,false);assert.equal(result.budget_settled,true);
+  assert.deepEqual(f.store.replay(),rootBefore);
+  assert.equal(f.packetStore.replay().length,localBefore+2);
+  const entries=f.packetStore.listTopic('packet:'+f.request.packet_ref);
+  const last=entries.at(-1);
+  assert.equal(last.event_id,result.result_event_id);
+  assert.equal(validateFractalogActRecord(last.payload).ok,true);
+  assert.equal(last.payload.act_id,entries.at(-2).payload.act_id);
+  assert.ok(last.parent_event_ids.includes(prepared.packet_claim_event_id));
+  assert.equal(last.payload.effect.receipt_ref,receipt.receipt_ref);
+  assert.equal(last.payload.effect.after_state_hash,receipt.after_state_hash);
+  assert.equal(JSON.stringify(f.packetStore.replay()).includes('fixture-not-for-packet'),false);
+  const retry=recordStandingSuperResult(input);
+  assert.equal(retry.duplicate,true);assert.equal(retry.result_event_id,result.result_event_id);
+  assert.equal(f.delegation.child_ledger.snapshot().settled.max_steps,1);
+  assert.equal(f.delegation.child_ledger.snapshot().reserved.max_steps,0);
+  const conflicting=recordStandingSuperResult({...input,verifyBrokerReceipt:()=>({
+    verified:true,receipt:{...receipt,after_state_hash:'sha256:'+'c'.repeat(64)}})});
+  assert.equal(conflicting.error,'administrative_receipt_conflict');
+  assert.equal(f.packetStore.auditTopicCommitment('packet:'+f.request.packet_ref).ok,true);
+ }finally{f.close()}
+});
+test('unverified or misbound results leave local reservation pending',async()=>{
+ const f=await fixture();try{
+  const {input,receipt}=prepareReturn(f);
+  const before=f.packetStore.replay();
+  for(const change of [{verifyBrokerReceipt:undefined},{receipt_candidate:{receipt_ref:'fake'}},
+    {verifyBrokerReceipt:()=>({verified:false,receipt})},
+    {resolvePacketContext:()=>({...f.context,primary_store_id:'sqlite:foreign'})},
+    {packet_claim_event_id:'unknown-event'}])
+    assert.equal(recordStandingSuperResult({...input,...change}).ok,false);
+  for(const change of [{packet_ref:'pkt-other'},{packet_claim_event_id:'another'},
+    {mandate_version:'v7'},{payload_hash:'sha256:'+'d'.repeat(64)},
+    {budget_reservation_id:'another'},{attempted:false},{after_state_hash:null},
+    {ok:true,exit_code:1},{timeout:true}]){
+    assert.equal(recordStandingSuperResult({...input,verifyBrokerReceipt:()=>({
+      verified:true,receipt:{...receipt,...change}})}).ok,false,JSON.stringify(change));
+  }
+  assert.deepEqual(f.packetStore.replay(),before);
+  assert.equal(f.delegation.child_ledger.snapshot().reserved.max_steps,1);
+ }finally{f.close()}
+});
+test('past attempted failure remains accountable after mandate revocation; no new authority',async()=>{
+ const f=await fixture();try{
+  const {input}=prepareReturn(f,{ok:false,timeout:true});
+  assert.equal(recordMandateControl(f.store,{principal_ref:'principal:jhn',mandate_ref:ref,
+    action:'revoke',reason:'fixture'}).ok,true);
+  const before=f.store.replay(),result=recordStandingSuperResult(input);
+  assert.equal(result.ok,true,JSON.stringify(result));assert.equal(result.executed_ok,false);
+  assert.equal(result.grants_authority,false);
+  assert.equal(f.packetStore.listTopic('packet:'+f.request.packet_ref).at(-1).payload.act_phase,'failed');
+  assert.equal(f.delegation.child_ledger.snapshot().settled.max_steps,1);
+  assert.deepEqual(f.store.replay(),before);
+  assert.equal(claimStandingSuperEffect({...f.input,request:{...f.request,request_id:'new-after-revoke'}}).ok,false);
+ }finally{f.close()}
+});
+test('failed result append rolls back settlement; exact receipt can be retried',async()=>{
+ const f=await fixture();try{
+  const {input}=prepareReturn(f);
+  const before=f.packetStore.replay();
+  const broken={...f.packetStore,transaction:fn=>f.packetStore.transaction(tx=>fn({
+    ...tx,append:e=>e.topic?.id==='packet:'+f.request.packet_ref?{ok:false}:tx.append(e)
+  }))};
+  const fail=recordStandingSuperResult({...input,resolvePacketContext:()=>({...f.context,store:broken})});
+  assert.equal(fail.error,'packet_result_append_failed');
+  assert.deepEqual(f.packetStore.replay(),before);
+  assert.equal(f.delegation.child_ledger.snapshot().reserved.max_steps,1);
+  assert.equal(recordStandingSuperResult(input).ok,true);
+  assert.equal(f.delegation.child_ledger.snapshot().settled.max_steps,1);
  }finally{f.close()}
 });
