@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { renderResourceProjections } from './lib/living-book-factory/resource-projections.js';
 import * as yaml from 'js-yaml';
 
@@ -15,7 +16,14 @@ const write = (p, value) => {
 const publicDoc = (title, body) => '---\nvisibility: public\ntitle: ' + title + '\n---\n' + body;
 const a = { id: 'dossier', route: '/ressources/dossier.html', source: 'sources/dossier.md' };
 const b = { id: 'evidence', route: '/ressources/evidence.html', source: 'sources/evidence.md' };
-const select = (book, resources) => write('projects/' + book + '/selection.yml', yaml.dump({resources}));
+const disposition = (id, status) => ({
+  schema: 'cogentia.delta-disposition/v0', id, sources: ['sources/secret.md'],
+  summary: 'Test disposition', significance: 'medium', projection_relevance: 'low',
+  disposition: status
+});
+const select = (book, resources, dispositions = [
+  disposition('later', 'DEFERRED'), disposition('not-in-scope', 'REJECTED')
+]) => write('projects/' + book + '/selection.yml', yaml.dump({resources, dispositions}));
 const build = (book, output) => renderResourceProjections(path.join(root, 'projects', book),
   { selection: 'selection.yml', out: path.join(root, output) });
 try {
@@ -36,6 +44,12 @@ try {
   assert.match(html, /href="\/"/);
   assert.doesNotMatch(html, /secret\.md|private\.png|href="javascript:|<script>|github\.com/);
   assert.equal(first.unresolved.length, 3);
+  assert.deepEqual(first.coverage, { scope:'declared-selection-only',
+    selected:['dossier','evidence'], deferred:['later'], excluded:['not-in-scope'],
+    unresolved_link_count:3 });
+  assert.equal(first.resources[0].source_revision, null);
+  assert.equal(first.selection_revision, null);
+  assert.doesNotMatch(html, /Test disposition|sources\/secret.md/);
   assert.equal(fs.existsSync(path.join(root,'out1/site/receipt.json')), false);
   assert.throws(() => build('first', 'out1'), /already exists/);
   const second = build('second', 'out3');
@@ -67,9 +81,33 @@ try {
     assert.throws(() => build('first','bad'));
     assert.equal(fs.existsSync(path.join(root,'bad')), false);
   }
+  select('first',[moved,b],[disposition('wrong','INVENTED')]);
+  assert.throws(() => build('first','bad'), /Delta Disposition/);
+  assert.equal(fs.existsSync(path.join(root,'bad')), false);
   select('first',[moved,b]);
   fs.mkdirSync(path.join(root,'projects/first/site'));
   assert.throws(() => build('first','projects/first/site/new'), /existing site/);
+  assert.throws(() => build('first','projects/first/edition-new'), /outside the book/);
+  const git = (...args) => execFileSync('git', ['-C',root,...args], {
+    stdio:['ignore','pipe','ignore'], encoding:'utf8'
+  }).trim();
+  git('init','-q');
+  git('add','--','sources/moved.md','sources/evidence.md','projects/first/selection.yml');
+  git('-c','user.name=Reality Test','-c','user.email=test@example.invalid',
+    'commit','-qm','Sources');
+  const revision = git('rev-parse','HEAD');
+  const committed = build('first','out7');
+  assert.equal(committed.resources[0].source_revision,revision);
+  assert.equal(committed.selection_revision,revision);
+  write('unrelated.txt','Not a dependency.');
+  git('add','--','unrelated.txt');
+  git('-c','user.name=Reality Test','-c','user.email=test@example.invalid',
+    'commit','-qm','Unrelated');
+  assert.deepEqual(committed,build('first','out8'));
+  fs.appendFileSync(path.join(root,moved.source),'\\nUncommitted source.');
+  const dirty = build('first','out9');
+  assert.equal(dirty.resources[0].source_revision,null);
+  assert.notEqual(dirty.resources[0].sha256,committed.resources[0].sha256);
   console.log('LIVING_BOOK_RESOURCES_REALITY_TEST_PASS');
 } finally {
   fs.rmSync(root,{recursive:true,force:true});

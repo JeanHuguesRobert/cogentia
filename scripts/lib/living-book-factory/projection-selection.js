@@ -68,6 +68,31 @@ function loadResources(projectReal, data) {
   });
 }
 
+// Carry existing semantic judgments without assigning them in the renderer.
+// The Delta Disposition contract is shared with other projections (#194).
+function loadDispositions(data) {
+  const values = data.dispositions ?? [];
+  if (!Array.isArray(values)) throw new Error('Selection dispositions must be an array');
+  if (!values.length) return values;
+  const schema = JSON.parse(fs.readFileSync(new URL(
+    '../../../schemas/delta-disposition.v0.schema.json', import.meta.url), 'utf8'));
+  const ids = new Set();
+  for (const value of values) {
+    if (!value || typeof value !== 'object' ||
+        schema.required.some(key => !Object.hasOwn(value, key)) ||
+        value.schema !== schema.properties.schema.const ||
+        !['id', 'summary'].every(key => typeof value[key] === 'string' && value[key].trim()) ||
+        !Array.isArray(value.sources) || !value.sources.length ||
+        value.sources.some(source => typeof source !== 'string' || !source.trim()) ||
+        !['significance', 'projection_relevance', 'disposition'].every(key =>
+          schema.properties[key].enum.includes(value[key])) || ids.has(value.id)) {
+      throw new Error('Invalid or duplicate Delta Disposition in selection');
+    }
+    ids.add(value.id);
+  }
+  return values;
+}
+
 export function loadWorkingSelection(projectDir, manifest, { resourcesOnly = false } = {}) {
   const rel = manifest.projection?.selection;
   if (!rel) return null;
@@ -111,6 +136,7 @@ export function loadWorkingSelection(projectDir, manifest, { resourcesOnly = fal
     selectionFile: file,
     selectionSha256: crypto.createHash('sha256').update(buffer).digest('hex'),
     sources,
-    resources: loadResources(projectReal, data)
+    resources: loadResources(projectReal, data),
+    dispositions: loadDispositions(data)
   };
 }

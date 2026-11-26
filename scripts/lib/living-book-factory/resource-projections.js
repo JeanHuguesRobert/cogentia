@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { marked, Renderer } from 'marked';
 import { loadManifest } from './manifest.js';
 import { loadWorkingSelection } from './projection-selection.js';
@@ -10,6 +11,23 @@ const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const escape = value => String(value).replace(/[&<>"']/g, c =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const indexRoute = '/ressources/index.html';
+
+// Record a version only when Git's bytes actually match the rendered bytes.
+// The last file-changing revision is stable across unrelated commits.
+function verifiedSourceRevision(file, expectedDigest) {
+  const git = (args, cwd) => execFileSync('git', ['-C', cwd, ...args],
+    { stdio: ['ignore', 'pipe', 'ignore'] });
+  try {
+    const cwd = path.dirname(file);
+    const root = fs.realpathSync(git(['rev-parse', '--show-toplevel'], cwd).toString().trim());
+    const rel = path.relative(root, file).split(path.sep).join('/');
+    if (!rel || rel.startsWith('../') ||
+        sha(git(['show', 'HEAD:' + rel], root)) !== expectedDigest) return null;
+    return git(['log', '-1', '--format=%H', 'HEAD', '--', rel], root).toString().trim() || null;
+  } catch {
+    return null;
+  }
+}
 
 function page(title, book, body) {
   return '<!doctype html>\n<html lang="' + escape(book.language || 'fr') +
@@ -44,6 +62,8 @@ export function renderResourceProjections(projectDir, { selection, out } = {}) {
   const realSite = fs.existsSync(site) ? fs.realpathSync(site) : site;
   if (canonicalDestination === realSite || canonicalDestination.startsWith(realSite + path.sep))
     throw new Error('Resource build output cannot be within the existing site');
+  if (canonicalDestination === root || canonicalDestination.startsWith(root + path.sep))
+    throw new Error('Resource build output must be outside the book source directory');
   const bySource = new Map(selected.resources.map(r => [r.absolute, r.route]));
   const unresolved = [];
   const files = new Map();
@@ -86,7 +106,20 @@ export function renderResourceProjections(projectDir, { selection, out } = {}) {
     schema: 'living-book.resource-projection/v1',
     book_id: book.id,
     selection_sha256: selected.selectionSha256,
-    resources: selected.resources.map(({ id, route, source, sha256 }) => ({ id, route, source, sha256 })),
+    selection_revision: verifiedSourceRevision(fs.realpathSync(selected.selectionFile), selected.selectionSha256),
+    resources: selected.resources.map(({ id, route, source, absolute, sha256 }) =>
+      ({ id, route, source, sha256, source_revision: verifiedSourceRevision(absolute, sha256) })),
+    // This is a declared, bounded coverage report, not a discovery pass over
+    // all Corpus knowledge. The underlying judgments remain source records.
+    coverage: {
+      scope: 'declared-selection-only',
+      selected: selected.resources.map(r => r.id),
+      deferred: selected.dispositions.filter(d => d.disposition === 'DEFERRED').map(d => d.id),
+      excluded: selected.dispositions.filter(d =>
+        ['NO_IMPACT', 'REJECTED', 'SUPERSEDED'].includes(d.disposition)).map(d => d.id),
+      unresolved_link_count: unresolved.length
+    },
+    delta_dispositions: selected.dispositions,
     artifacts: [...files].map(([route, bytes]) => ({ route, sha256: sha(bytes), size: Buffer.byteLength(bytes) })),
     unresolved
   };
