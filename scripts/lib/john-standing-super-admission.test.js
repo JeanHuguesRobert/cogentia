@@ -18,6 +18,7 @@ import {createJhnCanonicalConsentWorkflow} from './jhn-canonical-consent-workflo
 import {canonicalPayloadHash,buildEffectPayload} from './side-effect-authorization.js';
 import {assessStandingSuperEffect,claimStandingSuperEffect} from './john-standing-super-admission.js';
 import {recordStandingSuperResult} from './john-standing-super-result.js';
+import {projectCompletedPacketEffect} from '../super/root-effect-reconcile.mjs';
 const ref='mandate:jhn:john-root',now=new Date('2026-11-26T12:00:00Z'),owner='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const auth=resolveCallerAuth({COGENTIA_MCP_JHN_MUTATE:'1',COGENTIA_MCP_JHN_TOKEN:'fixture-only'},{
  headers:{authorization:'Bearer fixture-only'},meta:{'cogentia.actor':'agent:jhn','cogentia.mandate_ref':'mandate:chatgpt-corpus-coding'}});
@@ -281,4 +282,59 @@ test('failed result append rolls back settlement; exact receipt can be retried',
   assert.equal(recordStandingSuperResult(input).ok,true);
   assert.equal(f.delegation.child_ledger.snapshot().settled.max_steps,1);
  }finally{f.close()}
+});
+
+
+test('three localities: node receipt projection returns to owning packet and only summary reaches Principal',async()=>{
+ const f=await fixture({steps:3}),dir=mkdtempSync(join(tmpdir(),'standing-super-node-'));
+ const node=createSqliteCopEventStore(join(dir,'node.sqlite'));
+ try{
+  const {prepared,receipt:r,input}=prepareReturn(f);
+  const rootBefore=f.store.replay(),packetBefore=f.packetStore.replay();
+  // Synthetic node-side claim and consumed grant, representing the future
+  // protected issuer; no live grant is minted and no command is executed.
+  const claim=node.append({event_type:'PrivilegedEffectClaim',
+    topic:{id:'privileged-issuer:'+r.budget_reservation_id,seq:1},
+    epistemic_status:'normative',payload:{kind:'PrivilegedEffectClaim',
+      verification:'verified_standing_mandate',mandate_version:r.mandate_version,
+      budget_reservation_id:r.budget_reservation_id,effect_hash:r.payload_hash,
+      packet_ref:r.packet_ref,packet_claim_event_id:r.packet_claim_event_id,
+      target:r.target,principal_ref:r.principal_ref,actor_ref:r.actor_ref,
+      before_state_hash:r.before_state_hash}});
+  assert.equal(claim.ok,true);
+  const grant={authorization_id:r.authorization_id,authority_origin:'verified_mission',
+    single_use:true,action_class:'host.process.run',mandate_ref:r.mandate_ref,mandate_version:r.mandate_version,
+    principal:r.principal_ref,actor:r.actor_ref,target:{node:r.target},payload_hash:r.payload_hash,
+    budget_reservation_id:r.budget_reservation_id,consumed_at:'2026-11-26T12:00:01Z',
+    provenance:{cop_claim_event_id:claim.event.event_id,packet_ref:r.packet_ref,
+      packet_claim_event_id:r.packet_claim_event_id}};
+  const common={authorization_id:r.authorization_id,payload_hash:r.payload_hash};
+  const logEntries=[{...common,event:'cop_reserve',at:'2026-11-26T12:00:01Z'},
+    {...common,event:'effect_result',ok:true,timeout:false,exit_code:0,at:'2026-11-26T12:00:02Z'}];
+  const verifyBrokerReceipt=()=>projectCompletedPacketEffect({
+    store:node,grant,logEntries,authorization_id:r.authorization_id});
+  assert.equal(verifyBrokerReceipt().error,'postcondition_observation_required');
+  assert.equal(recordStandingSuperResult({...input,verifyBrokerReceipt}).ok,false);
+  assert.deepEqual(f.packetStore.replay(),packetBefore);
+  assert.equal(f.delegation.child_ledger.snapshot().reserved.max_steps,1);
+  logEntries.push({...common,event:'effect_state_observed',target:r.target,
+    packet_claim_event_id:r.packet_claim_event_id,before_state_hash:r.before_state_hash,
+    after_state_hash:r.after_state_hash,evidence_ref:'fixture:state-observation',
+    at:'2026-11-26T12:00:04Z'});
+  const proof=verifyBrokerReceipt();assert.equal(proof.ok,true,JSON.stringify(proof));
+  const result=recordStandingSuperResult({...input,verifyBrokerReceipt});
+  assert.equal(result.ok,true,JSON.stringify(result));
+  const observed=f.packetStore.listTopic('packet:'+r.packet_ref).at(-1);
+  assert.equal(observed.payload.effect.receipt_ref,proof.receipt.receipt_ref);
+  assert.equal(observed.payload.effect.after_state_hash,r.after_state_hash);
+  assert.equal(observed.payload.authority.budget_reservation_id,prepared.budget_reservation_id);
+  assert.equal(node.replay().length,1);
+  assert.deepEqual(f.store.replay(),rootBefore);
+  assert.equal(recordStandingSuperResult({...input,verifyBrokerReceipt}).duplicate,true);
+  const closed=f.delegation.close();
+  assert.equal(closed.ok,true,JSON.stringify(closed));
+  assert.equal(f.store.replay().length,rootBefore.length+1);
+  assert.equal(f.store.listTopic('packet:'+r.packet_ref).length,0);
+  assert.equal(f.delegation.child_ledger.snapshot().settled.max_steps,1);
+ }finally{node.close();f.close();rmSync(dir,{recursive:true,force:true})}
 });

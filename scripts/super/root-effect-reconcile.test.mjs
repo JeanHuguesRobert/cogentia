@@ -6,7 +6,7 @@ import {join} from 'node:path';
 import {createSqliteCopEventStore} from '../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js';
 import {recordMandateDeclaration} from '../../../inseme/packages/cop-core/src/governed-act.js';
 import {recordExecutionBudgetGrant,createEventSourcedExecutionBudgetLedger} from '../../../inseme/packages/cop-core/src/execution-budget.js';
-import {reconcileCompletedEffect,reconcileRootEffect} from './root-effect-reconcile.mjs';
+import {reconcileCompletedEffect,reconcileRootEffect,projectCompletedPacketEffect,readRootPacketEffectReceipt} from './root-effect-reconcile.mjs';
 function fixture(){
  const dir=mkdtempSync(join(tmpdir(),'cop-receipt-'));
  const store=createSqliteCopEventStore(join(dir,'cop.sqlite'));
@@ -44,4 +44,66 @@ test('fails closed when grant not consumed, forged receipt, missing claim or res
 });
 test('normal context cannot read or alter root COP journal',()=>{
  if(process.geteuid?.()!==0)assert.equal(reconcileRootEffect({authorization_id:'sea_4944ba77-7140-4bbd-af6c-278bb0030704'}).error,'root_required');
+});
+
+
+function packetFixture(){
+ const f=fixture();
+ const grant={...f.grant,authority_origin:'verified_mission',
+   mandate_ref:'mandate:jhn:john-root',mandate_version:'v8',
+   budget_reservation_id:'reservation:budget:pkt-test:one',
+   payload_hash:'sha256:'+'a'.repeat(64),target:{node:'node:fracta2'},
+   provenance:{packet_ref:'pkt-test',packet_claim_event_id:'packet-claim-test'}};
+ const claim=f.store.append({event_type:'PrivilegedEffectClaim',topic:{id:'privileged-issuer:'+grant.budget_reservation_id,seq:1},
+  epistemic_status:'normative',payload:{kind:'PrivilegedEffectClaim',verification:'verified_standing_mandate',
+   mandate_version:grant.mandate_version,budget_reservation_id:grant.budget_reservation_id,effect_hash:grant.payload_hash,
+   packet_ref:grant.provenance.packet_ref,packet_claim_event_id:grant.provenance.packet_claim_event_id,
+   target:grant.target.node,principal_ref:grant.principal,actor_ref:grant.actor,
+   before_state_hash:'sha256:'+'b'.repeat(64)}});
+ assert.equal(claim.ok,true);
+ grant.provenance.cop_claim_event_id=claim.event.event_id;
+ const logEntries=f.logEntries.map(e=>({...e,payload_hash:grant.payload_hash}));
+ logEntries.push({event:'effect_state_observed',authorization_id:grant.authorization_id,payload_hash:grant.payload_hash,
+   packet_claim_event_id:grant.provenance.packet_claim_event_id,target:grant.target.node,
+   before_state_hash:'sha256:'+'b'.repeat(64),after_state_hash:'sha256:'+'c'.repeat(64),
+   evidence_ref:'fixture:node-local-observation',at:'2026-11-07T08:53:39Z',stdout:'not-for-packet'});
+ return {...f,grant,logEntries};
+}
+test('node-local packet receipt is a deterministic projection, not a second ledger',()=>{
+ const f=packetFixture();try{
+  const before=f.store.replay();
+  const r=projectCompletedPacketEffect(f);
+  assert.equal(r.ok,true,JSON.stringify(r));
+  assert.equal(r.verified,true);assert.equal(r.grants_authority,false);
+  assert.equal(r.receipt.packet_ref,'pkt-test');
+  assert.equal(r.receipt.packet_claim_event_id,'packet-claim-test');
+  assert.equal(r.receipt.before_state_hash,'sha256:'+'b'.repeat(64));
+  assert.equal(r.receipt.after_state_hash,'sha256:'+'c'.repeat(64));
+  assert.equal(r.receipt.stdout,undefined);
+  assert.deepEqual(projectCompletedPacketEffect(f),r);
+  assert.deepEqual(f.store.replay(),before);
+ }finally{f.store.close();rmSync(f.dir,{recursive:true,force:true});}
+});
+test('node projection refuses mismatches and refuses to infer postconditions from exit status',()=>{
+ for(const mutate of [
+   f=>delete f.grant.consumed_at,
+   f=>f.grant.authority_origin='principal',
+   f=>f.grant.provenance.packet_claim_event_id='wrong',
+   f=>f.grant.provenance.cop_claim_event_id='wrong',
+   f=>f.logEntries.pop(),
+   f=>f.logEntries[2].after_state_hash='unobserved',
+   f=>f.logEntries[2].before_state_hash='sha256:'+'d'.repeat(64),
+   f=>f.logEntries[2].at='2026-11-07T08:53:34Z',
+   f=>f.logEntries[1].at='invalid',
+   f=>f.logEntries.push({...f.logEntries[1]}),
+   f=>f.logEntries[1].payload_hash='sha256:'+'e'.repeat(64),
+   f=>f.logEntries[1].exit_code=1]){
+  const f=packetFixture();try{
+   mutate(f);assert.equal(projectCompletedPacketEffect(f).ok,false);
+  }finally{f.store.close();rmSync(f.dir,{recursive:true,force:true});}
+ }
+});
+test('ordinary shell cannot invoke the protected receipt reader',()=>{
+ if(process.geteuid?.()!==0)
+   assert.equal(readRootPacketEffectReceipt({authorization_id:'sea_4944ba77-7140-4bbd-af6c-278bb0030704'}).error,'root_required');
 });
