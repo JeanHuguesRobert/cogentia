@@ -68,3 +68,30 @@ A **real** call to the connected Cogentia_Private `cogentia_host_process_prepare
 In parallel, `scripts/lib/browser-form-script.js` compiles a pre-reviewed, nonsecret input-only recipe to **one existing `page.evaluate` RPC** using DOM focus plus `document.execCommand('insertText')`, with no arbitrary caller-supplied code. `createHostedBrowserCapabilities({formFillBackend:'client-script'})` is an explicitly opt-in backend; existing production native `page.form.fill` remains the default. Browser execution was tested on the httpbin form under the *real signed* `mandate:jhn:form-assist` through an in-process authenticated **fixture transport**, not through a refreshed ChatGPT production MCP connector. First test on `input type=email` failed because `setSelectionRange` is unsupported there; two bounded budget units were settled and the field was not changed. That type is now excluded from the script backend and remains supported by the established native CDP backend. Second real test on an ordinary `input type=text` succeeded with a tool receipt and two units settled; independent DOM readback confirmed 34 exact fictitious characters present and no form submit. Total form budget after these tests: 10 settled, 0 reserved, 502 available. Loaded Chromium extension remained 1.0.18 throughout, without modification or reload. The script backend must not be used with credentials, sensitive data, email-type inputs, complex editors or arbitrary JavaScript; it is still optional until wider interoperability tests pass.
 
 This is a concrete return to the original client-generated code protocol, while retaining proven native-input fallback. It also exposes a material distinction: `page.evaluate` is a powerful bridge primitive and **never itself establishes COP authority**; only the signed semantic form mandate and guarded John execution path can admit the operation.
+
+## 23–26 November 2026 — InoxBrowser, from fixed recipes to reusable behavior
+
+The Principal directs incremental migration of reusable navigation behavior
+into Inox source verbs, executed by JavascriptInox through the ZeroBrowser
+host adapter. Retain the stable generic CDP bridge and COP semantic
+authorization. JS/DOM projection is a host boundary, not the Inox object
+model. Preserve existing recipes as observable references; introduce no
+production migration before comparative evidence.
+
+Cogentia [5301f9a](https://github.com/JeanHuguesRobert/cogentia/commit/5301f9a)
+provides the cross-origin frame transport fixture;
+[9b159b4](https://github.com/JeanHuguesRobert/cogentia/commit/9b159b4)
+and [6eeb590](https://github.com/JeanHuguesRobert/cogentia/commit/6eeb590)
+add the optional Inox selector and parity gate. The default selection
+remains unchanged. The current adapter creates a fresh bounded VM per
+selection (100,000 instruction budget, maximum 80 fields). The latest
+Inox experiment [ea1da5f](https://github.com/JeanHuguesRobert/Inox/commit/ea1da5f)
+passes 137 tests and the disposable Chromium cross-origin OOPIF fixture:
+same selected field index 2, 17 fictitious characters inserted, no submit;
+hosted browser untouched. This is not production connector verification.
+
+See the [Inox experiment](https://github.com/JeanHuguesRobert/Inox/tree/master/experiments/javascript-inox),
+the [materialization doctrine](https://github.com/JeanHuguesRobert/Inox/blob/master/research/two-versions-scripting-vs-system.md)
+and the continuing [packet #291](https://github.com/JeanHuguesRobert/cogentia/issues/291).
+The next implementation step is method dispatch convergence, not a new
+browser-specific RPC.
