@@ -4,7 +4,7 @@
  * A writable agent journal is NOT protected administrative authority.
  * The host supplies independently verified custody, caller and judgment.
  */
-import {createCopEventEnvelope} from '../../../inseme/packages/cop-core/src/cop-event-envelope.js';
+import {createFractalogActRecord} from '../../../inseme/packages/cop-core/src/fractalog.js';
 import {resolveMandate} from '../../../inseme/packages/cop-core/src/governed-act.js';
 import {createEventSourcedExecutionBudgetLedger} from '../../../inseme/packages/cop-core/src/execution-budget.js';
 import {assessJohnCopAuthority} from './john-cop-authority-preflight.js';
@@ -28,8 +28,8 @@ const traceFields=['principal_ref','actor_ref','mandate_ref','mandate_version','
 const equalSet=(a,b)=>Array.isArray(a)&&a.length===b.length&&b.every(x=>a.includes(x));
 const text=(v,max=256)=>typeof v==='string'&&v.trim().length>0&&v.length<=max;
 export function assessStandingSuperEffect({store,auth,verifyIssuer,verifyProtectedCustody,
- verifyIntent,request,at_time=new Date()}={}){
- if(typeof verifyProtectedCustody!=='function'||typeof verifyIntent!=='function')
+ verifyIntent,resolvePacketContext,request,at_time=new Date()}={}){
+ if(typeof verifyProtectedCustody!=='function'||typeof verifyIntent!=='function'||typeof resolvePacketContext!=='function')
   return deny('protected_issuer_and_intent_verifier_required');
  // These functions are injected by the protected host, not request fields.
  // No reliance on an assertion that a path, caller or intent is trusted.
@@ -40,7 +40,7 @@ export function assessStandingSuperEffect({store,auth,verifyIssuer,verifyProtect
   q.capability!=='host.process.run'||q.mandate_ref!==STANDING_MANDATE_REF||
   q.actor_ref!=='agent:jhn'||q.principal_ref!=='principal:jhn'||
   !/^v[1-9]\d*$/.test(q.mandate_version||'')||
-  !/^[-\w:.]{1,120}$/.test(q.request_id||'')||!text(q.purpose,512)||!text(q.recovery_ref)||
+  !/^[-\w:.]{1,120}$/.test(q.packet_ref||'')||!/^[-\w:.]{1,120}$/.test(q.request_id||'')||!text(q.purpose,512)||!text(q.recovery_ref)||
   !hash.test(q.before_state_hash||'')||!classes.includes(q.effect_class)||
   !text(q.command,32768)||Buffer.byteLength(q.command)>32768||
   !Number.isSafeInteger(q.timeout_ms)||q.timeout_ms<1||q.timeout_ms>120000)
@@ -78,7 +78,28 @@ export function assessStandingSuperEffect({store,auth,verifyIssuer,verifyProtect
  if(verdict?.allowed!==true||verdict.payload_hash!==payload_hash||
   verdict.effect_class!==q.effect_class||!text(verdict.evidence_ref))
   return deny('administrative_intent_unverified');
- const b=ledger.snapshot();
+ // Resolve the packet's actual primary placement through the host, not through
+ // a store path or balance asserted in a tool request.
+ let context;
+ try{context=resolvePacketContext({packet_ref:q.packet_ref,mandate_ref:q.mandate_ref,
+   mandate_version:q.mandate_version,actor_ref:q.actor_ref});}catch{}
+ const local=packetLocality(context,q.packet_ref);
+ if(!local)return deny('packet_primary_locality_unverified');
+ // Parent reserves a bounded allocation once. Microtransactions belong to
+ // the packet budget. A full root budget is normal when its capacity has
+ // already been delegated. No per-effect reservation in the root ledger.
+ const b=localLedger(local.store,local.budget_id).snapshot();
+ if(!b.has_grant||b.mandate_ref!==q.mandate_ref||
+   Object.keys(b.limits||{}).length!==1||!Number.isSafeInteger(b.limits.max_steps))
+   return deny('packet_budget_not_funded');
+ const parentEvents=store.listTopic('execution-budget:'+STANDING_BUDGET_ID);
+ const allocation=parentEvents.find(e=>e.event_type==='ExecutionBudgetReservation'&&
+   e.payload?.reservation?.reservation_id===local.allocation_ref)?.payload?.reservation;
+ if(!allocation||!allocation.idempotency_key?.startsWith('delegate:'+local.budget_id+':')||
+   allocation.demand?.max_steps!==b.limits.max_steps||
+   parentEvents.some(e=>['ExecutionBudgetSettlement','ExecutionBudgetRelease'].includes(e.event_type)&&
+     e.payload?.reservation_id===local.allocation_ref))
+   return deny('packet_budget_allocation_unverified');
  if((b.available?.max_steps||0)<1)return deny('budget_exhausted');
  return {ok:true,phase:'STANDING_SUPER_PREFLIGHT',grant:null,executed:false,
   requires_protected_claim:true,requires_root_issuance:true,
@@ -86,39 +107,75 @@ export function assessStandingSuperEffect({store,auth,verifyIssuer,verifyProtect
   mandate_version:q.mandate_version,target:q.target,execution_mode:q.execution_mode,
   payload_hash,purpose:q.purpose,effect_class:q.effect_class,request_id:q.request_id,
   before_state_hash:q.before_state_hash,recovery_ref:q.recovery_ref,
-  judgment_evidence_ref:verdict.evidence_ref,budget_id:STANDING_BUDGET_ID,
-  budget_version:b.version};
+  judgment_evidence_ref:verdict.evidence_ref,packet_ref:q.packet_ref,
+  primary_store_id:local.primary_store_id,allocation_ref:local.allocation_ref,
+  budget_id:local.budget_id,budget_version:b.version};
 }
 
-// Must be called from the same trusted issuer boundary as preflight.
-// Claim is durable evidence, NOT a spendable grant. No shell invocation.
+function localLedger(store,budget_id){
+ return createEventSourcedExecutionBudgetLedger({store,budget_id,require_authority_grant:true});
+}
+function packetLocality(c,ref){
+ if(!c||!text(c.primary_store_id)||!text(c.budget_id)||!text(c.allocation_ref)||
+    c.budget_id===STANDING_BUDGET_ID||typeof c.store?.transaction!=='function'||
+    typeof c.store?.auditTopicCommitment!=='function')return null;
+ const topic='packet:'+ref;
+ const created=c.store.listTopic(topic)[0]?.payload?.packet;
+ const primaries=created?.placements?.filter(p=>p.is_primary===true);
+ if(created?.packet_id!==ref||primaries?.length!==1||
+    primaries[0].store_id!==c.primary_store_id||
+    c.store.auditTopicCommitment(topic)?.ok!==true||
+    c.store.auditTopicCommitment('execution-budget:'+c.budget_id)?.ok!==true)
+   return null;
+ return c;
+}
+
+// Packet-side claim is local preparation evidence, NOT the protected broker
+// claim or an executable grant. The broker keeps its own admission/receipt
+// history and independently verifies current authority before execution.
 export function claimStandingSuperEffect(options={}){
- const pre=assessStandingSuperEffect(options);
+ let context;
+ const resolve=options.resolvePacketContext;
+ if(typeof resolve!=='function')return deny('packet_primary_locality_unverified');
+ const pre=assessStandingSuperEffect({...options,resolvePacketContext:args=>{
+   context=resolve(args);return context;
+ }});
  if(!pre.ok)return pre;
- const {store}=options;
- const ledger=createEventSourcedExecutionBudgetLedger({store,budget_id:pre.budget_id,require_authority_grant:true});
- const key='standing-super:'+pre.request_id;
- const reservation=ledger.reserve({idempotency_key:key,expected_version:pre.budget_version,
-  demand:{max_steps:1},forecasts:[{kind:'effect_intent',payload_hash:pre.payload_hash}]});
- if(!reservation?.ok||reservation.duplicate)
-  return deny(reservation?.duplicate?'administrative_request_already_reserved':reservation?.error||'administrative_reservation_failed');
- const id=reservation.reservation.reservation_id;
- const claim=createCopEventEnvelope({
-  event_type:'PrivilegedEffectClaim',topic:{id:'privileged-issuer:'+id,seq:1},
-  epistemic_status:'normative',actor_ref:pre.actor_ref,subject_ref:pre.mandate_ref,
-  mandate_ref:pre.mandate_ref,visibility:'restricted',
-  idempotency_key:'privileged-issuer:claim:'+id,
-  payload:{kind:'PrivilegedEffectClaim',mandate_version:pre.mandate_version,
-   budget_reservation_id:id,effect_hash:pre.payload_hash,verification:'verified_standing_mandate',
-   request_id:pre.request_id,principal_ref:pre.principal_ref,target:pre.target,
-   purpose:pre.purpose,effect_class:pre.effect_class,before_state_hash:pre.before_state_hash,
-   recovery_ref:pre.recovery_ref,judgment_evidence_ref:pre.judgment_evidence_ref,
-   status:'claimed_pending_root_grant'}
+ const {store}=context;
+ const topic='packet:'+pre.packet_ref;
+ const key='standing-super:'+pre.packet_ref+':'+pre.request_id;
+ const result=store.transaction(tx=>{
+   const history=tx.listTopic(topic);
+   if(history.some(e=>e.idempotency_key===key))
+     throw Error('administrative_request_already_reserved');
+   const ledger=localLedger(tx,pre.budget_id);
+   const reservation=ledger.reserve({idempotency_key:key,expected_version:pre.budget_version,
+     demand:{max_steps:1},forecasts:[{kind:'effect_intent',payload_hash:pre.payload_hash}]});
+   if(!reservation?.ok||reservation.duplicate)
+     throw Error(reservation?.duplicate?'administrative_request_already_reserved':reservation?.error||'administrative_reservation_failed');
+   const id=reservation.reservation.reservation_id,previous=history.at(-1);
+   const log=createFractalogActRecord({
+     record_id:'fractalog:'+key,act_id:key,act_kind:'host.process.run.super',
+     act_phase:'attempt',owner_instance_ref:'instance:jhn',visibility:'restricted',
+     governed_chain:{logical_agent_ref:pre.actor_ref,mandate_ref:pre.mandate_ref,
+       mandate_version:pre.mandate_version,principal_ref:pre.principal_ref},
+     trace:{packet_ref:pre.packet_ref,primary_store_id:pre.primary_store_id,
+       parent_event_ids:previous?[previous.event_id]:[]},
+     effect:{target:pre.target,execution_mode:'super',payload_hash:pre.payload_hash,
+       purpose:pre.purpose,effect_class:pre.effect_class,before_state_hash:pre.before_state_hash,
+       recovery_ref:pre.recovery_ref,status:'prepared_not_issued'},
+     authority:{judgment_evidence_ref:pre.judgment_evidence_ref,budget_id:pre.budget_id,
+       allocation_ref:pre.allocation_ref,budget_reservation_id:id},
+     links:previous?[{ref:previous.event_id,relation:'caused_by'}]:[]
+   });
+   const saved=tx.append({event_type:'fractalog.act-record/v1',topic:{id:topic,seq:history.length+1},
+     actor_ref:pre.actor_ref,subject_ref:pre.packet_ref,packet_id:pre.packet_ref,
+     mandate_ref:pre.mandate_ref,visibility:'restricted',epistemic_status:'declared',
+     parent_event_ids:previous?[previous.event_id]:[],idempotency_key:key,payload:log});
+   if(!saved?.ok||saved.duplicate)throw Error('packet_administrative_claim_failed');
+   return {id,event_id:saved.event.event_id};
  });
- let saved;
- try{saved=store.append(claim)}catch{}
- // An uncertain append is not permission to recycle a reservation.
- if(!saved?.ok||saved.duplicate)return {...deny('administrative_claim_requires_reconciliation'),reservation_id:id};
- return {...pre,phase:'COP_CLAIMED_NOT_ISSUED',budget_reservation_id:id,
-  claim_event_id:saved.event.event_id,requires_protected_claim:false};
+ if(!result.ok)return deny(result.error||'packet_administrative_claim_failed');
+ return {...pre,phase:'PACKET_COP_PREPARED_NOT_ISSUED',budget_reservation_id:result.value.id,
+   packet_claim_event_id:result.value.event_id,requires_protected_claim:true};
 }
