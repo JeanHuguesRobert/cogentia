@@ -482,3 +482,35 @@ ni permission d'utiliser un fournisseur. Le catalogue de protocoles
 facilite les opérations sans devenir une nouvelle source d'autorité.
 
 Suivi : [Cogentia #336](https://github.com/JeanHuguesRobert/cogentia/issues/336).
+
+
+## 2026-11-26 — Explicit logical assignment and stable submission (#342)
+
+The existing Tasks pilot accepts an optional **host-side** `prepareCreation`
+admission callback. It supplies an explicitly admitted submission key and
+work assignment, not an authority assertion supplied by the MCP caller.
+With this option the existing Task handle is deterministic within the owner,
+tool and submission-key scope. A repeat of the same request returns the same
+handle; a conflicting payload/assignment is refused. Creation of the Packet,
+its initial Continuation and the Inseme logical assignment event occur in one
+transaction. No second work store or scheduler is introduced. Existing
+callers without the option retain their previous behavior.
+
+`scripts/lib/mcp-tasks-john-work.test.mjs` exercises the real John Core with
+`corpus.search` (public results only), assigned logical responsibility,
+packet-local result, same-key concurrent submissions, collision rejection,
+SQLite close/reopen before dispatch and after delivery, anonymous read denial,
+and atomic rollback if assignment fails. A local run with
+`COGENTIA_342_REALITY_DAEMON_URL=http://127.0.0.1:8790` uses the real public
+Corpus backend while keeping the COP store and caller credentials isolated
+fixtures. It returned three CCC sources, one provider call, four packet
+local events and a verified topic commitment. This is not evidence of live
+canonical JHN mandate admission or a second authenticated external agent.
+
+The production composition is not activated by the callback's existence.
+The next integration must obtain the commissioning authority and destination
+policy from verified context, recheck admission at dispatch and retrieval,
+and use the existing production packet-local source and COP budget rather
+than make a transport label into a grant. The authenticated synchronous
+John search observed separately in #342 wrote a progress receipt, but not
+the delivered result itself; do not conflate the two paths.

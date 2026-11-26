@@ -6,6 +6,8 @@
  * COP scheduler may invoke its worker. Production activation remains opt-in.
  */
 import { randomUUID } from "node:crypto";
+import { hashPayload } from "../../../inseme/packages/cop-core/src/cop-event-envelope.js";
+import { assignPacketWorkWithinTransaction } from "../../../inseme/packages/cop-core/src/packet-work-assignment.js";
 import { createPacketWithInitialContinuation } from "../../../inseme/packages/cop-kernel/src/Cop-kerneltasks.js";
 import {
   createFractalogActRecord, validateFractalogActRecord,
@@ -34,7 +36,7 @@ const unknown = () => Object.assign(new Error("unknown_task"), { code: "unknown_
 export function createCopMcpTasksPilot({
   store, toolName, handler, allowAnonymous = false,
   ownerInstanceRef = "instance:mcp-tasks-cop-pilot",
-  primaryStoreId = null, verifyExternalResult = null,
+  primaryStoreId = null, verifyExternalResult = null, prepareCreation = null,
 } = {}) {
   if (!store || typeof store.append !== "function" ||
       typeof store.transaction !== "function" || typeof store.listTopic !== "function")
@@ -45,6 +47,18 @@ export function createCopMcpTasksPilot({
     throw new TypeError("explicit local primaryStoreId required");
   if (verifyExternalResult !== null && typeof verifyExternalResult !== "function")
     throw new TypeError("trusted external result verifier required");
+
+  if (prepareCreation !== null && typeof prepareCreation !== "function")
+    throw new TypeError("trusted creation admission required");
+
+  // Opt-in only. A host-side admission may supply a stable submission key
+  // and an explicit work assignment. Neither is inferred from an MCP
+  // actor label, a handler name, or caller-controlled metadata.
+  function stableTaskId(owner, submissionKey) {
+    const h = hashPayload({ owner, toolName, submissionKey }).slice(7, 39);
+    return "task:" + h.slice(0,8) + "-" + h.slice(8,12) + "-5" + h.slice(13,16)
+      + "-8" + h.slice(17,20) + "-" + h.slice(20,32);
+  }
 
   function identity(auth) {
     if (auth?.auth === "jhn" && auth.actor) return "jhn:" + auth.actor;
@@ -171,9 +185,22 @@ export function createCopMcpTasksPilot({
     async shouldCreate({ name, auth }) {
       return name === toolName && identity(auth) !== null;
     },
-    async create({ name, args = {}, auth }) {
-      if (name !== toolName || identity(auth) === null) throw new Error("not_authorized");
-      const taskId = "task:" + randomUUID();
+    async create({ name, args = {}, auth, correlation }) {
+      const owner = identity(auth);
+      if (name !== toolName || owner === null) throw new Error("not_authorized");
+      const admission = prepareCreation ? await prepareCreation({ name, args, auth, correlation }) : null;
+      if (prepareCreation && (admission?.admitted !== true ||
+          typeof admission.submission_key !== "string" ||
+          !/^[A-Za-z0-9_.:-]{1,128}$/.test(admission.submission_key) ||
+          !valid(admission.assignment))) throw new Error("work_creation_not_admitted");
+      const assignment = admission?.assignment ? {
+        responsible_agent_ref: admission.assignment.responsible_agent_ref,
+        commissioned_by_agent_ref: admission.assignment.commissioned_by_agent_ref ?? null,
+        commissioned_by_principal_ref: admission.assignment.commissioned_by_principal_ref ?? null,
+        source_ref: admission.assignment.source_ref ?? null,
+      } : null;
+      const digest = admission ? hashPayload({ name, args, assignment }) : null;
+      const taskId = admission ? stableTaskId(owner, admission.submission_key) : "task:" + randomUUID();
       const createdAt = new Date().toISOString();
       const packetRef = packetRefForMcpTask(taskId);
       const { packet, continuation } = await createPacketWithInitialContinuation({
@@ -191,12 +218,34 @@ export function createCopMcpTasksPilot({
         resumeIntent: "Deliver MCP Task result via COP",
         taskId, state: { toolName: name, args }, emit: false,
       });
-      // Persist packet and its continuation atomically as the first source
-      // event; all later acts are appended to this same packet's topic.
-      commit(taskId, "created", { owner: identity(auth), toolName: name, args,
-        createdAt, packetRef, packet, continuation },
-      "mcp-created:" + taskId);
-      return { taskId };
+      // Persist packet, continuation and (when explicitly admitted) logical
+      // assignment in the same transaction. The first event is still the
+      // source creation, so existing task discovery and recovery stay valid.
+      const saved = store.transaction(tx => {
+        const prior = tx.listTopic(topic(taskId)).find(e =>
+          e.payload?.profile === profile && e.payload.phase === "created");
+        if (prior) {
+          if (!admission || prior.payload.owner !== owner ||
+              prior.payload.toolName !== name || prior.payload.submission_digest !== digest)
+            throw new Error("task_submission_conflict");
+          return { taskId, duplicate: true };
+        }
+        const creation = commit(taskId, "created", { owner, toolName: name, args,
+          createdAt, packetRef, packet, continuation,
+          ...(admission ? { submission_digest: digest } : {}) },
+          "mcp-created:" + taskId, tx);
+        if (assignment) {
+          const assigned = assignPacketWorkWithinTransaction(tx, {
+            packet_ref: topic(taskId), assignment_id: "mcp-initial-assignment",
+            expected_revision: 0, ...assignment,
+            source_ref: assignment.source_ref ?? ("cop:event:" + creation.event.event_id),
+          });
+          if (!assigned.ok) throw new Error(assigned.status || "work_assignment_failed");
+        }
+        return { taskId };
+      });
+      if (!saved.ok) throw new Error(saved.error || "work_creation_commit_failed");
+      return saved.value;
     },
     async get({ taskId, auth }) { return project(taskId, auth); },
     async update({ taskId, auth, inputResponses }) {
