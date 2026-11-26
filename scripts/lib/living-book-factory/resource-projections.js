@@ -11,6 +11,10 @@ const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const escape = value => String(value).replace(/[&<>"']/g, c =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const indexRoute = '/ressources/index.html';
+const implementationSha = () => sha(Buffer.concat([
+  './resource-projections.js', './projection-selection.js', './manifest.js',
+  '../../../schemas/delta-disposition.v0.schema.json', '../../../pnpm-lock.yaml'
+].map(relative => fs.readFileSync(new URL(relative, import.meta.url)))));
 
 // Record a version only when Git's bytes actually match the rendered bytes.
 // The last file-changing revision is stable across unrelated commits.
@@ -41,7 +45,7 @@ function page(title, book, body) {
     '</main><footer>Projection de travail du Corpus · ' + escape(book.title) + '</footer></body></html>\n';
 }
 
-export function renderResourceProjections(projectDir, { selection, out } = {}) {
+export function prepareResourceProjection(projectDir, { selection } = {}) {
   const root = fs.realpathSync(projectDir);
   const manifestPath = ['living-book.yml', 'manifest.yml'].map(f => path.join(root, f))
     .find(f => fs.existsSync(f));
@@ -52,6 +56,22 @@ export function renderResourceProjections(projectDir, { selection, out } = {}) {
   if (selection !== undefined) manifest.projection = { ...manifest.projection, selection };
   const selected = loadWorkingSelection(root, manifest, { resourcesOnly: true });
   if (!selected?.resources.length) throw new Error('No selected public resources');
+  const inputs = {
+    book: { id: book.id, title: book.title, language: book.language || 'fr' },
+    implementation_sha256: implementationSha(),
+    selection_sha256: selected.selectionSha256,
+    selection_revision: verifiedSourceRevision(fs.realpathSync(selected.selectionFile), selected.selectionSha256),
+    resources: selected.resources.map(({ id, route, source, absolute, sha256 }) =>
+      ({ id, route, source, sha256, source_revision: verifiedSourceRevision(absolute, sha256) }))
+  };
+  return { root, book: inputs.book, selected, inputs, input_sha256: sha(JSON.stringify(inputs)) };
+}
+
+export function renderResourceProjections(projectDir, { selection, out } = {}) {
+  return renderPreparedResourceProjection(prepareResourceProjection(projectDir, { selection }), out);
+}
+
+export function renderPreparedResourceProjection({ root, book, selected, inputs, input_sha256 }, out) {
   if (typeof out !== 'string' || !out) throw new Error('A new --out directory is required');
   const destination = path.resolve(out);
   if (fs.existsSync(destination)) throw new Error('Output already exists: ' + destination);
@@ -84,7 +104,7 @@ export function renderResourceProjections(projectDir, { selection, out } = {}) {
         const target = fs.realpathSync(path.resolve(path.dirname(resource.absolute), decodeURIComponent(href)));
         return bySource.get(target) ?? omit(href, 'not_selected');
       } catch {
-        return omit(href, 'missing_reference');
+        return omit(href, 'not_selected');
       }
     };
     renderer.html = token => escape(token.text);
@@ -105,10 +125,11 @@ export function renderResourceProjections(projectDir, { selection, out } = {}) {
   const receipt = {
     schema: 'living-book.resource-projection/v1',
     book_id: book.id,
-    selection_sha256: selected.selectionSha256,
-    selection_revision: verifiedSourceRevision(fs.realpathSync(selected.selectionFile), selected.selectionSha256),
-    resources: selected.resources.map(({ id, route, source, absolute, sha256 }) =>
-      ({ id, route, source, sha256, source_revision: verifiedSourceRevision(absolute, sha256) })),
+    input_sha256,
+    implementation_sha256: inputs.implementation_sha256,
+    selection_sha256: inputs.selection_sha256,
+    selection_revision: inputs.selection_revision,
+    resources: inputs.resources,
     // This is a declared, bounded coverage report, not a discovery pass over
     // all Corpus knowledge. The underlying judgments remain source records.
     coverage: {

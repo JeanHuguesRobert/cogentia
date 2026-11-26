@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { buildResourceBatch } from './lib/living-book-factory/resource-build-batch.js';
 import { renderResourceProjections } from './lib/living-book-factory/resource-projections.js';
 import * as yaml from 'js-yaml';
 
@@ -108,6 +109,33 @@ try {
   const dirty = build('first','out9');
   assert.equal(dirty.resources[0].source_revision,null);
   assert.notEqual(dirty.resources[0].sha256,committed.resources[0].sha256);
+  // Batch orchestration: two books share a source; the third is independent.
+  const other = {id:'other',route:'/ressources/other.html',source:'sources/other.md'};
+  write(other.source,publicDoc('Other','Independent.'));
+  write('projects/third/manifest.yml',yaml.dump({book:{id:'third',title:'Third'}}));
+  for (const [book, resources] of [['first',[moved,b]],['second',[moved,b]],['third',[other]]]) {
+    write('projects/'+book+'/projections/resources-working.yml',yaml.dump({resources}));
+  }
+  // An ordinary book with no declared resource selection is not rebuilt.
+  write('projects/legacy/manifest.yml',yaml.dump({book:{id:'legacy',title:'Legacy'}}));
+  const cache=fs.mkdtempSync(path.join(os.tmpdir(),'lbf-cache-'));
+  try {
+    const batch=(plan=false)=>buildResourceBatch(root,{out:cache,plan}).books;
+    assert.deepEqual(batch(true).map(x=>x.status),Array(3).fill('NEEDS_BUILD'));
+    assert.equal(fs.readdirSync(cache).length,0);
+    const built=batch();
+    assert.deepEqual(built.map(x=>x.status),Array(3).fill('BUILT_VERIFIED'));
+    assert.deepEqual(batch().map(x=>x.status),Array(3).fill('REUSED_VERIFIED'));
+    write('unrelated.txt','A second unrelated change.');
+    assert.deepEqual(batch().map(x=>x.status),Array(3).fill('REUSED_VERIFIED'));
+    fs.appendFileSync(path.join(root,moved.source),'\\nNew shared fact.');
+    assert.deepEqual(batch(true).map(x=>x.status),['NEEDS_BUILD','NEEDS_BUILD','REUSED_VERIFIED']);
+    const changed=batch();
+    assert.deepEqual(changed.map(x=>x.status),['BUILT_VERIFIED','BUILT_VERIFIED','REUSED_VERIFIED']);
+    assert.equal(changed[2].directory,built[2].directory);
+    fs.appendFileSync(path.join(changed[2].directory,'site/ressources/other.html'),'tampered');
+    assert.throws(()=>batch(),/digest mismatch/);
+  } finally { fs.rmSync(cache,{recursive:true,force:true}); }
   console.log('LIVING_BOOK_RESOURCES_REALITY_TEST_PASS');
 } finally {
   fs.rmSync(root,{recursive:true,force:true});
