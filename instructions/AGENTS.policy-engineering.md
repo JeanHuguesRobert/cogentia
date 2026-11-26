@@ -3,7 +3,7 @@ title: "Engineering and publication operations"
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: '2026-11-20'
-last_modified_at: '2026-11-23'
+last_modified_at: '2026-11-26'
 status: "working-paper — active operational documentation"
 document_role: operational
 document_kind: agent-instructions
@@ -71,6 +71,38 @@ author as proof of a conflict with another agent.
 Existing branches/worktrees are **cleanup candidates**, not reasons to add new ones. Inventory first; classify each as genuinely active, merged, obsolete, or holding unique uncommitted work; integrate useful work into `main` with optimistic reconciliation, then delete only after confirming that no unique work would be lost. Never mass-delete blindly.
 
 Source doctrine: [Optimistic Mainline Governance](../research/optimistic_mainline_governance.md); [No ritual backups](#no-ritual-backups-copies-or-precautionary-isolation).
+
+## Super Agile — forward correction before installed-base protection
+
+**Principal directive (2026-11-18 to 2026-11-26; clarified in Cogentia #348):**
+Super Agile is the delivery regime for the present development phase where
+there is no significant installed base or user dependency that requires
+continuity of obsolete technical contracts. In that regime, optimize for
+effective progress and short feedback loops with Reality, not for hypothetical
+future compatibility or zero transient defects.
+
+- Work directly on main; deliver the smallest useful end-to-end increment,
+  run focused tests, consolidate it and deploy promptly within the applicable
+  mandate. Observe the real result and immediately correct actual defects
+  (Fix Bugs First).
+- Prefer clean forward evolution to retrocompatibility layers, aliases,
+  duplicate implementations, temporary migrations kept indefinitely, or
+  preservation of obsolete interfaces without an actual dependent consumer.
+  A deliberate contract change is not itself a bug; reconcile its actual
+  consumers and relevant tests in the same increment.
+- Do not make a rollback plan, backup, extended staging, or pre-release
+  review ceremony a routine delivery condition. If a deployment breaks,
+  prefer correcting the new state and advancing over restoring the old one.
+  Existing version history is not a reason to manufacture additional copies.
+- The regime does not authorize loss of unique Corpus traces, frozen editions,
+  or unrelated concurrent work, nor expand the applicable mandate. A real
+  installed dependency, irreplaceable data, or consequential third-party
+  effect changes the measured-risk decision for that specific act.
+
+Super Agile is a development regime, not the privileged shell execution mode
+called super. The Principal decides when a material installed base justifies
+a different continuity regime; do not silently import mature-product
+constraints into the experimental phase.
 
 ## No ritual backups, copies, or precautionary isolation
 
