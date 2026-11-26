@@ -133,6 +133,29 @@ Avant activation publique, relier les événements au vrai Paquet propriétaire,
 utiliser l'append et l'audit FractaLog locaux, puis exécuter le test sans
 projection fédérée. Aucun mandat supplémentaire n'est créé par cette note.
 
+### Réexamen du 26 novembre — administration et budget délégué
+
+Le biais identifié le 23 novembre s'est reproduit dans #285 :
+la première revendication administrative v8 était écrite dans un topic
+du magasin racine, sans Paquet commanditaire explicite. La correction
+`774bb2b4` rattache préparation et réservation au Paquet ; `47f49828`
+y rattache le résultat et son règlement atomique ; `a6ece8ef` projette
+les preuves du FractaNode vers le Paquet. Les tests sur trois magasins
+indépendants confirment que le parent reçoit une synthèse et non les
+microtransactions. Ils utilisent des preuves d'exécution simulées.
+Aucune admission privilégiée de production sous v8 n'en découle.
+
+RT-3 : preuve déterministe acquise pour la délégation et la remontée
+comptable locales, y compris dans la variante administrative. La
+coordination d'autorité réelle et l'observation de l'effet restent
+à éprouver sur #291. Ne pas confondre un contrat testé avec un effet réel.
+
+Le Principal rappelle que l'Instant T de comptabilité stricte n'est pas
+atteint : les discontinuités historiques expérimentales ne sont pas un
+chantier de réparation prioritaire. Voir [Instant Zéro](https://github.com/JeanHuguesRobert/inseme/blob/main/docs/cop-accounting-instant-zero.md).
+Le travail porte sur la localité et les invariants futurs, pas sur une
+réconciliation de tout le passé. Voir [checkpoint #285](https://github.com/JeanHuguesRobert/cogentia/issues/285#issuecomment-7199823593).
+
 ## Matrice initiale des risques
 
 | Domaine | Indice tiré du corpus | Risque | Priorité | Test discriminant |

@@ -4,10 +4,38 @@
 
 # Cogentia Super — COP authority, Unix execution
 
-Status: implementation candidate, pending root-owned deployment and live smoke test.
+Status (2026-11-26): existing root-owned broker active; v8 standing
+administration ratified, but live standing-effect issuance not implemented.
+The installation procedure below is historical, not the current activation path.
 FractaTrust v0 assumes agents inside the Principal's trust perimeter are cooperative.
 **COP is the sole authority**: no second broker mandate store, root token,
 command allowlist, reputation scoring or agent quarantine.
+
+## Current boundary — 2026-11-26
+
+The existing Supabase session activated v8 once. The normal profile covers
+Fracta2 and ThinkPad; the new administrative scope concerns Fracta2 only.
+No new human approval is needed merely to repeat that ratification.
+
+The consent journal is currently owned by the ordinary service account,
+while the broker's execution evidence is under independent node custody.
+The offline consent lineage checker validates journal consistency, not an
+exportable Supabase signature. The missing integration is the trusted
+authority crossing, not another blanket grant or a second mandate.
+
+The command remains an existing host.process.run effect. Packet-local
+preparation, budget and result recording, and node-local receipt projection
+have been tested with synthetic execution evidence. The broker is not yet
+connected to these v8 components. The observed source-bundle dependency
+failure was fixed in [a580aee6](https://github.com/JeanHuguesRobert/cogentia/commit/a580aee65f35aa7b3f583a29557b4304552fb034):
+the exact manifest now includes FractaLog, and the extracted archive is
+import-tested. That bundle has not been installed by this work.
+
+Keep authority, packet accounting and node receipts in their respective
+localities. See [Locality Principle](../research/locality_principle.md#131-administrative-acts-and-delegated-accounting-2026-11-26)
+and [#285](https://github.com/JeanHuguesRobert/cogentia/issues/285#issuecomment-7199823593).
+The concrete acceptance test is the requested Chromium AppArmor repair
+followed by the normal sandboxed Chromium worker probe (#291).
 
 ## Contract
 
@@ -30,7 +58,7 @@ command allowlist, reputation scoring or agent quarantine.
 - Never equate a valid grant with a permission to commit acts towards third
   parties contrary to the Principal's mandate.
 
-## Installation on Fracta2
+## Historical installation on Fracta2 (not current procedure)
 
 After the commit is pushed, from the Principal's ordinary SSH session:
 

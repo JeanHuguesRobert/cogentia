@@ -229,6 +229,11 @@ propagation:
     - "inseme/research/cop_fractalog_profile.md v0.2 — commit 459cc65a533309888648220b2ac92edac9d9a6fd"
     - "FractaVolta/research/fractalog.md v0.2 — commit 5000997a61ae6a72e9b20edf431b50a13d7b0340"
     - "inseme/research/cop_mission_stigmergy_exploration.md — commit fbb61ee22c906dd3582e4691ae8910bc565f6fb1"
+    - "cogentia/research/locality_principle.md v0.7"
+    - "cogentia/research/fractality-locality-centralization-audit-2026-10.md — 2026-11-26"
+    - "cogentia/docs/cogentia-super-install.md — current boundary"
+    - "inseme/research/cop_fractalog_profile.md v0.3-draft"
+    - "inseme/docs/cop-accounting-instant-zero.md — T clarification"
   expected_effects:
     - "packet-local trace facts are preferred source location for packet-borne acts"
     - "higher FractaLog views are projections/federations, not duplicated mutable source ledgers"
@@ -238,11 +243,14 @@ propagation:
   confidence: high
   propagation_level: 2
   blockers: []
-  next_action: "Add/replay a source-vs-projection FractaLog regression scenario in the existing COP bac-a-sable, then move to verified only on observed PASS."
+  next_action: "Reuse the validated packet-local contract in real handlers; verify the protected node authority crossing and live effect/receipt in #285/#291. Do not reconcile experimental historical accounting before T merely for continuity."
   verification:
-    status: planned
+    status: partial
     evidence_refs:
       - "inseme/sandbox/cop-continuation-bac-a-sable"
+      - "cogentia commit d93037f467b1191f3ec66dae9b26cdf44c960ab2 — MCP Task packet-local history"
+      - "cogentia commits 774bb2b4, 47f49828, a6ece8ef — three-locality tests with simulated execution evidence"
+      - "cogentia#285 comment 7199823593"
 ```
 
 ### PR-2026-002 — Operium Federated Capacity Registry and analytical resource accounting

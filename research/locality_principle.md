@@ -4,8 +4,8 @@ subtitle: "Smallest sufficient locality, explicit crossing, and global reference
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica, France"
 date: "2026-09-19"
-last_modified_at: "2026-11-10"
-version: "0.6"
+last_modified_at: "2026-11-26"
+version: "0.7"
 status: "working-paper — locality doctrine candidate"
 document_role: "source"
 document_kind: "architecture-principle"
@@ -65,6 +65,7 @@ classification_version: "1"
 classification_rule: "explicit-metadata"
 classification_confidence: "medium"
 changelog:
+  - "v0.7 (2026-11-26) — applies source locality to administrative Acts, delegated budgets and node receipts; separates pre-T accounting experiments from future strict continuity."
   - "v0.6 (2026-10-17) — adds bounded operational continuity under coordinator loss, grounded in FractaX RT-1 deterministic evidence; separates cached reachability from authority and records retry/reconciliation as a Locality Closure consequence."
   - "v0.5 (2026-10-07) — formalizes effective coupling between data plane/cognition and control plane/metacognition; adds Applicable Local Control First and control-plane activation failure as a stigmergic correction."
   - "v0.4 (2026-10-04) — relates locality to FractaCognition: local metacognition, default local retention of validated learning, and distinction between local handler incapacity and network incapacity."
@@ -739,6 +740,33 @@ copy all memory toward the handler
 where capability, mandate, privacy and resilience permit.
 
 Portable continuity state MUST NOT imply portable privilege or portable custody.
+
+---
+
+### 13.1 Administrative Acts and delegated accounting (2026-11-26)
+
+Identify the owner of each fact before choosing a store. For work
+commissioned to administer a FractaNode, three localities cooperate:
+the Principal (mandate, ratification, revocation and budget allocation),
+the Packet (preparation, causal work history, local reservations and
+settlements), and the resource/node (admission, execution and observations).
+Cross boundaries by explicit receipt references and budget summaries.
+Do not centralize the entire packet journal merely because a node must
+verify authority, or charge the same effect in two independent budgets.
+
+A shared SQLite file is compatible with this rule if logical source topics,
+custody and commitments are preserved. The test using three independent
+stores in [Cogentia #285](https://github.com/JeanHuguesRobert/cogentia/issues/285#issuecomment-7199823593)
+validates this contract with synthetic execution evidence; production
+administrative admission is still incomplete.
+
+The Principal has also clarified that the definitive strict accounting
+Instant T is not yet reached. Do not spend development effort reconciling
+experimental historical discontinuities simply to obtain a clean balance.
+Preserve useful evidence and real obligations; establish explicit epoch
+boundaries and correct forward accounting at the budget's natural locality.
+See [COP FractaLog Profile](https://github.com/JeanHuguesRobert/inseme/blob/main/research/cop_fractalog_profile.md#41-administrative-acts-three-source-localities-2026-11-26)
+and [Instant Zéro](https://github.com/JeanHuguesRobert/inseme/blob/main/docs/cop-accounting-instant-zero.md).
 
 ---
 
