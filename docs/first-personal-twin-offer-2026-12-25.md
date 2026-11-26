@@ -2,7 +2,7 @@
 title: "Première offre Cogentia Personal Digital Twin — Noël 2026"
 subtitle: "Augmenter un agent conversationnel existant plutôt qu'en imposer un nouveau"
 date: "2026-11-15"
-last_modified_at: "2026-11-15"
+last_modified_at: "2026-11-26"
 document_role: operational
 document_kind: product-brief
 visibility: public
@@ -86,6 +86,17 @@ Conserver dès l'origine les invariants propices à cette extension : identifian
 | Navigateur télécommandé | Brave hébergé ; Chromium hébergé ; autre adaptateur gouverné | Session reconnectable, secrets traités sans export illicite, capacité de reprise testée |
 | Recherche/embeddings | API ; fournisseur gratuit vérifié ; moteur local ; recherche lexicale | Réindexation reproductible, compatibilité des dimensions/modèles ou reconstruction annoncée |
 | Exécution/hébergement | VPS individuel ; PC fixe/portable ; téléphone mobile ; serverless ; combinaison de nœuds permanents et intermittents ; confédération | Sauvegarde, reprise hors ligne, routage selon disponibilité, restauration et migration à froid |
+
+### Supabase : dépendance actuelle, réversibilité conservatoire (26 novembre 2026)
+
+**Décision du Principal : conserver Supabase aujourd'hui, sans lancer de migration ni d'auto-hébergement, mais ne pas fermer les voies de substitution.** Le chantier d'identité OAuth du MCP peut avancer avec Supabase ; la portabilité n'est pas un prérequis supplémentaire au pilote de Noël.
+
+- Distinguer les fonctions d'identité (OAuth/OIDC, vérification des jetons et liaison au Principal), de persistance et de gouvernance COP. Confiner les particularités Supabase, dont les Auth Hooks, aux adaptateurs d'infrastructure existants lorsque cela est utile ; ne pas les ériger en sémantique du Twin ou du mandat.
+- Préserver les identifiants Cogentia, les contrats de commande/livraison et les preuves COP indépendamment des identifiants et API du fournisseur. Une substitution doit permettre la revalidation des liaisons d'identité et la conservation de la continuité, pas présupposer la portabilité des sessions ou des secrets.
+- Garder ouvertes les variantes PostgreSQL + Supabase Auth (GoTrue) auto-hébergés, PostgreSQL avec un autre fournisseur OAuth/OIDC, ou services managés équivalents. N'ajouter PostgREST et les autres services Supabase que si leurs fonctions sont nécessaires.
+- Conserver SQLite actuellement. Une éventuelle convergence vers PostgreSQL pour les nœuds hébergeurs relève de la [phase 2 de la persistance des paquets](../research/cognitive_packet_closure_and_packet_native_semantics.md#phase-2--store-abstraction-across-sqlite-and-postgresql), avec équivalence vérifiée des transactions, de l'idempotence et de l'intégrité ; SQLite reste une option embarquée ou hors connexion.
+
+Aucune installation supplémentaire sur Fracta2 à ce stade : ses navigateurs hébergés sollicitent déjà fortement ses ressources. Ne pas construire d'abstractions spéculatives ni d'adaptateurs inutilisés pour satisfaire cette orientation ; préserver les frontières existantes et traiter la substitution lorsqu'un besoin concret la justifie.
 
 ### Déploiement serverless : alternative et retour d'expérience
 
