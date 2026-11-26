@@ -4,7 +4,7 @@ description: Living roadmap for raising a trustable owner-facing digital twin th
 layout: default
 nav_order: 7
 date: 2026-06-30T00:00:00.000Z
-last_modified_at: 2026-07-13T00:00:00.000Z
+last_modified_at: 2026-11-26T00:00:00.000Z
 license: CC BY-SA 4.0
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/digital-twin-agile-roadmap.md
 document_role: operational
@@ -49,6 +49,28 @@ When exposure is bounded and an envelope of recovery (reversal, compensation, re
 
 Therefore the plan advances by small slices within a clear recovery envelope,
 acceptance checks, owner feedback, and correction. The roadmap itself is expected to change.
+
+## Editorial milestone — Babbu Natale, Christmas 2026
+
+Principal's decision, 26 November 2026: retain the following French formula
+for the forthcoming announcement of Babbu Natale, the adult Santa Claus,
+whose arrival is planned for 25 December 2026:
+
+> **La magie est dans l’expérience ; la traçabilité est dans l’atelier.**
+
+The canonical wording is already in the Principal's authored text of
+18 July 2026, [Le Père Noël revient — et cette fois, il aide les adultes](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/le-pere-noel-revient.md).
+The formula also expresses a design criterion: simple human experience,
+with inspectable, accountable execution behind it. See the [workshop commissioning contract](mcp-tasks-cop-bridge.md#user-experience-babbu-natale-and-the-workshop)
+and [#342](https://github.com/JeanHuguesRobert/cogentia/issues/342).
+
+Editorial resonance identified in the same conversation: Arthur C. Clarke's
+third law, “Any sufficiently advanced technology is indistinguishable from
+magic” (added to the 1973 revision of *Profiles of the Future*; see
+[The Arthur C. Clarke Foundation](https://clarkefoundation.org/arthur-c-clarke-biography/)).
+The contrast is useful for the announcement: apparent magic need not entail
+opacity. This is a planned editorial milestone, not a claim of achieved
+readiness or an announcement already made.
 
 ## Governing Documents
 
