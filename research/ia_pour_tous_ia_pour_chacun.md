@@ -13,7 +13,7 @@ document_kind: "doctrinal-note"
 visibility: "public"
 lifecycle_state: "working"
 language: fr
-last_modified_at: "2026-11-15"
+last_modified_at: "2026-11-26"
 update_policy: UP-DEFAULT-REVIEWED
 provenance:
   origin_type: repository
@@ -152,6 +152,67 @@ Cette stratégie concerne d’abord **IA pour chacun**, c’est-à-dire le dépl
 **Critère pratique de succès du premier pilote :** une personne autre que le concepteur peut obtenir un jumeau distinct, lui confier une tâche bornée, recevoir un résultat et ses limites, interrompre ou révoquer son mandat et retrouver son travail après une interruption, sans intervention improvisée de l'équipe sur ses données personnelles.
 
 ---
+
+### Scalabilité territoriale : du prototype JHN à la diffusion nationale (26 novembre 2026)
+
+**Statut : complément exploratoire issu de la discussion avec le Principal du 26 novembre 2026 ; paramètres de simulation, non mesures de production, non engagement d'investissement ou calendrier d'adoption.** Il complète le positionnement du 15 novembre sans modifier les critères de promotion des capacités ni la distinction CPDT/CCDT.
+
+Un agent permanent n'exige pas un accélérateur réservé en permanence. Distinguer (i) la diffusion des services interopérables, (ii) le nombre de CPDT effectivement opérationnels, (iii) leur demande d'inférence totale, (iv) la fraction que l'infrastructure commune doit fournir, (v) les charges CPU, RAM, stockage et réseau. L'adoption d'un service KYS par BYOAI ne prouve pas l'existence d'un CPDT ; un CCDT représente un sujet collectif sous sa propre gouvernance, et non un simple pool de calcul.
+
+**Étalon de simulation 2026.** Un profil actif consomme conventionnellement 40 000 tokens de sortie/jour (dont raisonnement et travaux autonomes) et 200 000 tokens d'entrée/jour ; profils léger/intensif/très intensif : 4 000 / 400 000 / 4 000 000 tokens de sortie. Hypothèses conjointes : 500 tokens de sortie/s de débit agrégé d'un accélérateur de référence de classe H100, pour le mélange de requêtes retenu, taux moyen d'exploitation de 50 %, puissance moyenne imputée de 1 kW. Soit 21,6 millions de tokens/jour, 540 jumeaux actifs/kW, 1,85 W et 16,2 kWh/an par jumeau. Ce débit est un paramètre incluant implicitement le traitement des entrées, pas un benchmark matériel mesuré ; la mémoire, le modèle, le contexte, le batching, la latence et les files d'attente conditionnent sa validité. Les fractions d'accélérateur sont des équivalents mutualisés, pas des machines déployables à cette puissance.
+
+**Facteurs distincts :** H (calcul utile brut par joule, hardware), A (travail de qualité comparable par unité de calcul, progrès algorithmique), U (volume/complexité de travaux demandés par CPDT), O (efficacité opérationnelle additionnelle : agents, outils, planification), C (économie nette de travaux redondants par coopération et communs), B (part de l'inférence apportée hors du pool commun). Normaliser H,A,U,O,C à 1 en 2026 ; ne pas compter deux fois les mêmes gains. Avec N Principaux équipés :
+
+```text
+P_total_kW = (N / 540) * U / (H * A * O * C)
+P_pool_kW  = P_total_kW * (1 - B),   0 <= B <= 1
+```
+
+B est une part de charge d'inférence exprimée en équivalents de référence, non une fraction de personnes ni une réduction de l'énergie mondiale ; comparer séparément l'efficacité et les coûts des ressources réelles. Une ressource BYOAI disponible pour son propriétaire n'est pas automatiquement mutualisable. L'accès effectif dépend des quotas, des conditions du fournisseur, du mandat, des capacités d'exécution et de leur disponibilité ; un socle commun/fallback et des alternatives humaines restent nécessaires pour l'accès sans IA personnelle. Voir [KYS Services — BYOAI](byoai_commons_service_protocol.md) et [Cogentia #298](https://github.com/JeanHuguesRobert/cogentia/issues/298).
+
+**Sensibilité 2026–2038**, O=C=1, adoption et progrès indépendants. Les pourcentages sont des hypothèses annuelles composées, non des extrapolations garanties de performances industrielles :
+
+| Scénario | H/an | A/an | U/an | Gain net H*A/U sur 12 ans | 400 000 CPDT : puissance d'inférence 2038 |
+|---|---:|---:|---:|---:|---:|
+| Prudent | +20 % | +15 % | +35 % | ×1,30 | 569 kW |
+| Central | +30 % | +30 % | +25 % | ×37,30 | 19,9 kW |
+| Accéléré | +40 % | +50 % | +35 % | ×200,74 | 3,69 kW |
+| Hyperaccéléré | +40 % | +100 % | +50 % | ×1 789,79 | 414 W |
+
+La dernière ligne est un test de sensibilité extrême, non un objectif de dimensionnement. À qualité et service de 2026 constants, le scénario central produit un gain H*A de ×543 ; l'activité par jumeau augmente de ×14,55. L'effet rebond peut absorber les gains, en particulier si la demande de tâches nouvelles croît plus vite que U supposé. Les travaux partagés peuvent réduire la redondance, mais leur production, vérification et diffusion ont aussi un coût.
+
+**Paliers illustratifs**, populations arrondies ou hypothèses de dimensionnement (pas une série démographique officielle), adoption intégrale à chaque palier. La dernière colonne suppose B=90 % en 2038, sans présumer que ce taux soit réalisable :
+
+| Palier (CPDT) | N | 2026, inférence totale (kW) | 2038 central, totale (kW) | 2038 central, pool (kW) |
+|---|---:|---:|---:|---:|
+| John (profil actif de référence) | 1 | 0,00185 | 0,0000496 | 0,00000496 |
+| Proches | 10 | 0,0185 | 0,000496 | 0,0000496 |
+| Premier cercle | 50 | 0,0926 | 0,00248 | 0,000248 |
+| Pionniers | 100 | 0,185 | 0,00496 | 0,000496 |
+| Communauté | 500 | 0,926 | 0,0248 | 0,00248 |
+| Local | 1 000 | 1,85 | 0,0496 | 0,00496 |
+| Quartiers / communes | 2 500 | 4,63 | 0,124 | 0,0124 |
+| Corte (~8 000) | 8 000 | 14,8 | 0,397 | 0,0397 |
+| Plusieurs communes | 20 000 | 37,0 | 0,993 | 0,0993 |
+| Bastia (~47 000) | 47 000 | 87,0 | 2,33 | 0,233 |
+| Intercommunal | 100 000 | 185 | 4,96 | 0,496 |
+| Haute-Corse (~187 000) | 187 000 | 346 | 9,28 | 0,928 |
+| Corse actuelle (~355 000) | 355 000 | 657 | 17,6 | 1,76 |
+| Corsica 2038 | 400 000 | 741 | 19,9 | 1,99 |
+| Diffusion interrégionale | 1 000 000 | 1 852 | 49,6 | 4,96 |
+| Plusieurs régions | 5 000 000 | 9 259 | 248 | 24,8 |
+| Diffusion nationale partielle | 10 000 000 | 18 519 | 496 | 49,6 |
+| France (~68 millions) | 68 000 000 | 125 926 | 3 376 | 338 |
+
+Ne pas confondre diffusion de services, équipement de la population et production locale. Le scénario central de diffusion peut être éprouvé par jalons (10–50 proches, 100–500 volontaires, 1 000–2 500, Corte, communes fédérées, Bastia, Haute-Corse, Corse, autres régions, France) sans promettre une date d'atteinte. À titre d'illustration, 400 000 CPDT en 2038 demanderaient 174 MWh/an d'inférence dans le scénario central avant BYOAI, ou 17,4 MWh/an à fournir au pool avec B=90 %, sous les hypothèses ci-dessus. Dimensionner séparément puissance de pointe, réserves, refroidissement, continuité, production photovoltaïque et stockage ; des équivalents moyens de quelques watts ne constituent pas des configurations matérielles autonomes.
+
+**Économie et métrologie.** Le prix du calcul par euro et l'efficacité énergétique ne sont pas synonymes. Avec 2,80 EUR/h par équivalent réservé (hypothèse locative) et 540 CPDT par équivalent, l'inférence active représente 3,79 EUR/mois par CPDT en 2026 ; une baisse annuelle indépendante de 20 % du prix de l'unité brute, A=1,30 et U=1,25/an donnerait 0,163 EUR/mois en 2038, si les gains sont répercutés et sans autres coûts. Ce n'est pas le coût complet d'un service. Une hypothèse distincte de 10 min de cœur CPU/jour, 50 % de taux d'exploitation et 5 Go de stockage primaire par CPDT donnerait environ 5 556 cœurs et 2 Po pour 400 000 CPDT ; RAM, navigateurs, indexation, réplication et accumulation de mémoire doivent être mesurés. Calibrer sur JHN puis pilotes : tokens d'entrée/sortie/raisonnement/cache, modèle, fournisseur, tâches utiles et reprises, latence et échéances, CPU/RAM/SSD/réseau, coûts et énergie attribuables, quotas et dépendances BYOAI, imputation aux paquets et budgets COP. Préserver le distinguo entre estimations préalables, mesures observées et comptabilité stricte quand son instant de référence sera fixé. Les travaux différables peuvent être ordonnancés selon le Compute et l'énergie disponibles, sans sacrifier le service urgent. Voir [MareNostrum — Qualitative Growth of AI Compute](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/qualitative_compute_growth.md) et [FractaVolta — Guaranteed Inference](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/garanteed_inference.md).
+
+**Articulation institutionnelle (hypothèse de recherche, non extension du texte normatif).** Les progrès du hardware/IA, l'efficacité opérationnelle et les communs concernent la capacité matérielle ; BYOAI/BYOx concernent aussi l'accès économique et la mobilisation de capacités existantes ; l'adaptation des règles concerne la possibilité institutionnelle d'exercer une compétence. Ces dimensions sont complémentaires mais non substituables. Le [Possibilisme](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/possibilism_04_2026.md) ne postule pas que l'accélération soit intrinsèquement bénéfique : conserver pluralité, voies de sortie et corrigibilité. Comparer comme pistes de recherche les discours techno-optimistes, e/acc et d/acc, notamment [Sam Altman, Three Observations](https://blog.samaltman.com/three-observations) et [Vitalik Buterin, d/acc: one year later](https://vitalik.eth.limo/general/2025/01/05/dacc2.html) ; distinguer leurs conjectures des mesures. Aucune adhésion à un courant n'est inférée.
+
+La [proposition de révision de l'article 72 du 12 novembre 2026](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/projects/capable/doctrine/revision_constitutionnelle_article_72.md) (et non seulement le projet d'article 72-5 corse) envisage un droit commun aux adaptations justifiées et une subsidiarité effective, sous garanties constitutionnelles et solidarité nationale, sans législateur régional concurrent. Le [Pacte Républicain d'Effectivité](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/projects/capable/doctrine/pacte-republicain-effectivite.md) articule révélation des obstacles, instruction contradictoire, décision compétente, évaluation et réexamen. Les CPDT/CCDT pourraient faciliter la documentation et l'instruction des demandes, leur suivi et la réutilisation des résultats entre territoires ; mesurer également la capacité des autorités nationales à traiter cette demande. Le choix et les actes demeurent sous mandats humains et institutionnels. La doctrine politique et son portage déclaré par Capable pour la présidentielle 2027 demeurent distincts des services KYS, qui restent d'intérêt commun, neutres et indépendants de toute adhésion politique. Aucune évolution normative, électorale, juridique ou infrastructurelle n'est décidée par ce complément.
+
+**Reality Tests :** comparer le coût complet et les capacités utiles entre utilisateurs de services BYOAI, CPDT autonomes et pool partagé ; mesurer les distributions d'usage, non seulement une moyenne ; démontrer le changement de fournisseur et la reprise ; vérifier l'accès sans IA propre ; confronter des cas territoriaux documentés aux compétences et règles applicables, en préservant les résultats négatifs. Les jalons d'investissement doivent être déclenchés par la demande mesurée, les contraintes de service et les capacités accessibles, non par la projection seule.
 
 ## 3. IA pour tous
 
