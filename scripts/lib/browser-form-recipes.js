@@ -1,7 +1,7 @@
 /** FBF #291: daemon-owned data recipes over stable browser primitive. */
 const TYPES=new Set(['text','email','search','tel','url','number']);
 const SECRET=/username|password|one-time-code|cc-number|cc-csc/i;
-export function createFormRecipeRegistry({firstTextSelector}={}){
+export function createFormRecipeRegistry({firstTextSelector,fieldSelector}={}){
  const recipes=new Map();
  return Object.freeze({
   register({id,version,match}={}){
@@ -24,8 +24,8 @@ export function createFormRecipeRegistry({firstTextSelector}={}){
    const field_index=structure.fields.findIndex(f=>f?.tag==='input'&&f.type===recipe.type&&
      f.disabled===false&&f.readonly===false&&!SECRET.test(String(f.autocomplete||'')));
    // Opt-in comparison: no alternate result may change the governed plan.
-   if(recipe.id==='generic.first-text' && recipe.version===1 && firstTextSelector){
-    const actual=firstTextSelector(structure.fields);
+   if(fieldSelector || (recipe.id==='generic.first-text' && recipe.version===1 && firstTextSelector)){
+    const actual=fieldSelector ? fieldSelector(structure.fields,recipe.type) : firstTextSelector(structure.fields);
     if(actual!==field_index)throw Error('form_recipe_inox_parity_mismatch');
    }
    if(field_index<0)throw Error('form_recipe_field_not_found');

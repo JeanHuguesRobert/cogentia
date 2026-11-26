@@ -27,7 +27,7 @@ try{
  const listen=(fn,host='127.0.0.1')=>new Promise((yes,no)=>{const s=https.createServer(tls,fn);s.once('error',no);s.listen(0,host,()=>yes(s))});
  const html=(res,text)=>{res.writeHead(200,{'content-type':'text/html'});res.end(text)};
  frame=await listen((req,res)=>html(res,'<!doctype html><title>isolated frame</title><input type="text" id="fake" autocomplete="off">'),'::');
- main=await listen((req,res)=>html(res,`<!doctype html><title>isolated parent</title><input type="text" autocomplete="username"><input type="text" disabled><input type="text" id="recipe" autocomplete="off"><iframe src="https://localhost:${assertPort(frame)}/inside"></iframe>`));
+ main=await listen((req,res)=>html(res,`<!doctype html><title>isolated parent</title><input type="text" autocomplete="username"><input type="text" disabled><input type="text" id="recipe" autocomplete="off"><input type="email"><iframe src="https://localhost:${assertPort(frame)}/inside"></iframe>`));
  const probe=await new Promise((yes,no)=>{const s=https.createServer(tls,(req,res)=>res.end());s.listen(0,'127.0.0.1',()=>yes(s));s.once('error',no)});
  const unused=assertPort(probe);await new Promise(r=>probe.close(r));
  const expectedUrl=`https://127.0.0.1:${assertPort(main)}/main`;
@@ -107,6 +107,10 @@ try{
    const compared=await prepareFormAssistRequest({...input,registry});
    assert.deepEqual(compared,reference);
    assert.equal(compared.input.arguments.field_index,2);
+   const email={...input,recipe_id:'generic.first-email'};
+   const emailPlan=await prepareFormAssistRequest({...email,registry});
+   assert.deepEqual(emailPlan,await prepareFormAssistRequest(email));
+   assert.equal(emailPlan.input.arguments.field_index,3);
    const receipt=await formFill.execute(compared.input.arguments);
    assert.equal(receipt.ok,true);assert.equal(receipt.submitted,false);
    console.log(JSON.stringify({ok:true,proof:'inox_image_live_dom_parity',field_index:2,request_equal:true,inserted_length:receipt.inserted_length,submitted:false,fixture_only:true}));
