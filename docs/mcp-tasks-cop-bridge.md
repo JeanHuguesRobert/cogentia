@@ -514,3 +514,42 @@ and use the existing production packet-local source and COP budget rather
 than make a transport label into a grant. The authenticated synchronous
 John search observed separately in #342 wrote a progress receipt, but not
 the delivered result itself; do not conflate the two paths.
+
+## 2026-11-26 — Canonical admission of a public John work pilot (#342)
+
+`john-public-work-admission.js` composes the existing Task pilot with the
+canonical issuer verifier, mandate preflight, Inseme delegated-budget ledger,
+logical work assignment and governed-capability invocation. It introduces no
+new issuer or work store. The host must independently resolve the exact
+commissioning and public destination context; a JHN transport bearer or
+client-supplied claim cannot supply that proof. This context is bound to the
+submission digest and rechecked at dispatch and result retrieval. The result
+is restricted to the public corpus projection, not John's internal trace.
+
+The pilot accepts only a bounded keyword `corpus.search` request through the
+existing `cogentia_john_run` tool. Three step units are allocated once to the
+work's budget topic; actual reported steps are settled locally and the
+sealed summary settles the parent allocation. The act chain and result are
+recorded in the packet topic. A crash or unresolved reservation must be
+reconciled, never blindly replayed. No claim is made that the pilot is a
+generic work-submission protocol or that its context callback is a production
+identity verifier.
+
+Tests use a separately signed **fixture** mandate authorizing `corpus.search`
+and fixture commissioning/destination evidence. They reject unsigned scope,
+forged transport, stale versions, wrong destination, private view and revoked
+authority. With the real public daemon the fixture returned three CCC sources,
+one provider invocation, two settled steps and a verified local commitment.
+The full targeted regression run passed 42 tests. No production mandate or
+new production work store was created by the test.
+
+Production reality check: actual v8 independently verified; `host.process.run`
+is in scope (real private MCP invocation settled with `canonical_cop:true`),
+whereas `corpus.search` and `work.submit` return `capability_out_of_scope`.
+Ordinary public search remains available independently of the funded-work
+pilot. The adapter is not activated in the HTTP composition. Do not substitute
+the host-process permission for a semantic search grant, or infer Principal
+commissioning from the transport token. Before activation, use #327's existing
+OAuth/Principal identity components and an explicit commissioning/destination
+contract, and decide the generic work authority under #299/#341 rather than
+issuing per-search mandates.

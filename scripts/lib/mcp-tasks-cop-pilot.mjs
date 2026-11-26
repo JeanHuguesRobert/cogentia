@@ -199,7 +199,12 @@ export function createCopMcpTasksPilot({
         commissioned_by_principal_ref: admission.assignment.commissioned_by_principal_ref ?? null,
         source_ref: admission.assignment.source_ref ?? null,
       } : null;
-      const digest = admission ? hashPayload({ name, args, assignment }) : null;
+      // Optional host-resolved access context is bound to the stable
+      // submission and persisted with the source work, never client metadata.
+      const accessContext = admission?.access_context ?? null;
+      if (accessContext !== null && !valid(accessContext)) throw new Error("invalid_work_access_context");
+      const digest = admission ? hashPayload({ name, args, assignment,
+        ...(accessContext ? {access_context:accessContext} : {}) }) : null;
       const taskId = admission ? stableTaskId(owner, admission.submission_key) : "task:" + randomUUID();
       const createdAt = new Date().toISOString();
       const packetRef = packetRefForMcpTask(taskId);
@@ -232,7 +237,8 @@ export function createCopMcpTasksPilot({
         }
         const creation = commit(taskId, "created", { owner, toolName: name, args,
           createdAt, packetRef, packet, continuation,
-          ...(admission ? { submission_digest: digest } : {}) },
+          ...(admission ? { submission_digest: digest } : {}),
+          ...(accessContext ? { access_context: accessContext } : {}) },
           "mcp-created:" + taskId, tx);
         if (assignment) {
           const assigned = assignPacketWorkWithinTransaction(tx, {
