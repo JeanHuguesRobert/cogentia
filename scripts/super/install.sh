@@ -7,9 +7,10 @@ if [ "$(id -u)" = 0 ]; then
 fi
 cd "$(dirname "$0")/../.."
 echo "== COP-super tests =="
-node --test scripts/super/broker.test.mjs scripts/super/broker-route.test.mjs
+node --test scripts/super/broker.test.mjs scripts/super/broker-route.test.mjs scripts/super/service-deploy.test.mjs
 echo "== Update root-owned broker =="
 sudo install -d -o root -g root -m 0755 /usr/local/libexec/cogentia-super
+sudo install -o root -g root -m 0644 scripts/super/service-deploy.mjs /usr/local/libexec/cogentia-super/service-deploy.mjs
 sudo install -o root -g root -m 0755 scripts/super/broker.mjs /usr/local/libexec/cogentia-super/broker.mjs
 sudo install -o root -g root -m 0644 scripts/super/cogentia-super.service /etc/systemd/system/cogentia-super.service
 sudo systemctl daemon-reload

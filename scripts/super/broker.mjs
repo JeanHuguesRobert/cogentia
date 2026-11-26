@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// COP is the sole authority; this broker consumes canonical effect grants.
+// Generic super scripts require canonical COP effect grants. The node owner may
+// separately delegate a fixed-function OS operation, never arbitrary root shell.
 import fs from 'node:fs';
 import net from 'node:net';
 import {createHash,randomUUID} from 'node:crypto';
@@ -69,6 +70,11 @@ function execute(script,timeout){
   });
 }
 export async function handle(r){
+  if(r?.op==='service.deploy'){
+    if(process.geteuid?.()!==0)return fail('protected_deploy_executor_required');
+    const {deployFromProtectedBroker}=await import('./service-deploy.mjs');
+    return deployFromProtectedBroker(r);
+  }
   if(r?.op==='reconcile'){
     if(process.geteuid?.()!==0)return fail('root_reconciliation_unavailable');
     try{
