@@ -90,7 +90,10 @@ export async function verifyMcpOAuthToken(token, options = {}) {
 
   const result=Object.freeze({ verified:true, subject:claims.sub, issuer, audience,
     scopes:Object.freeze([...scopes]), claims:Object.freeze({sub:claims.sub,iss:claims.iss,
-      aud:Array.isArray(claims.aud)?Object.freeze([...claims.aud]):claims.aud,exp:claims.exp}) });
+      aud:Array.isArray(claims.aud)?Object.freeze([...claims.aud]):claims.aud,exp:claims.exp,
+      ...(typeof claims.client_id==='string'?{client_id:claims.client_id}:{}),
+      ...(typeof claims.role==='string'?{role:claims.role}:{}),
+      ...(typeof claims.is_anonymous==='boolean'?{is_anonymous:claims.is_anonymous}:{})}) });
   verifiedTokens.add(result);
   return result;
 }

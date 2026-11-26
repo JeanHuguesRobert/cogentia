@@ -687,3 +687,45 @@ activation, #327 must provide real independently verified client bindings
 and commissioning context, and #299/#341 must settle semantic work
 authority; no automatic mandate amendment is implied. The normal public
 search and existing JHN transport remain independent.
+
+## 2026-11-26 — Supabase OAuth client identity profile (#327/#342)
+
+The real JHN project is active; its OpenID discovery and ES256 JWKS respond.
+The documented MCP discovery URL returned 404 at inspection. One autonomous
+JHN instance has a bound Principal. Read-only SQL metadata showed zero
+registered OAuth clients/authorizations, 43 public tables with RLS enabled,
+25 public policies and no policy text explicitly referring to client_id.
+The last count is not a complete policy/security audit.
+
+Supabase's native OAuth server currently supports standard OIDC scopes, not
+arbitrary application scopes. It signs a client_id claim alongside the user
+subject. See
+[OAuth flows](https://supabase.com/docs/guides/auth/oauth-server/oauth-flows)
+and [token security](https://supabase.com/docs/guides/auth/oauth-server/token-security).
+Its tokens can also reach existing user data APIs; do not enable broad
+OAuth access to the JHN project without reviewing those policies.
+
+The optional Supabase delivery profile reuses the existing signed JWT
+verifier and issuer/subject binding. It additionally requires a signed
+client_id, non-anonymous authenticated user, pinned project issuer/JWKS and
+an exact single HTTPS resource audience. It deliberately rejects the
+generic authenticated audience. Each allowed client_id needs an explicit
+delivery entitlement on the existing identity binding. No standard
+OIDC scope is promoted into a private-read or execution grant. Ordinary
+login tokens, copied evidence, ambiguous bindings, wrong destination and
+removed entitlement are rejected. The generic scoped OAuth route remains
+unchanged.
+
+74 focused tests passed. With the real public Corpus daemon and isolated
+signed Supabase-shaped ES256 fixture credentials, two client IDs of the
+same user retrieve one identical three-source CCC result, with one provider
+call, two settled steps and zero additional events on retrieval. This is
+not a live Supabase-issued credential or proof of production enrollment.
+
+Next: audit the existing project OAuth/RLS boundaries and choose a
+resource-specific audience issuance configuration; enroll two actual clients
+through the existing authorization UI. No Auth hook, database policy,
+client registration or provider configuration was changed in this lot.
+The optional profile is not wired to the production HTTP adapter yet.
+The existing signed semantic work-authority and commissioning boundaries
+remain prerequisites for the financed work pilot.

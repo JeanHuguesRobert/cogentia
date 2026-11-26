@@ -8,7 +8,7 @@ import {recordMandateControl} from '../../../inseme/packages/cop-core/src/govern
 import {projectPacketWorkAssignment} from '../../../inseme/packages/cop-core/src/packet-work-assignment.js';
 import {createMcpCore} from './cogentia-mcp-core.js';
 import {verifyMcpOAuthToken} from './mcp-oauth-token.js';
-import {createOAuthWorkDeliveryResolver} from './work-delivery-access.js';
+import {createOAuthWorkDeliveryResolver,createSupabaseWorkDeliveryResolver,verifySupabaseWorkDeliveryToken} from './work-delivery-access.js';
 import {resolveCallerAuth} from './cogentia-mcp-auth.js';
 import {issueVerifiedJohnRoot} from './john-root-issuance.js';
 import {createOfflineJohnIssuerVerifier} from './john-offline-issuer-verifier.js';
@@ -221,5 +221,70 @@ test('two independently signed OAuth subjects retrieve one completed work withou
      contract:f.store.listTopic(packetTopicForMcpTask(taskId)).find(x=>x.payload?.phase==='created').payload.access_context}),false);
    assert.equal(recordMandateControl(f.store,{principal_ref:'principal:jhn',mandate_ref:REF,action:'revoke',reason:'fixture'}).ok,true);
    assert.equal((await rpc('tasks/get',{taskId},b)).error?.code,-32602);
+ }finally{f.store.close()}
+});
+
+
+test('Supabase delivery profile: same user, distinct signed client IDs, one COP result',async()=>{
+ const f=fixture();
+ const issuer='https://project.fixture.test/auth/v1',audience='https://mcp.fixture.test/mcp';
+ const keys=generateKeyPairSync('ec',{namedCurve:'P-256'});
+ const jwk={...keys.publicKey.export({format:'jwk'}),kid:'fixture',alg:'ES256',use:'sig'};
+ const subject='11111111-1111-4111-8111-111111111111';
+ const clientA='22222222-2222-4222-8222-222222222222';
+ const clientB='33333333-3333-4333-8333-333333333333';
+ const clientC='44444444-4444-4444-8444-444444444444';
+ const opts={issuer,audience,jwksUrl:issuer+'/.well-known/jwks.json',nowMs:+now,
+   fetch:async()=>({ok:true,json:async()=>({keys:[jwk]})})};
+ async function proof(client_id){
+   const h=Buffer.from(JSON.stringify({alg:'ES256',kid:jwk.kid})).toString('base64url');
+   const p=Buffer.from(JSON.stringify({iss:issuer,aud:audience,sub:subject,
+     exp:Math.floor(+now/1000)+600,client_id,role:'authenticated',is_anonymous:false,scope:'openid email'})).toString('base64url');
+   const b=h+'.'+p;
+   return verifySupabaseWorkDeliveryToken(b+'.'+sign('sha256',Buffer.from(b),
+      {key:keys.privateKey,dsaEncoding:'ieee-p1363'}).toString('base64url'),opts);
+ }
+ const delivery={destination_ref:'destination:fixture-personal',recipient_ref:'principal:jhn',
+   visibility:'public',provider_account_ref:null,subject_ref:null,twin_ref:null};
+ const bindingsJson=JSON.stringify([{issuer,subject,principal:'principal:jhn',work_delivery:[
+  {...delivery,client_id:clientA},{...delivery,client_id:clientB},
+  {...delivery,client_id:clientC,destination_ref:'destination:collective'}]}]);
+ const resolveDelivery=createSupabaseWorkDeliveryResolver({issuer,audience,bindingsJson,now:()=>+now});
+ let calls=0;
+ const real=process.env.COGENTIA_342_REALITY_DAEMON_URL;
+ const realCore=real?createMcpCore({COGENTIA_MCP_VIEW:'public',COGENTIA_DAEMON_URL:real}):null;
+ const publicCore={async callTool(...args){
+   calls++;
+   if(realCore)return realCore.callTool(...args);
+   return {ok:true,status:'completed',text:JSON.stringify({ok:true,view:'public',results:[{id:'fixture:ccc'}]}),
+     accounting:{observed_steps:2,tool_calls_count:1,external_effects:0,internal_effects:0,ithaca_returned:true}};
+ }};
+ const make=()=>createCanonicalJohnPublicWorkPilot({...f,resolveDelivery,publicCore,
+    primaryStoreId:'sqlite:fixture-ccc',ownerInstanceRef:'instance:fixture-ccc',now:()=>now});
+ const meta={'io.modelcontextprotocol/protocolVersion':'2026-07-28',
+   'io.modelcontextprotocol/clientCapabilities':{extensions:{'io.modelcontextprotocol/tasks':{}}}};
+ const rpc=(method,params,oauthPrincipal)=>createMcpCore({
+    COGENTIA_MCP_VIEW:'public',COGENTIA_MCP_OAUTH_IDENTITY_BINDINGS:bindingsJson
+  },{mcpTasksAdapter:make().adapter}).handleJsonRpc({jsonrpc:'2.0',id:1,method,
+    params:{...params,_meta:meta}},{oauthPrincipal,headers:{}});
+ try{
+   const p=make(),{taskId}=await p.adapter.create({name:'cogentia_john_run',args,auth});
+   const [a,b,c]=await Promise.all([proof(clientA),proof(clientB),proof(clientC)]);
+   const done=await p.run(taskId,auth);
+   assert.equal(done.status,'completed');
+   const before=f.store.replay().length;
+   const aa=await rpc('tasks/get',{taskId},a),bb=await rpc('tasks/get',{taskId},b);
+   assert.equal(aa.result?.status,'completed',JSON.stringify(aa));
+   assert.deepEqual(aa.result.result,bb.result.result);
+   assert.deepEqual(aa.result.result,done.result);
+   assert.equal((await rpc('tasks/get',{taskId},c)).error?.code,-32602);
+   assert.equal((await rpc('tasks/cancel',{taskId},a)).error?.code,-32602);
+   assert.equal((await rpc('tasks/update',{taskId,inputResponses:{answer:'fixture'}},b)).error?.code,-32602);
+   assert.equal(f.store.replay().length,before);
+   assert.equal(f.ledger().snapshot().settled.max_steps,2);
+   assert.equal(calls,1);
+   if(real)console.log('CCC_SUPABASE_CLIENT_IDS_REAL_DAEMON',JSON.stringify({
+      results:JSON.parse(done.result.content[0].text).result.results.length,
+      provider_calls:calls,identical_delivery:true,additional_events:0,settled_steps:2}));
  }finally{f.store.close()}
 });
