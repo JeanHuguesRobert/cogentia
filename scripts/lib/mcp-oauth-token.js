@@ -5,6 +5,11 @@
  */
 import { createPublicKey, verify as verifySignature } from "node:crypto";
 
+const verifiedTokens = new WeakSet();
+export function isVerifiedMcpOAuthToken(token) {
+  return !!token && typeof token === "object" && verifiedTokens.has(token);
+}
+
 function decodePart(part) {
   return JSON.parse(Buffer.from(part, "base64url").toString("utf8"));
 }
@@ -83,5 +88,9 @@ export async function verifyMcpOAuthToken(token, options = {}) {
       fail('approval_human_presence_unverified');
   }
 
-  return { subject: claims.sub, issuer, audience, scopes: [...scopes], claims: { sub: claims.sub, iss: claims.iss, aud: claims.aud, exp: claims.exp } };
+  const result=Object.freeze({ verified:true, subject:claims.sub, issuer, audience,
+    scopes:Object.freeze([...scopes]), claims:Object.freeze({sub:claims.sub,iss:claims.iss,
+      aud:Array.isArray(claims.aud)?Object.freeze([...claims.aud]):claims.aud,exp:claims.exp}) });
+  verifiedTokens.add(result);
+  return result;
 }

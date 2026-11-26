@@ -639,3 +639,51 @@ within his mandate; Gabriel and the angelots observe and report, without
 displacing the Principal's decision or the agent's responsibility.
 
 > La magie est dans l'expérience ; la traçabilité est dans l'atelier.
+
+## 2026-11-26 — Retrieval by a second authenticated client (#342/#327)
+
+The initial requesting agent is historical commissioning evidence. A later
+client need not impersonate that requester or John in order to retrieve a
+completed delivery. The optional public John pilot delivery resolver reuses
+the existing OAuth issuer/subject bindings and checks independently verified
+JWT evidence. The server keeps the exact in-process verified token object
+(immutable, WeakSet-branded); JSON metadata or a copied "verified" flag is
+not evidence. The HTTP bearer parser's erroneous escaped whitespace was
+corrected (FBF). The task retrieval context carries this read evidence
+separately from execution identity; it is not supplied on update/cancel.
+
+The host-configured resolver requires both `cogentia.private.read` and
+`cogentia.work.retrieve` scopes, an unambiguous existing issuer/subject-to-
+Principal binding and an exact destination entitlement on that binding.
+The additional `work_delivery` array on an existing binding may specify
+the recipient, destination, visibility, subject, Twin and provider account
+references. Unknown subject/Twin/account must be explicitly null in this
+pilot; they are not inferred. The same Principal alone does not permit
+a different destination. This is an opt-in application read policy, not
+a separate authentication service or a new execution grant.
+
+For the first pilot only completed successful public-corpus results are
+exposed. The canonical packet commitment, assignment, request binding,
+issuer provenance and pinned active mandate are checked; the existing
+revocation policy is unchanged. Retrieval does not claim a new work,
+reserve budget, mutate the packet, acknowledge receipt or assimilate the
+result. The owner-bound legacy Task paths are unchanged. No new exposure
+for incomplete or failed work is introduced.
+
+Regression evidence: 70 targeted tests passed. Separate run with the
+actual public corpus daemon and isolated signed fixture mandate and OAuth
+issuer: two independently signed subjects bound to the same Principal and
+destination retrieved identical results (three CCC sources), one provider
+call, two settled steps and zero additional events on retrieval. Anonymous,
+copied proof, wrong destination/Principal, missing scope, expired evidence,
+revoked mandate and attempted update/cancel were refused. This is not
+evidence of two independently enrolled production clients.
+
+Production inspection on 26 November: the active service has no OAuth
+issuer/resource/JWKS/identity-bindings configuration and no Tasks COP
+enablement setting. The John pilot is not connected to production HTTP
+composition. The new scope has not been issued by a real provider. Before
+activation, #327 must provide real independently verified client bindings
+and commissioning context, and #299/#341 must settle semantic work
+authority; no automatic mandate amendment is implied. The normal public
+search and existing JHN transport remain independent.

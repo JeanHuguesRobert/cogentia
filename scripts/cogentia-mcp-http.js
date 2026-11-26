@@ -791,14 +791,14 @@ async function handleMcpPost(req, res) {
   const jwksUrl = String(process.env.COGENTIA_MCP_OAUTH_JWKS_URL || "").trim();
   if (issuer && audience && jwksUrl) {
     const header = String(req.headers.authorization || "");
-    const match = /^Bearer\\s+(.+)$/i.exec(header);
+    const match = /^Bearer\s+(.+)$/i.exec(header);
     if (match) {
       try {
         const principal = await verifyMcpOAuthToken(match[1], {
           issuer, audience, jwksUrl,
           requiredScopes: ["cogentia.private.read"],
         });
-        transport.oauthPrincipal = { ...principal, verified: true };
+        transport.oauthPrincipal = principal;
       } catch {
         // A failed OAuth token never creates a principal. Preserve legacy
         // public and separately-attested JHN access during migration.

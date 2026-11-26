@@ -3,12 +3,13 @@
  * Host-resolved commissioning/delivery context is an independent input.
  */
 import {hashPayload} from '../../../inseme/packages/cop-core/src/cop-event-envelope.js';
-import {resolveMandate,invokeGovernedCapability} from '../../../inseme/packages/cop-core/src/governed-act.js';
+import {resolveMandate,evaluateMandate,invokeGovernedCapability} from '../../../inseme/packages/cop-core/src/governed-act.js';
 import {createEventSourcedExecutionBudgetLedger} from '../../../inseme/packages/cop-core/src/execution-budget.js';
 import {reserveEventSourcedDelegatedBudget} from '../../../inseme/packages/cop-core/src/delegated-budget.js';
 import {projectPacketWorkAssignment} from '../../../inseme/packages/cop-core/src/packet-work-assignment.js';
 import {buildWorkCommissioningContract,compareWorkCommissioningContract} from './work-commissioning-contract.js';
 import {assessJohnCopAuthority} from './john-cop-authority-preflight.js';
+import {isVerifiedMcpOAuthToken} from './mcp-oauth-token.js';
 import {isResolvedCallerAuth} from './cogentia-mcp-auth.js';
 import {createCopMcpTasksPilot,packetRefForMcpTask,packetTopicForMcpTask} from './mcp-tasks-cop-pilot.mjs';
 import {STANDING_MANDATE_REF,STANDING_BUDGET_ID,STANDING_TRANSPORT_LABEL} from './john-standing-mission-authority.js';
@@ -85,10 +86,12 @@ export function assessCanonicalPublicJohnWork({store,verifyIssuer,resolveContext
    contract_hash:built.contract_hash,assignment:built.assignment,request:r};
 }
 
-export function createCanonicalJohnPublicWorkPilot({store,verifyIssuer,resolveContext,publicCore,primaryStoreId,ownerInstanceRef,now=()=>new Date()}={}){
+export function createCanonicalJohnPublicWorkPilot({store,verifyIssuer,resolveContext,publicCore,primaryStoreId,ownerInstanceRef,resolveDelivery=null,now=()=>new Date()}={}){
  if(store?.kind!=='sqlite'||typeof verifyIssuer!=='function'||typeof resolveContext!=='function'||
     typeof publicCore?.callTool!=='function'||!ref(ownerInstanceRef))
    throw new TypeError('canonical_public_work_host_dependencies_required');
+ if(resolveDelivery!==null&&typeof resolveDelivery!=='function')
+   throw new TypeError('trusted_delivery_resolver_required');
  const check=(auth,args,operation)=>assessCanonicalPublicJohnWork({store,verifyIssuer,resolveContext,auth,args,operation,now:now()});
  const fail=e=>{throw Object.assign(new Error(e),{code:'unknown_task'})};
  const creation=taskId=>store.listTopic(packetTopicForMcpTask(taskId)).find(e=>
@@ -169,11 +172,54 @@ export function createCanonicalJohnPublicWorkPilot({store,verifyIssuer,resolveCo
  const adapter={...pilot.adapter,
    async shouldCreate(c){return c.name===TOOL&&c.args?.request?.capability===CAPABILITY&&
      isResolvedCallerAuth(c.auth)&&c.auth.auth==='jhn'},
-   async get(c){permitted(c.taskId,c.auth,'retrieve');return pilot.adapter.get(c)},
+   async get(c){
+     if(c.oauthPrincipal){
+       if(!resolveDelivery||!isVerifiedMcpOAuthToken(c.oauthPrincipal))fail('unknown_task');
+       const delivery=await pilot.readCompletedDelivery(c.taskId,c.oauthPrincipal,async ({evidence,created})=>{
+         const contract=created.access_context;
+         const normalized=normalizePublicJohnWork(created.args);
+         if(!normalized.ok||contract?.schema!=='cogentia.work-commissioning/v1'||
+            contract.principal_ref!=='principal:jhn'||contract.request_hash!==normalized.request_hash||
+            contract.authority?.mandate_ref!==STANDING_MANDATE_REF||
+            contract.authority?.capability!==CAPABILITY||contract.delivery?.visibility!=='public')return false;
+         const assignment=projectPacketWorkAssignment(store,{packet_ref:packetTopicForMcpTask(c.taskId)});
+         if(!assignment.ok||assignment.responsible_agent_ref!=='agent:jhn'||
+            assignment.commissioned_by_principal_ref!=='principal:jhn'||
+            assignment.history?.at(-1)?.source_ref!==contract.assignment?.source_ref)return false;
+         // Retain the existing revocation/version policy for this pilot.
+         // Retrieval neither allocates nor settles execution budget.
+         try{
+           const mandate=resolveMandate(store,STANDING_MANDATE_REF);
+           const proof=verifyIssuer({mandate,mandate_ref:STANDING_MANDATE_REF,store});
+           if(proof?.verified!==true||proof.principal_ref!==contract.principal_ref||
+              proof.mandate_ref!==STANDING_MANDATE_REF)return false;
+           const grant=evaluateMandate(store,{mandate_ref:STANDING_MANDATE_REF,
+             version_pin:contract.authority.version,expected_principal_ref:contract.principal_ref,
+             expected_actor_ref:'agent:jhn',capability:CAPABILITY,at_time:now()});
+           if(grant.granted!==true)return false;
+           return await resolveDelivery({oauthPrincipal:evidence,contract})===true;
+         }catch{return false}
+       });
+       // The source work is restricted to the public projection; never
+       // return a failed/suspended/internal handler envelope through this route.
+       let value;
+       try{
+         if(delivery.result?.isError!==false||delivery.result?.content?.length!==1||
+            delivery.result.content[0].type!=='text')fail('unknown_task');
+         value=JSON.parse(delivery.result.content[0].text);
+       }catch{fail('unknown_task')}
+       if(value?.ok!==true||value.view!=='public'||value.result?.view!=='public'||
+          !Array.isArray(value.result.results)||value.packet_ref!==packetRefForMcpTask(c.taskId))
+         fail('unknown_task');
+       return delivery;
+     }
+     permitted(c.taskId,c.auth,'retrieve');return pilot.adapter.get(c)
+   },
    async update(c){permitted(c.taskId,c.auth,'update');return pilot.adapter.update(c)},
    async cancel(c){permitted(c.taskId,c.auth,'cancel');return pilot.adapter.cancel(c)},
  };
- return {...pilot,adapter,async run(taskId,auth){
+ const {readCompletedDelivery: _hostRead,...surface}=pilot;
+ return {...surface,adapter,async run(taskId,auth){
    permitted(taskId,auth,'dispatch');
    return pilot.run(taskId,auth);
  }};

@@ -118,7 +118,10 @@ export function createCopMcpTasksPilot({
   }
 
   function project(taskId, auth) {
-    const { events, created } = history(taskId, auth);
+    return projectHistory(taskId, history(taskId, auth));
+  }
+
+  function projectHistory(taskId, {events, created}) {
     const last = events.at(-1);
     const completed = events.find(x => x.payload?.phase === "completed");
     const failed = events.find(x => x.payload?.phase === "failed");
@@ -142,6 +145,24 @@ export function createCopMcpTasksPilot({
       ...(failed ? { error: failed.payload.error } : {}),
       ...(status === "input_required" ? { inputRequests: input.payload.inputRequests } : {}),
     };
+    return result;
+  }
+
+  // Read-only host operation. No change to legacy ownership checks and
+  // no synthetic owner credential. The injected verifier must bind the
+  // currently authenticated recipient to the immutable delivery contract.
+  // Only completed results are exposed by this path.
+  async function readCompletedDelivery(taskId, evidence, authorizeDelivery) {
+    if(typeof authorizeDelivery!=="function")throw unknown();
+    const events=store.listTopic(topic(taskId));
+    const created=events.find(x=>x.payload?.profile===profile&&
+      x.payload.phase==="created"&&x.payload.toolName===toolName)?.payload;
+    if(!created?.access_context||!auditPacket(taskId).ok||
+       !events.some(e=>e.payload?.profile===profile&&e.payload.phase==="completed"))
+      throw unknown();
+    if(await authorizeDelivery({taskId,evidence,created})!==true)throw unknown();
+    const result=projectHistory(taskId,{events,created});
+    if(result.status!=="completed")throw unknown();
     return result;
   }
 
@@ -414,5 +435,5 @@ export function createCopMcpTasksPilot({
   }
 
   return { toolName, adapter, run, requireInput,
-    acceptVerifiedExternalResult, auditPacket, recordReconciliationRequired };
+    acceptVerifiedExternalResult, auditPacket, recordReconciliationRequired, readCompletedDelivery };
 }

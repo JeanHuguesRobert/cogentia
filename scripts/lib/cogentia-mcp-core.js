@@ -15,6 +15,7 @@ import {
 } from "./mcp-tasks-2026-contract.mjs";
 import {bindJohnTransportClaims} from "./john-transport-binding.js";
 import { resolveOAuthIdentity } from "./mcp-oauth-identity.js";
+import { isVerifiedMcpOAuthToken } from "./mcp-oauth-token.js";
 import { listAgentSkills, getAgentSkill, exportSkillAsMethodPackage, resolveRepoRoot } from "./cogentia-agent-skills.js";
 import {
   extractCorrelation,
@@ -1798,7 +1799,11 @@ export function createMcpCore(env = process.env, extras = {}) {
         const context={auth,taskId,correlation:extractCorrelation(resolved.meta||{})};
         try{
           if(message.method==="tasks/get"){
-            const task=await adapter.get(context);
+            // Pass verified read evidence, not an invented JHN execution identity.
+            // Only the explicit delivery adapter may consume it.
+            const task=await adapter.get({...context,
+              ...(isVerifiedMcpOAuthToken(transport.oauthPrincipal)?
+                {oauthPrincipal:transport.oauthPrincipal}:{})});
             if(!task)return jsonRpcError(message.id,-32602,"Unknown Task identifier");
             return jsonRpcResult(message.id,attachModernMeta(
               formatMcpTask(task,{operation:'get',expectedId:taskId}),resolved.protocolVersion));

@@ -7,6 +7,8 @@ import {createEventSourcedExecutionBudgetLedger} from '../../../inseme/packages/
 import {recordMandateControl} from '../../../inseme/packages/cop-core/src/governed-act.js';
 import {projectPacketWorkAssignment} from '../../../inseme/packages/cop-core/src/packet-work-assignment.js';
 import {createMcpCore} from './cogentia-mcp-core.js';
+import {verifyMcpOAuthToken} from './mcp-oauth-token.js';
+import {createOAuthWorkDeliveryResolver} from './work-delivery-access.js';
 import {resolveCallerAuth} from './cogentia-mcp-auth.js';
 import {issueVerifiedJohnRoot} from './john-root-issuance.js';
 import {createOfflineJohnIssuerVerifier} from './john-offline-issuer-verifier.js';
@@ -145,5 +147,79 @@ test('revocation before dispatch prevents provider invocation and allocation',as
   await assert.rejects(p.adapter.get({taskId,auth}));
   assert.equal(f.ledger().snapshot().reserved.max_steps,0);
   assert.equal(f.ledger().snapshot().settled.max_steps,0);
+ }finally{f.store.close()}
+});
+
+test('two independently signed OAuth subjects retrieve one completed work without becoming John or spending again',async()=>{
+ const f=fixture();
+ const issuer='https://issuer.work-fixture.test',audience='https://mcp.work-fixture.test/mcp';
+ const keys=generateKeyPairSync('rsa',{modulusLength:2048});
+ const jwk={...keys.publicKey.export({format:'jwk'}),kid:'work-fixture',alg:'RS256',use:'sig'};
+ const opts={issuer,audience,jwksUrl:issuer+'/jwks',nowMs:+now,
+   requiredScopes:['cogentia.private.read'],fetch:async()=>({ok:true,json:async()=>({keys:[jwk]})})};
+ function token(sub,scope='cogentia.private.read cogentia.work.retrieve'){
+   const h=Buffer.from(JSON.stringify({alg:'RS256',kid:jwk.kid})).toString('base64url');
+   const p=Buffer.from(JSON.stringify({iss:issuer,aud:audience,sub,scope,exp:Math.floor(+now/1000)+600})).toString('base64url');
+   const b=h+'.'+p;return b+'.'+sign('RSA-SHA256',Buffer.from(b),keys.privateKey).toString('base64url');
+ }
+ const a=await verifyMcpOAuthToken(token('client-a'),opts);
+ const b=await verifyMcpOAuthToken(token('client-b'),opts);
+ const wrong=await verifyMcpOAuthToken(token('client-collective'),opts);
+ const other=await verifyMcpOAuthToken(token('other-principal'),opts);
+ const readOnly=await verifyMcpOAuthToken(token('client-a','cogentia.private.read'),opts);
+ const delivery={destination_ref:'destination:fixture-personal',recipient_ref:'principal:jhn',
+   visibility:'public',provider_account_ref:null,subject_ref:null,twin_ref:null};
+ const bindingsJson=JSON.stringify([
+   ...['client-a','client-b'].map(subject=>({issuer,subject,principal:'principal:jhn',work_delivery:[delivery]})),
+   {issuer,subject:'client-collective',principal:'principal:jhn',work_delivery:[{...delivery,destination_ref:'destination:collective'}]},
+   {issuer,subject:'other-principal',principal:'principal:other',work_delivery:[delivery]},
+ ]);
+ let calls=0;
+ const real=process.env.COGENTIA_342_REALITY_DAEMON_URL;
+ const realCore=real?createMcpCore({COGENTIA_MCP_VIEW:'public',COGENTIA_DAEMON_URL:real}):null;
+ const publicCore={async callTool(...args){
+   calls++;
+   if(realCore)return realCore.callTool(...args);
+   return {ok:true,status:'completed',text:JSON.stringify({ok:true,view:'public',results:[{id:'fixture:ccc'}]}),
+     accounting:{observed_steps:2,tool_calls_count:1,external_effects:0,internal_effects:0,ithaca_returned:true}};
+ }};
+ const resolveDelivery=createOAuthWorkDeliveryResolver({bindingsJson,now:()=>+now});
+ const make=()=>createCanonicalJohnPublicWorkPilot({...f,resolveDelivery,publicCore,
+   primaryStoreId:'sqlite:fixture-ccc',ownerInstanceRef:'instance:fixture-ccc',now:()=>now});
+ const p=make();
+ const env={COGENTIA_MCP_VIEW:'public',COGENTIA_MCP_OAUTH_IDENTITY_BINDINGS:bindingsJson};
+ const meta={'io.modelcontextprotocol/protocolVersion':'2026-07-28',
+   'io.modelcontextprotocol/clientCapabilities':{extensions:{'io.modelcontextprotocol/tasks':{}}}};
+ const rpc=(method,params,oauthPrincipal,extraMeta={})=>createMcpCore(env,{mcpTasksAdapter:make().adapter})
+   .handleJsonRpc({jsonrpc:'2.0',id:1,method,params:{...params,_meta:{...meta,...extraMeta}}},
+     {oauthPrincipal,headers:{}});
+ try{
+   const {taskId}=await p.adapter.create({name:'cogentia_john_run',args,auth});
+   assert.equal((await rpc('tasks/get',{taskId},a)).error.code,-32602);
+   const done=await p.run(taskId,auth);
+   assert.equal(done.status,'completed');
+   const before=f.store.replay().length;
+   const aa=await rpc('tasks/get',{taskId},a),bb=await rpc('tasks/get',{taskId},b);
+   assert.equal(aa.result?.status,'completed',JSON.stringify(aa));
+   assert.deepEqual(aa.result.result,bb.result.result);
+   assert.deepEqual(aa.result.result,done.result);
+   assert.equal(calls,1);
+   for(const proof of [wrong,other,readOnly,{...a},undefined]){
+     const denied=await rpc('tasks/get',{taskId},proof,{'cogentia.actor':'agent:jhn','cogentia.principal_ref':'principal:jhn'});
+     assert.equal(denied.error?.code,-32602,JSON.stringify(denied));
+   }
+   assert.equal((await rpc('tasks/cancel',{taskId},a)).error?.code,-32602);
+   assert.equal((await rpc('tasks/update',{taskId,inputResponses:{answer:'fixture'}},b)).error?.code,-32602);
+   assert.equal(f.store.replay().length,before);
+   assert.equal(f.ledger().snapshot().settled.max_steps,2);
+   if(real)console.log('CCC_TWO_OAUTH_SUBJECTS_REAL_DAEMON',JSON.stringify({
+     results:JSON.parse(done.result.content[0].text).result.results.length,
+     provider_calls:calls,identical_delivery:true,additional_events:0,settled_steps:2}));
+   assert.equal(resolveDelivery({oauthPrincipal:a,contract:{...f.store.listTopic(packetTopicForMcpTask(taskId)).find(x=>x.payload?.phase==='created').payload.access_context,
+     twin_ref:'twin:collective'}}),false);
+   assert.equal(createOAuthWorkDeliveryResolver({bindingsJson,now:()=>+now+700000})({oauthPrincipal:a,
+     contract:f.store.listTopic(packetTopicForMcpTask(taskId)).find(x=>x.payload?.phase==='created').payload.access_context}),false);
+   assert.equal(recordMandateControl(f.store,{principal_ref:'principal:jhn',mandate_ref:REF,action:'revoke',reason:'fixture'}).ok,true);
+   assert.equal((await rpc('tasks/get',{taskId},b)).error?.code,-32602);
  }finally{f.store.close()}
 });
