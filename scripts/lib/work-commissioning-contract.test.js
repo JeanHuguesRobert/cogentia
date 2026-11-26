@@ -60,3 +60,44 @@ test('retrieval cannot substitute another requester, recipient, destination, fun
  const forged=structuredClone(a);forged.contract.delivery.destination_ref='destination:other';
  assert.equal(compare(a.contract,forged).ok,false);
 });
+
+test('workshop recursion: one Principal, a Root Agent and two levels of delegated work',()=>{
+ const root=build({intent,context});
+ assert.equal(root.ok,true);
+ const childIntent={...intent,submission_key:'order-01-child',
+  request_hash:'sha256:'+'b'.repeat(64),responsible_agent_ref:'agent:elf-a',
+  capability:'research.compare',parent_budget_ref:'budget:root-work',allocation:{max_steps:2}};
+ const childContext={...context,request_hash:childIntent.request_hash,
+  requesting_agent_ref:'agent:root',commissioned_by_principal_ref:null,
+  commissioned_by_agent_ref:'agent:root',parent_work_ref:'packet:root-work',
+  commissioning_ref:'event:root-order-child',recipient_ref:'agent:root',
+  destination_ref:'destination:root-work'};
+ const child=build({intent:childIntent,context:childContext});
+ assert.equal(child.ok,true);
+ const leafIntent={...childIntent,submission_key:'order-01-leaf',
+  request_hash:'sha256:'+'c'.repeat(64),responsible_agent_ref:'agent:elf-b',
+  capability:'corpus.search',parent_budget_ref:'budget:child-work',allocation:{max_steps:1}};
+ const leafContext={...childContext,request_hash:leafIntent.request_hash,
+  requesting_agent_ref:'agent:elf-a',commissioned_by_agent_ref:'agent:elf-a',
+  parent_work_ref:'packet:child-work',commissioning_ref:'event:child-order-leaf',
+  recipient_ref:'agent:elf-a',destination_ref:'destination:child-work'};
+ const leaf=build({intent:leafIntent,context:leafContext});
+ assert.equal(leaf.ok,true);
+ for(const a of [root,child,leaf]){
+  assert.equal(a.contract.principal_ref,'principal:alice');
+  assert.equal(a.grants_authority,false);
+ }
+ assert.equal(child.assignment.commissioned_by_agent_ref,root.assignment.responsible_agent_ref);
+ assert.equal(leaf.assignment.commissioned_by_agent_ref,child.assignment.responsible_agent_ref);
+ assert.equal(leaf.contract.delivery.recipient_ref,child.assignment.responsible_agent_ref);
+ assert.equal(child.contract.delivery.recipient_ref,root.assignment.responsible_agent_ref);
+ assert.equal(root.contract.delivery.recipient_ref,'principal:alice');
+ assert.equal(new Set([root.contract_hash,child.contract_hash,leaf.contract_hash]).size,3);
+ // A descendant cannot substitute its own identity for the governing Principal.
+ assert.equal(build({intent:leafIntent,context:{...leafContext,principal_ref:'principal:elf-a'}}).ok,false);
+ // The same work cannot be silently redirected to the root's recipient.
+ assert.equal(compare(leaf.contract,build({intent:leafIntent,context:{
+  ...leafContext,recipient_ref:'principal:alice',destination_ref:'destination:personal'}})).ok,false);
+ // The constructor does not itself prove attenuation, reserve funds, or
+ // delegate authority. These remain existing COP admission obligations.
+});

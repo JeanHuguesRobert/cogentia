@@ -593,3 +593,49 @@ The generic contract is not yet a production identity resolver. The two
 remaining integration boundaries are independent caller/commissioner/destination
 resolution (#327) and actual semantic authority for funded work (#299).
 Do not amend v8 automatically or require a new human mandate per search.
+
+### User experience: Babbu Natale and the workshop
+
+The Principal's authored source [Le Père Noël revient — et cette fois, il aide les adultes](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/le_pere_noel_revient.md)
+(2026-07-18) is an architectural guide, not a protocol vocabulary.
+[FractaAgent](../research/fractaxxxx.md#fractaagent--candidate-name-for-recursive-governed-agent-composition-2026-11-07)
+already translates its recursive workshop into governed delegation.
+
+A wish is not yet an order; an order is not a mandate. The personal Twin
+helps clarify the wish and identify the desired outcome, then organizes the
+work under existing authority. The human should not have to select a tool,
+handler, budget dimension, transport protocol or physical host. Those belong
+to the workshop. A Job is a work Packet with a delivery contract, not every
+Cognitive Packet and not every capability invocation. One order may entail
+several subordinate work items and several deliverables.
+
+At the root John works for the real Principal; each delegated work has one
+responsible agent and an actual commissioning agent. An elf may coordinate
+subwork without becoming a new Principal. The existing COP authority and
+delegated-budget machinery must verify subdelegation and reserve the child's
+share. The generic contract constructor alone does neither. The three-level
+fixture in `work-commissioning-contract.test.js` makes this distinction
+executable, with each child returning to its commissioner rather than
+silently redirecting to the root destination.
+
+The current pilot's `retrieve_by_reference` establishes an intended mode of
+delivery and a durable result. It does not establish receipt by the
+commanditaire or assimilation into the parent's work. Preserve the existing
+[Return, Ithaca and assimilation](../research/cognitive_packet_closure_and_packet_native_semantics.md#11-return-ithaca-and-assimilation)
+distinction: fabrication/solved, availability for retrieval, returned yield,
+and assimilated result are not interchangeable. A GET, Task completed or
+transport success must not manufacture human acknowledgement or business
+assimilation. Later multi-deliverable Jobs should reuse COP return and
+assimilation evidence, not a second delivery ledger.
+
+The originating requester is historical; a later client acting for the same
+Principal must be independently entitled to retrieve the result in the
+authorized destination. Do not require identical client sessions, and do
+not equate the original requester with the authenticated current caller.
+The current pilot still compares the resolved full contract and does not
+demonstrate this cross-client retrieval path. The identity work in #327
+must supply that independent resolution. John should coordinate silently
+within his mandate; Gabriel and the angelots observe and report, without
+displacing the Principal's decision or the agent's responsibility.
+
+> La magie est dans l'expérience ; la traçabilité est dans l'atelier.
