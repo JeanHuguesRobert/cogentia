@@ -5,8 +5,8 @@ description: "Operational specification derived from existing Living Book Realit
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-10-04"
-last_modified_at: "2026-10-17"
-version: "0.5"
+last_modified_at: "2026-11-26"
+version: "0.6"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -873,3 +873,35 @@ A handler claiming an external effect SHOULD provide the durable evidence approp
 > **An internal success is not an external effect until it crosses and survives the relevant persistence boundary.**
 
 This extends the three-axis state grammar without requiring a fourth universal status axis: persistence is evidence used to determine `effect_status`.
+
+## 21. Addressable public knowledge projections — RT-LBF-003
+
+The reader uses the Living Book's canonical host; Git remains the source
+repository, not a prerequisite for reading the book. A public source can
+participate in several books without duplicating its canonical text.
+
+The implemented working-resource extension uses an explicit
+\`projects/<book>/projections/resources-working.yml\` selection:
+stable resource ID, public route and Corpus-relative source. Reject missing,
+unclassified, private or duplicate inputs. A bounded selection is not a
+claim of exhaustive Corpus coverage. Record unresolved references and editorial
+Delta Dispositions; deepen coverage by informed selection, not recursive
+automatic disclosure.
+
+The Factory's \`build-resources\` command fingerprints each book's selected
+sources, revisions, metadata, selection and implementation. A verified cache
+hit is reuse, not reconstruction. The CI transfer carries source revisions,
+digests and artifact manifests; the existing static release assembler
+compares the complete desired site inventory with the live tree. Identical
+bytes mean CURRENT_VERIFIED, with no new release or activation. Changed
+working pages may relocalize exact selected source links; frozen editions
+and unrelated bytes are preserved. A missing sitemap may be initialized
+from observed canonical pages.
+
+Reality evidence: [#348](https://github.com/JeanHuguesRobert/cogentia/issues/348#issuecomment-7202807961)
+and [Barons #112](https://github.com/JeanHuguesRobert/barons-Mariani/issues/112)
+record seven LIVE_VERIFIED books and 48 document projections on 2026-11-26.
+[Operium](https://github.com/JeanHuguesRobert/operium/blob/main/docs/living-books-deployment.md)
+owns the operational topology and activation evidence. This is not proof of
+autonomous deployment: the owner still activates the bounded releases while
+the standing administrative admission bridge (#285) is unfinished.

@@ -187,8 +187,11 @@ Every fully realized Living Book **MUST** instantiate the five structural faces 
 - [ ] **REQ-TEC-03 (Temporal Delta Tracking)**: The magazine **MUST** reside in `magazine/` and chronicle recent developments, newly uncovered traces, institutional replies, and emerging disputes since the prior edition.
 
 #### Face 3 — The Public Web Portal (*Le Site Web: Espace Composable*)
-- [ ] **REQ-TEC-04 (Public Addressability)**: The portal **MUST** be deployed to an authoritative canonical FQDN (e.g., `https://village.acorsica.org/`, `https://capable.lepp.fr/`).
+- [ ] **REQ-TEC-04 (Public Addressability)**: The portal **MUST** be deployed to an authoritative canonical FQDN (e.g., `https://village.acorsica.org/`, `https://capable.acorsica.org/`).
 - [ ] **REQ-TEC-05 (Addressable Atomic Units)**: Every chapter, case study, evidentiary document, and tool **MUST** have a permanent, addressable URL.
+  - For selected public documentary resources, the reader-facing route **MUST** be usable on the canonical Living Book host, independently of GitHub navigation. Technical provenance links MAY remain.
+  - Verify the actual public response and expected content; a successful build or upload is not evidence of publication. Record bounded coverage and unresolved references rather than claiming completeness.
+  - See [Factory RT-LBF-003](living_book_factory.md#21-addressable-public-knowledge-projections--rt-lbf-003) for the implemented incremental working-resource projection contract.
 - [ ] **REQ-TEC-06 (No JavaScript Lock-In)**: All core textual, evidentiary, and navigational components **MUST** be fully readable and operable without JavaScript enabled.
 
 #### Face 4 — Bounded Conversational Agent (*L'Agent Conversationnel*)

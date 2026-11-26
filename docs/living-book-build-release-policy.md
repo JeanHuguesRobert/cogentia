@@ -42,3 +42,23 @@ Versioned sources, tags, small manifests and release asset SHA-256 records enabl
 - A tracked `projections/preview.yml` remains text metadata and may continue to be versioned under current practice; its frequent timestamp-only changes can be revisited with evidence.
 - Textual site projections are a separate decision, since the existing site may depend on them being versioned. Do not expand the binary policy into a general deletion or deployment migration.
 - Retention and release uploads can reuse the current GitHub Actions infrastructure; add only an explicit, tested release workflow if an edition is about to be frozen.
+
+## Addressable working resources (RT-LBF-003, 2026-11-26)
+
+The working-resource selection is versioned source configuration. HTML
+projections and CI caches are disposable build products; retain the exact
+source revision, artifact digests and the small release receipt, not a second
+editorial archive. The current Barons CI retains its transfer artifacts for
+seven days and reuses verified book fingerprints. A complete site manifest
+includes inherited files and shared assets. A byte-identical desired tree
+returns CURRENT_VERIFIED without copying or switching the site.
+
+On Fracta2, verified active release receipts currently reside outside the
+document root in
+\`/var/lib/cogentia/state/living-book-resource-receipts/<release>/receipt.json\`.
+The operational record belongs to Operium; the build and release evidence
+is traced by [#348](https://github.com/JeanHuguesRobert/cogentia/issues/348).
+The Super Agile regime favors forward correction, not routine rollback
+rituals; it does not erase frozen editions or unique source evidence.
+The existing explicit activation boundary remains until the administrative
+mandate is effectively admitted.
