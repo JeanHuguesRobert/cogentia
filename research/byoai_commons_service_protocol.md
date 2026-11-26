@@ -2,7 +2,7 @@
 title: "KYS Services — minimal BYOAI interoperability contract v0.1"
 author: "Cogentia / C.O.R.S.I.C.A."
 date: "2026-10-30"
-last_modified_at: "2026-10-30"
+last_modified_at: "2026-11-26"
 license: "CC BY-SA 4.0"
 language: en
 status: "working-paper — proposal, not implemented standard"
@@ -178,6 +178,14 @@ This service model is a concrete articulation of the existing Cogentia doctrine 
 **DNS implication:** a public-interest institutional namespace should represent the **shared commons** (e.g. proposed `services.acorsica.org`), while personal twins retain their separate personal hostnames (e.g. existing `jhn.baronsmariani.org`). This is semantic and governance separation, not a requirement for separate physical servers. Capable supplies an articulation of Autonomie de Capacité, not an exclusive service host.
 
 **Test du Réel:** verify (a) a service remains useful without giving the collective provider private personal data, (b) a person can use it with different AI providers or no AI, and (c) the resulting benefit is concretely observable (a better understood or effectively accessed right), not just a completed chatbot conversation.
+
+## Scaling and territorial capability (research complement, 2026-11-26)
+
+The service publisher, the personal AI provider and a future common inference pool are distinct roles. A public KYS manifest and reusable method can be distributed to many people before any corresponding growth in Cogentia-hosted inference. Adoption of a KYS service does not establish adoption of a personal digital twin; neither adoption measure establishes the amount of locally produced compute.
+
+The quantitative sensitivity model is maintained in [IA pour tous, IA pour chacun — Scalabilité territoriale](ia_pour_tous_ia_pour_chacun.md#scalabilité-territoriale--du-prototype-jhn-à-la-diffusion-nationale-26-novembre-2026). It distinguishes hardware and algorithmic gains, workload growth, operational efficiency, cooperation, and the externally supplied fraction of inference. BYOAI changes the funding and provisioning boundary, not necessarily worldwide energy demand. A person's AI subscription, quota or local device is usable only within its actual capabilities and terms; its capacity is not implicitly donated to others. Common capacity and non-AI access remain complementary.
+
+The [proposed revision of Article 72 of the French Constitution (2026-11-12)](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/projects/capable/doctrine/revision_constitutionnelle_article_72.md) provides a separate institutional research context: justified territorial adaptations and effective subsidiarity. Personal and collective AI could assist documentation and evaluation of territorial obstacles, while legitimate human and institutional authorities retain decision-making powers. This is not a protocol extension or a constitutional claim. KYS Services remains a neutral public-interest offering, accessible independently of affiliation with Capable or any political participation. No personal dossier, service-use data or compute contribution is required for such participation; no political service-use profiling is introduced.
 
 ## First discriminating experiments
 
