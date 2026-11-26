@@ -1,7 +1,7 @@
 /** FBF #291: daemon-owned data recipes over stable browser primitive. */
 const TYPES=new Set(['text','email','search','tel','url','number']);
 const SECRET=/username|password|one-time-code|cc-number|cc-csc/i;
-export function createFormRecipeRegistry(){
+export function createFormRecipeRegistry({firstTextSelector}={}){
  const recipes=new Map();
  return Object.freeze({
   register({id,version,match}={}){
@@ -23,6 +23,11 @@ export function createFormRecipeRegistry(){
      structure.truncated!==false||structure.fields.length>80)throw Error('form_structure_unreliable');
    const field_index=structure.fields.findIndex(f=>f?.tag==='input'&&f.type===recipe.type&&
      f.disabled===false&&f.readonly===false&&!SECRET.test(String(f.autocomplete||'')));
+   // Opt-in comparison: no alternate result may change the governed plan.
+   if(recipe.id==='generic.first-text' && recipe.version===1 && firstTextSelector){
+    const actual=firstTextSelector(structure.fields);
+    if(actual!==field_index)throw Error('form_recipe_inox_parity_mismatch');
+   }
    if(field_index<0)throw Error('form_recipe_field_not_found');
    return Object.freeze({capability:'browser.form.fill',arguments:Object.freeze({
      tab_id,field_index,expected_url,text,
@@ -31,6 +36,10 @@ export function createFormRecipeRegistry(){
   describe(){return [...recipes.values()].map(x=>({...x}));},
  });
 }
-export const FORM_RECIPES=createFormRecipeRegistry();
-FORM_RECIPES.register({id:'generic.first-text',version:1,match:{type:'text'}});
-FORM_RECIPES.register({id:'generic.first-email',version:1,match:{type:'email'}});
+export function createDefaultFormRecipes(options){
+const registry=createFormRecipeRegistry(options);
+registry.register({id:'generic.first-text',version:1,match:{type:'text'}});
+registry.register({id:'generic.first-email',version:1,match:{type:'email'}});
+return registry;
+}
+export const FORM_RECIPES=createDefaultFormRecipes();

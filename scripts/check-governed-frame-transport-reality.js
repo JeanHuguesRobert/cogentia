@@ -10,7 +10,11 @@ import {createHostedFrameTransport} from './lib/browser-frame-cdp-transport.js';
 import {createHostedBrowserCapabilities} from './lib/hosted-browser-capabilities.js';
 import {executeFrameEvaluate} from './lib/browser-frame-evaluate.js';
 import {SAFE_DOM_STRUCTURE_CODE} from './lib/browser-safe-dom-structure.js';
+import {createInoxComparisonRegistry} from './lib/browser-inox-recipe.js';
+import {prepareFormAssistRequest} from './lib/browser-form-recipe-runner.js';
 import {compileNonSecretFormFill} from './lib/browser-form-script.js';
+const inoxDirectory=process.argv[2];
+if(inoxDirectory && !inoxDirectory.startsWith('/'))throw Error('absolute_inox_directory_required');
 const dir=mkdtempSync(join(tmpdir(),'cogentia-frame-transport-'));
 let main,frame,chrome,gate,ext;const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const assertPort=s=>s.address().port;
@@ -23,7 +27,7 @@ try{
  const listen=(fn,host='127.0.0.1')=>new Promise((yes,no)=>{const s=https.createServer(tls,fn);s.once('error',no);s.listen(0,host,()=>yes(s))});
  const html=(res,text)=>{res.writeHead(200,{'content-type':'text/html'});res.end(text)};
  frame=await listen((req,res)=>html(res,'<!doctype html><title>isolated frame</title><input type="text" id="fake" autocomplete="off">'),'::');
- main=await listen((req,res)=>html(res,`<!doctype html><title>isolated parent</title><iframe src="https://localhost:${assertPort(frame)}/inside"></iframe>`));
+ main=await listen((req,res)=>html(res,`<!doctype html><title>isolated parent</title><input type="text" autocomplete="username"><input type="text" disabled><input type="text" id="recipe" autocomplete="off"><iframe src="https://localhost:${assertPort(frame)}/inside"></iframe>`));
  const probe=await new Promise((yes,no)=>{const s=https.createServer(tls,(req,res)=>res.end());s.listen(0,'127.0.0.1',()=>yes(s));s.once('error',no)});
  const unused=assertPort(probe);await new Promise(r=>probe.close(r));
  const expectedUrl=`https://127.0.0.1:${assertPort(main)}/main`;
@@ -50,7 +54,7 @@ try{
   if(req.method==='tabs.list')ext.send(JSON.stringify({jsonrpc:'2.0',id:req.id,
     result:{tabs:[{id:42,url:expectedUrl,title:'fixture'}]}}));
   if(req.method==='page.evaluate'){
-   if(req.params.tabId!==42||req.params.expectedUrl!==expectedUrl)throw Error('fixture_tab_binding_mismatch');
+   if(req.params.tabId!==42||(req.params.expectedUrl!==undefined&&req.params.expectedUrl!==expectedUrl))throw Error('fixture_tab_binding_mismatch');
    const client=new WebSocket(cdpTarget.webSocketDebuggerUrl);
    try{
     await new Promise((yes,no)=>{client.once('open',yes);client.once('error',no)});
@@ -92,9 +96,21 @@ try{
  if(metadata){
   assert.equal(metadata.value?.fields?.[0]?.type,'text','metadata='+JSON.stringify({fields:metadata.value?.fields,forms:metadata.value?.forms}));
   const capabilities=createHostedBrowserCapabilities({gateway:base+'/assistant',browserInstanceId:'fixture-browser',
-    frameTransport:transport,timeoutMs:9000});
+    frameTransport:transport,timeoutMs:9000,formFillBackend:'client-script'});
   const inspect=capabilities.find(c=>c.name==='browser.hosted.inspect');
   const formFill=capabilities.find(c=>c.name==='browser.form.fill');
+  if(inoxDirectory){
+   const registry=await createInoxComparisonRegistry(inoxDirectory);
+   const input={inspect:args=>inspect.execute(args),recipe_id:'generic.first-text',tab_id:42,
+     expected_url:expectedUrl,text:'fixture-inox-only',request_id:'fixture-inox-parity'};
+   const reference=await prepareFormAssistRequest(input);
+   const compared=await prepareFormAssistRequest({...input,registry});
+   assert.deepEqual(compared,reference);
+   assert.equal(compared.input.arguments.field_index,2);
+   const receipt=await formFill.execute(compared.input.arguments);
+   assert.equal(receipt.ok,true);assert.equal(receipt.submitted,false);
+   console.log(JSON.stringify({ok:true,proof:'inox_image_live_dom_parity',field_index:2,request_equal:true,inserted_length:receipt.inserted_length,submitted:false,fixture_only:true}));
+  }
   const frameList=await inspect.execute({action:'frame_tree',tab_id:42,expected_url:expectedUrl});
   assert.equal(frameList.oopif_frames?.length,1);
   assert.equal(frameList.oopif_frames[0].frame_id,childFrame.id);

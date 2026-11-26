@@ -27,3 +27,11 @@ test('untrusted recipes, bad origins and truncated DOM fail closed',()=>{
    {...task,structure:{...structure,fields:[structure.fields[0]]}}])
   assert.throws(()=>r.plan({...v,recipe_id:'safe',version:1}));
 });
+test('opt-in comparison cannot alter the reference plan or bypass validation',()=>{
+ let calls=0;
+ const reg=createFormRecipeRegistry({firstTextSelector:()=>{calls++;return 0;}});
+ reg.register({id:'generic.first-text',version:1,match:{type:'text'}});
+ assert.throws(()=>reg.plan({...task,recipe_id:'generic.first-text',version:1}),/parity_mismatch/);
+ assert.throws(()=>reg.plan({...task,expected_url:'https://other.example',recipe_id:'generic.first-text',version:1}),/structure_unreliable/);
+ assert.equal(calls,1);
+});
