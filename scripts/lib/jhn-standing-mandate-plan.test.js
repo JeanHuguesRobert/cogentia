@@ -229,12 +229,35 @@ test("Supabase-linked Principal activates standing mandate in one authenticated 
     assert.equal(fourth.status,200);
     assert.equal((await fourth.json()).mandate_version,"v7");
     assert.equal(resolveMandate(f.store,ref).scope.allowed_actions.includes("browser.form.upload"),true);
+    const v7=resolveMandate(f.store,ref), plan=f.plan();
+    assert.equal(plan.next_version,"v8");
+    assert.equal(plan.requires_owner_consent,true);
+    assert.deepEqual(plan.mandate.scope.allowed_actions,v7.scope.allowed_actions);
+    assert.deepEqual(plan.mandate.scope.forbidden_actions,v7.scope.forbidden_actions);
+    assert.deepEqual(plan.mandate.scope.budget_ceiling,v7.scope.budget_ceiling);
+    assert.deepEqual(plan.mandate.scope.standing_operations.slice(0,-1),v7.scope.standing_operations);
+    assert.deepEqual(plan.mandate.scope.standing_operations.at(-1),{
+      profile:"host.process-general/v1",capability:"host.process.run",
+      target:"node:fracta2",provider:"unix-process",execution_mode:"super"});
+    assert.equal(plan.mandate.scope.administrative_policy.authority.protected_issuer,true);
+    assert.equal(plan.mandate.scope.administrative_policy.authority.per_act_exact_payload_grant,true);
+    assert.equal(plan.mandate.scope.administrative_policy.trace.required,true);
+    assert.equal(plan.mandate.valid_until,v7.valid_until);
+    const count=f.store.replay().length;
+    assert.equal((await f.http(endpoint,"untrusted-user",{})).status,403);
+    assert.equal((await f.http(endpoint,"owner-session",{scope:{}})).status,400);
+    assert.equal(f.store.replay().length,count);
+    assert.equal(resolveMandate(f.store,ref).version,"v7");
     const fifth=await f.http(endpoint,"owner-session",{});
-    assert.equal((await fifth.json()).already_authorized_in_scope,true);
+    assert.equal(fifth.status,200,await fifth.clone().text());
+    assert.equal((await fifth.json()).mandate_version,"v8");
+    assert.deepEqual(resolveMandate(f.store,ref).scope,plan.mandate.scope);
+    const sixth=await f.http(endpoint,"owner-session",{});
+    assert.equal((await sixth.json()).already_authorized_in_scope,true);
     const events=f.store.replay();
     assert.equal(events.filter(e=>e.payload?.kind==="PrincipalConsentRequested").length,0);
-    assert.equal(events.filter(e=>e.payload?.kind==="PrincipalAuthenticatedMandateIntent").length,4);
-    assert.equal(events.filter(e=>e.payload?.kind==="MandateDeclaration").length,5);
+    assert.equal(events.filter(e=>e.payload?.kind==="PrincipalAuthenticatedMandateIntent").length,5);
+    assert.equal(events.filter(e=>e.payload?.kind==="MandateDeclaration").length,6);
     assert.equal(events.filter(e=>e.payload?.kind==="MandateDeclaration")
       .at(-1).payload.metadata.amendment.approval_scheme,
       "supabase_authenticated_owner_direct_intent_v1");

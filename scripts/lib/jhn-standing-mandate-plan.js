@@ -42,6 +42,71 @@ const forbid=Object.freeze([
   "private.disclose","purchase.execute","security.credentials.change",
   "irreversible.delete",
 ]);
+// v8 ratification only. This policy does NOT implement a privileged executor
+// or authorize any effect. The existing super broker remains fail-closed.
+export const STANDING_ADMIN_PROFILE=Object.freeze({
+  profile:STANDING_GENERAL_HOST_PROFILE,capability:"host.process.run",
+  target:"node:fracta2",provider:"unix-process",execution_mode:"super"
+});
+const administrativePolicy=()=>({
+  "kind": "cop.host-administration-policy/v1",
+  "target": "node:fracta2",
+  "execution_mode": "super",
+  "purpose": "Administration technique du FractaNode appartenant au Principal, nécessaire aux travaux mandatés",
+  "included_classes": [
+    "operating_system_and_packages",
+    "service_installation_configuration_and_deployment",
+    "local_network_and_system_configuration",
+    "resource_management",
+    "security_policy_maintenance"
+  ],
+  "excluded_classes": [
+    "self_authorization_or_mandate_change",
+    "issuer_or_audit_integrity_change",
+    "credential_or_secret_disclosure",
+    "third_party_commitment",
+    "irreversible_destructive_action",
+    "other_principals_resources_without_delegation"
+  ],
+  "authority": {
+    "independent_principal_ratification": true,
+    "active_version_recheck": true,
+    "per_act_exact_payload_grant": true,
+    "protected_issuer": true,
+    "no_per_act_human_signature_within_scope": true,
+    "revocation_recheck": true,
+    "budget_reservation_required": true
+  },
+  "trace": {
+    "required": true,
+    "fields": [
+      "principal_ref",
+      "actor_ref",
+      "mandate_ref",
+      "mandate_version",
+      "target",
+      "execution_mode",
+      "purpose",
+      "payload_hash",
+      "authorization_id",
+      "reservation_id",
+      "before_state",
+      "after_state",
+      "effect_receipt",
+      "budget_settlement",
+      "recovery_ref"
+    ],
+    "protect_audit_integrity": true,
+    "exclude_secret_values": true
+  }
+});
+const ADMIN_REASON="Décision du Principal du 26 novembre 2026 : distinguer usage ordinaire du FractaNode et administration ; autoriser le franchissement administratif explicite sur Fracta2 dans une portée générale, par acte COP dérivé et reçu renforcé, sans intervention humaine par opération. Les interdictions, dates et plafonds existants restent inchangés.";
+const expectedNormalOperations=[
+  {profile:STANDING_GENERAL_HOST_PROFILE,capability:"host.process.run",
+    target:"node:fracta2",provider:"unix-process",execution_mode:"normal"},
+  {profile:STANDING_GENERAL_HOST_PROFILE,capability:"host.process.run",
+    target:"node:i7-thinkpad-jhr",provider:"windows-ssh",execution_mode:"normal"},
+];
 const fail=error=>Object.freeze({ok:false,error,mandate_amended:false});
 export function johnStandingMandatePlan({store,at_time=new Date()}={}) {
   if(typeof store?.replay!=="function" || typeof store?.listTopic!=="function")
@@ -154,8 +219,34 @@ export function johnStandingMandatePlan({store,at_time=new Date()}={}) {
     if(!scope.allowed_actions.includes(BROWSER_UPLOAD_CAPABILITY)||
        JSON.stringify(scope.browser_upload_policy)!==JSON.stringify(BROWSER_UPLOAD_POLICY))
       return fail("standing_v7_browser_upload_scope_untrusted");
+    if(!scope.allowed_actions.includes("host.process.run")||
+       JSON.stringify(scope.standing_operations)!==JSON.stringify(expectedNormalOperations)||
+       scope.administrative_policy!==undefined)
+      return fail("standing_v7_administration_baseline_untrusted");
+    const next=structuredClone(scope);
+    next.standing_operations.push({...STANDING_ADMIN_PROFILE});
+    next.administrative_policy=administrativePolicy();
+    return {ok:true,ready_for_issuance:true,requires_owner_consent:true,
+      mandate_ref:REF,previous_version:"v7",next_version:"v8",
+      added_capabilities:[],added_standing_operations:[{...STANDING_ADMIN_PROFILE}],
+      forbidden_actions_unchanged:true,budget_ceiling_unchanged:true,
+      budget_snapshot_for_review:{budget_id:ids[0],limits:budget.limits,
+        available:budget.available,observed_version:budget.version},
+      mandate:{mandate_ref:REF,principal_ref:"principal:jhn",
+        expected_version:"v7",scope:next,valid_from:existing.valid_from,
+        valid_until:existing.valid_until,reason:ADMIN_REASON},
+      mandate_amended:false};
+  }
+  if(existing.version==="v8"){
+    const scope=existing.scope;
+    if(!scope.allowed_actions.includes("host.process.run")||
+       !scope.allowed_actions.includes(BROWSER_UPLOAD_CAPABILITY)||
+       JSON.stringify(scope.browser_upload_policy)!==JSON.stringify(BROWSER_UPLOAD_POLICY)||
+       JSON.stringify(scope.standing_operations)!==JSON.stringify([...expectedNormalOperations,STANDING_ADMIN_PROFILE])||
+       JSON.stringify(scope.administrative_policy)!==JSON.stringify(administrativePolicy()))
+      return fail("standing_v8_administration_scope_untrusted");
     return {ok:true,already_authorized_in_scope:true,
-      mandate_ref:REF,version:"v7",mandate_amended:false};
+      mandate_ref:REF,version:"v8",mandate_amended:false};
   }
   if (existing.version!=="v3")
     return fail("standing_plan_version_unsupported");
