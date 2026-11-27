@@ -28,7 +28,7 @@ function matchesExactMandatePlan(presented,expected) {
 export function createJhnConsentHttpHandler({workflow,origin,exactAgentMailAmendmentPlan,
   exactContinuationAmendmentPlan,requestExactContinuationConsent,
   exactRepositoryAmendmentPlan,exactChatgptTurnAmendmentPlan,
-  requestExactChatgptTurnConsent,exactStandingAmendmentPlan}={}) {
+  requestExactChatgptTurnConsent,exactStandingAmendmentPlan,workCommissioner=null}={}) {
   if(!workflow||typeof workflow.inspect!=='function'||typeof workflow.decide!=='function'||typeof workflow.authenticate!=='function')
     throw Error('canonical_consent_workflow_required');
   if(typeof origin!=='string'||!/^https:\/\/[^/]+$/.test(origin))
@@ -37,13 +37,14 @@ export function createJhnConsentHttpHandler({workflow,origin,exactAgentMailAmend
     if(request.method!=='GET'&&request.method!=='POST')return denied(405,'method_not_allowed');
     const url=new URL(request.url);
     if(url.origin!==origin)return denied(403,'wrong_origin');
+    const isWorkCommission=url.pathname==='/api/cop/principal-consent/work-commission';
     const isDirectStandingApply=url.pathname==='/api/cop/principal-consent/standing-apply';
     const isContinuationRequest=url.pathname==='/api/cop/principal-consent/continuation-request';
     const isRepositoryRequest=url.pathname==='/api/cop/principal-consent/repository-request';
     const isChatgptRequest=url.pathname==='/api/cop/principal-consent/chatgpt-turn-request';
     const match=/^\/api\/cop\/principal-consent\/([a-f0-9-]{36})$/.exec(url.pathname);
-    if(!isDirectStandingApply&&!isContinuationRequest&&!isRepositoryRequest&&!isChatgptRequest&&(!match||!ID.test(match[1])))return denied(404,'consent_route_not_found');
-    if((isDirectStandingApply||isContinuationRequest||isRepositoryRequest||isChatgptRequest)&&request.method!=='POST')return denied(405,'method_not_allowed');
+    if(!isWorkCommission&&!isDirectStandingApply&&!isContinuationRequest&&!isRepositoryRequest&&!isChatgptRequest&&(!match||!ID.test(match[1])))return denied(404,'consent_route_not_found');
+    if((isWorkCommission||isDirectStandingApply||isContinuationRequest||isRepositoryRequest||isChatgptRequest)&&request.method!=='POST')return denied(405,'method_not_allowed');
     if(request.method==='POST'&&request.headers.get('origin')!==origin)
       return denied(403,'cross_origin_decision_forbidden');
     const token=request.headers.get('authorization')?.match(/^Bearer\s+([^\s]+)$/i)?.[1];
@@ -54,6 +55,16 @@ export function createJhnConsentHttpHandler({workflow,origin,exactAgentMailAmend
     catch{return denied(503,'principal_preflight_unavailable');}
     if(identity?.ok!==true||identity.authenticated!==true||identity.principal_ref!=='principal:jhn')
       return denied(403,'principal_session_not_verified');
+    if(isWorkCommission){
+      if(typeof workCommissioner?.commissionFromPrincipal!=='function')
+        return denied(403,'work_commission_not_enabled');
+      let body;
+      try{const raw=await request.text();if(raw.length>256)return denied(413,'work_commission_body_too_large');body=JSON.parse(raw)}catch{return denied(400,'invalid_work_commission_body')}
+      if(!body||Object.keys(body).length!==1||!/^sha256:[a-f0-9]{64}$/.test(body.plan_hash||''))
+        return denied(400,'exact_work_plan_hash_required');
+      const result=await workCommissioner.commissionFromPrincipal({session,presented_plan_hash:body.plan_hash});
+      return reply(result?.ok===true?200:409,result);
+    }
     // One authenticated owner action directly applies the exact server
     // plan. No intermediate challenge, second approval, or expiration link.
     if(isDirectStandingApply){

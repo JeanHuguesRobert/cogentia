@@ -29,7 +29,10 @@ export function buildWorkCommissioningContract({intent:i,context:c}={}){
     !typed(i.parent_budget_ref,'budget:')||!budget(i.allocation))
    return deny('invalid_work_intent');
  if(c.principal_ref!==i.principal_ref||c.request_hash!==i.request_hash||
-    !ref(c.commissioning_ref)||!agent(c.requesting_agent_ref)||
+    !ref(c.commissioning_ref)||
+    !(agent(c.requesting_agent_ref)&&c.requesting_principal_ref==null||
+      c.requesting_agent_ref==null&&c.requesting_principal_ref===i.principal_ref&&
+      c.commissioned_by_principal_ref===i.principal_ref)||
     !ref(c.destination_ref)||!ref(c.recipient_ref)||
     !['public','restricted','sealed'].includes(c.result_visibility))
    return deny('work_context_mismatch');
@@ -50,7 +53,8 @@ export function buildWorkCommissioningContract({intent:i,context:c}={}){
    commissioned_by_principal_ref:cp,commissioned_by_agent_ref:ca,source_ref:c.commissioning_ref};
  const contract={schema:'cogentia.work-commissioning/v1',
    submission_key:i.submission_key,request_hash:i.request_hash,
-   principal_ref:i.principal_ref,requesting_agent_ref:c.requesting_agent_ref,
+   principal_ref:i.principal_ref,requesting_agent_ref:c.requesting_agent_ref??null,
+   ...(c.requesting_principal_ref?{requesting_principal_ref:c.requesting_principal_ref}:{}),
    subject_ref:c.subject_ref??null,twin_ref:c.twin_ref??null,
    assignment,parent_work_ref:parent,
    authority:{mandate_ref:i.mandate_ref,version:i.mandate_version,capability:i.capability},

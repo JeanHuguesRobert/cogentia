@@ -1171,6 +1171,7 @@ export const TOOLS = [
     inputSchema: {
       type: "object",
       properties: {
+        work_ref: { type: "string", description: "Optional exact reference to an already commissioned work; host resolves its existing packet and funding." },
         command: { type: "string", minLength: 1, maxLength: 32768 },
         timeout_ms: { type: "integer", minimum: 1, maximum: 120000 },
         execution_mode: { type: "string", enum: ["normal", "super"], description: "Super requires a separately authorized privileged executor; never implied by a grant for normal." },
@@ -1422,7 +1423,7 @@ export function createMcpCore(env = process.env, extras = {}) {
   const githubTransport = extras.githubTransport || createGithubDryRunTransport();
   const gitTransport = extras.gitTransport || createGitDryRunTransport();
 
-  async function callHostCapability(capability, args, auth) {
+  async function callHostCapability(capability, args, auth, workContext=null) {
     const router = getHostRouter();
     // MCP already enforced private-read / mutate. Project that onto the
     // shared v3 lockers so host routing does not depend on JHN-mutate
@@ -1452,6 +1453,7 @@ export function createMcpCore(env = process.env, extras = {}) {
       target: args.target,
       provider: args.provider,
       authorization: args.side_effect_authorization || args.authorization,
+      packet_ref: workContext?.packet_ref ?? null,
     });
   }
 
@@ -2984,6 +2986,12 @@ export function createMcpCore(env = process.env, extras = {}) {
       case "cogentia_host_process_run": {
         requireString(args.command, "command");
         if (args.command.length > 32768) throw new Error("command too long");
+        if(args.work_ref!=null){
+          if(typeof extras.runCommissionedHostWork!=="function")
+            throw Error("commissioned_work_runtime_not_enabled");
+          return extras.runCommissionedHostWork({args,auth,
+            invoke:(act,workContext)=>callHostCapability("host.process.run",act,auth,workContext)});
+        }
         const result = await callHostCapability("host.process.run", args, auth);
         if (result?.judgment?.status !== "needs_judgment") return result;
         // Shell output is untrusted: it requests review but cannot authorize

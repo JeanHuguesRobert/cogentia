@@ -495,6 +495,7 @@ await multiMcpRuntime.start();
 process.on("exit", () => {
   multiMcpRuntime.close();
   mcpTasksRuntime.close();
+  standingMissionRuntime.close();
 });
 
 server.listen(port, host, () => {

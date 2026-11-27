@@ -33,6 +33,12 @@ export function mcpTaskIdFromPacketTopic(value) {
 const topic = packetTopicForMcpTask;
 const unknown = () => Object.assign(new Error("unknown_task"), { code: "unknown_task" });
 
+export function stableMcpWorkTaskId(owner,toolName,submissionKey){
+  const h=hashPayload({owner,toolName,submissionKey}).slice(7,39);
+  return "task:"+h.slice(0,8)+"-"+h.slice(8,12)+"-5"+h.slice(13,16)
+    +"-8"+h.slice(17,20)+"-"+h.slice(20,32);
+}
+
 export function createCopMcpTasksPilot({
   store, toolName, handler, allowAnonymous = false,
   ownerInstanceRef = "instance:mcp-tasks-cop-pilot",
@@ -54,11 +60,6 @@ export function createCopMcpTasksPilot({
   // Opt-in only. A host-side admission may supply a stable submission key
   // and an explicit work assignment. Neither is inferred from an MCP
   // actor label, a handler name, or caller-controlled metadata.
-  function stableTaskId(owner, submissionKey) {
-    const h = hashPayload({ owner, toolName, submissionKey }).slice(7, 39);
-    return "task:" + h.slice(0,8) + "-" + h.slice(8,12) + "-5" + h.slice(13,16)
-      + "-8" + h.slice(17,20) + "-" + h.slice(20,32);
-  }
 
   function identity(auth) {
     if (auth?.auth === "jhn" && auth.actor) return "jhn:" + auth.actor;
@@ -201,16 +202,10 @@ export function createCopMcpTasksPilot({
       "mcp-reconciliation-required:" + taskId);
   }
 
-  const adapter = {
-    durable: true,
-    async shouldCreate({ name, auth }) {
-      return name === toolName && identity(auth) !== null;
-    },
-    async create({ name, args = {}, auth, correlation }) {
-      const owner = identity(auth);
-      if (name !== toolName || owner === null) throw new Error("not_authorized");
-      const admission = prepareCreation ? await prepareCreation({ name, args, auth, correlation }) : null;
-      if (prepareCreation && (admission?.admitted !== true ||
+  // Shared canonical creation. An authenticated Principal can commission
+  // work for an agent; this must not fabricate that agent's transport auth.
+  async function createForOwner({name,args,owner,admission,requireAdmission}){
+      if (requireAdmission && (admission?.admitted !== true ||
           typeof admission.submission_key !== "string" ||
           !/^[A-Za-z0-9_.:-]{1,128}$/.test(admission.submission_key) ||
           !valid(admission.assignment))) throw new Error("work_creation_not_admitted");
@@ -226,7 +221,7 @@ export function createCopMcpTasksPilot({
       if (accessContext !== null && !valid(accessContext)) throw new Error("invalid_work_access_context");
       const digest = admission ? hashPayload({ name, args, assignment,
         ...(accessContext ? {access_context:accessContext} : {}) }) : null;
-      const taskId = admission ? stableTaskId(owner, admission.submission_key) : "task:" + randomUUID();
+      const taskId = admission ? stableMcpWorkTaskId(owner,toolName,admission.submission_key) : "task:" + randomUUID();
       const createdAt = new Date().toISOString();
       const packetRef = packetRefForMcpTask(taskId);
       const { packet, continuation } = await createPacketWithInitialContinuation({
@@ -273,6 +268,41 @@ export function createCopMcpTasksPilot({
       });
       if (!saved.ok) throw new Error(saved.error || "work_creation_commit_failed");
       return saved.value;
+  }
+
+  // Host-internal only; NOT a method of the public MCP Tasks adapter.
+  // The host must already have independently verified the Principal and
+  // admitted this exact work. The owner string is a future retrieval/claim
+  // binding, never a credential or an execution grant.
+  async function createCommissioned({args,admission}={}){
+    const assignment=admission?.assignment,work=admission?.access_context;
+    const responsible=assignment?.responsible_agent_ref;
+    if(!prepareCreation||admission?.admitted!==true||
+       typeof responsible!=="string"||!/^agent:jhn(?::[A-Za-z0-9_.-]+)*$/.test(responsible)||
+       assignment?.commissioned_by_principal_ref!=="principal:jhn"||
+       assignment?.commissioned_by_agent_ref!=null||
+       work?.schema!=="cogentia.work-commissioning/v1"||
+       work?.principal_ref!=="principal:jhn"||
+       work?.assignment?.responsible_agent_ref!==responsible||
+       work?.assignment?.commissioned_by_principal_ref!=="principal:jhn")
+      throw Error("principal_commissioned_work_required");
+    const created=await createForOwner({name:toolName,args,owner:"jhn:"+responsible,
+      admission,requireAdmission:true});
+    const events=store.listTopic(topic(created.taskId));
+    const first=events.find(e=>e.payload?.profile===profile&&e.payload?.phase==="created");
+    return {...created,status:projectHistory(created.taskId,{events,created:first.payload}).status};
+  }
+
+  const adapter = {
+    durable: true,
+    async shouldCreate({ name, auth }) {
+      return name === toolName && identity(auth) !== null;
+    },
+    async create({ name, args = {}, auth, correlation }) {
+      const owner = identity(auth);
+      if (name !== toolName || owner === null) throw new Error("not_authorized");
+      const admission = prepareCreation ? await prepareCreation({ name, args, auth, correlation }) : null;
+      return createForOwner({name,args,owner,admission,requireAdmission:!!prepareCreation});
     },
     async get({ taskId, auth }) { return project(taskId, auth); },
     async update({ taskId, auth, inputResponses }) {
@@ -434,6 +464,6 @@ export function createCopMcpTasksPilot({
     return project(taskId, auth);
   }
 
-  return { toolName, adapter, run, requireInput,
+  return { toolName, adapter, run, requireInput, createCommissioned,
     acceptVerifiedExternalResult, auditPacket, recordReconciliationRequired, readCompletedDelivery };
 }

@@ -19,6 +19,8 @@ import {johnRepositoryMandatePlan} from '../lib/jhn-repository-mandate-plan.js';
 import {johnStandingMandatePlan} from '../lib/jhn-standing-mandate-plan.js';
 import {johnChatgptTurnMandatePlan} from '../lib/jhn-chatgpt-turn-mandate-plan.js';
 import {requestContinuationConsent} from './jhn-continuation-consent-cli.js';
+import {createExistingHostWorkCommissioner,openConfiguredExistingWork} from '../lib/john-commission-existing-work.js';
+import {createConfiguredStandingIssuerVerifier} from '../lib/cogentia-mcp-standing-mission-runtime.js';
 import {createSupabaseClient} from '../../../inseme/apps/platform/scripts/lib/config.js';
 
 const CONFIGURED_CANONICAL='/var/lib/cogentia/cop/john-root-v1.sqlite';
@@ -36,10 +38,10 @@ function makeOptions(env) {
 
 export function createLocalConsentServer({workflow,origin,enableDecision=false,exactAgentMailAmendmentPlan,exactContinuationAmendmentPlan,requestExactContinuationConsent,exactRepositoryAmendmentPlan,
   exactChatgptTurnAmendmentPlan,requestExactChatgptTurnConsent,
-  exactStandingAmendmentPlan}={}) {
+  exactStandingAmendmentPlan,workCommissioner=null}={}) {
  const api=createJhnConsentHttpHandler({workflow,origin,exactAgentMailAmendmentPlan,exactContinuationAmendmentPlan,requestExactContinuationConsent,exactRepositoryAmendmentPlan,
     exactChatgptTurnAmendmentPlan,requestExactChatgptTurnConsent,
-    exactStandingAmendmentPlan});
+    exactStandingAmendmentPlan,workCommissioner});
  const expectedHost=new URL(origin).host;
  return createServer(async(req,res)=>{
    const response=(status,body)=>{res.writeHead(status,{'content-type':'application/json','cache-control':'no-store','x-content-type-options':'nosniff'});res.end(JSON.stringify(body));};
@@ -61,6 +63,21 @@ export function createLocalConsentServer({workflow,origin,enableDecision=false,e
  });
 }
 
+// Explicit operator configuration only. The separate source store must
+// already exist and have the canonical COP schema; no live work creation at
+// service startup. No agent bearer, credential copy or executor in this path.
+export function createLocalWorkCommissionRuntime({env=process.env,store,workflow}={}){
+ const local=openConfiguredExistingWork(env);
+ if(!local)return {commissioner:null,close(){}};
+ try{
+  const verifyIssuer=createConfiguredStandingIssuerVerifier(env.COGENTIA_JHN_ISSUER_AUTHORIZED_KEYS);
+  const commissioner=createExistingHostWorkCommissioner({rootStore:store,...local,
+    ownerInstanceRef:'instance:jhn-consent',verifyIssuer,authenticatePrincipal:workflow.authenticate,
+    sourceRef:local.plan.request.work_ref,handler:async()=>{throw Error('consent_service_not_executor')}});
+  return {commissioner,close:local.close};
+ }catch(e){local.close();throw e}
+}
+
 async function main(){
  const opts=makeOptions(process.env);
  // Explicitly opening a verified *existing* SQLite file, never a fixture or
@@ -70,7 +87,8 @@ async function main(){
  // Explicit getUser(accessToken) still makes a remote Supabase Auth call.
  // No token is installed as this server-side administrative client's session.
  const workflow=createJhnCanonicalConsentWorkflow({store,adminClient,authClient:adminClient});
- const server=createLocalConsentServer({...opts,workflow,
+ const work=createLocalWorkCommissionRuntime({store,workflow});
+ const server=createLocalConsentServer({...opts,workflow,workCommissioner:work.commissioner,
    exactContinuationAmendmentPlan:()=>johnContinuationMandatePlan({store}),
    exactRepositoryAmendmentPlan:()=>johnRepositoryMandatePlan({store}),
    exactStandingAmendmentPlan:()=>johnStandingMandatePlan({store}),
@@ -91,7 +109,7 @@ async function main(){
      decisions_enabled:opts.enableDecision,agent_mail_exact_apply_enabled:opts.enableAgentMailApply,
      origin:opts.origin,issuer_routes_exposed:false}));
  });
- for(const signal of ['SIGTERM','SIGINT'])process.on(signal,()=>server.close(()=>{store.close();process.exit(0)}));
+ for(const signal of ['SIGTERM','SIGINT'])process.on(signal,()=>server.close(()=>{work.close();store.close();process.exit(0)}));
 }
 if(process.argv[1]&&import.meta.url===new URL('file://'+process.argv[1]).href){
   main().catch(error=>{console.error('JHN consent server unavailable:',error.message.replace(/[^a-zA-Z0-9_ .:-]/g,''));process.exitCode=1;});

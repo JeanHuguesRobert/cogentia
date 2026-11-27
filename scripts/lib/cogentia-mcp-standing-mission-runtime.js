@@ -9,11 +9,25 @@ import {createSqliteCopEventStore} from
   "../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js";
 import {sshFingerprint} from "./john-sshsig-approval.js";
 import {createOfflineJohnIssuerVerifier} from "./john-offline-issuer-verifier.js";
+import {openConfiguredExistingWork,createCommissionedHostWorkRunner} from "./john-commission-existing-work.js";
 import {createCanonicalStandingMissionResolver} from "./john-standing-mission-authority.js";
 
 const PINNED_STORE="/var/lib/cogentia/cop/john-root-v1.sqlite";
 const PINNED_ISSUER="SHA256:lG9BC3fIjurrBccYLO1w7VQpmc9ZMr8MvM1o3zJ6L3c";
 const fail=(code)=>{throw Object.assign(new Error(code),{error_class:code});};
+
+// Shared pinned verifier for the standing runtime and owner work service.
+export function createConfiguredStandingIssuerVerifier(keyFile){
+  let sshKey;
+  try{
+    sshKey=readFileSync(keyFile,"utf8").split("\n").find(line=>{
+      try{return sshFingerprint(line)===PINNED_ISSUER;}
+      catch{return false;}
+    });
+  }catch{fail("standing_mission_issuer_unavailable");}
+  if(!sshKey)fail("standing_mission_issuer_unavailable");
+  return createOfflineJohnIssuerVerifier({trustedSshPublicKey:sshKey,expectedSshFingerprint:PINNED_ISSUER});
+}
 
 export function createMcpStandingMissionRuntime(env=process.env) {
   if(env.COGENTIA_MCP_STANDING_MISSION_ENABLED!=="1")
@@ -28,23 +42,17 @@ export function createMcpStandingMissionRuntime(env=process.env) {
     if(e.error_class)throw e;
     fail("standing_mission_store_unavailable");
   }
-  let sshKey;
-  try{
-    sshKey=readFileSync(keyFile,"utf8").split("\n").find(line=>{
-      try{return sshFingerprint(line)===PINNED_ISSUER;}
-      catch{return false;}
-    });
-  }catch{fail("standing_mission_issuer_unavailable");}
-  if(!sshKey)fail("standing_mission_issuer_unavailable");
+  const verifyIssuer=createConfiguredStandingIssuerVerifier(keyFile);
   const store=createSqliteCopEventStore(storePath);
+  let local;
   try{
-    const verifyIssuer=createOfflineJohnIssuerVerifier({
-      trustedSshPublicKey:sshKey,expectedSshFingerprint:PINNED_ISSUER,
-    });
+    local=openConfiguredExistingWork(env);
+    const work=local?createCommissionedHostWorkRunner({rootStore:store,...local,verifyIssuer}):null;
     const missionAuthorityResolver=createCanonicalStandingMissionResolver({
-      store,verifyIssuer,
+      store,verifyIssuer,resolvePacketContext:work?.resolvePacketContext??null,
     });
-    return {enabled:true,extras:{missionAuthorityResolver},
-      close(){store.close();}};
-  }catch(e){store.close();throw e;}
+    return {enabled:true,extras:{missionAuthorityResolver,
+      ...(work?{runCommissionedHostWork:work.run}:{})},
+      close(){local?.close();store.close();}};
+  }catch(e){local?.close();store.close();throw e;}
 }
