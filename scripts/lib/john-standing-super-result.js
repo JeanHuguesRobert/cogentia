@@ -148,3 +148,137 @@ export function recordStandingSuperResult({resolvePacketContext,verifyBrokerRece
      obs?.conflict?'administrative_observation_conflict':observationError,
    postcondition_status:'unassessed',assessment_required:true,grants_authority:false};
 }
+
+// A work owner's judgment belongs in the packet, not the node audit or
+// budget ledger. This projection is about remaining responsibility, not
+// admission to execute a repair. Only a trusted host may record judgments.
+function administrativePacket(resolvePacketContext,packet_ref){
+ if(!id.test(packet_ref||'')||typeof resolvePacketContext!=='function')return null;
+ try{
+   const c=resolvePacketContext({packet_ref}),store=c?.store,topic='packet:'+packet_ref;
+   if(!str(c?.primary_store_id)||typeof store?.transaction!=='function'||
+      store.auditTopicCommitment(topic)?.ok!==true)return null;
+   const history=store.listTopic(topic),created=history[0]?.payload?.packet;
+   const primary=created?.placements?.filter(x=>x.is_primary===true);
+   if(created?.packet_id!==packet_ref||primary?.length!==1||
+      primary[0].store_id!==c.primary_store_id)return null;
+   return {store,topic,context:c,history};
+ }catch{return null}
+}
+
+function actRecords(history,claimId){
+ const claim=history.find(e=>e.event_id===claimId),p=claim?.payload;
+ if(!p||!validateFractalogActRecord(p).ok||p.act_kind!=='host.process.run.super'||
+    p.act_phase!=='attempt'||p.effect?.status!=='prepared_not_issued')return null;
+ const key='standing-super-result:'+claimId;
+ const find=suffix=>history.find(e=>e.idempotency_key===key+suffix);
+ const result=find(''),observation=find(':state'),assessment=find(':assessment'),resolution=find(':repair-resolution');
+ for(const row of [result,observation,assessment,resolution].filter(Boolean)){
+   if(!validateFractalogActRecord(row.payload).ok||row.payload.act_id!==p.act_id)return null;
+ }
+ if(observation&&(!result||observation.payload.effect.execution_receipt_ref!==result.payload.effect.receipt_ref||
+    !observation.parent_event_ids?.includes(result.event_id)))return null;
+ if(assessment&&(!observation||assessment.payload.effect.observation_event_id!==observation.event_id||
+    !assessment.parent_event_ids?.includes(observation.event_id)))return null;
+ if(resolution&&(!assessment||resolution.payload.effect.assessment_event_id!==assessment.event_id||
+    !resolution.parent_event_ids?.includes(assessment.event_id)))return null;
+ return {claim,p,key,result,observation,assessment,resolution};
+}
+
+/** Packet-local read model. No second source of obligation state.
+ * Ready means accountability has been addressed, NOT that the original
+ * purpose succeeded or that all other packet completion criteria are met.
+ */
+export function projectStandingSuperResponsibilities({resolvePacketContext,packet_ref}={}){
+ const c=administrativePacket(resolvePacketContext,packet_ref);
+ if(!c)return deny('packet_primary_locality_unverified');
+ const acts=[];
+ for(const e of c.history){
+   if(e.payload?.act_kind!=='host.process.run.super'||e.payload?.act_phase!=='attempt'||
+      e.payload?.effect?.status!=='prepared_not_issued')continue;
+   const a=actRecords(c.history,e.event_id);
+   if(!a)return deny('administrative_responsibility_history_invalid');
+   const judgment=a.assessment?.payload.effect,disposition=a.resolution?.payload.effect;
+   acts.push({packet_claim_event_id:e.event_id,responsible_agent_ref:a.p.governed_chain.logical_agent_ref,
+     result_event_id:a.result?.event_id??null,observation_event_id:a.observation?.event_id??null,
+     assessment_event_id:a.assessment?.event_id??null,
+     postcondition:judgment?.postcondition??'unassessed',
+     repair_status:judgment?.repair_required===true?(disposition?.disposition??'open'):
+       judgment?'not_required':'unassessed',
+     ...(disposition?.disposition==='transferred'?{repair_packet_ref:disposition.repair_packet_ref}:{}),
+     resolution_event_id:a.resolution?.event_id??null});
+ }
+ return {ok:true,packet_ref,acts,accountability_ready:acts.every(a=>
+   a.result_event_id&&a.observation_event_id&&a.assessment_event_id&&
+   ['not_required','repaired','transferred'].includes(a.repair_status)),
+   grants_authority:false};
+}
+
+// The responsible handler supplies an independently checked judgment of the
+// actual observation and applicable purpose. Never infer damage or success
+// from the exit code, the state hash alone, or a candidate's assertion.
+export function recordStandingSuperJudgment({resolvePacketContext,verifyJudgment,packet_ref,
+ packet_claim_event_id,candidate,kind='assessment'}={}){
+ const c=administrativePacket(resolvePacketContext,packet_ref);
+ if(!c||!id.test(packet_claim_event_id||'')||typeof verifyJudgment!=='function'||
+    !['assessment','repair-resolution'].includes(kind))return deny('trusted_judgment_context_required');
+ const a=actRecords(c.history,packet_claim_event_id);
+ if(!a?.result||!a.observation)return deny('administrative_state_observation_missing');
+ const basis=kind==='assessment'?a.observation:a.assessment;
+ if(!basis||kind==='repair-resolution'&&a.assessment.payload.effect.repair_required!==true)
+   return deny('repair_obligation_missing');
+ let verified;
+ try{verified=verifyJudgment({candidate,kind,packet_ref,
+   prepared:structuredClone(a.p),basis:structuredClone(basis)})}catch{}
+ if(verified?.verified!==true||verified.basis_event_id!==basis.event_id||
+    verified.responsible_agent_ref!==a.p.governed_chain.logical_agent_ref||
+    !str(verified.evidence_ref))return deny('responsible_judgment_unverified');
+ let judgment;
+ if(kind==='assessment'){
+   if(!['satisfied','unsatisfied'].includes(verified.postcondition)||
+      typeof verified.repair_required!=='boolean'||
+      verified.repair_required&&!str(verified.repair_purpose))
+     return deny('administrative_assessment_invalid');
+   judgment={observation_event_id:basis.event_id,postcondition:verified.postcondition,
+     repair_required:verified.repair_required,
+     ...(verified.repair_required?{repair_purpose:verified.repair_purpose}:{}),
+     evidence_ref:verified.evidence_ref};
+ }else{
+   if(!['repaired','transferred'].includes(verified.disposition)||
+      !str(verified.repair_packet_ref)||
+      verified.disposition==='transferred'&&verified.repair_packet_ref===packet_ref)
+     return deny('repair_disposition_invalid');
+   // The host verifier checks actual repair evidence or explicit acceptance
+   // by the recipient work's responsible handler. A packet ID is not proof.
+   judgment={assessment_event_id:basis.event_id,disposition:verified.disposition,
+     repair_packet_ref:verified.repair_packet_ref,evidence_ref:verified.evidence_ref};
+ }
+ const key=a.key+':'+kind,digest=hashPayload(judgment);
+ const saved=c.store.transaction(tx=>{
+   const local=tx.listTopic(c.topic),current=actRecords(local,packet_claim_event_id);
+   if(!current||((kind==='assessment'?current.observation:current.assessment)?.event_id!==basis.event_id))
+     throw Error('administrative_judgment_basis_changed');
+   const old=local.find(e=>e.idempotency_key===key);
+   if(old){
+     if(old.payload?.effect?.judgment_hash!==digest)throw Error('administrative_judgment_conflict');
+     return {duplicate:true,event_id:old.event_id};
+   }
+   const parents=[...new Set([basis.event_id,local.at(-1)?.event_id].filter(Boolean))];
+   const log=createFractalogActRecord({
+     record_id:'fractalog:'+key,act_id:a.p.act_id,act_kind:a.p.act_kind,
+     act_phase:'observed',owner_instance_ref:a.p.owner_instance_ref,
+     governed_chain:a.p.governed_chain,visibility:'restricted',
+     trace:{packet_ref,primary_store_id:c.context.primary_store_id,parent_event_ids:parents},
+     effect:{target:a.p.effect.target,judgment_kind:kind,judgment_hash:digest,...judgment},
+     links:[...parents.map(ref=>({ref,relation:'caused_by'})),{ref:judgment.evidence_ref,relation:'evidence'}]
+   });
+   const result=tx.append({event_type:'fractalog.act-record/v1',topic:{id:c.topic,seq:local.length+1},
+     actor_ref:verified.responsible_agent_ref,subject_ref:packet_ref,packet_id:packet_ref,
+     mandate_ref:a.p.governed_chain.mandate_ref,visibility:'restricted',epistemic_status:'decided',
+     parent_event_ids:parents,idempotency_key:key,payload:log});
+   if(!result?.ok||result.duplicate)throw Error('administrative_judgment_append_failed');
+   return {duplicate:false,event_id:result.event.event_id};
+ });
+ if(!saved.ok)return deny(saved.error||'administrative_judgment_commit_failed');
+ return {ok:true,...saved.value,grants_authority:false};
+}

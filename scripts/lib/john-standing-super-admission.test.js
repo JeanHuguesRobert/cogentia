@@ -17,7 +17,7 @@ import {BROWSER_UPLOAD_POLICY} from './jhn-browser-upload-mandate-plan.js';
 import {createJhnCanonicalConsentWorkflow} from './jhn-canonical-consent-workflow.js';
 import {canonicalPayloadHash,buildEffectPayload} from './side-effect-authorization.js';
 import {assessStandingSuperEffect,claimStandingSuperEffect} from './john-standing-super-admission.js';
-import {recordStandingSuperResult} from './john-standing-super-result.js';
+import {recordStandingSuperResult,recordStandingSuperJudgment,projectStandingSuperResponsibilities} from './john-standing-super-result.js';
 import {projectCompletedPacketEffect} from '../super/root-effect-reconcile.mjs';
 const ref='mandate:jhn:john-root',now=new Date('2026-11-26T12:00:00Z'),owner='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const auth=resolveCallerAuth({COGENTIA_MCP_JHN_MUTATE:'1',COGENTIA_MCP_JHN_TOKEN:'fixture-only'},{
@@ -374,5 +374,91 @@ test('failure without final observation is charged once; observation append fail
   assert.equal(conflict.budget_settled,true);
   assert.equal(f.delegation.child_ledger.snapshot().settled.max_steps,1);
   assert.deepEqual(f.store.replay(),rootBefore);
+ }finally{f.close()}
+});
+
+test('responsible judgment distinguishes unsuccessful work from damage; repair remains attributable until verified',async()=>{
+ const f=await fixture({steps:3});try{
+   const {input,prepared}=prepareReturn(f,{ok:false,timeout:true});
+   const base={resolvePacketContext:f.input.resolvePacketContext,packet_ref:f.request.packet_ref,
+     packet_claim_event_id:prepared.packet_claim_event_id};
+   const project=()=>projectStandingSuperResponsibilities(base);
+   assert.equal(project().accountability_ready,false);
+   assert.equal(recordStandingSuperJudgment({...base,verifyJudgment:()=>({verified:true})}).ok,false);
+   const result=recordStandingSuperResult(input);
+   assert.equal(result.ok,true);
+   assert.equal(project().accountability_ready,false);
+   const rootBefore=f.store.replay();
+   const budgetBefore=f.delegation.child_ledger.snapshot();
+   const assessment={verified:true,basis_event_id:result.state_observation_event_id,
+     responsible_agent_ref:f.request.actor_ref,evidence_ref:'fixture:judgment',
+     postcondition:'unsatisfied',repair_required:true,repair_purpose:'Restore affected fixture'};
+   const saved=recordStandingSuperJudgment({...base,verifyJudgment:()=>assessment});
+   assert.equal(saved.ok,true,JSON.stringify(saved));
+   assert.equal(project().acts[0].repair_status,'open');
+   assert.equal(project().accountability_ready,false);
+   assert.equal(recordStandingSuperJudgment({...base,verifyJudgment:()=>assessment}).duplicate,true);
+   assert.equal(recordStandingSuperJudgment({...base,verifyJudgment:()=>({...assessment,repair_required:false})}).error,'administrative_judgment_conflict');
+   const repaired={verified:true,basis_event_id:saved.event_id,responsible_agent_ref:f.request.actor_ref,
+     evidence_ref:'fixture:verified-restoration',disposition:'repaired',repair_packet_ref:f.request.packet_ref};
+   assert.equal(recordStandingSuperJudgment({...base,kind:'repair-resolution',
+     verifyJudgment:()=>({...repaired,verified:false})}).ok,false);
+   assert.equal(project().accountability_ready,false);
+   const disposition=recordStandingSuperJudgment({...base,kind:'repair-resolution',verifyJudgment:()=>repaired});
+   assert.equal(disposition.ok,true,JSON.stringify(disposition));
+   assert.equal(project().accountability_ready,true);
+   assert.equal(project().acts[0].postcondition,'unsatisfied');
+   assert.equal(project().acts[0].repair_status,'repaired');
+   assert.deepEqual(f.delegation.child_ledger.snapshot(),budgetBefore);
+   assert.deepEqual(f.store.replay(),rootBefore);
+ }finally{f.close()}
+});
+test('a failed process does not create a repair obligation without a responsible judgment',async()=>{
+ const f=await fixture();try{
+   const {input,prepared}=prepareReturn(f,{ok:false});
+   const result=recordStandingSuperResult(input);
+   const base={resolvePacketContext:f.input.resolvePacketContext,packet_ref:f.request.packet_ref,
+     packet_claim_event_id:prepared.packet_claim_event_id};
+   assert.equal(projectStandingSuperResponsibilities(base).acts[0].repair_status,'unassessed');
+   const a={verified:true,basis_event_id:result.state_observation_event_id,
+     responsible_agent_ref:f.request.actor_ref,evidence_ref:'fixture:no-damage',
+     postcondition:'unsatisfied',repair_required:false};
+   const r=recordStandingSuperJudgment({...base,verifyJudgment:()=>a});
+   assert.equal(r.ok,true,JSON.stringify(r));
+   assert.equal(projectStandingSuperResponsibilities(base).accountability_ready,true);
+   assert.equal(projectStandingSuperResponsibilities(base).acts[0].postcondition,'unsatisfied');
+   assert.equal(recordStandingSuperJudgment({...base,kind:'repair-resolution',
+     verifyJudgment:()=>({verified:true})}).error,'repair_obligation_missing');
+ }finally{f.close()}
+});
+test('repair transfer needs verified acceptance by another packet; preserves original judgment and attribution',async()=>{
+ const f=await fixture();try{
+   const {input,prepared}=prepareReturn(f,{ok:false});
+   const result=recordStandingSuperResult(input);
+   const base={resolvePacketContext:f.input.resolvePacketContext,packet_ref:f.request.packet_ref,
+     packet_claim_event_id:prepared.packet_claim_event_id};
+   const responsible_agent_ref=f.request.actor_ref;
+   const a=recordStandingSuperJudgment({...base,verifyJudgment:()=>({
+     verified:true,basis_event_id:result.state_observation_event_id,responsible_agent_ref,
+     evidence_ref:'fixture:damage-assessment',postcondition:'unsatisfied',
+     repair_required:true,repair_purpose:'Restore fixture'})});
+   assert.equal(a.ok,true,JSON.stringify(a));
+   const transfer={verified:true,basis_event_id:a.event_id,responsible_agent_ref,
+     evidence_ref:'fixture:recipient-acceptance',disposition:'transferred',repair_packet_ref:'pkt-repair'};
+   const close=changes=>recordStandingSuperJudgment({...base,kind:'repair-resolution',
+     verifyJudgment:()=>({...transfer,...changes})});
+   assert.equal(close({verified:false}).ok,false);
+   assert.equal(close({repair_packet_ref:base.packet_ref}).error,'repair_disposition_invalid');
+   assert.equal(close({responsible_agent_ref:'agent:other'}).ok,false);
+   assert.equal(projectStandingSuperResponsibilities(base).accountability_ready,false);
+   const accepted=close({});
+   assert.equal(accepted.ok,true,JSON.stringify(accepted));
+   assert.equal(close({}).duplicate,true);
+   const view=projectStandingSuperResponsibilities(base);
+   assert.equal(view.accountability_ready,true);
+   assert.equal(view.acts[0].repair_status,'transferred');
+   assert.equal(view.acts[0].repair_packet_ref,'pkt-repair');
+   assert.equal(view.acts[0].responsible_agent_ref,responsible_agent_ref);
+   assert.equal(view.acts[0].postcondition,'unsatisfied');
  }finally{f.close()}
 });
