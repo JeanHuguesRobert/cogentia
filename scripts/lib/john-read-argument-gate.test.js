@@ -19,3 +19,13 @@ test('UID observation is opt-in and URL-pinned, without enlarging the action set
   {...args,action:'context'},{...args,frame_id:'other'},{...args,include_element_identity:false}])
   assert.throws(()=>normalizeJohnReadArguments('browser.hosted.inspect',bad));
 });
+
+test('managed frame identity observation requires the existing frame selector and validates explicit instance',()=>{
+ const args={action:'frame_structure',browser_instance_id:'firefox-fixture',tab_id:42,
+  expected_url:'https://parent.example/form',frame_id:'child',expected_frame_origin:'https://frame.example',
+  include_element_identity:true};
+ assert.deepEqual(normalizeJohnReadArguments('browser.hosted.inspect',args),args);
+ for(const bad of [{...args,browser_instance_id:''},{...args,frame_id:undefined},
+  {...args,expected_frame_origin:'https://frame.example/path'},{...args,action:'status'}])
+  assert.throws(()=>normalizeJohnReadArguments('browser.hosted.inspect',bad));
+});

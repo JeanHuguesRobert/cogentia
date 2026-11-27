@@ -63,3 +63,16 @@ test('existing inspect and form capabilities exchange UID target and redacted re
   assert.equal(calls,4);
  }finally{ext?.close();await gate.close()}
 });
+
+test('non-default instance is never silently replaced by the configured browser',async()=>{
+ const gate=createNavigationGateway({instance:'missing-provider-fixture'});
+ await gate.listen(0,['127.0.0.1']);
+ try{
+  const caps=createHostedBrowserCapabilities({gateway:'ws://127.0.0.1:'+gate._bound[0].address().port+'/assistant'});
+  const inspect=caps.find(c=>c.name==='browser.hosted.inspect'),fill=caps.find(c=>c.name==='browser.form.fill');
+  const browser_instance_id='missing-firefox';
+  await assert.rejects(()=>inspect.execute({action:'tabs',browser_instance_id}),e=>e.code==='BROWSER_INSTANCE_UNSUPPORTED');
+  await assert.rejects(()=>fill.execute({browser_instance_id,tab_id:42,expected_url:url,text:'test',
+    element_target:{...target,browser_instance_id}}),e=>e.code==='BROWSER_INSTANCE_UNSUPPORTED');
+ }finally{await gate.close()}
+});

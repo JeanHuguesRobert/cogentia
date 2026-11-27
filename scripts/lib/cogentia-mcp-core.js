@@ -844,6 +844,7 @@ export const TOOLS = [
         read_arguments: {type:"object",additionalProperties:false,description:"Only for browser.hosted.inspect or browser.navigation.instances; validated read selectors, never credentials or effects.",properties:{
           action:{type:"string",enum:["status","tabs","structure","frames","context","frame_tree","frame_structure"]},
           tab_id:{type:"integer",minimum:1},max_chars:{type:"integer",minimum:1,maximum:12000},
+          browser_instance_id:{type:"string",minLength:1,maxLength:200},include_element_identity:{type:"boolean"},
           include_url:{type:"boolean"},expected_url:{type:"string",maxLength:4096},
           frame_id:{type:"string",maxLength:160},expected_frame_origin:{type:"string",maxLength:256}}},
         principal_id: { type: "string", description: "Principal identity id (e.g. principal:operator or jhn)." },

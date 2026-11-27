@@ -6,8 +6,11 @@
  */
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
-import {spawn} from 'node:child_process';
-import {mkdtemp,readFile,rm} from 'node:fs/promises';
+import {spawn,spawnSync} from 'node:child_process';
+import {createServer as createHttpsServer} from 'node:https';
+import {createHostedBrowserCapabilities} from './lib/hosted-browser-capabilities.js';
+import {runJohnRequest} from './lib/john-run.js';
+import {mkdtemp,readFile,writeFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {setTimeout as delay} from 'node:timers/promises';
@@ -85,21 +88,41 @@ async function reload(tab){
 }
 
 try{
- frameServer=createServer((req,res)=>{
+ const firefox=engine==='firefox';
+ // A fixture-only CA in the disposable Firefox NSS profile; no certificate
+ // bypass, trust-store or browser settings change outside this directory.
+ let makeServer=createServer;
+ if(firefox){
+  const key=join(dir,'fixture-key.pem'),cert=join(dir,'fixture-cert.pem'),ca=join(dir,'ca.pem'),caKey=join(dir,'ca-key.pem'),csr=join(dir,'fixture.csr'),ext=join(dir,'fixture.ext');
+  function local(command,args){
+   const result=spawnSync(command,args,{encoding:'utf8',timeout:5000});
+   if(result.status!==0)throw Error('fixture_tls_setup_failed:'+command);
+  }
+  local('openssl',['req','-x509','-newkey','rsa:2048','-nodes','-days','1','-subj','/CN=Cogentia fixture CA',
+   '-addext','basicConstraints=critical,CA:TRUE','-addext','keyUsage=critical,keyCertSign,cRLSign','-keyout',caKey,'-out',ca]);
+  local('openssl',['req','-new','-newkey','rsa:2048','-nodes','-subj','/CN=127.0.0.1','-keyout',key,'-out',csr]);
+  await writeFile(ext,'basicConstraints=critical,CA:FALSE\nsubjectAltName=IP:127.0.0.1\nextendedKeyUsage=serverAuth\nkeyUsage=critical,digitalSignature,keyEncipherment\n');
+  local('openssl',['x509','-req','-in',csr,'-CA',ca,'-CAkey',caKey,'-CAcreateserial','-days','1','-extfile',ext,'-out',cert]);
+  local('certutil',['-N','--empty-password','-d','sql:'+dir]);
+  local('certutil',['-A','-d','sql:'+dir,'-n','Cogentia disposable fixture','-t','CT,,','-i',ca]);
+  const tls={key:await readFile(key),cert:await readFile(cert)};
+  makeServer=handler=>createHttpsServer(tls,handler);
+ }
+ const scheme=firefox?'https':'http';
+ frameServer=makeServer((req,res)=>{
   if(req.url==='/frame'){res.writeHead(200,{'content-type':'text/html; charset=utf-8'});res.end('<!doctype html><input id="uid-target" value="frame-original">')}
   else{res.writeHead(404);res.end()}
  });
  await new Promise((resolve,reject)=>{frameServer.once('error',reject);frameServer.listen(0,'127.0.0.1',resolve)});
- const frameOrigin='http://127.0.0.1:'+frameServer.address().port;
+ const frameOrigin=scheme+'://127.0.0.1:'+frameServer.address().port;
  const frameUrl=frameOrigin+'/frame';
- server=createServer((req,res)=>{
+ server=makeServer((req,res)=>{
   if(req.url==='/worker.js'){res.writeHead(200,{'content-type':'application/javascript'});res.end(runtime)}
   else if(req.url==='/probe'){res.writeHead(200,{'content-type':'text/html; charset=utf-8'});res.end(html+'<iframe id="cross" src="'+frameUrl+'"></iframe>')}
   else{res.writeHead(404);res.end()}
  });
  await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve)});
- const expectedUrl='http://127.0.0.1:'+server.address().port+'/probe';
- const firefox=engine==='firefox';
+ const expectedUrl=scheme+'://127.0.0.1:'+server.address().port+'/probe';
  browser=spawn(firefox?(process.env.FIREFOX_BIN||'/usr/lib/firefox/firefox'):(process.env.CHROMIUM_BIN||'/usr/bin/chromium'),
   firefox?['--headless','--no-remote','--profile',dir,'--remote-debugging-port','0','about:blank']:[
   '--headless=new','--remote-debugging-address=127.0.0.1','--remote-debugging-port=0',
@@ -359,6 +382,47 @@ try{
   assert.equal((await worker.locate()).tabId,managedTab);
   assert.equal((await fillManaged('after provider reconnect')).ok,true);
   assert.equal(await evaluate(tabs.get(41),'document.querySelector("#uid-target").value'),'after provider reconnect');
+  const caps=createHostedBrowserCapabilities({gateway:base+'/assistant'});
+  const inspect=caps.find(c=>c.name==='browser.hosted.inspect');
+  const form=caps.find(c=>c.name==='browser.form.fill');
+  const selected={browser_instance_id:provider.browserId,tab_id:managedTab,expected_url:expectedUrl};
+  const tree=await inspect.execute({...selected,action:'frame_tree'});
+  const frame=tree.frame_tree.frames.find(f=>!f.is_top_level&&f.origin===frameOrigin);
+  assert.ok(frame);
+  const observation=await inspect.execute({...selected,action:'frame_structure',
+   frame_id:frame.frame_id,expected_frame_origin:frameOrigin,include_element_identity:true});
+  const frameTarget=observation.fields[0].element_target;
+  assert.ok(frameTarget);
+  const args={...selected,element_target:frameTarget,expected_frame_origin:frameOrigin,text:'Hosted — Corse'};
+  const request={version:'john.request.v1',request_id:'bidi-form-reality',principal:{id:'principal:jhn'},
+   mandate:{id:'mandate:jhn:form-assist',version:'v1'},budget:{id:'budget:fixture'},
+   execution_budget:{max_steps:4,max_tool_calls:1,max_subagents:0,max_elapsed_ms:15000,max_external_effects:0,max_internal_effects:1},
+   exposure:'bounded',capability:'browser.form.fill',input:{prompt:'Fill a fixture field',arguments:args},
+   handler:{id:'capability.once.bounded',kind:'capability_once_bounded',allowed_capabilities:['browser.form.fill']}};
+  const opts={capabilities:[form],allowedCapabilities:['browser.form.fill'],maxInternalEffects:1,requiredEvents:false};
+  const beforeDeny=await evaluate({context:frame.frame_id},'document.querySelector("#uid-target").value');
+  const denied=await runJohnRequest(request,opts);
+  assert.equal(denied.some(e=>e.type==='john.tool.receipt'),false);
+  assert.equal(await evaluate({context:frame.frame_id},'document.querySelector("#uid-target").value'),beforeDeny);
+  const granted=await runJohnRequest({...request,request_id:'bidi-form-reality-approved'},
+   {...opts,approvedBoundedOnceCapability:'browser.form.fill'});
+  assert.equal(granted.some(e=>e.type==='john.run.completed'),true);
+  assert.equal(granted.find(e=>e.type==='john.accounting.settled')?.data?.internal_effects,1);
+  assert.equal(granted.find(e=>e.type==='john.accounting.settled')?.data?.external_effects,0);
+  assert.ok(!JSON.stringify(granted).includes(args.text));
+  assert.equal(await evaluate({context:frame.frame_id},'document.querySelector("#uid-target").value'),args.text);
+  assert.equal(await evaluate(tabs.get(41),'document.querySelector("#uid-target").value'),'after provider reconnect');
+  await assert.rejects(()=>form.execute({...args,browser_instance_id:'not-the-provider'}),e=>e.code==='BROWSER_ELEMENT_TARGET_INVALID');
+  await assert.rejects(()=>form.execute({...args,expected_frame_origin:new URL(expectedUrl).origin}));
+  await evaluate({context:frame.frame_id},`(() => {const el=document.querySelector('#uid-target');const next=el.cloneNode(true);next.value='untouched';el.replaceWith(next)})()`);
+  await assert.rejects(()=>form.execute(args),e=>e.code==='BROWSER_ELEMENT_TARGET_STALE');
+  assert.equal(await evaluate({context:frame.frame_id},'document.querySelector("#uid-target").value'),'untouched');
+  const top=await inspect.execute({...selected,action:'structure',include_element_identity:true});
+  const topTarget=top.fields[0].element_target;
+  assert.ok(topTarget);
+  assert.equal((await form.execute({...selected,element_target:topTarget,text:'Hosted top'})).ok,true);
+  assert.equal(await evaluate(tabs.get(41),'document.querySelector("#uid-target").value'),'Hosted top');
+
   const extra=await bidi.call('browsingContext.create',{type:'tab'});
   await bidi.call('browsingContext.navigate',{context:extra.context,url:expectedUrl,wait:'complete'});
   const more=await session.call('tabs.list',scope);
@@ -380,10 +444,10 @@ try{
   managedProvider=true;
  }
  console.log(JSON.stringify({ok:true,browser:version,engine,actual_chromium:engine==='chromium',actual_firefox:engine==='firefox',actual_gateway:true,
-  extension:engine==='firefox'?'fixture_bidi_peer':'fixture_cdp_peer',actual_inventory:true,uid_registry:true,uid_reinjection:true,uid_replacement_rejected:true,uid_document_isolation:true,uid_reload_invalidated:true,uid_fill:true,uid_stale_no_input:true,uid_reconnect:true,cross_origin_uid:crossOriginUid,managed_bidi_provider:managedProvider,engine_disconnect_retired_provider:managedProvider,distinct_workers:true,rediscovery:true,checkpoint_reload:true,reused_worker:true,
+  extension:engine==='firefox'?'fixture_bidi_peer':'fixture_cdp_peer',actual_inventory:true,uid_registry:true,uid_reinjection:true,uid_replacement_rejected:true,uid_document_isolation:true,uid_reload_invalidated:true,uid_fill:true,uid_stale_no_input:true,uid_reconnect:true,cross_origin_uid:crossOriginUid,managed_bidi_provider:managedProvider,hosted_frame_uid:managedProvider,john_bounded_fixture:managedProvider,engine_disconnect_retired_provider:managedProvider,distinct_workers:true,rediscovery:true,checkpoint_reload:true,reused_worker:true,
   sandbox_disabled:false,personal_browser_used:false}));
 }catch(e){
- console.error(JSON.stringify({ok:false,reason:e.message,engine,browser_exit:exitInfo||null,browser_stderr:stderr,
+ console.error(JSON.stringify({ok:false,reason:e.message,code:e.code||null,engine,browser_exit:exitInfo||null,browser_stderr:stderr,
   sandbox_disabled:false,personal_browser_used:false}));process.exitCode=1;
 }finally{
  session?.close();peer?.close();await managedPeer?.close();await gate?.close();bidi?.close();

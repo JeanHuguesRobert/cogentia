@@ -41,7 +41,7 @@ export async function executeBidiFrameEvaluate({send,rootContext,expectedUrl,fra
  // JSON projection matches the Core CDP recipe contract. A realm destroyed
  // between observation and execution is not replaced by another realm.
  const result=await send('script.evaluate',{
-  expression:`Promise.resolve((0,eval)(${JSON.stringify(script)})).then(v=>JSON.stringify(v??null))`,
+  expression:`Promise.resolve().then(()=>{if(location.href!==${JSON.stringify(fresh.url)})throw Error('document_url_changed');return (0,eval)(${JSON.stringify(script)})}).then(v=>JSON.stringify(v??null))`,
   target:{realm:init.realm},awaitPromise:true});
  if(result.type!=='success'||result.realm!==init.realm||result.result?.type!=='string')
   throw Error('bidi_frame_execution_failed');

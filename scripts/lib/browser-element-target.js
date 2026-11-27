@@ -18,15 +18,16 @@ export function validElementTarget(target,{tabId,browserId,allowFrame=false}={})
 }
 export const ELEMENT_TARGET_SCHEMA={type:'object',properties:{
  browser_instance_id:{type:'string',minLength:1,maxLength:200},
- tab_id:{type:'integer',minimum:1},frame_id:{type:'string',enum:['top']},
+ tab_id:{type:'integer',minimum:1},frame_id:{type:'string',pattern:'^[A-Za-z0-9_-]{1,160}$'},
  document_epoch:{type:'string',pattern:'^[a-f0-9]{32}$'},uid:{type:'string',pattern:'^[a-f0-9]{32}:[1-9][0-9]{0,15}$'}
 },required:['browser_instance_id','tab_id','frame_id','document_epoch','uid'],additionalProperties:false};
 
-export function compileUidStructure(expectedUrl){
+export function compileUidStructure(expectedUrl,{originOnly=false}={}){
  if(typeof expectedUrl!=='string'||!expectedUrl||expectedUrl.length>4096)throw Error('element_target_url_invalid');
+ if(originOnly&&new URL(expectedUrl).origin!==expectedUrl)throw Error('element_target_origin_invalid');
  const stdlib=readFileSync(new URL('../../browser-stdlib/navigation.js',import.meta.url),'utf8');
  return `(() => {
- if(location.href!==${JSON.stringify(expectedUrl)})return {ok:false,reason:'document_url_changed'};
+ if(location.${originOnly?"origin":"href"}!==${JSON.stringify(expectedUrl)})return {ok:false,reason:'document_url_changed'};
  if(!window.__cogentiaNavigationAssistant?.elementIdentity){
  ${stdlib}
  }

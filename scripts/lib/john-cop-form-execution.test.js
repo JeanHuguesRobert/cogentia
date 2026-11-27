@@ -36,3 +36,16 @@ test('UID target uses the same canonical admission and cannot mix selectors or f
   {...rest,element_target:target,frame_id:'other',expected_frame_origin:'https://example.org'}])
   assert.equal((await invoke(args)).error,'canonical_form_envelope_invalid');
 });
+
+test('managed frame UID admission pins explicit instance and origin',async()=>{
+ const epoch='a'.repeat(32),browser_instance_id='firefox-fixture';
+ const element_target={browser_instance_id,tab_id:7,frame_id:'frame',document_epoch:epoch,uid:epoch+':1'};
+ const {field_index,...rest}=input;
+ const args={...rest,browser_instance_id,element_target,expected_frame_origin:'https://frame.example'};
+ const invoke=arguments_=>executeJohnCanonicalForm({request:{...req,input:{...req.input,arguments:arguments_}},
+  authorizedKeysPath:'/no-such-file',run:()=>assert.fail('must not execute')});
+ assert.equal((await invoke(args)).error,'trusted_form_issuer_missing');
+ for(const bad of [{...args,browser_instance_id:'other'},{...args,expected_frame_origin:'https://frame.example/path'},
+  {...args,element_target:{...element_target,frame_id:'top'}},{...args,field_index:0}])
+  assert.equal((await invoke(bad)).error,'canonical_form_envelope_invalid');
+});

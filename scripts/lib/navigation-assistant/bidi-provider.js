@@ -3,7 +3,9 @@
  */
 import {randomUUID} from 'node:crypto';
 import {WebSocket} from 'ws';
-const METHODS=Object.freeze(['tabs.list','page.evaluate']);
+import {executeBidiFrameEvaluate} from '../browser-frame-bidi-evaluate.js';
+import {projectFrameTree} from '../browser-frame-tree.js';
+const METHODS=Object.freeze(['tabs.list','page.evaluate','page.frameTree']);
 const metadata=Object.freeze({engine:'firefox',transport:'bidi',methods:METHODS});
 function webUrl(value){try{const u=new URL(value);return ['http:','https:'].includes(u.protocol)&&!u.username&&!u.password}catch{return false}}
 export function createBidiNavigationProvider({session,instancePrefix='firefox'}={}){
@@ -33,14 +35,32 @@ export function createBidiNavigationProvider({session,instancePrefix='firefox'}=
  function tabReceipt(tab){return {id:tab.id,url:tab.url,title:''}}
  async function dispatch(method,params={}){
   if(method==='tabs.list')return {tabs:(await inventory()).map(tabReceipt)};
-  if(method!=='page.evaluate')throw Error('bidi_method_unsupported');
+  if(!['page.evaluate','page.frameTree'].includes(method))throw Error('bidi_method_unsupported');
   if(!Number.isSafeInteger(params.tabId)||params.tabId<1||
-   typeof params.code!=='string'||!params.code||params.code.length>16000||
+   (method==='page.evaluate'&&(typeof params.code!=='string'||!params.code||params.code.length>16000))||
    (params.expectedUrl!==undefined&&!webUrl(params.expectedUrl)))throw Error('bidi_evaluation_invalid');
   const before=(await inventory()).find(t=>t.id===params.tabId);
   if(!before||!webUrl(before.url)||(params.expectedUrl!==undefined&&params.expectedUrl!==before.url))
    throw Error('bidi_tab_target_changed');
   const expected=before.url;
+  if(method==='page.frameTree'){
+   if(params.expectedUrl!==expected)throw Error('bidi_frame_target_invalid');
+   const {contexts}=await session.call('browsingContext.getTree',{root:before.context});
+   if(contexts?.length!==1||contexts[0].context!==before.context||contexts[0].url!==expected)
+    throw Error('bidi_frame_target_changed');
+   let count=0;
+   function convert(node,depth=0){
+    if(++count>256||depth>16)throw Error('bidi_frame_tree_too_large');
+    return {frame:{id:node.context,url:node.url},childFrames:(node.children||[]).map(child=>convert(child,depth+1))};
+   }
+   return {tab:tabReceipt(before),frame_tree:projectFrameTree(convert(contexts[0]))};
+  }
+  if(params.frameId!==undefined||params.expectedFrameOrigin!==undefined){
+   if(params.expectedUrl!==expected)throw Error('bidi_frame_target_invalid');
+   const detail=await executeBidiFrameEvaluate({send:session.call,rootContext:before.context,expectedUrl:expected,
+    frameId:params.frameId,expectedOrigin:params.expectedFrameOrigin,scriptForUrl:()=>params.code});
+   return {tab:tabReceipt(before),value:detail.value,frameId:detail.frameId,origin:detail.origin};
+  }
   const probe=await session.call('script.evaluate',{expression:'location.href',target:{context:before.context},awaitPromise:true});
   if(probe.type!=='success'||probe.result?.value!==expected||typeof probe.realm!=='string'||!probe.realm)
    throw Error('bidi_tab_realm_unavailable');

@@ -243,7 +243,7 @@ export function createNavigationGateway(options = {}) {
         // Fail closed while any lease exists for this browser; explicit targets
         // remain available through the owner or after release.
         const tabId = message.params?.tabId;
-        const guardedMethods = ["page.evaluate", "page.insertText", "page.form.fill", "tabs.activate", "tabs.close"];
+        const guardedMethods = ["page.evaluate", "page.frameTree", "page.insertText", "page.form.fill", "tabs.activate", "tabs.close"];
         if (guardedMethods.includes(message.method)) {
           if (!Number.isInteger(tabId)) {
             const hasLease = [...leases.keys()].some((key) => key.startsWith(`${target.browserInstanceId}:`) && currentLease(key));

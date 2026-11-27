@@ -6,7 +6,7 @@ import {createHostedFrameTransport} from "./browser-frame-cdp-transport.js";
 import {createBrowserFileUploadCapability} from "./browser-file-upload.js";
 import {executeFrameEvaluate} from "./browser-frame-evaluate.js";
 import {projectFrameTree} from "./browser-frame-tree.js";
-/** Hosted Chromium capabilities over the Fracta2 navigation-assistant extension. */
+/** Hosted navigation capabilities over the existing gateway. */
 
 const DEFAULT_GATEWAY = "ws://127.0.0.1:8776/assistant";
 const DEFAULT_HEALTH = "http://127.0.0.1:8776/health";
@@ -22,6 +22,33 @@ export function createHostedBrowserCapabilities(options = {}) {
     timeoutMs,
   });
 
+  async function selectedBrowser(input){
+    const selected=input.browser_instance_id??browserId;
+    if(typeof selected!=='string'||!selected||selected.length>200)
+      throw capabilityError('BROWSER_INSTANCE_INVALID');
+    if(selected===browserId)return {id:selected,managed:false};
+    // Explicit non-default selection only; never fall back to the configured
+    // Chromium instance or accept an undeclared legacy connection.
+    const inventory=await rpc(gateway,'browser.instances',{},timeoutMs);
+    const entries=(inventory.browsers||[]).filter(b=>b.browser_instance_id===selected&&b.registered===true);
+    if(entries.length!==1||entries[0].provider?.transport!=='bidi'||entries[0].provider?.engine!=='firefox'||
+      !entries[0].provider.methods?.includes('page.evaluate'))
+      throw capabilityError('BROWSER_INSTANCE_UNSUPPORTED');
+    return {id:selected,managed:true,methods:entries[0].provider.methods};
+  }
+  async function managedFrameCall(selected,tabId,expectedUrl,method,params={}){
+    if(!selected.methods.includes(method))throw capabilityError('BROWSER_INSTANCE_UNSUPPORTED');
+    const session=await createGatewaySession(gateway,{timeoutMs});
+    try{
+      return await session.withTabLease(selected.id,tabId,async peer=>{
+        const reply=await peer.call(method,{browser_instance_id:selected.id,tabId,expectedUrl,...params});
+        if(reply?.tab?.id!==tabId||reply?.tab?.url!==expectedUrl||
+          (params.frameId!==undefined&&(reply.frameId!==params.frameId||reply.origin!==params.expectedFrameOrigin)))
+          throw capabilityError('BROWSER_ELEMENT_TARGET_UNCONFIRMED');
+        return reply;
+      });
+    }finally{session.close()}
+  }
   return [
     {
       name: "browser.navigation.instances",
@@ -83,6 +110,7 @@ export function createHostedBrowserCapabilities(options = {}) {
         type: "object",
         properties: {
           action: { type: "string", enum: ["status", "tabs", "context", "structure", "frames", "frame_tree", "frame_structure"] },
+          browser_instance_id: {type:"string",minLength:1,maxLength:200},
           tab_id: { type: "integer", minimum: 0 },
           max_chars: { type: "integer", minimum: 1, maximum: 12000 },
           include_url: { type: "boolean" },
@@ -97,12 +125,14 @@ export function createHostedBrowserCapabilities(options = {}) {
       async execute(input = {}) {
         const action = String(input.action || "");
         if (action === "status") {
+          if(input.browser_instance_id!==undefined)throw capabilityError('BROWSER_INSTANCE_INVALID');
           const response = await fetch(health, { signal: AbortSignal.timeout(timeoutMs) });
           if (!response.ok) throw capabilityError("BROWSER_GATEWAY_UNAVAILABLE");
           return response.json();
         }
+        const selected=await selectedBrowser(input);
         if (action === "tabs") {
-          const result = await rpc(gateway, "tabs.list", { browser_instance_id: browserId }, timeoutMs);
+          const result = await rpc(gateway, "tabs.list", { browser_instance_id: selected.id }, timeoutMs);
           return {
             tabs: Array.isArray(result.tabs)
               ? result.tabs.map((tab) => summarizeTab(tab, input.include_url === true))
@@ -115,7 +145,7 @@ export function createHostedBrowserCapabilities(options = {}) {
           // CDP frame IDs are unavailable from this page execution context.
           const tabId=positiveInt(input.tab_id,'tab_id');
           const result=await rpc(gateway,'page.evaluate',{
-            browser_instance_id:browserId,tabId,
+            browser_instance_id:selected.id,tabId,
             code:`(() => ({ origin:location.origin,frames:Array.from(document.querySelectorAll('iframe')).slice(0,20).map((f,i)=>({iframe_index:i,origin:(()=>{try{return new URL(f.getAttribute('src')||'',location.href).origin}catch{return null}})(),same_origin:(()=>{try{return !!f.contentDocument}catch{return false}})()})) }))()`
           },timeoutMs);
           const raw=result.value||{};
@@ -127,6 +157,32 @@ export function createHostedBrowserCapabilities(options = {}) {
           const tabId=positiveInt(input.tab_id,'tab_id');
           const expectedUrl=String(input.expected_url||'');
           if(!expectedUrl.startsWith('https://'))throw capabilityError('BROWSER_FRAME_TARGET_INVALID');
+          if(selected.managed){
+            if(action==='frame_tree'){
+              const reply=await managedFrameCall(selected,tabId,expectedUrl,'page.frameTree');
+              return {tab_id:tabId,frame_tree:reply.frame_tree,oopif_frames:[]};
+            }
+            const frameId=String(input.frame_id||''),expectedOrigin=input.expected_frame_origin;
+            if(!/^[A-Za-z0-9_-]{1,160}$/.test(frameId)||!exactHttpsOrigin(expectedOrigin))
+              throw capabilityError('BROWSER_FRAME_TARGET_INVALID');
+            const identity=input.include_element_identity===true;
+            const reply=await managedFrameCall(selected,tabId,expectedUrl,'page.evaluate',{
+              frameId,expectedFrameOrigin:expectedOrigin,
+              code:identity?compileUidStructure(expectedOrigin,{originOnly:true}):SAFE_DOM_STRUCTURE_CODE});
+            const raw=reply.value||{};
+            if(identity&&(!Array.isArray(raw.fields)||!Array.isArray(raw.element_uids)||
+              raw.fields.length!==raw.element_uids.length||raw.ok===false))
+              throw capabilityError('BROWSER_ELEMENT_TARGET_UNCONFIRMED');
+            return {tab_id:tabId,frame_id:frameId,origin:expectedOrigin,
+              forms:boundedInteger(raw.forms,0,0,100),total_fields:boundedInteger(raw.total_fields,0,0,100000),
+              fields:Array.isArray(raw.fields)?raw.fields.slice(0,80).map((f,i)=>({
+                tag:String(f.tag||'').slice(0,16),type:String(f.type||'').slice(0,30),
+                required:f.required===true,disabled:f.disabled===true,readonly:f.readonly===true,
+                autocomplete:String(f.autocomplete||'').slice(0,64),
+                ...(identity?{element_target:projectElementTarget(raw,i,selected.id,tabId,frameId)}:{})
+              })):[],truncated:raw.truncated===true};
+          }
+          if(input.include_element_identity===true)throw capabilityError('BROWSER_ELEMENT_TARGET_INVALID');
           if(action==='frame_tree'){
             return frameTransport.withFrame({tabId,expectedUrl,operation:async({frameTree,discoverFrames})=>{
               const result=projectFrameTree(frameTree);
@@ -156,7 +212,7 @@ export function createHostedBrowserCapabilities(options = {}) {
           if(identity&&(typeof input.expected_url!=='string'||!input.expected_url.startsWith('https://')))
             throw capabilityError('BROWSER_ELEMENT_TARGET_INVALID');
           const result = await rpc(gateway, "page.evaluate", {
-            browser_instance_id: browserId, tabId: targetTabId,
+            browser_instance_id: selected.id, tabId: targetTabId,
             ...(identity?{expectedUrl:input.expected_url}:{}),
             code: identity?compileUidStructure(input.expected_url):SAFE_DOM_STRUCTURE_CODE,
           }, timeoutMs);
@@ -179,7 +235,7 @@ export function createHostedBrowserCapabilities(options = {}) {
               disabled: f.disabled === true,
               readonly: f.readonly === true,
               autocomplete: String(f.autocomplete || "").slice(0, 64),
-              ...(identity?{element_target:projectElementTarget(raw,i,browserId,targetTabId)}:{}),
+              ...(identity?{element_target:projectElementTarget(raw,i,selected.id,targetTabId)}:{}),
             })) : [],
             total_fields: boundedInteger(raw.total_fields, 0, 0, 100000),
             frames: boundedInteger(raw.frames, 0, 0, 100),
@@ -196,7 +252,7 @@ export function createHostedBrowserCapabilities(options = {}) {
           const targetTabId = positiveInt(input.tab_id, "tab_id");
           const maxChars = boundedInteger(input.max_chars, 4000, 1, 12000);
           const result = await rpc(gateway, "page.evaluate", {
-            browser_instance_id: browserId,
+            browser_instance_id: selected.id,
             tabId: targetTabId,
             code: "(() => ({title:document.title,url:location.href,text:(document.body?.innerText||\"\").slice(0," + maxChars + ")}))()",
           }, timeoutMs);
@@ -257,8 +313,9 @@ export function createHostedBrowserCapabilities(options = {}) {
     {
       name: "browser.form.fill",
       kind: "tool", risk: "internal_recoverable", resultVisibility: "reasoner", costUnits: 1,
-      description: "Fill a non-secret ordinary field. Supply exactly one field_index or element_target from identity-aware structure inspection (top document only). For same-origin iframes, Core sends a compiled JavaScript recipe through the stable page.evaluate primitive. Cross-origin frames require a separately authorized frame-scoped transport; no extension-specific RPC.",
+      description: "Fill a non-secret ordinary field. Supply exactly one field_index or element_target from identity-aware structure inspection (top document or managed BiDi frame). For same-origin iframes, Core sends a compiled JavaScript recipe through the stable page.evaluate primitive. Cross-origin frames require a separately authorized frame-scoped transport; no extension-specific RPC.",
       inputSchema: {type:"object",properties:{
+        browser_instance_id:{type:"string",minLength:1,maxLength:200},
         tab_id:{type:"integer",minimum:1},field_index:{type:"integer",minimum:0,maximum:79},
         element_target:ELEMENT_TARGET_SCHEMA,
         expected_url:{type:"string",minLength:1,maxLength:4096},
@@ -276,24 +333,39 @@ export function createHostedBrowserCapabilities(options = {}) {
         if(!["plain","contenteditable"].includes(fieldKind))throw capabilityError("BROWSER_FORM_FIELD_KIND_INVALID");
         if(!expected.startsWith('https://')||!value||value.length>2048)throw capabilityError('BROWSER_FORM_INPUT_INVALID');
         const uidMode=input.element_target!==undefined;
-        if(uidMode?(input.field_index!==undefined||!validElementTarget(input.element_target,{tabId:tab,browserId})):
+        const chosen=input.browser_instance_id??browserId;
+        if(input.browser_instance_id!==undefined&&!uidMode)throw capabilityError('BROWSER_ELEMENT_TARGET_INVALID');
+        if(uidMode?(input.field_index!==undefined||!validElementTarget(input.element_target,{tabId:tab,browserId:chosen,allowFrame:input.browser_instance_id!==undefined&&chosen!==browserId})):
           (!Number.isInteger(input.field_index)||input.field_index<0||input.field_index>79))
           throw capabilityError('BROWSER_ELEMENT_TARGET_INVALID');
         if(uidMode){
-          if(input.frame_id!==undefined||input.iframe_index!==undefined||input.expected_frame_origin!==undefined)
-            throw capabilityError('BROWSER_ELEMENT_TARGET_INVALID');
           const target=input.element_target;
-          const session=await createGatewaySession(gateway,{timeoutMs});
-          try{
-            const receipt=await callUidFormFill({session,target,expectedUrl:expected,
-              code:compileNonSecretFormFill({elementTarget:target,text:value,expectedUrl:expected,fieldKind})});
-            if(receipt?.ok===false&&['element_uid_stale','document_epoch_changed'].includes(receipt.reason))
-              throw capabilityError('BROWSER_ELEMENT_TARGET_STALE');
-            if(receipt?.ok!==true||receipt.submitted!==false||receipt.insertedLength!==value.length||
-              receipt.document_epoch!==target.document_epoch||receipt.uid!==target.uid)
-              throw capabilityError('BROWSER_FORM_INSERTION_UNCONFIRMED');
-            return {ok:true,inserted_length:value.length,tab_id:tab,element_target:target,submitted:false};
-          }finally{session.close()}
+          const frame=target.frame_id!=='top';
+          if(input.frame_id!==undefined||input.iframe_index!==undefined||
+            (frame?!exactHttpsOrigin(input.expected_frame_origin):input.expected_frame_origin!==undefined))
+            throw capabilityError('BROWSER_ELEMENT_TARGET_INVALID');
+          const selected=await selectedBrowser(input);
+          let receipt;
+          if(frame){
+            if(!selected.managed)throw capabilityError('BROWSER_ELEMENT_TARGET_INVALID');
+            const reply=await managedFrameCall(selected,tab,expected,'page.evaluate',{
+              frameId:target.frame_id,expectedFrameOrigin:input.expected_frame_origin,
+              code:compileNonSecretFormFill({elementTarget:target,text:value,
+                expectedUrl:input.expected_frame_origin,originOnly:true,fieldKind})});
+            receipt=reply.value;
+          }else{
+            const session=await createGatewaySession(gateway,{timeoutMs});
+            try{
+              receipt=await callUidFormFill({session,target,expectedUrl:expected,
+                code:compileNonSecretFormFill({elementTarget:target,text:value,expectedUrl:expected,fieldKind})});
+            }finally{session.close()}
+          }
+          if(receipt?.ok===false&&['element_uid_stale','document_epoch_changed'].includes(receipt.reason))
+            throw capabilityError('BROWSER_ELEMENT_TARGET_STALE');
+          if(receipt?.ok!==true||receipt.submitted!==false||receipt.insertedLength!==value.length||
+            receipt.document_epoch!==target.document_epoch||receipt.uid!==target.uid)
+            throw capabilityError('BROWSER_FORM_INSERTION_UNCONFIRMED');
+          return {ok:true,inserted_length:value.length,tab_id:tab,element_target:target,submitted:false};
         }
         const cdpFrame=input.frame_id!==undefined;
         const hasFrame=cdpFrame||input.iframe_index!==undefined||input.expected_frame_origin!==undefined;
@@ -397,6 +469,10 @@ async function rpc(endpoint, method, params, timeoutMs) {
   });
 }
 
+function exactHttpsOrigin(value){
+  try{const u=new URL(value);return u.protocol==='https:'&&u.origin===value&&!u.username&&!u.password}
+  catch{return false}
+}
 function originOf(value) {
   try { return new URL(value).origin; } catch { return ""; }
 }

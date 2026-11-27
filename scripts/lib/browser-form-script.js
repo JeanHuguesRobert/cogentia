@@ -3,7 +3,7 @@ import {validElementTarget} from './browser-element-target.js';
  * No caller-provided JavaScript; non-secret ordinary text inputs only.
  * The input text is embedded in the CDP RPC: NEVER use this for secrets.
  */
-export function compileNonSecretFormFill({fieldIndex,text,expectedUrl,iframeIndex,expectedFrameOrigin,fieldKind="plain",elementTarget,allowLoopbackFixture=false}={}){
+export function compileNonSecretFormFill({fieldIndex,text,expectedUrl,iframeIndex,expectedFrameOrigin,fieldKind="plain",elementTarget,allowLoopbackFixture=false,originOnly=false}={}){
  const uidMode=elementTarget!==undefined;
  const fixtureUrl=allowLoopbackFixture&&typeof expectedUrl==='string'&&/^http:\/\/127\.0\.0\.1:\d+\//.test(expectedUrl);
  if((uidMode?(fieldIndex!==undefined||!validElementTarget(elementTarget,{allowFrame:true})):(!Number.isInteger(fieldIndex)||fieldIndex<0||fieldIndex>79))||
@@ -14,11 +14,14 @@ export function compileNonSecretFormFill({fieldIndex,text,expectedUrl,iframeInde
  if(scoped && (!Number.isInteger(iframeIndex)||iframeIndex<0||iframeIndex>19||
     typeof expectedFrameOrigin!=='string'||!expectedFrameOrigin.startsWith('https://')||
     new URL(expectedFrameOrigin).origin!==expectedFrameOrigin))throw Error('form_script_frame_invalid');
+ if(originOnly&&(!uidMode||elementTarget.frame_id==='top'||new URL(expectedUrl).origin!==expectedUrl))
+  throw Error('form_script_origin_scope_invalid');
  if(uidMode&&scoped)throw Error('form_script_uid_frame_unsupported');
  const encoded=JSON.stringify(text);
  const urlLiteral=JSON.stringify(expectedUrl);
+ const documentLocation=originOnly?"location.origin":"location.href";
  return `(() => {
- if(location.href!==${urlLiteral})return {ok:false,reason:'document_url_changed'};
+ if(${documentLocation}!==${urlLiteral})return {ok:false,reason:'document_url_changed'};
  let targetDocument=document;
  ${scoped?`const frame=document.querySelectorAll('iframe')[${iframeIndex}];
  if(!frame||!frame.isConnected)return {ok:false,reason:'iframe_missing'};
@@ -44,7 +47,7 @@ export function compileNonSecretFormFill({fieldIndex,text,expectedUrl,iframeInde
  if(/username|password|one-time-code|cc-number|cc-csc/i.test(String(el.autocomplete||'')))
    return {ok:false,reason:'sensitive_autocomplete'};
  const value=${encoded};
- if(location.href!==${urlLiteral})return {ok:false,reason:'document_url_changed'};
+ if(${documentLocation}!==${urlLiteral})return {ok:false,reason:'document_url_changed'};
  el.focus({preventScroll:true});
  if(targetDocument.activeElement!==el)return {ok:false,reason:'focus_denied'};
  if(kind==='contenteditable'){
@@ -57,7 +60,7 @@ export function compileNonSecretFormFill({fieldIndex,text,expectedUrl,iframeInde
  }else{
    try{el.setSelectionRange(0,el.value.length);}catch{return {ok:false,reason:'selection_denied'};}
  }
- if(location.href!==${urlLiteral}||!el.isConnected||targetDocument.activeElement!==el)
+ if(${documentLocation}!==${urlLiteral}||!el.isConnected||targetDocument.activeElement!==el)
    return {ok:false,reason:'document_or_focus_changed'};
  ${uidMode?`if(window.__cogentiaNavigationAssistant?.elementIdentity!==registry||
  registry.resolveElementUid(${JSON.stringify(elementTarget.uid)})!==el)
