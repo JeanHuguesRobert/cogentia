@@ -366,6 +366,15 @@ function createStoredGrant({
 }
 
 export function grantSideEffectAuthorization(args = {}) {
+  // A session-attested grant cannot be consumed by the protected super broker.
+  // Refuse before persisting a misleading "granted" record; keep the broker's
+  // independent issuer and exact-payload checks unchanged.
+  if (args.action_class === "host.process.run"
+      && args.payload?.execution_mode === "super"
+      && ["mcp_jhn_attested_mutate", "mcp_admin_mutate", "in_process_effect_grant", "cli_principal_confirm"].includes(args.authority_origin)) {
+    throw fail("trusted_super_issuer_required",
+      "This authorization origin is not accepted by the protected super broker. Use an independently authorized privileged effect, or an existing owner-enabled bounded deployment capability if it covers the operation.");
+  }
   if (args.authority_origin === "mandate_derived") {
     throw fail("mandate_derived_verifier_unavailable",
       "mandate-derived grants can only be created by the configured workspace capability");

@@ -19,7 +19,9 @@ export function prepareHostProcessRun({ command, timeout_ms, target, provider, e
     payload,
     exposed_mutation: { command, timeout_ms: timeout_ms ?? 120000, execution_mode, target, provider },
     phase: 'EXPOSE',
-    note: 'Preparation only; no execution or authorization. A verified standing mandate or exact COP effect grant is required for dispatch.',
+    note: execution_mode === 'super'
+      ? 'Preparation only. The protected super broker requires an independently trusted exact effect grant; a generic MCP-session grant is not sufficient. For routine deployment, use an existing owner-enabled bounded capability when applicable.'
+      : 'Preparation only; no execution or authorization. A verified standing mandate or exact COP effect grant is required for dispatch.',
   });
   // Execution identity is deliberately not a substitute for the COP mandate.
   // Keep the previous diagnostic field for clients, without asserting an

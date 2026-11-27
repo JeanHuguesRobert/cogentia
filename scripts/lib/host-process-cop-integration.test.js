@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { prepareHostProcessRun } from './host-process-prepare.js';
 import { createHostCapabilityRouter } from './host-capability-router.js';
-import { mintSideEffectGrantFromPrepared, resetAuthorizationStore, consumeSideEffectAuthorization } from './side-effect-authorization.js';
+import { mintSideEffectGrantFromPrepared, resetAuthorizationStore, consumeSideEffectAuthorization, getAuthorizationStore } from './side-effect-authorization.js';
 
 const auth = { actor:'actor:test', principal_ref:'principal:test', mandate_ref:'mandate:test', lockers:{ public:{read:true,write:true}, private:{read:true,write:true} } };
 test('existing COP EXPOSE → hash-bound grant → Unix provider → receipt; grant is single-use', async () => {
@@ -75,4 +75,25 @@ test('unrestricted super script requires a valid grant, not a command allowlist'
   assert.equal(result.ok,true);
   assert.equal(received,command);
   await router.stop();
+});
+
+
+test('transport grant cannot promise super execution; ordinary grants remain available', () => {
+  resetAuthorizationStore();
+  const common = {command:'printf NON_MUTATING_TEST', target:'node:fracta2', provider:'unix-process'};
+  const superPrepared = prepareHostProcessRun({...common, execution_mode:'super'});
+  assert.match(superPrepared.note, /generic MCP-session grant is not sufficient/);
+  for (const authority_origin of ['mcp_jhn_attested_mutate','mcp_admin_mutate','in_process_effect_grant','cli_principal_confirm']) {
+    assert.throws(() => mintSideEffectGrantFromPrepared(superPrepared, {
+      principal:'principal:test', actor:'actor:test', mandate_ref:'mandate:test',
+      authority_origin, confirm:superPrepared.payload_hash
+    }), e => e.error_class === 'trusted_super_issuer_required');
+  }
+  const ordinary = prepareHostProcessRun({...common, execution_mode:'normal'});
+  const grant = mintSideEffectGrantFromPrepared(ordinary, {
+    principal:'principal:test', actor:'actor:test', mandate_ref:'mandate:test',
+    authority_origin:'mcp_jhn_attested_mutate', confirm:ordinary.payload_hash
+  });
+  assert.equal(grant.status,'granted');
+  assert.equal(getAuthorizationStore().getGrant(grant.authorization_id).payload_hash,ordinary.payload_hash);
 });
