@@ -887,3 +887,26 @@ kept for inspection. Never retry blindly after an interrupted run.
 Fixture tests exercise archive safety, exact baseline, listener boundary,
 reconnection predicate, receipts, rollback and lock retention; actual
 owner invocation and production recovery remain untested until migration.
+
+
+### I4 — hosted gateway migrated, companion preparation
+
+On 2026-11-27 the node owner executed the reviewed migration of gateway
+revision `5e95dbeed67f25d88f81919cdf9762127a903666`. The reported
+receipt is verified; an independent read-only probe confirmed the exact
+release working directory, active hardened service under the original
+workspace identity, managed-provider marker, two registered instances,
+zero pending requests and zero active leases at observation. The eleven
+prior connections included nine unregistered connections; two registered
+instances were recovered, not eleven individually verified sessions.
+
+The source preparation script now also accepts `--companion` and packages
+only the Firefox companion and its transitive local modules, with the
+same verified ws tarball and per-source SHA-256 manifest. This is a
+separate release from the gateway. The owner selects the existing X11
+workspace, installs the checked bundle as read-only executable source
+under the owner-controlled release base, and starts the companion under
+the original non-root workspace identity with a new dedicated profile.
+Use synthetic content first; loopback BiDi alone does not establish
+isolation from other local Unix accounts. No personal browser profile
+is imported, and no additional VNC service is needed.

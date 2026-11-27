@@ -16,9 +16,16 @@ function run(cmd,args,cwd=repo){
  return r.stdout;
 }
 const digest=(algorithm,data,encoding='hex')=>createHash(algorithm).update(data).digest(encoding);
-const [revision,output,...extra]=process.argv.slice(2);
-if(!/^[a-f0-9]{40}$/.test(revision||'')||!output||extra.length||process.getuid()===0){
- console.error('usage: node scripts/ops/prepare-navigation-gateway-release.js FULL_COMMIT PRIVATE_OUTPUT_DIRECTORY');
+const [revision,output,mode,...extra]=process.argv.slice(2);
+const companion=mode==='--companion';
+const entry=companion?'scripts/ops/navigation-assistant-firefox.js':'scripts/ops/navigation-assistant-gateway.js';
+const files=companion?[entry,'scripts/lib/navigation-assistant/gateway-session.js',
+ 'scripts/lib/navigation-assistant/bidi-session.js','scripts/lib/navigation-assistant/bidi-provider.js',
+ 'scripts/lib/browser-frame-bidi-evaluate.js','scripts/lib/browser-frame-tree.js',
+ 'scripts/lib/browser-bidi-native.js','scripts/lib/browser-text-edit-contract.js']:[entry];
+const stem=companion?'navigation-firefox-companion':'navigation-gateway';
+if(!/^[a-f0-9]{40}$/.test(revision||'')||!output||extra.length||(mode!==undefined&&!companion)||process.getuid()===0){
+ console.error('usage: node scripts/ops/prepare-navigation-gateway-release.js FULL_COMMIT PRIVATE_OUTPUT_DIRECTORY [--companion]');
  process.exit(2);
 }
 let work;
@@ -38,8 +45,13 @@ try{
  const release=join(work,'release');
  await mkdir(join(release,'scripts','ops'),{recursive:true,mode:0o700});
  await mkdir(join(release,'node_modules','ws'),{recursive:true,mode:0o700});
- const source=run('git',['show',revision+':scripts/ops/navigation-assistant-gateway.js']);
- await writeFile(join(release,'scripts','ops','navigation-assistant-gateway.js'),source);
+ const hashes={};
+ for(const file of files){
+  const source=run('git',['show',revision+':'+file]);
+  await mkdir(join(release,file,'..'),{recursive:true,mode:0o700});
+  await writeFile(join(release,file),source);
+  hashes[file]=digest('sha256',source);
+ }
  const metadata=JSON.stringify({private:true,type:'module',dependencies:{ws:version}},null,2)+'\n';
  await writeFile(join(release,'package.json'),metadata);
  await writeFile(join(release,'REVISION'),revision+'\n');
@@ -49,11 +61,12 @@ try{
  const tar=join(work,'ws-'+version+'.tgz'),tarBytes=await readFile(tar);
  assert.equal('sha512-'+digest('sha512',tarBytes,'base64'),integrity,'ws tarball integrity');
  run('tar',['-xzf',tar,'--strip-components=1','-C',join(release,'node_modules','ws')],work);
- const manifest={schema:'cogentia.navigation-gateway-release/v1',revision,
-  entry_sha256:digest('sha256',source),ws:{version,integrity},scope:'gateway-only',deployment:false};
+ const manifest={schema:companion?'cogentia.navigation-firefox-companion-release/v1':'cogentia.navigation-gateway-release/v1',revision,
+  entry_sha256:hashes[entry],...(companion?{files:hashes}:{}),ws:{version,integrity},scope:companion?'firefox-companion-only':'gateway-only',deployment:false};
  await writeFile(join(release,'RELEASE.json'),JSON.stringify(manifest,null,2)+'\n');
- run(process.execPath,['--check','scripts/ops/navigation-assistant-gateway.js'],release);
- const archive=join(out,'navigation-gateway-'+revision+'.tar.gz');
+ for(const file of files)run(process.execPath,['--check',file],release);
+ if(companion)run(process.execPath,[entry,'--help'],release);
+ const archive=join(out,stem+'-'+revision+'.tar.gz');
  // Refuse replacement of a prior artifact. tar is built under the private
  // temporary directory before publishing the new archive.
  const packed=join(work,'release.tar.gz');
