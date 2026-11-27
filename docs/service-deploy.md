@@ -1,7 +1,7 @@
 ---
 title: "Service deployment: bounded FractaNode owner delegation"
 date: 2026-11-26
-last_modified_at: 2026-11-26
+last_modified_at: 2026-11-27
 document_role: operational
 document_kind: runbook
 visibility: public
@@ -11,7 +11,7 @@ license: CC BY-SA 4.0
 update_policy: UP-DEFAULT-REVIEWED
 ---
 
-# service.deploy — first fixed-function provider on Fracta2
+# service.deploy — bounded service descriptors on Fracta2
 
 Owning pilot: [Cogentia #342](https://github.com/JeanHuguesRobert/cogentia/issues/342).
 This follows [the active node-owner administration decision](fractanode-owner-administration-2026-11-08.md).
@@ -113,3 +113,65 @@ idempotency, rollback and uncertain outcome. Installation and live deployment
 are separate evidence: verify the actual broker response, receipt and active
 MCP revision before declaring #342 deployed. Re-run the public John corpus
 search from the connected MCP afterwards.
+
+
+## Second Reality Test — ONA (prepared 2026-11-27; not enabled)
+
+The same engine now has a second reviewed descriptor for
+`operium-node-agent.service`. It uses its own protected owner policy
+`/var/lib/cogentia-super/service-deploy-ona-policy.json` and drop-in
+`/etc/systemd/system/operium-node-agent.service.d/zz-release.conf`.
+The MCP policy is unchanged and grants no ONA authority. The broker request
+still accepts only service, full revision and unique ticket. It accepts no
+caller-supplied executable, service definition, root command, health URL
+or configuration path. Both services share the receipt and lock protocol.
+
+ONA currently runs from the mutable Operium checkout with
+`NoNewPrivileges=no`. Do not bootstrap a versioned baseline through the
+ordinary deploy operation: it requires an already hardened ONA release,
+an owner-installed drop-in and an independent owner policy. First migration
+must be owner-operated, separately reviewed and reversible. Preserve the
+existing state directory, registry, service identity, environment and
+credentials; test actual ONA jobs, recovery and navigation before enabling
+delegation. The normal deployment engine will not restore an unhardened
+ONA baseline. The root broker module is not updated by preparing sources.
+
+The release layout is
+`/srv/cogentia/releases/operium-node-agent/<operium-sha>/operium`.
+ONA imports sibling Cogentia and Inseme code; bind those to existing tested
+release paths, record all three revision markers plus the lock digest in
+a release manifest and do not retarget those links in place. For this pilot
+one Operium commit identifies one prepared dependency combination; a later
+dependency-only deployment requires an explicit composite release identity,
+not silent mutation of that combination.
+
+The first prepared baseline uses Operium `7ce7c20`, Cogentia `91da47a2`,
+and Inseme `f4fa82ed`. The health acceptance requires both ONA's loopback
+`8794/health` with the expected node identity and the navigation gateway's
+`8765/health` with the expected instance. A real deployment additionally
+checks fleet and scheduled jobs, preserves SQLite state, and verifies
+recovery. The existing #81 preflight and restart receipt work is reused;
+no new MCP tool is required. The initial release and the generalized
+engine passed focused local tests; no claim of live ONA deployment follows.
+
+
+### One-time ONA owner activation
+
+The separately reviewed `scripts/super/install-ona-service-deploy.sh` accepts
+the digest of the currently installed deployment module and an explicit
+`--enable-local-ubuntu-role` owner opt-in. Stage only the installer and the
+new deployment module from the exact published revision; verify the archive
+digest before extracting into a root-owned private directory. The script
+refuses an unexpected unit, an existing ONA drop-in/policy or a pending
+deployment lock. It migrates the baseline and waits for **fresh successful
+executions of all four currently enabled jobs**, in addition to ONA health,
+navigation health and the fleet view. It keeps the former module and a
+baseline receipt in a protected backup. Only then does it update the broker
+module, observe that ONA is still disabled, verify that the existing MCP
+policy is unchanged, and install the separate ONA owner policy. On failure,
+it removes its own new policy and drop-in and restores the former module.
+The owner must inspect a failed or interrupted migration before repeating it.
+This is a one-time owner action, not a new authorization for each release.
+After success, the same client can verify the current ONA release without
+restarting it, and a subsequent distinct prepared revision provides the
+positive autonomous deployment Reality Test.

@@ -8,46 +8,63 @@ import {fileURLToPath} from 'node:url';
 import {setTimeout as delay} from 'node:timers/promises';
 
 export const SERVICE='mcp-cogentia.service';
-const BASE='/srv/cogentia/releases/mcp-cogentia';
-const DROP='/etc/systemd/system/mcp-cogentia.service.d/zz-release-330.conf';
-const POLICY='/var/lib/cogentia-super/service-deploy-policy.json';
+export const ONA_SERVICE='operium-node-agent.service';
+// Fixed, code-reviewed descriptors. A request selects a service, never supplies
+// an executable, config path, health URL, Unix identity or privilege policy.
+const descriptors=Object.freeze({
+  [SERVICE]:Object.freeze({
+    base:'/srv/cogentia/releases/mcp-cogentia',repo:'cogentia',
+    drop:'/etc/systemd/system/mcp-cogentia.service.d/zz-release-330.conf',
+    policy:'/var/lib/cogentia-super/service-deploy-policy.json',
+    entry:'scripts/cogentia-mcp-http.js',health:'http://127.0.0.1:8791/health',
+    healthy:body=>body?.ok===true&&body?.mcp==='cogentia-mcp',requireHardenedBaseline:false}),
+  [ONA_SERVICE]:Object.freeze({
+    base:'/srv/cogentia/releases/operium-node-agent',repo:'operium',
+    drop:'/etc/systemd/system/operium-node-agent.service.d/zz-release.conf',
+    policy:'/var/lib/cogentia-super/service-deploy-ona-policy.json',
+    entry:'bin/operium-node-agent.js',health:'http://127.0.0.1:8794/health',
+    healthy:body=>body?.ok===true&&body?.service==='operium-node-agent'&&body?.node_id==='resource://fracta2',
+    secondaryHealth:'http://127.0.0.1:8765/health',secondaryHealthy:body=>body?.ok===true&&body?.instance==='fracta2',
+    requireHardenedBaseline:true})
+});
+export function serviceDescriptor(service){return typeof service==='string'&&Object.hasOwn(descriptors,service)?descriptors[service]:null;}
 const RECEIPTS='/var/lib/cogentia-super/service-deploy-receipts';
 const NODE='/usr/local/bin/node';
-const ENTRY='scripts/cogentia-mcp-http.js';
 const SOCKET='/run/cogentia-super/broker.sock';
 const SHA=/^[0-9a-f]{40}$/;
 const ID=/^[a-zA-Z0-9_-]{8,100}$/;
 const hooks=['ExecCondition','ExecStartPre','ExecStartPost','ExecReload','ExecStop','ExecStopPost'];
 const properties=['User','Group','SupplementaryGroups','NoNewPrivileges','CapabilityBoundingSet','AmbientCapabilities','WorkingDirectory','ExecStart','ExecStartEx','MainPID','ActiveState',...hooks,...hooks.map(k=>k+'Ex')];
 const fail=error=>({ok:false,error,executed:false});
-const cwd=revision=>BASE+'/'+revision+'/cogentia';
-const legacyConfig=revision=>'[Service]\nWorkingDirectory='+cwd(revision)+'\nExecStart=\nExecStart='+NODE+' '+cwd(revision)+'/'+ENTRY+'\n';
-export const deploymentConfig=revision=>legacyConfig(revision)+'NoNewPrivileges=yes\nCapabilityBoundingSet=\nAmbientCapabilities=\n';
+const cwd=(revision,d)=>d.base+'/'+revision+'/'+d.repo;
+const legacyConfig=(revision,d)=>'[Service]\nWorkingDirectory='+cwd(revision,d)+'\nExecStart=\nExecStart='+NODE+' '+cwd(revision,d)+'/'+d.entry+'\n';
+export const deploymentConfig=(revision,service=SERVICE)=>legacyConfig(revision,serviceDescriptor(service))+'NoNewPrivileges=yes\nCapabilityBoundingSet=\nAmbientCapabilities=\n';
 
 export function validateDeployRequest(r){
   if(!r||typeof r!=='object'||Array.isArray(r)||r.op!=='service.deploy'||
      Object.keys(r).some(k=>!['op','service','revision','request_id'].includes(k))||
-     r.service!==SERVICE||typeof r.revision!=='string'||!SHA.test(r.revision)||
+     !serviceDescriptor(r.service)||typeof r.revision!=='string'||!SHA.test(r.revision)||
      typeof r.request_id!=='string'||!ID.test(r.request_id))return false;
   return true;
 }
-export function validateOwnerPolicy(p,gid){
+export function validateOwnerPolicy(p,gid,service=SERVICE){
   return p?.schema==='cogentia.service-deploy.owner-policy/v1'&&p.enabled===true&&
-    p.service===SERVICE&&p.target==='node:fracta2'&&p.authority==='node-owner-local-role'&&
+    p.service===service&&Boolean(serviceDescriptor(service))&&p.target==='node:fracta2'&&p.authority==='node-owner-local-role'&&
     Number.isSafeInteger(gid)&&gid>0&&p.socket_gid===gid;
 }
-function revisionOf(dir){
-  if(typeof dir!=='string'||!dir.startsWith(BASE+'/')||!dir.endsWith('/cogentia'))return null;
-  const r=dir.slice(BASE.length+1,-'/cogentia'.length);
+function revisionOf(dir,d){
+  if(typeof dir!=='string'||!dir.startsWith(d.base+'/')||!dir.endsWith('/'+d.repo))return null;
+  const r=dir.slice(d.base.length+1,-('/'+d.repo).length);
   return SHA.test(r)?r:null;
 }
-export function safeUnit(state,revision,{hardened=false}={}){
+export function safeUnit(state,revision,{hardened=false,service=SERVICE}={}){
+  const d=serviceDescriptor(service);if(!d)return false;
   return (!hardened||(state?.NoNewPrivileges==='yes'&&state.CapabilityBoundingSet===''))&& state?.User==='ubuntu'&&(!state.Group||state.Group==='ubuntu')&&!state.SupplementaryGroups&&state.AmbientCapabilities===''&&
-    hooks.every(k=>!state[k]&&!state[k+'Ex'])&&state.WorkingDirectory===cwd(revision)&&
+    hooks.every(k=>!state[k]&&!state[k+'Ex'])&&state.WorkingDirectory===cwd(revision,d)&&
     typeof state.ExecStart==='string'&&
-    state.ExecStart.startsWith('{ path='+NODE+' ; argv[]='+NODE+' '+cwd(revision)+'/'+ENTRY+' ; ')&&
+    state.ExecStart.startsWith('{ path='+NODE+' ; argv[]='+NODE+' '+cwd(revision,d)+'/'+d.entry+' ; ')&&
     !state.ExecStart.includes(' ; {')&&typeof state.ExecStartEx==='string'&&
-    state.ExecStartEx.startsWith('{ path='+NODE+' ; argv[]='+NODE+' '+cwd(revision)+'/'+ENTRY+' ; flags= ; ')&&
+    state.ExecStartEx.startsWith('{ path='+NODE+' ; argv[]='+NODE+' '+cwd(revision,d)+'/'+d.entry+' ; flags= ; ')&&
     !state.ExecStartEx.includes(' ; {');
 }
 
@@ -60,12 +77,13 @@ export function runtimeHardened(status,uid){
 
 export async function executeServiceDeploy(r,a){
   if(!validateDeployRequest(r))return fail('invalid_deployment_request');
+  const service=r.service,d=serviceDescriptor(service);
   if(!await a.authorized())return fail('owner_delegation_required');
   const prior=await a.readReceipt(r.request_id);
   if(prior)return prior.revision===r.revision&&prior.service===r.service
     ? {...prior,duplicate:true}:fail('deployment_request_id_conflict');
   if(!await a.lock(r.request_id))return fail('deployment_busy_or_reconciliation_required');
-  let receipt={schema:'cogentia.service-deploy.receipt/v1',request_id:r.request_id,service:SERVICE,
+  let receipt={schema:'cogentia.service-deploy.receipt/v1',request_id:r.request_id,service,
     revision:r.revision,authority:'node-owner-local-role',at:new Date().toISOString(),
     authority_scope:'local-broker-socket-role',state:'prepared',ok:false,executed:false};
   let saved=null,previous=null,changed=false,retainLock=false;
@@ -77,14 +95,14 @@ export async function executeServiceDeploy(r,a){
     if(committed)return committed.revision===r.revision&&committed.service===r.service
       ? {...committed,duplicate:true}:fail('deployment_request_id_conflict');
     const before=await a.inspect();
-    previous=revisionOf(before.WorkingDirectory);
-    if(!previous||!safeUnit(before,previous))return fail('unexpected_service_configuration');
+    previous=revisionOf(before.WorkingDirectory,d);
+    if(!previous||!safeUnit(before,previous,{service,hardened:d.requireHardenedBaseline}))return fail('unexpected_service_configuration');
     if(!await a.releaseValid(previous)||!await a.releaseValid(r.revision))return fail('release_not_prepared');
     saved=await a.readConfig();
-    if(saved!==deploymentConfig(previous)&&saved!==legacyConfig(previous))return fail('unexpected_release_dropin');
+    if(saved!==deploymentConfig(previous,service)&&(d.requireHardenedBaseline||saved!==legacyConfig(previous,d)))return fail('unexpected_release_dropin');
     receipt={...receipt,previous_revision:previous,previous_pid:before.MainPID};
     await a.saveReceipt(receipt);
-    if(previous===r.revision&&saved===deploymentConfig(previous)&&safeUnit(before,previous,{hardened:true})){
+    if(previous===r.revision&&saved===deploymentConfig(previous,service)&&safeUnit(before,previous,{hardened:true,service})){
       const verified=await a.verify(r.revision);
       receipt={...receipt,state:verified?'verified':'attention_required',ok:verified,unchanged:true};
       await a.saveReceipt(receipt);
@@ -97,9 +115,9 @@ export async function executeServiceDeploy(r,a){
     receipt={...receipt,state:'executing',executed:true};
     await a.saveReceipt(receipt);
     changed=true;
-    await a.writeConfig(deploymentConfig(r.revision));
+    await a.writeConfig(deploymentConfig(r.revision,service));
     await a.reload();
-    if(!safeUnit(await a.inspect(),r.revision,{hardened:true}))throw Error('new_configuration_not_effective');
+    if(!safeUnit(await a.inspect(),r.revision,{hardened:true,service}))throw Error('new_configuration_not_effective');
     await a.restart();
     if(!await a.verify(r.revision))throw Error('new_release_health_failed');
     receipt={...receipt,state:'verified',ok:true,new_pid:(await a.inspect()).MainPID};
@@ -109,8 +127,8 @@ export async function executeServiceDeploy(r,a){
     receipt={...receipt,error:['new_configuration_not_effective','new_release_health_failed'].includes(error.message)?error.message:'deployment_failed'};
     if(changed){
       try{
-        await a.writeConfig(deploymentConfig(previous));await a.reload();
-        if(!safeUnit(await a.inspect(),previous,{hardened:true}))throw Error('rollback_configuration_not_effective');
+        await a.writeConfig(deploymentConfig(previous,service));await a.reload();
+        if(!safeUnit(await a.inspect(),previous,{hardened:true,service}))throw Error('rollback_configuration_not_effective');
         await a.restart();
         if(!await a.verify(previous))throw Error('rollback_health_failed');
         receipt={...receipt,state:'rolled_back',rollback_verified:true};
@@ -143,18 +161,18 @@ function atomic(file,text,mode=0o600){
 }
 const runFile=promisify(execFile);
 const systemctl=async (...args)=>(await runFile('/usr/bin/systemctl',args,{encoding:'utf8',timeout:45000,maxBuffer:65536})).stdout;
-async function inspect(){
-  const output=await systemctl('show',SERVICE,'--all',...properties.flatMap(k=>['-p',k]));
+async function inspect(service){
+  const output=await systemctl('show',service,'--all',...properties.flatMap(k=>['-p',k]));
   return Object.fromEntries(output.trim().split('\n').map(l=>[l.slice(0,l.indexOf('=')),l.slice(l.indexOf('=')+1)]));
 }
-function releaseValid(revision){
+export function releaseValid(revision,d){
   if(!SHA.test(revision))return false;
   try{
-    const d=cwd(revision);
+    const directory=cwd(revision,d);
     // Source is agent-owned, and is ONLY executed under the existing ubuntu
     // service identity. Root never imports it or executes Git in that tree.
-    if(fs.realpathSync(d)!==d||fs.realpathSync(d+'/'+ENTRY)!==d+'/'+ENTRY)return false;
-    const fd=fs.openSync(d+'/REVISION',fs.constants.O_RDONLY|fs.constants.O_NOFOLLOW|fs.constants.O_NONBLOCK);
+    if(fs.realpathSync(directory)!==directory||fs.realpathSync(directory+'/'+d.entry)!==directory+'/'+d.entry)return false;
+    const fd=fs.openSync(directory+'/REVISION',fs.constants.O_RDONLY|fs.constants.O_NOFOLLOW|fs.constants.O_NONBLOCK);
     try{
       const s=fs.fstatSync(fd);
       if(!s.isFile()||s.size!==41)return false;
@@ -162,42 +180,47 @@ function releaseValid(revision){
     }finally{fs.closeSync(fd);}
   }catch{return false;}
 }
-function authorized(){
+function authorized(d,service){
   try{
-    if(!protectedFile(POLICY))return false;
+    if(!protectedFile(d.policy))return false;
     const socket=fs.lstatSync(SOCKET);
     const parent=fs.lstatSync(path.dirname(SOCKET));
     if(!socket.isSocket()||socket.uid!==0||(socket.mode&0o777)!==0o660||
        !parent.isDirectory()||parent.uid!==0||parent.gid!==socket.gid||(parent.mode&0o777)!==0o750)return false;
-    const p=JSON.parse(fs.readFileSync(POLICY,'utf8'));
-    return validateOwnerPolicy(p,socket.gid);
+    const p=JSON.parse(fs.readFileSync(d.policy,'utf8'));
+    return validateOwnerPolicy(p,socket.gid,service);
   }catch{return false;}
 }
 export async function deployFromProtectedBroker(r){
   if(process.geteuid?.()!==0||!protectedFile(fileURLToPath(import.meta.url)))return fail('protected_deploy_executor_required');
   if(!validateDeployRequest(r))return fail('invalid_deployment_request');
-  if(!authorized())return fail('owner_delegation_required');
-  if(!protectedDir(RECEIPTS)||!protectedFile(DROP))return fail('protected_deployment_state_required');
+  const service=r.service,d=serviceDescriptor(service);
+  if(!authorized(d,service))return fail('owner_delegation_required');
+  if(!protectedDir(RECEIPTS)||!protectedFile(d.drop))return fail('protected_deployment_state_required');
   const {stdout:uidText}=await runFile('/usr/bin/id',['-u','ubuntu'],{encoding:'utf8',timeout:2000});
   const uid=Number(uidText.trim());
   if(!Number.isSafeInteger(uid)||uid<=0)return fail('service_identity_unavailable');
   const receiptPath=id=>path.join(RECEIPTS,id+'.json');
   const lock=path.join(RECEIPTS,'active.lock');
   return executeServiceDeploy(r,{
-    authorized,inspect,releaseValid,
-    readConfig:()=>fs.readFileSync(DROP,'utf8'),
-    writeConfig:content=>atomic(DROP,content,0o644),
-    reload:()=>systemctl('daemon-reload'),restart:()=>systemctl('restart',SERVICE),
+    authorized:()=>authorized(d,service),inspect:()=>inspect(service),releaseValid:revision=>releaseValid(revision,d),
+    readConfig:()=>fs.readFileSync(d.drop,'utf8'),
+    writeConfig:content=>atomic(d.drop,content,0o644),
+    reload:()=>systemctl('daemon-reload'),restart:()=>systemctl('restart',service),
     async verify(revision){
       for(let i=0;i<20;i++){
         try{
-          const state=await inspect();
-          if(safeUnit(state,revision,{hardened:true})&&state.ActiveState==='active'&&Number(state.MainPID)>0&&
-             fs.realpathSync('/proc/'+state.MainPID+'/cwd')===cwd(revision)&&
+          const state=await inspect(service);
+          if(safeUnit(state,revision,{hardened:true,service})&&state.ActiveState==='active'&&Number(state.MainPID)>0&&
+             fs.realpathSync('/proc/'+state.MainPID+'/cwd')===cwd(revision,d)&&
              runtimeHardened(fs.readFileSync('/proc/'+state.MainPID+'/status','utf8'),uid)){
-            const response=await fetch('http://127.0.0.1:8791/health',{redirect:'error',signal:AbortSignal.timeout(1500)});
+            const response=await fetch(d.health,{redirect:'error',signal:AbortSignal.timeout(1500)});
             const body=await response.json();
-            if(response.ok&&body?.ok===true&&body?.mcp==='cogentia-mcp')return true;
+            if(response.ok&&d.healthy(body)){
+              if(!d.secondaryHealth)return true;
+              const secondary=await fetch(d.secondaryHealth,{redirect:'error',signal:AbortSignal.timeout(1500)});
+              if(secondary.ok&&d.secondaryHealthy(await secondary.json()))return true;
+            }
           }
         }catch{}
         await delay(500);
