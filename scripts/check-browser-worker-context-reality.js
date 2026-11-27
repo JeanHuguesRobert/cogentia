@@ -15,6 +15,7 @@ import {WebSocket as Ws} from 'ws';
 import {createNavigationGateway} from './ops/navigation-assistant-gateway.js';
 import {createGatewaySession} from './lib/navigation-assistant/gateway-session.js';
 import {compileUidStructure,projectElementTarget,callUidFormFill} from './lib/browser-element-target.js';
+import {executeBidiFrameEvaluate} from './lib/browser-frame-bidi-evaluate.js';
 import {compileNonSecretFormFill} from './lib/browser-form-script.js';
 import {bindBrowserWorkerContext} from './lib/browser-worker-context.js';
 
@@ -38,7 +39,7 @@ globalThis.worker=createWorker({id:host.load()?.id||crypto.randomUUID(),host,pro
  }
 }});
 </script>`;
-let server,browser,exited,exitInfo,gate,peer,session,bidi,stderr='';
+let server,frameServer,browser,exited,exitInfo,gate,peer,session,bidi,stderr='';
 const tabs=new Map();
 const browserId='worker-reality-fixture';
 async function json(url,options={}){
@@ -111,9 +112,16 @@ async function reload(tab){
 }
 
 try{
+ frameServer=createServer((req,res)=>{
+  if(req.url==='/frame'){res.writeHead(200,{'content-type':'text/html; charset=utf-8'});res.end('<!doctype html><input id="uid-target" value="frame-original">')}
+  else{res.writeHead(404);res.end()}
+ });
+ await new Promise((resolve,reject)=>{frameServer.once('error',reject);frameServer.listen(0,'127.0.0.1',resolve)});
+ const frameOrigin='http://127.0.0.1:'+frameServer.address().port;
+ const frameUrl=frameOrigin+'/frame';
  server=createServer((req,res)=>{
   if(req.url==='/worker.js'){res.writeHead(200,{'content-type':'application/javascript'});res.end(runtime)}
-  else if(req.url==='/probe'){res.writeHead(200,{'content-type':'text/html; charset=utf-8'});res.end(html)}
+  else if(req.url==='/probe'){res.writeHead(200,{'content-type':'text/html; charset=utf-8'});res.end(html+'<iframe id="cross" src="'+frameUrl+'"></iframe>')}
   else{res.writeHead(404);res.end()}
  });
  await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve)});
@@ -276,6 +284,47 @@ try{
  session.close();session=await createGatewaySession(base+'/assistant');
  assert.equal((await fill(fresh,'new session')).ok,true);
  assert.equal(await evaluate(tabs.get(41),'inputEvents'),1);
+ // The BiDi-specific frame transport uses the real context tree and realm,
+ // while the DOM recipes and target receipt stay engine-independent.
+ let crossOriginUid=false;
+ if(firefox){
+  const send=(method,params)=>bidi.call(method,params);
+  const rootContext=tabs.get(41).context;
+  const tree=await send('browsingContext.getTree',{root:rootContext});
+  const frame=tree.contexts[0].children.find(c=>c.url===frameUrl);
+  assert.ok(frame);
+  assert.equal(await evaluate(tabs.get(41),'document.querySelector("#cross").contentDocument===null'),true);
+  const frameEval=(scriptForUrl,options={})=>session.withTabLease(browserId,41,()=>executeBidiFrameEvaluate({
+   send,rootContext,expectedUrl,frameId:frame.context,expectedOrigin:frameOrigin,scriptForUrl,...options}));
+  const obs=await frameEval(compileUidStructure);
+  const frameTarget=projectElementTarget(obs.value,0,browserId,41,frame.context);
+  assert.ok(frameTarget);assert.notEqual(frameTarget.uid,fresh.uid);
+  const frameFill=(target,text)=>frameEval(url=>compileNonSecretFormFill({
+   elementTarget:target,expectedUrl:url,text,allowLoopbackFixture:true}));
+  const done=await frameFill(frameTarget,'Dans la frame');
+  assert.equal(done.value.ok,true);assert.equal(done.realm,obs.realm);
+  assert.equal(await evaluate({context:frame.context},'document.querySelector("#uid-target").value'),'Dans la frame');
+  assert.equal(await evaluate(tabs.get(41),'document.querySelector("#uid-target").value'),'new session');
+  const other=(await send('browsingContext.getTree',{root:tabs.get(42).context})).contexts[0].children.find(c=>c.url===frameUrl);
+  await assert.rejects(()=>frameEval(compileUidStructure,{frameId:other.context}),/bidi_frame_not_unique_or_missing/);
+  await assert.rejects(()=>frameEval(compileUidStructure,{expectedOrigin:new URL(expectedUrl).origin}),/bidi_frame_origin_mismatch/);
+  await evaluate({context:frame.context},`(() => {
+    const old=document.querySelector('#uid-target'),clone=old.cloneNode(true);
+    clone.value='frame-unchanged';old.replaceWith(clone);
+    globalThis.inputEvents=0;clone.addEventListener('input',()=>inputEvents++);
+  })()`);
+  assert.deepEqual((await frameFill(frameTarget,'stale')).value,{ok:false,reason:'element_uid_stale'});
+  assert.equal(await evaluate({context:frame.context},'inputEvents'),0);
+  assert.equal(await evaluate({context:frame.context},'document.querySelector("#uid-target").value'),'frame-unchanged');
+  const second=await frameEval(compileUidStructure);
+  const newer=projectElementTarget(second.value,0,browserId,41,frame.context);
+  await send('browsingContext.reload',{context:frame.context,wait:'complete'});
+  const after=await frameEval(compileUidStructure);
+  assert.notEqual(after.realm,second.realm);
+  assert.deepEqual((await frameFill(newer,'old document')).value,{ok:false,reason:'document_epoch_changed'});
+  assert.equal(await evaluate({context:frame.context},'document.querySelector("#uid-target").value'),'frame-original');
+  crossOriginUid=true;
+ }
  const worker=bindBrowserWorkerContext({session,browserId,expectedUrl,workerId:id});
  const locator=await worker.locate();
  assert.equal(locator.tabId,41);
@@ -304,7 +353,7 @@ try{
  assert.equal((await invoke('step')).locals.started,2);
  assert.equal((await invoke('step',[{type:'resume',increment:2}])).lastResult.value,3);
  console.log(JSON.stringify({ok:true,browser:version,engine,actual_chromium:engine==='chromium',actual_firefox:engine==='firefox',actual_gateway:true,
-  extension:engine==='firefox'?'fixture_bidi_peer':'fixture_cdp_peer',actual_inventory:true,uid_registry:true,uid_reinjection:true,uid_replacement_rejected:true,uid_document_isolation:true,uid_reload_invalidated:true,uid_fill:true,uid_stale_no_input:true,uid_reconnect:true,distinct_workers:true,rediscovery:true,checkpoint_reload:true,reused_worker:true,
+  extension:engine==='firefox'?'fixture_bidi_peer':'fixture_cdp_peer',actual_inventory:true,uid_registry:true,uid_reinjection:true,uid_replacement_rejected:true,uid_document_isolation:true,uid_reload_invalidated:true,uid_fill:true,uid_stale_no_input:true,uid_reconnect:true,cross_origin_uid:crossOriginUid,distinct_workers:true,rediscovery:true,checkpoint_reload:true,reused_worker:true,
   sandbox_disabled:false,personal_browser_used:false}));
 }catch(e){
  console.error(JSON.stringify({ok:false,reason:e.message,engine,browser_exit:exitInfo||null,browser_stderr:stderr,
@@ -317,6 +366,7 @@ try{
   if(!exitInfo){try{process.kill(-browser.pid,'SIGKILL')}catch{};await Promise.race([exited,delay(1000)])}
  }
  if(server){server.closeAllConnections();await new Promise(r=>server.close(r))}
+ if(frameServer){frameServer.closeAllConnections();await new Promise(r=>frameServer.close(r))}
  await rm(dir,{recursive:true,force:true,maxRetries:5,retryDelay:100});
  console.log(JSON.stringify({cleanup:true,temporary_profile_removed:true,browser_exit:exitInfo||null}));
 }

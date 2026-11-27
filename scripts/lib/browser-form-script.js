@@ -6,7 +6,7 @@ import {validElementTarget} from './browser-element-target.js';
 export function compileNonSecretFormFill({fieldIndex,text,expectedUrl,iframeIndex,expectedFrameOrigin,fieldKind="plain",elementTarget,allowLoopbackFixture=false}={}){
  const uidMode=elementTarget!==undefined;
  const fixtureUrl=allowLoopbackFixture&&typeof expectedUrl==='string'&&/^http:\/\/127\.0\.0\.1:\d+\//.test(expectedUrl);
- if((uidMode?(fieldIndex!==undefined||!validElementTarget(elementTarget)):(!Number.isInteger(fieldIndex)||fieldIndex<0||fieldIndex>79))||
+ if((uidMode?(fieldIndex!==undefined||!validElementTarget(elementTarget,{allowFrame:true})):(!Number.isInteger(fieldIndex)||fieldIndex<0||fieldIndex>79))||
    typeof text!=='string'||text.length<1||text.length>2048||
    typeof expectedUrl!=='string'||(!expectedUrl.startsWith('https://')&&!fixtureUrl)||expectedUrl.length>4096)throw Error('form_script_invalid_input');
  if(!['plain','contenteditable'].includes(fieldKind))throw Error('form_script_field_kind_invalid');

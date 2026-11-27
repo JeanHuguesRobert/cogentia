@@ -1,19 +1,19 @@
 /** Document-local DOM identity for the existing inspect/form.fill capabilities.
  * A target identifies an object, not an authorization or durable selector.
- * First increment: top document only. No implicit frame or ordinal fallback.
+ * Frame identity is explicit; hosted top-document callers remain top-only by default.
  */
 import {readFileSync} from 'node:fs';
 import {SAFE_DOM_STRUCTURE_CODE} from './browser-safe-dom-structure.js';
 
 const EPOCH=/^[a-f0-9]{32}$/;
 const UID=/^[a-f0-9]{32}:[1-9][0-9]{0,15}$/;
-export function validElementTarget(target,{tabId,browserId}={}){
+export function validElementTarget(target,{tabId,browserId,allowFrame=false}={}){
  return !!target&&typeof target==='object'&&!Array.isArray(target)&&
   Object.keys(target).sort().join(',')==='browser_instance_id,document_epoch,frame_id,tab_id,uid'&&
   typeof target.browser_instance_id==='string'&&target.browser_instance_id.length>0&&target.browser_instance_id.length<=200&&
   (browserId===undefined||target.browser_instance_id===browserId)&&
   Number.isSafeInteger(target.tab_id)&&target.tab_id>0&&(tabId===undefined||target.tab_id===tabId)&&
-  target.frame_id==='top'&&typeof target.document_epoch==='string'&&EPOCH.test(target.document_epoch)&&
+  (target.frame_id==='top'||(allowFrame&&typeof target.frame_id==='string'&&/^[A-Za-z0-9_-]{1,160}$/.test(target.frame_id)))&&typeof target.document_epoch==='string'&&EPOCH.test(target.document_epoch)&&
   typeof target.uid==='string'&&UID.test(target.uid)&&target.uid.startsWith(target.document_epoch+':');
 }
 export const ELEMENT_TARGET_SCHEMA={type:'object',properties:{
@@ -36,10 +36,10 @@ export function compileUidStructure(expectedUrl){
  document.querySelectorAll('input,textarea,select,button,[contenteditable="true"]')).slice(0,80).map(el=>registry.elementUid(el))};
  })()`;
 }
-export function projectElementTarget(raw,index,browserId,tabId){
- const target={browser_instance_id:browserId,tab_id:tabId,frame_id:'top',
+export function projectElementTarget(raw,index,browserId,tabId,frameId="top"){
+ const target={browser_instance_id:browserId,tab_id:tabId,frame_id:frameId,
   document_epoch:raw?.document_epoch,uid:raw?.element_uids?.[index]};
- return validElementTarget(target,{tabId,browserId})?target:null;
+ return validElementTarget(target,{tabId,browserId,allowFrame:true})?target:null;
 }
 
 /** Reuse the caller's existing admission and lease. No retry on uncertain effect. */

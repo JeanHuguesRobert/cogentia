@@ -517,3 +517,41 @@ This section describes implemented Core source and bounded live probes; it
 does **not** by itself imply that a running agent service has loaded the new
 commit, that its runtime upload roots are configured, or that the separate
 COP upload mandate has been issued.
+
+
+## 2026-11-27 — Document-local element identity and multi-engine reality tests
+
+Packet [Cogentia #349](https://github.com/JeanHuguesRobert/cogentia/issues/349)
+extends the existing semantic capabilities, not the extension RPC catalogue.
+The standard library has a document-local object UID registry (WeakMap,
+WeakRef and a document epoch). A UID is not a durable selector or an
+authorization.
+
+The source-level top-document contract is opt-in:
+`browser.hosted.inspect` with `action: "structure"`,
+`include_element_identity: true`, explicit `tab_id` and exact HTTPS
+`expected_url` returns an `element_target` for each observed control.
+The target binds browser instance, tab, frame ("top"), document epoch and UID.
+Pass it to the existing `browser.form.fill` instead of `field_index`.
+The existing COP admission, non-secret field rules and tab lease remain in
+force. A stale target is refused without selecting another control by index.
+The receipt contains target identity and insertion length, not text.
+
+For real Firefox, the reusable Core BiDi frame evaluator
+(`scripts/lib/browser-frame-bidi-evaluate.js`) binds a child browsing context
+to the selected root context, exact top URL and expected frame origin, then
+pins the actual named-sandbox realm for execution. It rechecks the frame
+and realm after dispatch and does not retry an unconfirmed effect.
+The common UID and fill recipes run in that realm, including in cross-origin
+frames. This is backend-level evidence; the public hosted capability and
+canonical COP argument gate remain top-document-only for UID targets pending
+frame integration. The existing Chromium frame route is unchanged.
+
+Reproduce with `node scripts/check-browser-worker-context-reality.js --firefox`
+or `--chromium`. The Firefox 158.0.1 run on Fracta2 uses real browser
+contexts, the actual navigation gateway and a disposable fixture transport.
+It passes top-document UID fill and stale refusal, assistant reconnection,
+cross-origin frame UID fill, wrong-root/origin refusal, clone replacement
+and frame reload invalidation. Chromium remains blocked at launch by the
+sandbox issue tracked in [#285](https://github.com/JeanHuguesRobert/cogentia/issues/285).
+This is not an installed Firefox extension or a production deployment.
