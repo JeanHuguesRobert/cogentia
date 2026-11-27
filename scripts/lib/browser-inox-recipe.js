@@ -5,7 +5,7 @@ import {readFile} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {createDefaultFormRecipes} from './browser-form-recipes.js';
-export async function createInoxComparisonRegistry(directory){
+export async function createInoxComparisonRegistry(directory,{editProfile}={}){
  if(typeof directory!=='string'||!directory)throw Error('inox_recipe_directory_required');
  const root=resolve(directory);
  const module=name=>import(pathToFileURL(join(root,name)).href);
@@ -13,7 +13,7 @@ export async function createInoxComparisonRegistry(directory){
   module('toy-runner.js'),module('definition-image.js'),module('zero-browser.js')]);
  const image=JSON.parse(await readFile(join(root,'browser-fields-image.json'),'utf8'));
  const uniqueImage=JSON.parse(await readFile(join(root,'browser-unique-field-image.json'),'utf8'));
- return createDefaultFormRecipes({fieldSelector(fields,type,selection){
+ return createDefaultFormRecipes({editProfile,fieldSelector(fields,type,selection){
   const vm=installZeroBrowser(new VM({maxSteps:100000}),fields);
   loadDefinitions(vm,image);
   if(selection==='unique')loadDefinitions(vm,uniqueImage);

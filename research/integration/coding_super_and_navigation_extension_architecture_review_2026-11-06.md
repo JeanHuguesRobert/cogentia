@@ -113,3 +113,36 @@ produces a planning result, but the current plain-input client-script and
 native BiDi fill backends exclude email (and number). The fixture's email
 comparison was planning only, not an end-to-end email write proof.
 Do not broaden backend field policy merely to obtain a green recipe test.
+
+### Principal decision — general text editing, not email-specific recipes
+
+The Principal confirms that the semantic abstraction should be editing text
+in an identified editable element, independent of CDP/BiDi/DOM. Distinguish
+insert-at-selection from replace-all; these are different observable effects.
+The existing Chromium page.form.fill focuses and inserts, while the Core
+DOM script selects and replaces. Native BiDi page.insertText operates on an
+already focused input and checks caret and content. It is not yet a form.fill
+route. The successful legacy email demonstration on 6 November remains valid;
+the newer DOM and BiDi exclusions are backend-specific, not a general
+prohibition on non-secret email text.
+
+The first FBF increment centralizes the existing plain-input support profiles
+in browser-text-edit-contract.js. DOM script and BiDi native input use the
+same declared type subsets as the planning model. An explicitly configured
+form recipe registry checks the selected profile before producing a plan;
+the default preserves legacy CDP semantics, and an unrouted native BiDi
+profile cannot generate a form.fill plan. The real Chromium comparison
+fixture now configures the actual dom-replace profile and verifies that an
+unsupported edit is rejected before producing the John request. No new
+authorization, input type, RPC or transport route is introduced.
+
+This is a preflight contract, not yet automatic provider negotiation:
+the trusted caller must choose the matching registry for its execution
+route. Native BiDi focused insertion also has independent text/length and
+selection constraints. UID/realm binding and current DOM revalidation
+remain executor responsibilities. A future ZeroBrowser edit interface
+should express operation, target and desired text, select a proven
+implementation before dispatch, and verify the intended resulting content
+without retrying uncertain edits. Preserve existing tested paths while
+converging on that contract. Do not treat a type name or a successful
+keypress as proof of complete replacement.

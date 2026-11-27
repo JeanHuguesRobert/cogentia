@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {createFormRecipeRegistry,FORM_RECIPES} from './browser-form-recipes.js';
+import {createFormRecipeRegistry,createDefaultFormRecipes,FORM_RECIPES} from './browser-form-recipes.js';
 const structure={origin:'https://example.org',truncated:false,fields:[
  {tag:'input',type:'password',disabled:false,readonly:false,autocomplete:'current-password'},
  {tag:'input',type:'text',disabled:false,readonly:false,autocomplete:''},
@@ -47,4 +47,19 @@ test('unique-text requires exactly one admissible field and leaves first-text un
  const r=createFormRecipeRegistry({fieldSelector:()=>0});
  r.register({id:'unique',version:1,match:{type:'text'},selection:'unique'});
  assert.throws(()=>r.plan({...req,recipe_id:'unique',structure:duplicate}),/parity_mismatch/);
+});
+
+
+test('explicit editing profile rejects unsupported field types before emitting a plan',()=>{
+ const email={...task,recipe_id:'generic.first-email',version:1};
+ assert.equal(FORM_RECIPES.plan(email).arguments.field_index,2);
+ for(const editProfile of ['dom-replace']){
+  const registry=createDefaultFormRecipes({editProfile});
+  assert.throws(()=>registry.plan(email),/form_recipe_edit_unsupported/);
+  assert.equal(registry.plan({...email,recipe_id:'generic.first-text'}).arguments.field_index,1);
+  registry.register({id:'number',version:1,match:{type:'number'}});
+  assert.throws(()=>registry.plan({...email,recipe_id:'number',structure:{...structure,fields:[{...structure.fields[1],type:'number'}]}}),/edit_unsupported/);
+ }
+ assert.throws(()=>createDefaultFormRecipes({editProfile:'bidi-native-insert'}),/edit_profile_unrouted/);
+ assert.throws(()=>createDefaultFormRecipes({editProfile:'unknown'}),/unknown_text_edit_profile/);
 });

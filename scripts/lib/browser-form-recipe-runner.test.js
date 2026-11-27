@@ -1,4 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
+import {createDefaultFormRecipes} from './browser-form-recipes.js';
 import {prepareFormAssistRequest} from './browser-form-recipe-runner.js';
 const structure={origin:'https://example.org',truncated:false,fields:[
  {tag:'input',type:'text',disabled:false,readonly:false,autocomplete:''},
@@ -19,4 +20,9 @@ test('invalid recipe or absent inspector produces no packet',async()=>{
  await assert.rejects(()=>prepareFormAssistRequest({...input,request_id:'spaces no'}));
  await assert.rejects(()=>prepareFormAssistRequest({...input,recipe_id:'unknown'}));
  await assert.rejects(()=>prepareFormAssistRequest({...input,inspect:null}));
+});
+
+
+test('unsupported edit yields no John request for the chosen profile',async()=>{
+ await assert.rejects(()=>prepareFormAssistRequest({...input,registry:createDefaultFormRecipes({editProfile:'dom-replace'})}),/edit_unsupported/);
 });

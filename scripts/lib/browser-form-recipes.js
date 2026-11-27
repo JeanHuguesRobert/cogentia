@@ -1,7 +1,9 @@
+import {textEditProfile,supportsTextInput} from './browser-text-edit-contract.js';
 /** FBF #291: daemon-owned data recipes over stable browser primitive. */
 const TYPES=new Set(['text','email','search','tel','url','number']);
 const SECRET=/username|password|one-time-code|cc-number|cc-csc/i;
-export function createFormRecipeRegistry({firstTextSelector,fieldSelector}={}){
+export function createFormRecipeRegistry({firstTextSelector,fieldSelector,editProfile='legacy-cdp-insert'}={}){
+ if(!textEditProfile(editProfile).formPlan)throw Error('form_recipe_edit_profile_unrouted');
  const recipes=new Map();
  return Object.freeze({
   register({id,version,match,selection='first'}={}){
@@ -34,6 +36,7 @@ export function createFormRecipeRegistry({firstTextSelector,fieldSelector}={}){
    }
    if(field_index===-2)throw Error('form_recipe_field_ambiguous');
    if(field_index<0)throw Error('form_recipe_field_not_found');
+   if(!supportsTextInput(editProfile,recipe.type))throw Error('form_recipe_edit_unsupported');
    return Object.freeze({capability:'browser.form.fill',arguments:Object.freeze({
      tab_id,field_index,expected_url,text,
    }),recipe_id:recipe.id,recipe_version:recipe.version});

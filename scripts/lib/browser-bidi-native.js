@@ -1,3 +1,4 @@
+import {textEditProfile} from './browser-text-edit-contract.js';
 /** Browser-native BiDi operations on a caller-admitted, explicit root context.
  * The caller owns the tab lease. No authority, path admission or replay here.
  */
@@ -39,7 +40,7 @@ export async function insertBidiNativeText({send,context,expectedUrl,text}={}){
    const el=document.activeElement;
    if(!el?.isConnected||el.disabled||el.readOnly||el.getAttribute('aria-disabled')==='true'||
     !['INPUT','TEXTAREA'].includes(el.tagName)||
-    (el.tagName==='INPUT'&&!['text','search','tel','url'].includes(el.type))||
+    (el.tagName==='INPUT'&&!${JSON.stringify(textEditProfile("bidi-native-insert").inputTypes)}.includes(el.type))||
     /username|password|one-time-code|cc-number|cc-csc/i.test(el.autocomplete||'')||
     !Number.isInteger(el.selectionStart)||!Number.isInteger(el.selectionEnd))return null;
    return {el,original:el.value,start:el.selectionStart,end:el.selectionEnd};

@@ -11,6 +11,7 @@ import {createHostedBrowserCapabilities} from './lib/hosted-browser-capabilities
 import {executeFrameEvaluate} from './lib/browser-frame-evaluate.js';
 import {SAFE_DOM_STRUCTURE_CODE} from './lib/browser-safe-dom-structure.js';
 import {createInoxComparisonRegistry} from './lib/browser-inox-recipe.js';
+import {createDefaultFormRecipes} from './lib/browser-form-recipes.js';
 import {prepareFormAssistRequest} from './lib/browser-form-recipe-runner.js';
 import {compileNonSecretFormFill} from './lib/browser-form-script.js';
 const inoxDirectory=process.argv[2];
@@ -100,17 +101,17 @@ try{
   const inspect=capabilities.find(c=>c.name==='browser.hosted.inspect');
   const formFill=capabilities.find(c=>c.name==='browser.form.fill');
   if(inoxDirectory){
-   const registry=await createInoxComparisonRegistry(inoxDirectory);
-   const input={inspect:args=>inspect.execute(args),recipe_id:'generic.first-text',tab_id:42,
+   const registry=await createInoxComparisonRegistry(inoxDirectory,{editProfile:'dom-replace'});
+   const referenceRegistry=createDefaultFormRecipes({editProfile:'dom-replace'});
+   const input={registry:referenceRegistry,inspect:args=>inspect.execute(args),recipe_id:'generic.first-text',tab_id:42,
      expected_url:expectedUrl,text:'fixture-inox-only',request_id:'fixture-inox-parity'};
    const reference=await prepareFormAssistRequest(input);
    const compared=await prepareFormAssistRequest({...input,registry});
    assert.deepEqual(compared,reference);
    assert.equal(compared.input.arguments.field_index,2);
    const email={...input,recipe_id:'generic.first-email'};
-   const emailPlan=await prepareFormAssistRequest({...email,registry});
-   assert.deepEqual(emailPlan,await prepareFormAssistRequest(email));
-   assert.equal(emailPlan.input.arguments.field_index,3);
+   await assert.rejects(()=>prepareFormAssistRequest({...email,registry}),/edit_unsupported/);
+   await assert.rejects(()=>prepareFormAssistRequest(email),/edit_unsupported/);
    const unique={...input,recipe_id:'generic.unique-text'};
    const uniquePlan=await prepareFormAssistRequest({...unique,registry});
    assert.deepEqual(uniquePlan,await prepareFormAssistRequest(unique));
@@ -122,7 +123,7 @@ try{
    await assert.rejects(()=>prepareFormAssistRequest({...unique,registry,inspect:async()=>ambiguous}),/field_ambiguous/);
    const receipt=await formFill.execute(uniquePlan.input.arguments);
    assert.equal(receipt.ok,true);assert.equal(receipt.submitted,false);
-   console.log(JSON.stringify({ok:true,proof:'inox_image_live_dom_parity',field_index:2,request_equal:true,unique_recipe:true,ambiguity_rejected:true,email_plan_only:true,inserted_length:receipt.inserted_length,submitted:false,fixture_only:true}));
+   console.log(JSON.stringify({ok:true,proof:'inox_image_live_dom_parity',field_index:2,request_equal:true,unique_recipe:true,ambiguity_rejected:true,unsupported_edit_rejected:true,inserted_length:receipt.inserted_length,submitted:false,fixture_only:true}));
   }
   const frameList=await inspect.execute({action:'frame_tree',tab_id:42,expected_url:expectedUrl});
   assert.equal(frameList.oopif_frames?.length,1);

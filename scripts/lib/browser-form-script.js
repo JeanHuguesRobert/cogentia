@@ -1,3 +1,4 @@
+import {textEditProfile} from './browser-text-edit-contract.js';
 import {validElementTarget} from './browser-element-target.js';
 /** Trusted client-side recipe compiled into one existing page.evaluate call.
  * No caller-provided JavaScript; non-secret ordinary text inputs only.
@@ -42,7 +43,7 @@ export function compileNonSecretFormFill({fieldIndex,text,expectedUrl,iframeInde
  if(kind==='plain' && !['INPUT','TEXTAREA'].includes(el.tagName))
    return {ok:false,reason:'field_unavailable'};
  const type=String(el.type||'text').toLowerCase();
- if(kind==='plain' && el.tagName==='INPUT' && !['text','search','tel','url'].includes(type))
+ if(kind==='plain' && el.tagName==='INPUT' && !${JSON.stringify(textEditProfile("dom-replace").inputTypes)}.includes(type))
    return {ok:false,reason:'field_type_forbidden'};
  if(/username|password|one-time-code|cc-number|cc-csc/i.test(String(el.autocomplete||'')))
    return {ok:false,reason:'sensitive_autocomplete'};
