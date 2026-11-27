@@ -3,7 +3,7 @@ title: "External effects and verified handoffs"
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: '2026-11-20'
-last_modified_at: '2026-11-20'
+last_modified_at: '2026-11-27'
 status: "working-paper — active operational documentation"
 document_role: operational
 document_kind: agent-instructions
@@ -208,7 +208,7 @@ crossing the access boundary.
 
 ### External Side-Effect Gate — mandatory two-phase authorization
 
-The Next Logical Action Principle alone **never authorizes a consequential external effect**. A distinct mandate-derived, auditable grant can cover certain narrowly recoverable internal writes after trusted verification; it never authorizes third-party communications, publication, disclosure, or commitment.
+The Next Logical Action Principle alone **never authorizes a consequential external effect**. A distinct mandate-derived, auditable grant can cover bounded recoverable internal writes and the public-Corpus editorial operations explicitly delegated below. It never by itself authorizes third-party communications, confidential disclosure, or new external commitments.
 
 An external side effect is any operation that changes state outside the current
 ephemeral working context, including, non-exhaustively:
@@ -242,7 +242,7 @@ Preparation and execution are separate mandates. Producing text, a local file,
 a proposed patch, or a preview does not authorize sending, publishing,
 committing, submitting, or otherwise applying it.
 
-Before an effectful execution, expose proportionately:
+Before an effectful execution requiring act-specific approval, expose proportionately:
 
 - the exact action class;
 - the exact target / recipient / repository / resource;
@@ -290,9 +290,7 @@ The following NEVER create execution authority by themselves:
 - the Next Logical Action Principle;
 - Tool availability.
 
-If the target, payload, amount, attachments, recipients, or material scope
-changes after authorization, authorization is invalidated and must be obtained
-again.
+For an act-specific authorization, a material change of target, payload, amount, attachments, recipients or scope invalidates that authorization. For a standing mandate, verify that the new operation remains within its defined scope; ordinary changes of target file or payload within that scope do not consume or invalidate the mandate.
 
 Authorization is consumed by the authorized execution unless the Principal
 explicitly grants a bounded recurring or batch mandate.
@@ -308,7 +306,17 @@ email
 → draft + notify + manual send by default
 ```
 
-When in doubt, fail closed: prepare and expose; do not execute.
+When in doubt about authority, prepare and expose the affected operation; do not execute it until resolved. Apply the separate doctrinal arbitration rule below to doubts about meaning or attribution, without interrupting independent authorized editorial work.
+
+### Standing public-Corpus editorial mandate — Principal decision, 2026-11-27
+
+The Principal explicitly delegates routine editorial maintenance and intellectual research in the public Corpus on agreed projects. Within the effective mandate, agents may edit, commit, push and publish ordinary public-Corpus corrections, faithful synchronization and propagation, cross-references, research enrichments, objections, conceptual connections and new hypotheses with their proper attribution and epistemic status. This is a standing, scoped delegation, not a new act-specific request for every file, commit or repository. Work on canonical sources before projections, preserve optimistic concurrency and verify and report actual effects. Use the available authorized execution route and required provider/account controls; this clause is not a way to bypass them or expand a sub-agent's route or budget.
+
+A valid doctrinal decision permits its faithful editorial propagation within the standing mandate. The decision is not consumed by its first documentary expression. Distinguish publication of research from promotion of a claim to the Principal's adopted doctrine. If there is any doubt about doctrinal effect, ask the Principal the substantive question, not for permission to edit each file; see [Doctrinal promotion and editorial autonomy](AGENTS.policy-epistemics.md#doctrinal-promotion-and-editorial-autonomy--principal-decision-2026-11-27). Do not promote before clarification; other independent authorized work may continue.
+
+The standing mandate is limited to ordinary, bounded and corrigible public-Corpus editorial effects. It does not authorize disclosure of protected or unpublished private material, alteration of frozen historical records, a new political/legal position or engagement, outbound communications, financial or legal acts, deployment or access changes, or modification of mandates and authority boundaries. These retain their applicable specific approval and execution controls. Public visibility alone neither grants authority nor requires repeated approval for an otherwise covered editorial action.
+
+For this standing mandate, PREPARE → EXPOSE → AUTHORIZE is satisfied at the mandate level by the Principal's explicit delegation of the class of effects; before execution check that the exact operation falls within it, record its scope and apply the available trusted authorization/audit mechanism. Do not solicit a repetitive human confirmation solely because a new file or commit implements the same authorized class of effect. If an independent execution gate requires approval, respect it. Verify actual effects and report the changed locations and immutable receipts where available.
 
 A locally obvious continuation is not automatically the globally highest-priority
 continuation. Before advancing it, preserve any explicit Principal ordering,
