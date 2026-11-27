@@ -27,6 +27,29 @@ async function runSundayConsolidationTest() {
     fs.mkdirSync(path.join(fixtureBase, name), { recursive: true });
   }
 
+  fs.mkdirSync(path.join(fixtureBase, "extra-public", "research"), { recursive: true });
+  fs.mkdirSync(path.join(fixtureBase, "Inox", "research"), { recursive: true });
+  fs.writeFileSync(path.join(fixtureBase, "Inox", "research", "index.md"), "# Inox");
+  fs.writeFileSync(path.join(fixtureBase, "extra-public", "research", "index.md"), "# Extra");
+  const extraPrivate = path.join(fixtureBase, "private-fixture");
+  fs.mkdirSync(extraPrivate);
+  for (const args of [["init", "-q"], ["-c","user.name=Test","-c","user.email=test@example.invalid","commit","--allow-empty","-m","PRIVATE_FIXTURE_COMMIT"]]) {
+    const r = spawnSync("git", args, { cwd: extraPrivate, encoding: "utf8", env: { ...process.env, GIT_AUTHOR_DATE: "2026-09-19T12:00:00Z", GIT_COMMITTER_DATE: "2026-09-19T12:00:00Z" } });
+    if (r.status !== 0) throw new Error(r.stderr);
+  }
+  const fixtureRegistry = path.join(fixtureRoot, ".cogentia.json");
+  fs.writeFileSync(fixtureRegistry, JSON.stringify({
+    repos: [
+      { name: "cogentia", path: ".", branch: "main" },
+      ...["FractaVolta", "marenostrum", "barons-Mariani", "inseme", "Inox", "registre-mariani", "ubikia", "JeanHuguesRobert", "StructEnv", "extra-public", "private-fixture"].map(name => ({
+        name, path: "../" + name, branch: name === "Inox" ? "master" : "main",
+        ...(name === "extra-public" ? { github: "example/extra-public" } : {})
+      }))
+    ],
+    repo_policies: { "registre-mariani": { visibility: "private" }, "private-fixture": { visibility: "private" } }
+  }));
+  const previousRegistry = process.env.COGENTIA_REGISTRY;
+  process.env.COGENTIA_REGISTRY = fixtureRegistry;
   let result;
   try {
     result = await runWeeklyConsolidation({
@@ -88,7 +111,7 @@ async function runSundayConsolidationTest() {
     if (!text.includes("author: unknown\n") || !text.includes("generated_by: scripts/lib/consolidation.js\n")) {
       throw new Error("Digest must identify mechanical generation without inventing human authorship");
     }
-    if (!text.includes("**0 recent commit entries**") || !text.includes("not verified by this pipeline")) {
+    if (!text.includes("not verified by this pipeline")) {
       throw new Error("Empty fixture must report bounded observations and verification limits");
     }
   }
@@ -103,8 +126,20 @@ async function runSundayConsolidationTest() {
     throw new Error("❌ Public digest must carry complete public frontmatter");
   }
 
+  // A full canonical registry, not the legacy static inventory, drives both views.
+  if (!publicLlmsText.includes("Inox/blob/master/research/index.md") ||
+      publicLlmsText.includes("Inox/blob/main/") ||
+      !publicLlmsText.includes("example/extra-public/blob/main/research/index.md")) {
+    throw new Error("Canonical registry branch/repository metadata lost");
+  }
+  const emittedRegistry = JSON.parse(fs.readFileSync(path.join(fixtureRoot, "docs", "registry.json"), "utf8"));
+  if (emittedRegistry.length !== 10 || emittedRegistry.find(r => r.name === "Inox")?.branch !== "master" ||
+      emittedRegistry.some(r => r.name === "registre-mariani")) {
+    throw new Error("Public registry must retain the full public corpus and explicit branch metadata");
+  }
+
   // Privacy invariants
-  if (/registre-mariani/i.test(publicText)) {
+  if (/registre-mariani|private-fixture|PRIVATE_FIXTURE_COMMIT/i.test(publicText) || !privateText.includes("PRIVATE_FIXTURE_COMMIT")) {
     throw new Error("❌ Public digest must not name registre-mariani");
   }
   if (/-\s+\*\*\[registre-mariani\]\*\*/i.test(publicLlmsText)) {
@@ -170,6 +205,14 @@ async function runSundayConsolidationTest() {
   if (forced.skipped || !fs.readFileSync(publicDigest, "utf8").includes("2026-09-20T19:00:00.000Z")) {
     throw new Error("Force must regenerate a complete week");
   }
+  // An already complete week must reopen when its authoritative registry changes.
+  const changedRegistry = JSON.parse(fs.readFileSync(fixtureRegistry, "utf8"));
+  changedRegistry.repos.find(r => r.name === "extra-public").branch = "stable";
+  fs.writeFileSync(fixtureRegistry, JSON.stringify(changedRegistry));
+  const changed = await runWeeklyConsolidation({ root: fixtureRoot, now: "2026-09-20T19:30:00.000Z", fanOut: false });
+  if (changed.skipped || !fs.readFileSync(publicLlms, "utf8").includes("example/extra-public/blob/stable/")) {
+    throw new Error("A registry change must invalidate the former completion receipt");
+  }
   const fanOut = await runWeeklyConsolidation({ root: fixtureRoot, now: "2026-09-20T20:00:00.000Z" });
   if (fanOut.skipped || !fs.existsSync(path.join(fixtureBase, "FractaVolta", "llms.txt"))) {
     throw new Error("Requesting missing sibling projections must regenerate them");
@@ -200,6 +243,8 @@ async function runSundayConsolidationTest() {
   console.log("✅ SUNDAY CORPUS CONSOLIDATION DUAL-PRIVACY VERIFICATION PASSED (100%)");
   console.log("==========================================================================");
   } finally {
+    if (previousRegistry === undefined) delete process.env.COGENTIA_REGISTRY;
+    else process.env.COGENTIA_REGISTRY = previousRegistry;
     continuationStore.close();
     fs.rmSync(fixtureBase, { recursive: true, force: true });
   }

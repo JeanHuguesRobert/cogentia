@@ -6,8 +6,9 @@ import fs from "node:fs";
 import {continuationRepository} from "./continuation-sqlite-repository.mjs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { loadWeeklyRegistry } from "./registry-context.js";
 import {
-  gitVerifyCore,
   indexStatusCore,
   syncInteractionTracesCore,
   emitStaticProjection,
@@ -16,9 +17,7 @@ import {
 import {
   PUBLIC_VIEW,
   PRIVATE_VIEW,
-  defaultMonorepoRepos,
   filterReposForView,
-  filterGitLogsForView,
   isPrivateRepo,
   isPublicRepo,
 } from "./privacy-views.js";
@@ -42,7 +41,11 @@ export async function runWeeklyConsolidation(options = {}) {
   const nextWeekNumber = weekNumber === 52 ? 1 : weekNumber + 1;
   const nextYear = weekNumber === 52 ? year + 1 : year;
   const nextSprintTag = `${nextYear}-W${String(nextWeekNumber).padStart(2, "0")}`;
-  const monorepo = defaultMonorepoRepos(root);
+  const registry = loadWeeklyRegistry(root, options.registryPath);
+  const monorepo = registry.repos;
+  // Local completion receipt: changes to the canonical registry must reopen
+  // projection work, even if the former (partial) outputs still exist.
+  const registryFingerprint = createHash("sha256").update(JSON.stringify(monorepo)).digest("hex");
   const continuationStore=continuationRepository(root);
 
   // This is a WEEKLY pipeline (rewrites the digest for the current ISO week
@@ -75,6 +78,7 @@ export async function runWeeklyConsolidation(options = {}) {
   const complete = completedPacket?.id === `ctn_weekly_consolidation_${sprintTag}`
     && completedPacket.status === "completed"
     && completedPacket.execution_steps_completed === 5
+    && completedPacket.registry_fingerprint === registryFingerprint
     && scheduledNext !== null
     && requiredOutputs.every(file => fs.existsSync(file) && fs.statSync(file).isFile() && fs.statSync(file).size > 0);
   if (!options.force && complete) {
@@ -96,7 +100,6 @@ export async function runWeeklyConsolidation(options = {}) {
 
   // --- Phase 1: Multi-Repo Audit ---
   console.log("\n[Phase 1] Auditing Monorepo Repositories & Index Status...");
-  const gitStatus = await gitVerifyCore({ root });
   const indexStatus = await indexStatusCore({ root });
   console.log(`✓ ${monorepo.length} repository definitions loaded (working-tree and remote health not verified).`);
   console.log(`  · Public: ${publicRepos.length} · Private: ${privateRepos.length}`);
@@ -130,25 +133,19 @@ export async function runWeeklyConsolidation(options = {}) {
 
   // --- Phase 3: Dual Static Projection Emission (public + private) ---
   console.log("\n[Phase 3] Emitting Dual Static Projections (PUBLIC + PRIVATE)...");
-  const ctxRepos = monorepo.map((r) => ({
-    name: r.name,
-    path: r.path,
-    visibility: r.visibility,
-    public_presence: r.public_presence,
-    role: "primary",
-  }));
-  const ctx = {
-    registryRoot: root,
-    repos: gitStatus.repositories
-      ? mergeRepoVisibility(gitStatus.repositories, monorepo)
-      : ctxRepos,
-  };
-
+  const ctx = { registryRoot: root, repos: monorepo };
   const publicProjection = emitStaticProjection(ctx, [], { view: PUBLIC_VIEW, fanOut: options.fanOut !== false });
   const privateProjection = emitStaticProjection(ctx, [], { view: PRIVATE_VIEW, fanOut: false });
+  // Publish only navigation metadata, never local policy/configuration.
   const registryResult = publishRegistry({
     ...ctx,
-    repos: filterReposForView(ctx.repos, PUBLIC_VIEW),
+    repos: filterReposForView(ctx.repos, PUBLIC_VIEW).map(r => ({
+      name: r.name,
+      path: path.relative(root, r.path) || ".",
+      branch: r.branch,
+      ...(r.github_full_name ? { github: r.github_full_name } : {}),
+      visibility: "public",
+    })),
   });
 
   console.log(
@@ -250,6 +247,7 @@ export async function runWeeklyConsolidation(options = {}) {
       "docs/sunday-consolidation-master-plan.md"
     ],
     execution_steps_completed: 5,
+    registry_fingerprint: registryFingerprint,
     serendipity_ledger_count: highSignalDownloads.length,
     continuation_scheduled: `CPKT-${nextSprintTag}-CONSOLIDATION`
   };
@@ -319,18 +317,6 @@ export async function runWeeklyConsolidation(options = {}) {
   };
 }
 
-function mergeRepoVisibility(gitRepos, monorepo) {
-  const byName = new Map(monorepo.map((r) => [r.name, r]));
-  return gitRepos.map((r) => {
-    const meta = byName.get(r.name) || {};
-    return {
-      ...r,
-      visibility: r.visibility || meta.visibility || (isPrivateRepo(r.name) ? "private" : "public"),
-      public_presence: r.public_presence || meta.public_presence,
-      path: r.path || meta.path || ".",
-    };
-  });
-}
 
 function harvestHighSignalDownloads(downloadsPath) {
   if (!fs.existsSync(downloadsPath)) return [];
@@ -389,7 +375,8 @@ function generateWeeklyDigestMarkdown({
   originRef = "unknown",
 }) {
   const isPrivate = view === PRIVATE_VIEW;
-  const filteredLogs = filterGitLogsForView(gitLogs, view);
+  const visibleNames = new Set(filterReposForView(monorepo, view).map(r => r.name));
+  const filteredLogs = Object.entries(gitLogs).filter(([name]) => visibleNames.has(name));
 
   const repoCommitSections = filteredLogs.map(([repoName, commits]) => {
     const privacyTag = isPrivateRepo(repoName) ? " 🔒" : "";

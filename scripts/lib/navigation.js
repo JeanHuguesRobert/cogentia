@@ -197,10 +197,10 @@ export function emitStaticProjection(ctx, inventory = [], options = {}) {
     lines.push(`- **[${repo.name}]**: ${repoUrl}`);
     lines.push(`  - Role: ${repo.role || "primary"}`);
     lines.push(`  - Visibility: ${repo.visibility || repo.policy?.visibility || (isPrivateRepo(repo) ? "private" : "public")}`);
-    if (repo.path && fs.existsSync(path.join(repo.path, "research", "index.md"))) {
+    if (repo.path && fs.existsSync(path.resolve(rootDir, repo.path, "research", "index.md"))) {
       lines.push(`  - Index: [research/index.md](${repoUrl}/blob/${branch}/research/index.md)`);
     }
-    if (repo.path && fs.existsSync(path.join(repo.path, "research", "concepts.md"))) {
+    if (repo.path && fs.existsSync(path.resolve(rootDir, repo.path, "research", "concepts.md"))) {
       lines.push(`  - Concepts: [research/concepts.md](${repoUrl}/blob/${branch}/research/concepts.md)`);
     }
   }
@@ -245,21 +245,21 @@ export function emitStaticProjection(ctx, inventory = [], options = {}) {
     ""
   ];
 
-  const canonicalRelPaths = [
-    "research/potentics.md",
-    "research/vigilia.md",
-    "research/informational_gravity.md",
-    "research/corpus_navigation_audit.md",
-    "research/second_method.md",
-    "docs/connect-mcp-clients.md",
-    "docs/cogentia-magistral-boundary.md"
+  // Resolve canonical sources through the registry, not the registry's own
+  // location (which may be a different repository from cogentia).
+  const canonicalSections = [
+    ["barons-Mariani", "research/potentics.md"],
+    ["barons-Mariani", "research/vigilia.md"],
+    ["cogentia", "research/informational_gravity.md"],
+    ["cogentia", "research/corpus_navigation_audit.md"],
+    ["barons-Mariani", "research/second_method.md"],
+    ["cogentia", "docs/connect-mcp-clients.md"],
+    ["cogentia", "docs/cogentia-magistral-boundary.md"],
   ];
-
-  for (const relPath of canonicalRelPaths) {
-    let fullFile = path.join(rootDir, relPath);
-    if (!fs.existsSync(fullFile)) {
-      fullFile = path.join(rootDir, "..", "barons-Mariani", relPath);
-    }
+  for (const [repoName, relPath] of canonicalSections) {
+    const sourceRepo = visibleRepos.find(repo => repo.name === repoName);
+    if (!sourceRepo?.path) continue;
+    const fullFile = path.resolve(rootDir, sourceRepo.path, relPath);
     if (fs.existsSync(fullFile)) {
       try {
         // llms-full is a plain-text projection, not a Markdown renderer: do

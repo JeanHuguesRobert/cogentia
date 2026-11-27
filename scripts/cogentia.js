@@ -70,6 +70,7 @@ import { orientCorpus, runOrientationBenchmark, DEFAULT_ORIENT_POLICY } from "./
 import { sourceBoundDomainSeeds } from "./lib/corpus-orient-domain-signals.js";
 import { ORIENT_REALITY_FIXTURES } from "./lib/corpus-orient-fixtures.js";
 import { runWeeklyConsolidation } from "./lib/consolidation.js";
+import { normalizeRegistryContext, normalizeGitHubFullName } from "./lib/registry-context.js";
 import { buildConsolidateSession } from "./lib/consolidate-session.js";
 import { replaceIndexCatalog, stripIndexCatalog } from "./lib/research-index-navigation.js";
 import { listAgentSkills, getAgentSkill } from "./lib/cogentia-agent-skills.js";
@@ -237,21 +238,7 @@ const BUILTIN_SKIP_DIRS = new Set([
   ".vite",
   "coverage",
 ]);
-const DEFAULT_REPO_POLICIES = {
-  inseme: {
-    default_scope: "research",
-    note: "local policy: unstable outside research",
-  },
-  JeanHuguesRobert: {
-    ignore_dirty: [".cogentia/**"],
-    role: "registry",
-  },
-  "registre-mariani": {
-    visibility: "private",
-    public_presence: "hidden",
-    note: "private civic/registry corpus — never fan-out into public digests or llms.txt",
-  },
-};
+
 const VISIBILITY_LEVELS = new Set(["public", "internal", "private", "confidential", "secret"]);
 const PUBLIC_PRESENCE = new Set(["full", "stub", "hidden"]);
 const TRACE_LEVELS = new Set(["loose", "standard", "high", "regulated"]);
@@ -4110,7 +4097,7 @@ async function cmdConsolidate() {
     if (at && Number.isNaN(new Date(at).getTime())) {
       throw new Error("--at must be a valid ISO-8601 timestamp");
     }
-    const result = await runWeeklyConsolidation({ now: at, force: hasFlag("--force"), fanOut: !hasFlag("--no-fan-out") });
+    const result = await runWeeklyConsolidation({ registryPath: valueFlag("--registry"), now: at, force: hasFlag("--force"), fanOut: !hasFlag("--no-fan-out") });
     if (hasFlag("--converge") || hasFlag("-c")) {
       console.log(`\nSunday Consolidation Completed [${result.sprint_tag}]\nDigest: ${result.digest_path}\n`);
       console.log(`[Phase 5] Auto-converging Corpus Navigation to Fixed Point...`);
@@ -12091,64 +12078,13 @@ function loadContext() {
     return loadedContextCache.ctx;
   }
   const raw = JSON.parse(fs.readFileSync(configPath, "utf8"));
-  const registryRoot = path.dirname(configPath);
-  const repos = (raw.repos || []).map(r => {
-    const policy = {
-      ...(DEFAULT_REPO_POLICIES[r.name] || {}),
-      ...policyFromRepoEntry(r),
-      ...(raw.policies?.[r.name] || raw.repo_policies?.[r.name] || {}),
-    };
-    const repoPath = resolveRegistryPath(registryRoot, r.path || ".");
-    // Do not spawn `git remote` per repo on every request. Policy wins; else
-    // githubUrl / issue-sync resolve lazily via githubFullNameFromRemote cache.
-    const githubFullName = normalizeGitHubFullName(policy.github || policy.github_repo || "");
-    const fallbackName = githubFullName || `JeanHuguesRobert/${r.name}`;
-    return {
-      name: r.name,
-      path: repoPath,
-      kind: r.kind,
-      branch: r.branch || "main",
-      added: r.added,
-      github_full_name: githubFullName,
-      owner: policy.owner || fallbackName.split("/")[0],
-      owner_kind: policy.owner_kind || "unknown",
-      ownership: policy.ownership || policy.relation || "unknown",
-      mandate: policy.mandate || "",
-      policy: { default_scope: "all", ...policy },
-    };
-  });
-  const ctx = { configPath, registryRoot, config: raw, repos };
+  const ctx = normalizeRegistryContext(raw, configPath);
   if (stat) {
     loadedContextCache = { configPath, mtimeMs: stat.mtimeMs, size: stat.size, ctx };
   }
   return ctx;
 }
 
-function resolveRegistryPath(registryRoot, targetPath) {
-  const raw = String(targetPath || ".");
-  return path.isAbsolute(raw) ? path.resolve(raw) : path.resolve(registryRoot, raw);
-}
-
-function policyFromRepoEntry(r) {
-  const policy = {};
-  for (const key of [
-    "github",
-    "github_repo",
-    "owner",
-    "owner_kind",
-    "ownership",
-    "relation",
-    "mandate",
-    "visibility",
-    "privacy",
-    "public_presence",
-    "trace_level",
-    "default_scope",
-  ]) {
-    if (r[key] != null && r[key] !== "") policy[key] = r[key];
-  }
-  return policy;
-}
 
 function findConfig() {
   const trials = [];
@@ -17191,12 +17127,6 @@ function parseGitHubFullName(remote) {
   return m ? normalizeGitHubFullName(m[1].replace(/^\/+/, "")) : "";
 }
 
-function normalizeGitHubFullName(value) {
-  const clean = String(value || "").trim().replace(/\.git$/i, "").replace(/^https:\/\/github\.com\//i, "");
-  const parts = clean.split("/").filter(Boolean);
-  if (parts.length < 2) return "";
-  return `${parts[0]}/${parts[1]}`;
-}
 
 function sameGitHubFullName(a, b) {
   const left = normalizeGitHubFullName(a).toLowerCase();
