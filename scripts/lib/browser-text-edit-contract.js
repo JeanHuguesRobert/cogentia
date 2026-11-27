@@ -6,9 +6,9 @@
 const insert=Object.freeze(['text','email','search','tel','url','number']);
 const replace=Object.freeze(['text','search','tel','url']);
 export const TEXT_EDIT_PROFILES=Object.freeze({
- 'legacy-cdp-insert':Object.freeze({operation:'insert-at-selection',formPlan:true,inputTypes:insert}),
- 'dom-replace':Object.freeze({operation:'replace-all',formPlan:true,inputTypes:replace}),
- 'bidi-native-insert':Object.freeze({operation:'insert-at-selection',formPlan:false,inputTypes:replace}),
+ 'legacy-cdp-insert':Object.freeze({operation:'insert-at-selection',inputTypes:insert}),
+ 'dom-replace':Object.freeze({operation:'replace-all',inputTypes:replace}),
+ 'bidi-native-insert':Object.freeze({operation:'insert-at-selection',inputTypes:replace}),
 });
 export function textEditProfile(name){
  if(!Object.hasOwn(TEXT_EDIT_PROFILES,name))throw Error('unknown_text_edit_profile');

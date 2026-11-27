@@ -168,3 +168,32 @@ signed mandates. The underlying browser.form.fill request envelope,
 transport contracts and edit profiles remain unchanged. The real fixture
 tests both selection policies, unsupported edit rejection and actual text
 insertion. No production change.
+
+### Common text-edit intent and actual replacement on both engines
+
+The same Inox selector image now exposes plan-text-edit, a pure
+native Inox object describing operation and selected index. It does not
+perform the effect. The Core validates and compares the intent, requests
+identity-aware observation for replace-all, and binds the selected index
+to its exact browser, tab, document epoch and element UID. The existing
+browser.form.fill UID route selects the common DOM replacement recipe
+over CDP or managed BiDi without the caller supplying a backend profile.
+Legacy index-based insertion remains distinct. The experimental planner's
+editProfile option and formPlan flags were removed; they duplicated the
+routing choice now implied by the semantic operation and target.
+The executor also revalidates document and target identity after editing,
+so a matching value on a detached element cannot prove success.
+
+The shared fixture browser-inox-edit-reality.mjs executes the same image
+and operation through actual disposable Chromium and Firefox 158.0.1,
+with nonempty starting values, exact independent readback, ambiguity
+rejection, UID binding and no submit. Chromium also rejects unsupported
+email replacement and passes existing OOPIF checks. The first Firefox
+suite stopped at a multi-MCP composition timeout before the new proof;
+the second run placed the proof before composition and passed both it
+and the full worker/provider fixture. No personal browser or production
+deployment. The first convergence covers non-secret ordinary top-level
+text inputs, not arbitrary editable elements, every engine-specific
+input type, or a general asynchronous effectful Inox VM. The fixture
+executes the existing semantic capability after comparing the prepared
+John request; it is not a new production COP admission proof.

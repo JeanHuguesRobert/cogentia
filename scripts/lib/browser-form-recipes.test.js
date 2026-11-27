@@ -40,13 +40,18 @@ test('unique selection refuses ambiguity, first selects first',()=>{
  const p=createFormPlanner({fieldSelector:()=>0});
  assert.throws(()=>p.plan({...task,selection:'unique',structure:duplicate}),/parity_mismatch/);
 });
-test('explicit editing profile refuses unsupported field types',()=>{
- const email={...task,field_type:'email'};
- assert.equal(FORM_PLANNER.plan(email).arguments.field_index,2);
- const p=createFormPlanner({editProfile:'dom-replace'});
- assert.throws(()=>p.plan(email),/edit_unsupported/);
- assert.equal(p.plan(task).arguments.field_index,1);
- assert.throws(()=>p.plan({...task,field_type:'number',structure:{...structure,fields:[{...structure.fields[1],type:'number'}]}}),/edit_unsupported/);
- assert.throws(()=>createFormPlanner({editProfile:'bidi-native-insert'}),/edit_profile_unrouted/);
- assert.throws(()=>createFormPlanner({editProfile:'unknown'}),/unknown_text_edit_profile/);
+test('operation selects existing compatible route; replacement requires observed UID',()=>{
+ const epoch='a'.repeat(32),target={browser_instance_id:'fixture',tab_id:42,frame_id:'top',
+   document_epoch:epoch,uid:epoch+':1'};
+ const replacement={...task,operation:'replace-all',browser_instance_id:'fixture',
+   structure:{...structure,fields:[structure.fields[0],{...structure.fields[1],element_target:target},structure.fields[2]]}};
+ const p=createFormPlanner();
+ assert.equal(p.plan({...task,field_type:'email'}).arguments.field_index,2);
+ assert.deepEqual(p.plan(replacement).arguments.element_target,target);
+ assert.equal('field_index' in p.plan(replacement).arguments,false);
+ assert.throws(()=>p.plan({...replacement,field_type:'email'}),/edit_unsupported/);
+ assert.throws(()=>p.plan({...replacement,browser_instance_id:'other'}),/target_required/);
+ assert.throws(()=>p.plan({...replacement,structure}),/target_required/);
+ assert.throws(()=>p.plan({...task,operation:'unknown'}),/edit_unsupported/);
+ assert.throws(()=>p.plan({...task,browser_instance_id:'fixture'}),/target_required/);
 });

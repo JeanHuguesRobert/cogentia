@@ -12,6 +12,7 @@ import {createHostedBrowserCapabilities} from './lib/hosted-browser-capabilities
 import {selectBidiFile} from './lib/browser-bidi-native.js';
 import {createBrowserFileUploadCapability} from './lib/browser-file-upload.js';
 import {runJohnRequest} from './lib/john-run.js';
+import {proveInoxReplacement} from './fixtures/browser-inox-edit-reality.mjs';
 import {proveBrowserComposition} from './fixtures/browser-multimcp-reality.mjs';
 import {mkdtemp,readFile,writeFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
@@ -389,6 +390,15 @@ try{
   const inspect=caps.find(c=>c.name==='browser.hosted.inspect');
   const form=caps.find(c=>c.name==='browser.form.fill');
   const selected={browser_instance_id:provider.browserId,tab_id:managedTab,expected_url:expectedUrl};
+  if(process.env.COGENTIA_INOX_DIRECTORY){
+   const proof=await proveInoxReplacement({directory:process.env.COGENTIA_INOX_DIRECTORY,
+    inspect,form,scope:selected,expectedIndex:0,
+    readValue:()=>evaluate(tabs.get(41),'document.querySelector("#uid-target").value')});
+   assert.equal(await evaluate(tabs.get(42),'document.querySelector("#uid-target").value'),'');
+   console.log(JSON.stringify({ok:true,proof:'inox_image_live_dom_parity',engine:'firefox',...proof,fixture_only:true}));
+   const restored=await inspect.execute({...selected,action:'structure',include_element_identity:true});
+   assert.equal((await form.execute({...selected,element_target:restored.fields[0].element_target,text:'after provider reconnect'})).ok,true);
+  }
   const tree=await inspect.execute({...selected,action:'frame_tree'});
   const frame=tree.frame_tree.frames.find(f=>!f.is_top_level&&f.origin===frameOrigin);
   assert.ok(frame);

@@ -1,5 +1,4 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {createFormPlanner} from './browser-form-recipes.js';
 import {prepareFormAssistRequest} from './browser-form-recipe-runner.js';
 const structure={origin:'https://example.org',truncated:false,fields:[
  {tag:'input',type:'text',disabled:false,readonly:false,autocomplete:''},
@@ -24,5 +23,17 @@ test('invalid recipe or absent inspector produces no packet',async()=>{
 
 
 test('unsupported edit yields no John request for the chosen profile',async()=>{
- await assert.rejects(()=>prepareFormAssistRequest({...input,planner:createFormPlanner({editProfile:'dom-replace'})}),/edit_unsupported/);
+ await assert.rejects(()=>prepareFormAssistRequest({...input,operation:'replace-all',browser_instance_id:'fixture'}),/edit_unsupported/);
+});
+
+
+test('replacement asks for exact document identity and emits existing UID envelope',async()=>{
+ const epoch='a'.repeat(32),target={browser_instance_id:'fixture',tab_id:51,frame_id:'top',document_epoch:epoch,uid:epoch+':1'};
+ const req=await prepareFormAssistRequest({...input,field_type:'text',operation:'replace-all',browser_instance_id:'fixture',
+  inspect:async args=>{
+   assert.deepEqual(args,{action:'structure',tab_id:51,browser_instance_id:'fixture',expected_url:input.expected_url,include_element_identity:true});
+   return {...structure,fields:[{...structure.fields[0],element_target:target}]};
+  }});
+ assert.deepEqual(req.input.arguments,{tab_id:51,expected_url:input.expected_url,text:input.text,browser_instance_id:'fixture',element_target:target});
+ assert.equal(req.capability,'browser.form.fill');
 });

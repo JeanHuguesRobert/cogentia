@@ -10,9 +10,10 @@ import {createHostedFrameTransport} from './lib/browser-frame-cdp-transport.js';
 import {createHostedBrowserCapabilities} from './lib/hosted-browser-capabilities.js';
 import {executeFrameEvaluate} from './lib/browser-frame-evaluate.js';
 import {SAFE_DOM_STRUCTURE_CODE} from './lib/browser-safe-dom-structure.js';
+import {proveInoxReplacement} from './fixtures/browser-inox-edit-reality.mjs';
 import {createInoxComparisonPlanner} from './lib/browser-inox-recipe.js';
-import {createFormPlanner} from './lib/browser-form-recipes.js';
 import {prepareFormAssistRequest} from './lib/browser-form-recipe-runner.js';
+import {createGatewaySession} from './lib/navigation-assistant/gateway-session.js';
 import {compileNonSecretFormFill} from './lib/browser-form-script.js';
 const inoxDirectory=process.argv[2];
 if(inoxDirectory && !inoxDirectory.startsWith('/'))throw Error('absolute_inox_directory_required');
@@ -28,7 +29,7 @@ try{
  const listen=(fn,host='127.0.0.1')=>new Promise((yes,no)=>{const s=https.createServer(tls,fn);s.once('error',no);s.listen(0,host,()=>yes(s))});
  const html=(res,text)=>{res.writeHead(200,{'content-type':'text/html'});res.end(text)};
  frame=await listen((req,res)=>html(res,'<!doctype html><title>isolated frame</title><input type="text" id="fake" autocomplete="off">'),'::');
- main=await listen((req,res)=>html(res,`<!doctype html><title>isolated parent</title><input type="text" autocomplete="username"><input type="text" disabled><input type="text" id="recipe" autocomplete="off"><input type="email"><iframe src="https://localhost:${assertPort(frame)}/inside"></iframe>`));
+ main=await listen((req,res)=>html(res,`<!doctype html><title>isolated parent</title><input type="text" autocomplete="username"><input type="text" disabled><input type="text" id="recipe" autocomplete="off" value="old fixture text"><input type="email"><iframe src="https://localhost:${assertPort(frame)}/inside"></iframe>`));
  const probe=await new Promise((yes,no)=>{const s=https.createServer(tls,(req,res)=>res.end());s.listen(0,'127.0.0.1',()=>yes(s));s.once('error',no)});
  const unused=assertPort(probe);await new Promise(r=>probe.close(r));
  const expectedUrl=`https://127.0.0.1:${assertPort(main)}/main`;
@@ -101,29 +102,21 @@ try{
   const inspect=capabilities.find(c=>c.name==='browser.hosted.inspect');
   const formFill=capabilities.find(c=>c.name==='browser.form.fill');
   if(inoxDirectory){
-   const planner=await createInoxComparisonPlanner(inoxDirectory,{editProfile:'dom-replace'});
-   const referencePlanner=createFormPlanner({editProfile:'dom-replace'});
-   const input={planner:referencePlanner,inspect:args=>inspect.execute(args),recipe_id:'generic.select-input',field_type:'text',selection:'first',tab_id:42,
-     expected_url:expectedUrl,text:'fixture-inox-only',request_id:'fixture-inox-parity'};
-   const reference=await prepareFormAssistRequest(input);
-   const compared=await prepareFormAssistRequest({...input,planner});
-   assert.deepEqual(compared,reference);
-   assert.equal(compared.input.arguments.field_index,2);
-   const email={...input,field_type:'email'};
-   await assert.rejects(()=>prepareFormAssistRequest({...email,planner}),/edit_unsupported/);
-   await assert.rejects(()=>prepareFormAssistRequest(email),/edit_unsupported/);
-   const unique={...input,selection:'unique'};
-   const uniquePlan=await prepareFormAssistRequest({...unique,planner});
-   assert.deepEqual(uniquePlan,await prepareFormAssistRequest(unique));
-   assert.equal(uniquePlan.input.arguments.field_index,2);
-   // Use the real observed metadata, then add a second admissible
-   // candidate to verify ambiguity without making a browser write.
-   const observed=await inspect.execute({action:'structure',tab_id:42});
-   const ambiguous={...observed,fields:[...observed.fields,observed.fields[2]]};
-   await assert.rejects(()=>prepareFormAssistRequest({...unique,planner,inspect:async()=>ambiguous}),/field_ambiguous/);
-   const receipt=await formFill.execute(uniquePlan.input.arguments);
-   assert.equal(receipt.ok,true);assert.equal(receipt.submitted,false);
-   console.log(JSON.stringify({ok:true,proof:'inox_image_live_dom_parity',field_index:2,request_equal:true,unique_recipe:true,ambiguity_rejected:true,unsupported_edit_rejected:true,inserted_length:receipt.inserted_length,submitted:false,fixture_only:true}));
+   const scope={browser_instance_id:'fixture-browser',tab_id:42,expected_url:expectedUrl};
+   const readValue=async()=>{
+    const session=await createGatewaySession(base+'/assistant');
+    try{return (await session.call('page.evaluate',{browser_instance_id:'fixture-browser',
+      tabId:42,expectedUrl,code:'document.querySelector("#recipe").value'})).value}
+    finally{session.close()}
+   };
+   const proof=await proveInoxReplacement({directory:inoxDirectory,inspect,form:formFill,scope,readValue,expectedIndex:2});
+   const planner=await createInoxComparisonPlanner(inoxDirectory);
+   await assert.rejects(()=>prepareFormAssistRequest({...scope,planner,inspect:args=>inspect.execute(args),
+    operation:'replace-all',field_type:'email',selection:'first',text:'fixture@example.test',
+    request_id:'fixture-unsupported-email'}),/edit_unsupported/);
+   console.log(JSON.stringify({ok:true,proof:'inox_image_live_dom_parity',engine:'chromium',
+    ...proof,unsupported_edit_rejected:true,fixture_only:true}));
+
   }
   const frameList=await inspect.execute({action:'frame_tree',tab_id:42,expected_url:expectedUrl});
   assert.equal(frameList.oopif_frames?.length,1);

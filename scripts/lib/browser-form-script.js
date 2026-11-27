@@ -67,6 +67,11 @@ export function compileNonSecretFormFill({fieldIndex,text,expectedUrl,iframeInde
  registry.resolveElementUid(${JSON.stringify(elementTarget.uid)})!==el)
  return {ok:false,reason:'element_uid_stale'};`:''}
  const inserted=targetDocument.execCommand('insertText',false,value);
+ if(${documentLocation}!==${urlLiteral}||!el.isConnected)
+   return {ok:false,reason:'document_or_element_changed_after_edit'};
+ ${uidMode?`if(window.__cogentiaNavigationAssistant?.elementIdentity!==registry||
+ registry.resolveElementUid(${JSON.stringify(elementTarget.uid)})!==el)
+ return {ok:false,reason:'element_changed_after_edit'};`:''}
  const actual=kind==='contenteditable'
    ? String(el.innerText||el.textContent||'').replace(/\\r\\n/g,'\\n')
    : el.value;

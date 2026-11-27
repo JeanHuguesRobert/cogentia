@@ -66,3 +66,11 @@ test('cross-origin iframe refuses without guessing or falling back to main docum
  {document:doc,location:{href:'https://demo.example/start'},URL});
  assert.equal(out.reason,'cross_origin_frame_requires_isolated_world');
 });
+
+test('replacement cannot confirm a detached element even when its old value matches',()=>{
+ const field={tagName:'INPUT',type:'text',autocomplete:'',isConnected:true,disabled:false,readOnly:false,value:'old',
+  focus(){doc.activeElement=this},setSelectionRange(){}};
+ const doc={querySelectorAll:()=>[field],execCommand(name,ui,value){field.value=value;field.isConnected=false;return true}};
+ const out=runInNewContext(compileNonSecretFormFill({fieldIndex:0,text:'new',expectedUrl:'https://example.org/test'}),{document:doc,location:{href:'https://example.org/test'}});
+ assert.equal(out.ok,false);assert.equal(out.reason,'document_or_element_changed_after_edit');
+});
