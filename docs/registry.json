@@ -2,46 +2,132 @@
   {
     "name": "cogentia",
     "path": ".",
+    "branch": "main",
     "visibility": "public"
   },
   {
     "name": "FractaVolta",
     "path": "../FractaVolta",
+    "branch": "main",
     "visibility": "public"
   },
   {
     "name": "marenostrum",
     "path": "../marenostrum",
+    "branch": "main",
     "visibility": "public"
   },
   {
     "name": "barons-Mariani",
     "path": "../barons-Mariani",
+    "branch": "main",
+    "visibility": "public"
+  },
+  {
+    "name": "suicide-corse",
+    "path": "../suicide-corse",
+    "branch": "main",
     "visibility": "public"
   },
   {
     "name": "inseme",
     "path": "../inseme",
+    "branch": "main",
+    "visibility": "public"
+  },
+  {
+    "name": "survey",
+    "path": "../survey",
+    "branch": "main",
+    "github": "JeanHuguesRobert/survey",
     "visibility": "public"
   },
   {
     "name": "Inox",
     "path": "../Inox",
+    "branch": "master",
     "visibility": "public"
   },
   {
     "name": "ubikia",
     "path": "../ubikia",
+    "branch": "main",
+    "visibility": "public"
+  },
+  {
+    "name": "operium",
+    "path": "../operium",
+    "branch": "main",
+    "github": "JeanHuguesRobert/operium",
+    "visibility": "public"
+  },
+  {
+    "name": "serra",
+    "path": "../serra",
+    "branch": "main",
+    "github": "JeanHuguesRobert/serra",
     "visibility": "public"
   },
   {
     "name": "JeanHuguesRobert",
     "path": "../JeanHuguesRobert",
+    "branch": "main",
+    "visibility": "public"
+  },
+  {
+    "name": "privai",
+    "path": "../privai",
+    "branch": "main",
+    "github": "acorsica/privai",
+    "visibility": "public"
+  },
+  {
+    "name": "gouvernance",
+    "path": "../gouvernance",
+    "branch": "main",
+    "github": "acorsica/gouvernance",
+    "visibility": "public"
+  },
+  {
+    "name": "marianivillage",
+    "path": "../marianivillage",
+    "branch": "main",
+    "github": "acorsica/marianivillage",
+    "visibility": "public"
+  },
+  {
+    "name": "institut-mariani",
+    "path": "../institut-mariani",
+    "branch": "main",
+    "github": "acorsica/institut-mariani",
+    "visibility": "public"
+  },
+  {
+    "name": "Kudos",
+    "path": "../Kudos",
+    "branch": "main",
+    "github": "acorsica/Kudos",
+    "visibility": "public"
+  },
+  {
+    "name": ".github",
+    "path": "../.github",
+    "branch": "main",
+    "github": "acorsica/.github",
+    "visibility": "public"
+  },
+  {
+    "name": "acorsica.org",
+    "path": "../acorsica.org",
+    "branch": "main",
+    "github": "acorsica/acorsica.org",
     "visibility": "public"
   },
   {
     "name": "StructEnv",
     "path": "../StructEnv",
+    "branch": "main",
+    "github": "JeanHuguesRobert/StructEnv",
     "visibility": "public"
   }
 ]
