@@ -97,30 +97,38 @@ export function projectCompletedPacketEffect({store,grant,logEntries,authorizati
     !Number.isFinite(Date.parse(a.at))||!Number.isFinite(Date.parse(r.at))||
     Date.parse(a.at)<Date.parse(g.consumed_at)||Date.parse(r.at)<Date.parse(a.at))
    return deny('protected_execution_receipt_unverified');
- if(observations.length!==1)return deny('postcondition_observation_required');
- const o=observations[0];
- if(o.payload_hash!==g.payload_hash||o.packet_claim_event_id!==p.packet_claim_event_id||
-    o.target!==g.target.node||o.before_state_hash!==c.before_state_hash||
-    !sha.test(o.after_state_hash||'')||!ref(o.evidence_ref)||
-    !Number.isFinite(Date.parse(o.at))||Date.parse(o.at)<Date.parse(r.at))
-   return deny('protected_postcondition_unverified');
+ // A completed process can be accounted for before the resource state is
+ // observed. Keep its receipt immutable when a later observation arrives.
  const receipt={
-   schema:'cogentia.super.packet-receipt/v1',
+   schema:'cogentia.super.packet-receipt/v2',
    packet_ref:p.packet_ref,packet_claim_event_id:p.packet_claim_event_id,
    target:g.target.node,payload_hash:g.payload_hash,
    principal_ref:g.principal,actor_ref:g.actor,mandate_ref:g.mandate_ref,
    mandate_version:g.mandate_version,budget_reservation_id:g.budget_reservation_id,
-   before_state_hash:c.before_state_hash,after_state_hash:o.after_state_hash,
+   before_state_hash:c.before_state_hash,
    authorization_id,attempted:true,ok:r.ok,exit_code:r.exit_code,
-   timeout:r.timeout,observed_at:o.at
+   timeout:r.timeout,observed_at:r.at
  };
- // Reference commits to the source projection, including the actual
- // observation evidence. No output contents or secret material cross.
  receipt.receipt_ref='cop:node:fracta2:super:'+authorization_id+':'+hashPayload({
-   receipt,claim_event_id:claim.event_id,reserved_at:a.at,
-   execution_observed_at:r.at,observation_evidence_ref:o.evidence_ref
+   receipt,claim_event_id:claim.event_id,reserved_at:a.at
  });
- return {ok:true,verified:true,receipt,grants_authority:false};
+ let observation=null,observation_error=null;
+ if(observations.length>1)observation_error='ambiguous_state_observation';
+ if(observations.length===1){
+   const o=observations[0];
+   if(o.payload_hash!==g.payload_hash||o.packet_claim_event_id!==p.packet_claim_event_id||
+      o.target!==g.target.node||o.before_state_hash!==c.before_state_hash||
+      !sha.test(o.after_state_hash||'')||!ref(o.evidence_ref)||
+      !Number.isFinite(Date.parse(o.at))||Date.parse(o.at)<Date.parse(r.at))
+     observation_error='protected_state_observation_unverified';
+   else{
+     // A hash describes an observation, not satisfaction of the purpose.
+     observation={after_state_hash:o.after_state_hash,observed_at:o.at,
+       evidence_ref:o.evidence_ref,execution_receipt_ref:receipt.receipt_ref};
+     observation.observation_ref='cop:node:fracta2:state:'+authorization_id+':'+hashPayload(observation);
+   }
+ }
+ return {ok:true,verified:true,receipt,observation,observation_error,grants_authority:false};
 }
 
 // Root-local reader for the existing grant and audit files. No new socket

@@ -78,7 +78,7 @@ test('node-local packet receipt is a deterministic projection, not a second ledg
   assert.equal(r.receipt.packet_ref,'pkt-test');
   assert.equal(r.receipt.packet_claim_event_id,'packet-claim-test');
   assert.equal(r.receipt.before_state_hash,'sha256:'+'b'.repeat(64));
-  assert.equal(r.receipt.after_state_hash,'sha256:'+'c'.repeat(64));
+  assert.equal(r.observation.after_state_hash,'sha256:'+'c'.repeat(64));
   assert.equal(r.receipt.stdout,undefined);
   assert.deepEqual(projectCompletedPacketEffect(f),r);
   assert.deepEqual(f.store.replay(),before);
@@ -90,10 +90,6 @@ test('node projection refuses mismatches and refuses to infer postconditions fro
    f=>f.grant.authority_origin='principal',
    f=>f.grant.provenance.packet_claim_event_id='wrong',
    f=>f.grant.provenance.cop_claim_event_id='wrong',
-   f=>f.logEntries.pop(),
-   f=>f.logEntries[2].after_state_hash='unobserved',
-   f=>f.logEntries[2].before_state_hash='sha256:'+'d'.repeat(64),
-   f=>f.logEntries[2].at='2026-11-07T08:53:34Z',
    f=>f.logEntries[1].at='invalid',
    f=>f.logEntries.push({...f.logEntries[1]}),
    f=>f.logEntries[1].payload_hash='sha256:'+'e'.repeat(64),
@@ -102,6 +98,24 @@ test('node projection refuses mismatches and refuses to infer postconditions fro
    mutate(f);assert.equal(projectCompletedPacketEffect(f).ok,false);
   }finally{f.store.close();rmSync(f.dir,{recursive:true,force:true});}
  }
+});
+test('completed execution receipt is invariant under later observation; malformed observation cannot erase the attempt',()=>{
+ const f=packetFixture();try{
+  const complete=projectCompletedPacketEffect(f);
+  const observation=f.logEntries.pop();
+  const first=projectCompletedPacketEffect(f);
+  assert.equal(first.ok,true);assert.equal(first.observation,null);
+  assert.deepEqual(first.receipt,complete.receipt);
+  for(const change of [{after_state_hash:'unobserved'},{before_state_hash:'sha256:'+'d'.repeat(64)},{at:'2026-11-07T08:53:34Z'}]){
+   const invalid=projectCompletedPacketEffect({...f,logEntries:[...f.logEntries,{...observation,...change}]});
+   assert.equal(invalid.ok,true);assert.equal(invalid.observation,null);
+   assert.equal(invalid.observation_error,'protected_state_observation_unverified');
+   assert.deepEqual(invalid.receipt,first.receipt);
+  }
+  const duplicate=projectCompletedPacketEffect({...f,logEntries:[...f.logEntries,observation,observation]});
+  assert.equal(duplicate.observation_error,'ambiguous_state_observation');
+  assert.deepEqual(duplicate.receipt,first.receipt);
+ }finally{f.store.close();rmSync(f.dir,{recursive:true,force:true});}
 });
 test('ordinary shell cannot invoke the protected receipt reader',()=>{
  if(process.geteuid?.()!==0)

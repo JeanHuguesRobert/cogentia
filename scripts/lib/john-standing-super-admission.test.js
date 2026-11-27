@@ -187,7 +187,7 @@ function prepareReturn(f,{ok=true,timeout=false}={}){
  const prepared=claimStandingSuperEffect(f.input);
  assert.equal(prepared.ok,true,JSON.stringify(prepared));
  const q=f.request;
- const receipt={schema:'cogentia.super.packet-receipt/v1',
+ const receipt={schema:'cogentia.super.packet-receipt/v2',
    packet_ref:q.packet_ref,packet_claim_event_id:prepared.packet_claim_event_id,
    target:q.target,payload_hash:q.payload_hash,principal_ref:q.principal_ref,
    actor_ref:q.actor_ref,mandate_ref:q.mandate_ref,mandate_version:q.mandate_version,
@@ -203,7 +203,7 @@ function prepareReturn(f,{ok=true,timeout=false}={}){
    // production verifier or a root execution.
    receipt_candidate:{receipt_ref:receipt.receipt_ref},
    verifyBrokerReceipt:({candidate})=>({verified:candidate?.receipt_ref===receipt.receipt_ref,
-     receipt:structuredClone(receipt)})};
+     receipt:structuredClone(receipt),observation:{observation_ref:'fixture:state-observation',evidence_ref:'fixture:state',execution_receipt_ref:receipt.receipt_ref,after_state_hash:receipt.after_state_hash,observed_at:receipt.observed_at}})};
  return {prepared,receipt,input};
 }
 test('verified node result settles locally and links causal act; duplicate delivery is harmless',async()=>{
@@ -214,22 +214,24 @@ test('verified node result settles locally and links causal act; duplicate deliv
   assert.equal(result.ok,true,JSON.stringify(result));assert.equal(result.executed_ok,true);
   assert.equal(result.grants_authority,false);assert.equal(result.budget_settled,true);
   assert.deepEqual(f.store.replay(),rootBefore);
-  assert.equal(f.packetStore.replay().length,localBefore+2);
+  assert.equal(f.packetStore.replay().length,localBefore+3);
   const entries=f.packetStore.listTopic('packet:'+f.request.packet_ref);
-  const last=entries.at(-1);
+  const last=entries.at(-2);
   assert.equal(last.event_id,result.result_event_id);
   assert.equal(validateFractalogActRecord(last.payload).ok,true);
-  assert.equal(last.payload.act_id,entries.at(-2).payload.act_id);
+  assert.equal(last.payload.act_id,entries.at(-3).payload.act_id);
   assert.ok(last.parent_event_ids.includes(prepared.packet_claim_event_id));
   assert.equal(last.payload.effect.receipt_ref,receipt.receipt_ref);
-  assert.equal(last.payload.effect.after_state_hash,receipt.after_state_hash);
+  assert.equal(last.payload.effect.after_state_hash,undefined);
+  assert.equal(entries.at(-1).payload.effect.after_state_hash,receipt.after_state_hash);
+  assert.equal(result.postcondition_status,'unassessed');
   assert.equal(JSON.stringify(f.packetStore.replay()).includes('fixture-not-for-packet'),false);
   const retry=recordStandingSuperResult(input);
   assert.equal(retry.duplicate,true);assert.equal(retry.result_event_id,result.result_event_id);
   assert.equal(f.delegation.child_ledger.snapshot().settled.max_steps,1);
   assert.equal(f.delegation.child_ledger.snapshot().reserved.max_steps,0);
   const conflicting=recordStandingSuperResult({...input,verifyBrokerReceipt:()=>({
-    verified:true,receipt:{...receipt,after_state_hash:'sha256:'+'c'.repeat(64)}})});
+    verified:true,receipt:{...receipt,exit_code:1,ok:false}})});
   assert.equal(conflicting.error,'administrative_receipt_conflict');
   assert.equal(f.packetStore.auditTopicCommitment('packet:'+f.request.packet_ref).ok,true);
  }finally{f.close()}
@@ -245,7 +247,7 @@ test('unverified or misbound results leave local reservation pending',async()=>{
     assert.equal(recordStandingSuperResult({...input,...change}).ok,false);
   for(const change of [{packet_ref:'pkt-other'},{packet_claim_event_id:'another'},
     {mandate_version:'v7'},{payload_hash:'sha256:'+'d'.repeat(64)},
-    {budget_reservation_id:'another'},{attempted:false},{after_state_hash:null},
+    {budget_reservation_id:'another'},{attempted:false},
     {ok:true,exit_code:1},{timeout:true}]){
     assert.equal(recordStandingSuperResult({...input,verifyBrokerReceipt:()=>({
       verified:true,receipt:{...receipt,...change}})}).ok,false,JSON.stringify(change));
@@ -262,7 +264,7 @@ test('past attempted failure remains accountable after mandate revocation; no ne
   const before=f.store.replay(),result=recordStandingSuperResult(input);
   assert.equal(result.ok,true,JSON.stringify(result));assert.equal(result.executed_ok,false);
   assert.equal(result.grants_authority,false);
-  assert.equal(f.packetStore.listTopic('packet:'+f.request.packet_ref).at(-1).payload.act_phase,'failed');
+  assert.equal(f.packetStore.listTopic('packet:'+f.request.packet_ref).at(-2).payload.act_phase,'failed');
   assert.equal(f.delegation.child_ledger.snapshot().settled.max_steps,1);
   assert.deepEqual(f.store.replay(),before);
   assert.equal(claimStandingSuperEffect({...f.input,request:{...f.request,request_id:'new-after-revoke'}}).ok,false);
@@ -313,10 +315,13 @@ test('three localities: node receipt projection returns to owning packet and onl
     {...common,event:'effect_result',ok:true,timeout:false,exit_code:0,at:'2026-11-26T12:00:02Z'}];
   const verifyBrokerReceipt=()=>projectCompletedPacketEffect({
     store:node,grant,logEntries,authorization_id:r.authorization_id});
-  assert.equal(verifyBrokerReceipt().error,'postcondition_observation_required');
-  assert.equal(recordStandingSuperResult({...input,verifyBrokerReceipt}).ok,false);
-  assert.deepEqual(f.packetStore.replay(),packetBefore);
-  assert.equal(f.delegation.child_ledger.snapshot().reserved.max_steps,1);
+  const first=recordStandingSuperResult({...input,verifyBrokerReceipt});
+  assert.equal(first.ok,true,JSON.stringify(first));
+  assert.equal(first.state_observed,false);
+  assert.equal(first.postcondition_status,'unassessed');
+  assert.equal(f.packetStore.replay().length,packetBefore.length+2);
+  assert.equal(f.delegation.child_ledger.snapshot().reserved.max_steps,0);
+  assert.equal(f.delegation.child_ledger.snapshot().settled.max_steps,1);
   logEntries.push({...common,event:'effect_state_observed',target:r.target,
     packet_claim_event_id:r.packet_claim_event_id,before_state_hash:r.before_state_hash,
     after_state_hash:r.after_state_hash,evidence_ref:'fixture:state-observation',
@@ -325,7 +330,9 @@ test('three localities: node receipt projection returns to owning packet and onl
   const result=recordStandingSuperResult({...input,verifyBrokerReceipt});
   assert.equal(result.ok,true,JSON.stringify(result));
   const observed=f.packetStore.listTopic('packet:'+r.packet_ref).at(-1);
-  assert.equal(observed.payload.effect.receipt_ref,proof.receipt.receipt_ref);
+  assert.equal(result.result_event_id,first.result_event_id);
+  assert.equal(result.state_observed,true);
+  assert.equal(observed.payload.effect.execution_receipt_ref,proof.receipt.receipt_ref);
   assert.equal(observed.payload.effect.after_state_hash,r.after_state_hash);
   assert.equal(observed.payload.authority.budget_reservation_id,prepared.budget_reservation_id);
   assert.equal(node.replay().length,1);
@@ -337,4 +344,35 @@ test('three localities: node receipt projection returns to owning packet and onl
   assert.equal(f.store.listTopic('packet:'+r.packet_ref).length,0);
   assert.equal(f.delegation.child_ledger.snapshot().settled.max_steps,1);
  }finally{node.close();f.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test('failure without final observation is charged once; observation append failure and retry do not replay the effect',async()=>{
+ const f=await fixture();try{
+  const {input,receipt}=prepareReturn(f,{ok:false,timeout:true});
+  const rootBefore=f.store.replay();
+  const broken={...f.packetStore,transaction:fn=>f.packetStore.transaction(tx=>fn({
+    ...tx,append:e=>e.topic?.id==='packet:'+f.request.packet_ref&&e.idempotency_key?.endsWith(':state')
+      ?{ok:false,error:'fixture_observation_failure'}:tx.append(e)
+  }))};
+  const result=recordStandingSuperResult({...input,resolvePacketContext:()=>({...f.context,store:broken})});
+  assert.equal(result.ok,true,JSON.stringify(result));
+  assert.equal(result.executed_ok,false);
+  assert.equal(result.budget_settled,true);
+  assert.equal(result.state_observed,false);
+  assert.equal(result.observation_error,'packet_state_observation_append_failed');
+  assert.equal(result.assessment_required,true);
+  assert.equal(f.delegation.child_ledger.snapshot().settled.max_steps,1);
+  const retry=recordStandingSuperResult(input);
+  assert.equal(retry.ok,true,JSON.stringify(retry));
+  assert.equal(retry.result_event_id,result.result_event_id);
+  assert.equal(retry.state_observed,true);
+  assert.equal(retry.postcondition_status,'unassessed');
+  const conflict=recordStandingSuperResult({...input,verifyBrokerReceipt:()=>({
+    verified:true,receipt,observation:{observation_ref:'fixture:other',evidence_ref:'fixture:other',
+      execution_receipt_ref:receipt.receipt_ref,after_state_hash:'sha256:'+'d'.repeat(64),observed_at:receipt.observed_at}})});
+  assert.equal(conflict.observation_error,'administrative_observation_conflict');
+  assert.equal(conflict.budget_settled,true);
+  assert.equal(f.delegation.child_ledger.snapshot().settled.max_steps,1);
+  assert.deepEqual(f.store.replay(),rootBefore);
+ }finally{f.close()}
 });
