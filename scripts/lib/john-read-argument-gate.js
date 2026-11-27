@@ -1,3 +1,4 @@
+import {validateVisualRead} from './browser-visual-read.js';
 /** Pre-admission bounded selector gate for the convenience John read call.
  * Never upgrades scopes or forwards arbitrary values into the browser.
  */
@@ -14,6 +15,7 @@ export function normalizeJohnReadArguments(capability,args){
   if(Object.keys(args).length)throw Error('john_read_arguments_invalid');
   return {};
  }
+ if(args.action==='image'){if(!validateVisualRead(args))throw Error('john_visual_read_arguments_invalid');return {...args};}
  if(Object.keys(args).some(k=>!['action','tab_id','max_chars','include_url','expected_url','frame_id','expected_frame_origin','include_element_identity','browser_instance_id'].includes(k)) || !ACTIONS.has(args.action))
   throw Error('john_read_arguments_invalid');
  if(['structure','frames','context','frame_tree','frame_structure'].includes(args.action)){

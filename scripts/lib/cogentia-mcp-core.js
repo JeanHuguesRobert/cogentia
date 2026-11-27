@@ -1,3 +1,4 @@
+import {attachTransientImage,takeTransientImage} from './mcp-transient-image.js';
 import {listRegisteredMcpAppTools,callRegisteredMcpAppTool} from "./cogentia-mcp-app-registry.js";
 import {executeJohnCanonicalForm} from "./john-cop-form-execution.js";
 import {executeJohnCanonicalUpload} from "./john-cop-upload-execution.js";
@@ -1959,7 +1960,11 @@ export function createMcpCore(env = process.env, extras = {}) {
           // Preserve the existing MCP tool visibility/authority boundary
           // before a task adapter can intercept the call. Task creation is
           // NEVER a back door into private/mutating or unknown capabilities.
-          const taskableTool=name!=="cogentia_identity"&&(TOOLS.some(tool=>tool.name===name) ||
+          const transientVisualRequested=name==='cogentia_john_run'&&
+            (args.request?.input?.arguments?.action==='image'||args.read_arguments?.action==='image');
+          if(transientVisualRequested&&message.params?.task!==undefined)
+            return jsonRpcError(message.id,-32602,'Transient visual read cannot be a durable task');
+          const taskableTool=!transientVisualRequested&&name!=="cogentia_identity" &&(TOOLS.some(tool=>tool.name===name) ||
             (extras.mcpProgramSurface?.tools?.some(tool=>tool.name===name) &&
               (name!== "multimcp_program_execute" ||
                 extras.mcpProgramSurface.verifiedTaskCaller(auth)===true)))&&
@@ -2013,6 +2018,8 @@ export function createMcpCore(env = process.env, extras = {}) {
             envelope.auth = "jhn";
           }
           let result = mcpToolResult(envelope);
+          const transientImage=takeTransientImage(data);
+          if(transientImage&&envelope.ok)result.content.push(transientImage);
           if (resolved.era === "modern") {
             result = attachModernMeta(result, resolved.protocolVersion);
             if (correlation.traceparent) {
@@ -2470,10 +2477,19 @@ export function createMcpCore(env = process.env, extras = {}) {
         };
         const trustedJhn = jhnCaller && callOpts.auth.allowMutate === true;
         const browserEnabled = !/^(0|false|no)$/i.test(String(env.COGENTIA_JHN_HOSTED_BROWSER_ENABLED || "1"));
+        const visualReadRequested=req.capability==='browser.hosted.inspect'&&req.input?.arguments?.action==='image';
+        let transientImage;
+        if(visualReadRequested){
+          if(!jhnCaller||!browserEnabled||env.COGENTIA_JHN_CANONICAL_READ_ENABLED!=='1'||
+             req.exposure!=='read_only'||req.handler?.kind!=='capability_once'||req.input?.continuity)
+            return {ok:false,status:'failed',failure:{code:'canonical_visual_read_required'}};
+          req.input.arguments=normalizeJohnReadArguments(req.capability,req.input.arguments);
+        }
         const allBrowserCapabilities = jhnCaller && browserEnabled
           ? createHostedBrowserCapabilities({
             gateway: env.COGENTIA_HOSTED_BROWSER_GATEWAY,
             health: env.COGENTIA_HOSTED_BROWSER_HEALTH,
+            ...(visualReadRequested?{onImage:image=>{transientImage=image}}:{}),
           }) : [];
         // No legacy bypass: form entry is available ONLY through the
         // separately signed canonical effect gate below.
@@ -2773,7 +2789,7 @@ export function createMcpCore(env = process.env, extras = {}) {
             const admitted=e.find(x=>x.type==="john.packet.admitted");
             const continuity=journalTurn(e);
             const continuityAdvance=await advanceTurn(e,continuity);
-            return {ok:continuity?.ok!==false,
+            const response={ok:continuity?.ok!==false,
               status:continuity?.ok===false?"continuity_journal_failed":"completed",
               packet_status:continuity?.packet_status||"not_evaluated",
               packet_continuity:continuity,
@@ -2786,6 +2802,11 @@ export function createMcpCore(env = process.env, extras = {}) {
               canonical_accounting:{mandate_ref:result.canonical_mandate_ref,settled_steps:result.settled_steps},
               odyssey:completed?.data?.result?.odyssey||null,
               events_count:e.length,events:e};
+            if(visualReadRequested&&response.ok){
+              if(!transientImage)return {ok:false,status:'failed',failure:{code:'visual_read_missing_payload'}};
+              return attachTransientImage(response,transientImage);
+            }
+            return response;
           } finally {canonicalStore.close();}
         }
         const events = await runJohnRequest(req, {

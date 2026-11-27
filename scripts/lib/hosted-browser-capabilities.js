@@ -1,3 +1,4 @@
+import {readLoadedImage,validateVisualRead} from './browser-visual-read.js';
 import {replaceCdpRichText} from './browser-cdp-rich-edit.js';
 import {projectSiteEditorRole,projectEditorContext,usesNativeRichEdit} from './browser-site-adapters.js';
 import {validElementTarget,ELEMENT_TARGET_SCHEMA,compileUidStructure,projectElementTarget,callUidFormFill} from "./browser-element-target.js";
@@ -111,7 +112,8 @@ export function createHostedBrowserCapabilities(options = {}) {
       inputSchema: {
         type: "object",
         properties: {
-          action: { type: "string", enum: ["status", "tabs", "context", "structure", "frames", "frame_tree", "frame_structure"] },
+          action: { type: "string", enum: ["status", "tabs", "context", "structure", "frames", "frame_tree", "frame_structure", "image"] },
+          image_name: {type:"string",maxLength:180},
           browser_instance_id: {type:"string",minLength:1,maxLength:200},
           tab_id: { type: "integer", minimum: 0 },
           max_chars: { type: "integer", minimum: 1, maximum: 12000 },
@@ -133,6 +135,18 @@ export function createHostedBrowserCapabilities(options = {}) {
           return response.json();
         }
         const selected=await selectedBrowser(input);
+        if(action==='image'){
+          // The ordinary inspector has no binary sink. Only the dedicated
+          // canonical one-shot invocation can enable this read.
+          if(typeof options.onImage!=='function'||selected.managed||!validateVisualRead(input))
+            throw capabilityError('BROWSER_VISUAL_READ_UNAVAILABLE');
+          let captured;
+          const receipt=await frameTransport.withFrame({tabId:input.tab_id,expectedUrl:input.expected_url,
+            operation:({send,frameTree})=>readLoadedImage({send,frameTree,input,onImage:image=>{captured=image}})});
+          if(!captured)throw capabilityError('BROWSER_VISUAL_READ_UNCONFIRMED');
+          options.onImage(captured);
+          return receipt;
+        }
         if (action === "tabs") {
           const result = await rpc(gateway, "tabs.list", { browser_instance_id: selected.id }, timeoutMs);
           return {

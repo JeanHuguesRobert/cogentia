@@ -29,7 +29,8 @@ try{
  const listen=(fn,host='127.0.0.1')=>new Promise((yes,no)=>{const s=https.createServer(tls,fn);s.once('error',no);s.listen(0,host,()=>yes(s))});
  const html=(res,text)=>{res.writeHead(200,{'content-type':'text/html'});res.end(text)};
  frame=await listen((req,res)=>html(res,'<!doctype html><title>isolated frame</title><input type="text" id="fake" autocomplete="off">'),'::');
- main=await listen((req,res)=>html(res,`<!doctype html><title>isolated parent</title><input type="text" autocomplete="username"><input type="text" disabled><input type="text" id="recipe" autocomplete="off" value="old fixture text"><input type="email"><iframe src="https://localhost:${assertPort(frame)}/inside"></iframe>`));
+ const tinyPNG=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aPm0AAAAASUVORK5CYII=','base64');
+ main=await listen((req,res)=>{if(req.url==='/visual-fixture.png'){res.writeHead(200,{'content-type':'image/png'});res.end(tinyPNG);return;}html(res,`<!doctype html><title>isolated parent</title><input type="text" autocomplete="username"><input type="text" disabled><input type="text" id="recipe" autocomplete="off" value="old fixture text"><input type="email"><img src="/visual-fixture.png" width="100" height="100"><iframe src="https://localhost:${assertPort(frame)}/inside"></iframe>`)});
  const probe=await new Promise((yes,no)=>{const s=https.createServer(tls,(req,res)=>res.end());s.listen(0,'127.0.0.1',()=>yes(s));s.once('error',no)});
  const unused=assertPort(probe);await new Promise(r=>probe.close(r));
  const expectedUrl=`https://${inoxDirectory?"cogentia-fixture.facebook.com":"127.0.0.1"}:${assertPort(main)}/main`;
@@ -123,6 +124,16 @@ try{
     ...proof,unsupported_edit_rejected:true,fixture_only:true}));
 
   }
+  let visualImage;
+  const visualInspect=createHostedBrowserCapabilities({gateway:base+'/assistant',browserInstanceId:'fixture-browser',
+   frameTransport:transport,timeoutMs:9000,onImage:image=>visualImage=image}).find(c=>c.name==='browser.hosted.inspect');
+  const visualInput={action:'image',browser_instance_id:'fixture-browser',tab_id:42,expected_url:expectedUrl,image_name:'visual-fixture.png'};
+  await assert.rejects(()=>inspect.execute(visualInput),e=>e.code==='BROWSER_VISUAL_READ_UNAVAILABLE');
+  const visualReceipt=await visualInspect.execute(visualInput);
+  assert.equal(visualImage?.data,tinyPNG.toString('base64'));
+  assert.equal(visualReceipt.bytes,tinyPNG.length);
+  assert.ok(!JSON.stringify(visualReceipt).includes(visualImage.data));
+  console.log(JSON.stringify({proof:'transient_visual_read',real_chromium:true,original_bytes_verified:true,receipt_without_bytes:true,no_sink_refused:true}));
   const frameList=await inspect.execute({action:'frame_tree',tab_id:42,expected_url:expectedUrl});
   assert.equal(frameList.oopif_frames?.length,1);
   assert.equal(frameList.oopif_frames[0].frame_id,childFrame.id);
