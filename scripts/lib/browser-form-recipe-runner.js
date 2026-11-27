@@ -1,13 +1,13 @@
 /** Compile a trusted, data-only recipe plan into the existing signed John v1 path.
  * This code changes on the daemon, never in the extension worker.
  */
-import {FORM_RECIPES} from './browser-form-recipes.js';
-export async function prepareFormAssistRequest({inspect,recipe_id,version=1,
-  tab_id,expected_url,text,request_id,registry=FORM_RECIPES}={}){
+import {FORM_PLANNER} from './browser-form-recipes.js';
+export async function prepareFormAssistRequest({inspect,recipe_id,version=1,field_type,selection,
+  tab_id,expected_url,text,request_id,planner=FORM_PLANNER}={}){
  if(typeof inspect!=='function')throw Error('trusted_structure_inspector_required');
  if(typeof request_id!=='string'||!/^[-\w:.]{1,120}$/.test(request_id))throw Error('request_id_invalid');
  const structure=await inspect({action:'structure',tab_id});
- const plan=registry.plan({recipe_id,version,structure,tab_id,expected_url,text});
+ const plan=planner.plan({recipe_id,version,field_type,selection,structure,tab_id,expected_url,text});
  // Do not invent authority: resulting packet must still pass the MCP's
  // independent Principal signature, per-capability COP and budget gate.
  return {version:'john.request.v1',request_id,principal:{id:'principal:jhn'},

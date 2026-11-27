@@ -146,3 +146,25 @@ implementation before dispatch, and verify the intended resulting content
 without retrying uncertain edits. Preserve existing tested paths while
 converging on that contract. Do not treat a type name or a successful
 keypress as proof of complete replacement.
+
+### Principal decision — generalization requires subtraction
+
+A proven general capability should subsume its narrower predecessors:
+migrate callers and regression cases, remove the redundant names and
+implementations, and retain historical evidence in version control rather
+than in the active API. Do not confuse distinct semantic operations with
+redundant names. Keep an operational transport or authorized contract until
+its replacement has actually passed the corresponding end-to-end checks.
+
+The experimental selector now has one versioned recipe,
+generic.select-input@1, with explicit field_type and selection (first or
+unique). Removed generic.first-text, generic.first-email and
+generic.unique-text, the firstTextSelector compatibility hook and the
+registry of trivial type-specific recipes. A single Inox select-field
+image and native object projection replace three selector images. All
+in-repository call sites migrated; the old identifiers fail explicitly.
+These names were internal planning/fixture API, not MCP capabilities or
+signed mandates. The underlying browser.form.fill request envelope,
+transport contracts and edit profiles remain unchanged. The real fixture
+tests both selection policies, unsupported edit rejection and actual text
+insertion. No production change.

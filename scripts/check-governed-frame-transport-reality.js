@@ -10,8 +10,8 @@ import {createHostedFrameTransport} from './lib/browser-frame-cdp-transport.js';
 import {createHostedBrowserCapabilities} from './lib/hosted-browser-capabilities.js';
 import {executeFrameEvaluate} from './lib/browser-frame-evaluate.js';
 import {SAFE_DOM_STRUCTURE_CODE} from './lib/browser-safe-dom-structure.js';
-import {createInoxComparisonRegistry} from './lib/browser-inox-recipe.js';
-import {createDefaultFormRecipes} from './lib/browser-form-recipes.js';
+import {createInoxComparisonPlanner} from './lib/browser-inox-recipe.js';
+import {createFormPlanner} from './lib/browser-form-recipes.js';
 import {prepareFormAssistRequest} from './lib/browser-form-recipe-runner.js';
 import {compileNonSecretFormFill} from './lib/browser-form-script.js';
 const inoxDirectory=process.argv[2];
@@ -101,26 +101,26 @@ try{
   const inspect=capabilities.find(c=>c.name==='browser.hosted.inspect');
   const formFill=capabilities.find(c=>c.name==='browser.form.fill');
   if(inoxDirectory){
-   const registry=await createInoxComparisonRegistry(inoxDirectory,{editProfile:'dom-replace'});
-   const referenceRegistry=createDefaultFormRecipes({editProfile:'dom-replace'});
-   const input={registry:referenceRegistry,inspect:args=>inspect.execute(args),recipe_id:'generic.first-text',tab_id:42,
+   const planner=await createInoxComparisonPlanner(inoxDirectory,{editProfile:'dom-replace'});
+   const referencePlanner=createFormPlanner({editProfile:'dom-replace'});
+   const input={planner:referencePlanner,inspect:args=>inspect.execute(args),recipe_id:'generic.select-input',field_type:'text',selection:'first',tab_id:42,
      expected_url:expectedUrl,text:'fixture-inox-only',request_id:'fixture-inox-parity'};
    const reference=await prepareFormAssistRequest(input);
-   const compared=await prepareFormAssistRequest({...input,registry});
+   const compared=await prepareFormAssistRequest({...input,planner});
    assert.deepEqual(compared,reference);
    assert.equal(compared.input.arguments.field_index,2);
-   const email={...input,recipe_id:'generic.first-email'};
-   await assert.rejects(()=>prepareFormAssistRequest({...email,registry}),/edit_unsupported/);
+   const email={...input,field_type:'email'};
+   await assert.rejects(()=>prepareFormAssistRequest({...email,planner}),/edit_unsupported/);
    await assert.rejects(()=>prepareFormAssistRequest(email),/edit_unsupported/);
-   const unique={...input,recipe_id:'generic.unique-text'};
-   const uniquePlan=await prepareFormAssistRequest({...unique,registry});
+   const unique={...input,selection:'unique'};
+   const uniquePlan=await prepareFormAssistRequest({...unique,planner});
    assert.deepEqual(uniquePlan,await prepareFormAssistRequest(unique));
    assert.equal(uniquePlan.input.arguments.field_index,2);
    // Use the real observed metadata, then add a second admissible
    // candidate to verify ambiguity without making a browser write.
    const observed=await inspect.execute({action:'structure',tab_id:42});
    const ambiguous={...observed,fields:[...observed.fields,observed.fields[2]]};
-   await assert.rejects(()=>prepareFormAssistRequest({...unique,registry,inspect:async()=>ambiguous}),/field_ambiguous/);
+   await assert.rejects(()=>prepareFormAssistRequest({...unique,planner,inspect:async()=>ambiguous}),/field_ambiguous/);
    const receipt=await formFill.execute(uniquePlan.input.arguments);
    assert.equal(receipt.ok,true);assert.equal(receipt.submitted,false);
    console.log(JSON.stringify({ok:true,proof:'inox_image_live_dom_parity',field_index:2,request_equal:true,unique_recipe:true,ambiguity_rejected:true,unsupported_edit_rejected:true,inserted_length:receipt.inserted_length,submitted:false,fixture_only:true}));
