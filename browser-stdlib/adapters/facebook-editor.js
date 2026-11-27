@@ -31,3 +31,28 @@ export function editorContext(node, registry) {
   }
   return null;
 }
+
+// Facebook's controlled editor can discard LF characters embedded in insertText.
+// Reuse the paragraph operations established by the navigation TUI. Do not
+// emit Enter key events, click buttons, or submit. Stop at the first failure.
+export function writeCommentParagraphs(text, doc, guard=()=>true) {
+  const results=[];
+  const lines=String(text).replace(/\r\n/g,'\n').split(/(\n+)/);
+  for (const [index,line] of lines.entries()) {
+    if (!line) continue;
+    if (index%2) {
+      // One explicit break for a single LF; three for a paragraph separator.
+      const count=line.length===1?1:line.length+1;
+      for(let i=0;i<count;i++){
+        const ok=guard()&&doc.execCommand('insertParagraph',false,null)===true;
+        results.push({kind:'paragraph-break',ok});
+        if(!ok)return {ok:false,results};
+      }
+    } else {
+      const ok=guard()&&doc.execCommand('insertText',false,line)===true;
+      results.push({kind:'text',ok});
+      if(!ok)return {ok:false,results};
+    }
+  }
+  return {ok:true,results};
+}

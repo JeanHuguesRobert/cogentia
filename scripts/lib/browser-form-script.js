@@ -24,6 +24,7 @@ export function compileNonSecretFormFill({fieldIndex,text,expectedUrl,iframeInde
   throw Error('form_script_semantic_role_invalid');
  const roleCheck=site?`if(siteEditorRole(el)!==${JSON.stringify(semanticRole)})
  return {ok:false,reason:'element_role_changed'};`:'';
+ const siteParagraphs=site?.id==='facebook'&&fieldKind==='contenteditable';
  const encoded=JSON.stringify(text);
  const urlLiteral=JSON.stringify(expectedUrl);
  const documentLocation=originOnly?"location.origin":"location.href";
@@ -75,7 +76,19 @@ export function compileNonSecretFormFill({fieldIndex,text,expectedUrl,iframeInde
  registry.resolveElementUid(${JSON.stringify(elementTarget.uid)})!==el)
  return {ok:false,reason:'element_uid_stale'};`:''}
  ${roleCheck}
- const inserted=targetDocument.execCommand('insertText',false,value);
+ ${siteParagraphs?`
+ // A controlled editor can ignore a Range during insertText. Require the
+ // old draft to be absent before attempting the new draft.
+ const guard=()=>${documentLocation}===${urlLiteral}&&el.isConnected&&targetDocument.activeElement===el&&
+  window.__cogentiaNavigationAssistant?.elementIdentity===registry&&
+  registry.resolveElementUid(${JSON.stringify(elementTarget.uid)})===el&&siteEditorRole(el)===${JSON.stringify(semanticRole)};
+ if(String(el.innerText||el.textContent||'').trim()){
+  if(!guard()||targetDocument.execCommand('delete',false,null)!==true||
+    !guard()||String(el.innerText||el.textContent||'').trim())
+   return {ok:false,reason:'editor_clear_unconfirmed',submitted:false};
+ }
+ const inserted=${site.writeParagraphs}(value,targetDocument,guard).ok;
+ `:`const inserted=targetDocument.execCommand('insertText',false,value);`}
  if(${documentLocation}!==${urlLiteral}||!el.isConnected)
    return {ok:false,reason:'document_or_element_changed_after_edit'};
  ${uidMode?`if(window.__cogentiaNavigationAssistant?.elementIdentity!==registry||
@@ -85,7 +98,7 @@ export function compileNonSecretFormFill({fieldIndex,text,expectedUrl,iframeInde
  const actual=kind==='contenteditable'
    ? String(el.innerText||el.textContent||'').replace(/\\r\\n/g,'\\n')
    : el.value;
- const matches=actual===value || (kind==='contenteditable'&&actual===value+'\\n');
+ const matches=${siteParagraphs?"actual.replace(/\\r\\n/g,'\\n').replace(/\\n{2,}/g,'\\n\\n').replace(/\\n+$/,'')===value.replace(/\\r\\n/g,'\\n').replace(/\\n{2,}/g,'\\n\\n').replace(/\\n+$/,'')":"actual===value || (kind==='contenteditable'&&actual===value+'\\n')"};
  return {ok:inserted===true&&matches,
    insertedLength:inserted===true&&matches?value.length:0,
    ${scoped?`iframeIndex:${iframeIndex},`:''}

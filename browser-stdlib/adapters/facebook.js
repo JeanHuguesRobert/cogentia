@@ -89,34 +89,11 @@
     };
   }
 
-  function writeCommentParagraphs(text) {
-    const paragraphs = String(text)
-      .split(/\r?\n\s*\r?\n/)
-      .map((paragraph) => paragraph.trim())
-      .filter(Boolean);
-    const results = [];
-    for (const [index, paragraph] of paragraphs.entries()) {
-      if (index > 0) {
-        // Three paragraph breaks leave two deliberately empty visual lines in
-        // Facebook's contenteditable composer; raw LF text alone is often
-        // normalized into one dense block by its React editor.
-        results.push({ kind: "paragraph-break", ok: document.execCommand("insertParagraph", false, null) });
-        results.push({ kind: "paragraph-break", ok: document.execCommand("insertParagraph", false, null) });
-        results.push({ kind: "paragraph-break", ok: document.execCommand("insertParagraph", false, null) });
-      }
-      results.push({ kind: "text", ...navigation.insertText(paragraph) });
-    }
-    return {
-      ok: results.every((result) => result.ok),
-      paragraphs: paragraphs.length,
-      results,
-    };
-  }
-
   function insertComment(text) {
     const composer = commentComposer();
     if (!composer.active) return { ok: false, error: "the active field is not a Facebook top-level comment composer", composer };
-    return { ...writeCommentParagraphs(text), composer };
+    const active = document.activeElement;
+    return { ...writeCommentParagraphs(text, document, () => document.activeElement === active && editorRole(active) !== null), composer };
   }
 
   function replaceComment(text, { expectedStart = null, expectedEnd = null } = {}) {
@@ -131,7 +108,9 @@
     range.selectNodeContents(active);
     selection.removeAllRanges();
     selection.addRange(range);
-    const result = writeCommentParagraphs(text);
+    if (before && (!document.execCommand("delete", false, null) || (active.innerText || "").trim()))
+      return { ok: false, error: "editor_clear_unconfirmed", composer };
+    const result = writeCommentParagraphs(text, document, () => document.activeElement === active && editorRole(active) !== null);
     return { ...result, beforeLength: before.length, composer };
   }
 

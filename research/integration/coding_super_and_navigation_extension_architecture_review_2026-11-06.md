@@ -290,3 +290,32 @@ its own cancel control has an edit_context; its scope UID is stable
 across observations; removing the control removes that evidence.
 No personal page edits. Thirty-two targeted tests pass in the
 composed checkout, and both full browser fixtures pass.
+
+### Real Facebook replacement failure and FBF (2026-11-27)
+
+The Principal reopened the same published comment in edit mode. The
+new editor received a new UID; the separate new-comment composer
+retained its UID. The existing governed form-assist attempt targeted
+the correct editor, but independent readback showed the old and new
+texts concatenated, with the inserted paragraph breaks lost. COP
+returned form_result_not_confirmed. The Principal cancelled; a fresh
+readback confirmed the published original unchanged. The Principal
+also reports the loss of line breaks during ordinary manual pasting.
+
+Reuse the established Facebook paragraph behavior in a single
+site-library function shared with the legacy TUI. A role-bound rich
+text replacement first issues delete on the selected content and
+requires verified emptiness before insertion. An ignored delete
+must stop without append. Insert explicit paragraph operations
+instead of sending embedded LF through insertText; check the same
+UID, role, document and focus before each operation. Verify the
+readback, treating multiple blank lines as equivalent paragraph
+separators, not collapsing single-line boundaries or text. Never
+submit or automatically retry. Keep the existing COP form envelope
+and generic non-Facebook materialization unchanged.
+
+34/34 focused tests, including a simulated ignored deletion and
+paragraph-losing insertText, and disposable Chromium and Firefox
+full fixtures pass with independent multiline readback. The real
+Facebook editor remains the next acceptance test; the local browser
+fixtures do not implement Facebook's controlled-editor internals.

@@ -19,7 +19,7 @@ function environment(nodes,href=url){
  const registry={epoch,elementUid:el=>epoch+':'+(nodes.indexOf(el)+1),resolveElementUid:uid=>nodes[Number(uid.split(':')[1])-1]};
  const doc={title:'Fixture',forms:[],querySelectorAll:s=>s==='iframe'?[]:s==='[role="textbox"][contenteditable="true"]'?nodes.filter(n=>n.isContentEditable):nodes,
   getSelection:()=>selection,createRange:()=>({selectNodeContents(){}}),
-  execCommand(name,ui,text){doc.activeElement.innerText=text;return true}};
+  execCommand(name,ui,text){if(name==='delete')doc.activeElement.innerText='';else if(name==='insertParagraph')doc.activeElement.innerText+='\n';else doc.activeElement.innerText+=text;return true}};
  for(const el of nodes)el.focus=()=>{doc.activeElement=el};
  const window={__cogentiaNavigationAssistant:{elementIdentity:registry,adapters:{},elementSignature:()=>({})}};
  return {document:doc,location:{href,origin:new URL(href).origin},window};
@@ -75,7 +75,7 @@ test('role is checked on the same UID immediately before editing; no retry or su
 
 test('post-edit role change reports unconfirmed effect, not a pre-edit stale target',()=>{
  const el=node('Comment as PRIVATE_PERSON'),env=environment([el]);
- env.document.execCommand=(name,ui,text)=>{el.innerText=text;el.setLabel('Reply to PRIVATE_PERSON');return true};
+ env.document.execCommand=(name,ui,text)=>{if(name==='delete')el.innerText='';else {el.innerText=text;el.setLabel('Reply to PRIVATE_PERSON')}return true};
  const code=compileNonSecretFormFill({elementTarget:target,expectedUrl:url,text:'new draft',fieldKind:'contenteditable',semanticRole:role});
  assert.equal(runInNewContext(code,env).reason,'element_role_changed_after_edit');
  assert.equal(el.innerText,'new draft');
@@ -114,4 +114,31 @@ test('editor context projects only a bounded cancellation relationship in its ow
  cancel.getClientRects=()=>[];assert.equal(editorContext(editor,registry),null);
  cancel.getClientRects=()=>[{}];cancel.closest=()=>null;
  assert.equal(editorContext(editor,registry).actionable,false);
+});
+
+
+test('Facebook replacement stops after ignored deletion; never appends to uncleared draft',()=>{
+ const el=node('Comment as fixture'),env=environment([el]);
+ const calls=[];
+ env.document.execCommand=(name,ui,text)=>{calls.push(name);return true};
+ const code=compileNonSecretFormFill({elementTarget:target,expectedUrl:url,text:'first\n\nsecond',fieldKind:'contenteditable',semanticRole:role});
+ const receipt=runInNewContext(code,env);
+ assert.equal(receipt.reason,'editor_clear_unconfirmed');
+ assert.deepEqual(calls,['delete']);
+ assert.equal(el.innerText,'old draft');
+});
+test('Facebook replacement uses explicit paragraph operations and independent normalized readback',()=>{
+ const el=node('Comment as fixture'),env=environment([el]),calls=[];
+ env.document.execCommand=(name,ui,text)=>{calls.push(name);
+  if(name==='delete')el.innerText='';
+  else if(name==='insertParagraph')el.innerText+='\n';
+  else if(name==='insertText')el.innerText+=String(text).replace(/\n/g,'');
+  return true;
+ };
+ const text='first\n\nsecond';
+ const code=compileNonSecretFormFill({elementTarget:target,expectedUrl:url,text,fieldKind:'contenteditable',semanticRole:role});
+ const receipt=runInNewContext(code,env);
+ assert.equal(receipt.ok,true);assert.equal(receipt.insertedLength,text.length);
+ assert.deepEqual(calls,['delete','insertText','insertParagraph','insertParagraph','insertParagraph','insertText']);
+ assert.equal(el.innerText,'first\n\n\nsecond');
 });

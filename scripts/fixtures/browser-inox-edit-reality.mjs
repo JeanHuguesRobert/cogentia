@@ -91,15 +91,24 @@ export async function proveInoxSiteRole({directory,inspect,form,scope,evaluate})
   const proof=await proveInoxReplacement({directory,inspect,form,scope,readValue,expectedIndex,
    semanticRole:role,expectedKind:'contenteditable',text:'Corte — brouillon'});
   assert.equal(await evaluate('document.querySelector("#inox-site-other").innerText'),'untouched reply');
+  const multiline='Premier paragraphe — été\n\nSecond paragraphe';
+  const multilinePlan=await prepareFormAssistRequest({...scope,inspect:args=>inspect.execute(args),operation:'replace-all',
+   selection:'unique',semantic_role:role,text:multiline,request_id:'fixture-facebook-paragraphs'});
+  const multilineReceipt=await form.execute(multilinePlan.input.arguments);
+  assert.equal(multilineReceipt.ok,true);assert.equal(multilineReceipt.submitted,false);
+  const normalized=s=>s.replace(/\n{2,}/g,'\n\n').replace(/\n+$/,'');
+  assert.equal(normalized(await readValue()),multiline);
+  assert.equal(await evaluate('document.querySelector("#inox-site-other").innerText'),'untouched reply');
+
   const planner=await createInoxComparisonPlanner(directory);
   const input={...scope,inspect:args=>inspect.execute(args),operation:'replace-all',selection:'unique',
    semantic_role:role,text:'must not be written',request_id:'fixture-role-changed',planner};
   const pending=await prepareFormAssistRequest(input);
   await evaluate('document.querySelector("#inox-site-fixture").setAttribute("aria-label","Reply to PRIVATE_FIXTURE_NAME")');
   await assert.rejects(()=>form.execute(pending.input.arguments),e=>e.code==='BROWSER_ELEMENT_TARGET_STALE');
-  assert.equal(await readValue(),'Corte — brouillon');
+  assert.equal(normalized(await readValue()),multiline);
   await assert.rejects(()=>prepareFormAssistRequest(input),/field_not_found/);
-  return {...proof,site_role:role,role_changed_rejected:true,unrelated_editor_unchanged:true,labels_not_returned:true};
+  return {...proof,site_role:role,paragraphs_verified:true,role_changed_rejected:true,unrelated_editor_unchanged:true,labels_not_returned:true};
  }finally{await evaluate('document.querySelector("#inox-site-parent")?.remove()')}
 }
 

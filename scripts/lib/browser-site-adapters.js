@@ -3,11 +3,11 @@
  * filename, script or URL. A new site extends this data table.
  */
 import {readFileSync} from 'node:fs';
-import {editorRole as facebookEditorRole,editorContext as facebookEditorContext} from '../../browser-stdlib/adapters/facebook-editor.js';
+import {editorRole as facebookEditorRole,editorContext as facebookEditorContext,writeCommentParagraphs as facebookWriteParagraphs} from '../../browser-stdlib/adapters/facebook-editor.js';
 
 const sites=Object.freeze([
  Object.freeze({id:'facebook',domain:'facebook.com',
-  roles:Object.freeze(['facebook.comment-composer']),editorRole:facebookEditorRole,editorContext:facebookEditorContext}),
+  roles:Object.freeze(['facebook.comment-composer']),editorRole:facebookEditorRole,editorContext:facebookEditorContext,writeParagraphs:facebookWriteParagraphs}),
 ]);
 function siteFor(url){
  try{
@@ -18,7 +18,7 @@ function siteFor(url){
 }
 export function siteEditorProjection(url){
  const site=siteFor(url);
- return site?{id:site.id,matcher:'('+site.editorRole.toString()+')',context:'('+site.editorContext.toString()+')'}:null;
+ return site?{id:site.id,matcher:'('+site.editorRole.toString()+')',context:'('+site.editorContext.toString()+')',writeParagraphs:'('+site.writeParagraphs.toString()+')'}:null;
 }
 export function projectSiteEditorRole(url,role){
  return siteFor(url)?.roles.includes(role)?{semantic_role:role}:{};
@@ -29,7 +29,7 @@ export function projectSiteEditorRole(url,role){
 // A short observation or edit needs only the matcher, not the whole adapter.
 export function facebookAdapterSource(){
  const source=readFileSync(new URL('../../browser-stdlib/adapters/facebook.js',import.meta.url),'utf8');
- return '(() => {const editorRole='+facebookEditorRole.toString()+';\n'+source+'\n})()';
+ return '(() => {const editorRole='+facebookEditorRole.toString()+';const writeCommentParagraphs='+facebookWriteParagraphs.toString()+';\n'+source+'\n})()';
 }
 
 
