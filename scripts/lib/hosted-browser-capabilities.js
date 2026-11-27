@@ -278,6 +278,7 @@ export function createHostedBrowserCapabilities(options = {}) {
         type: "object",
         properties: {
           action: { type: "string", enum: ["activate", "open", "close", "insert_text"] },
+          browser_instance_id: {type:"string",minLength:1,maxLength:200},
           tab_id: { type: "integer", minimum: 1 },
           expected_url: { type: "string", maxLength: 4096 },
           url: { type: "string", maxLength: 4096 },
@@ -289,6 +290,27 @@ export function createHostedBrowserCapabilities(options = {}) {
       },
       async execute(input = {}) {
         const action = String(input.action || "");
+        const selected=await selectedBrowser(input);
+        if(selected.managed){
+          const methods={open:'tabs.create',activate:'tabs.activate',close:'tabs.close'};
+          const method=methods[action];
+          if(!method||!selected.methods.includes(method))throw capabilityError('BROWSER_ACTION_NOT_ALLOWED');
+          const session=await createGatewaySession(gateway,{timeoutMs});
+          try{
+            if(action==='open'){
+              const url=new URL(input.url);
+              if(!['http:','https:'].includes(url.protocol)||url.username||url.password||input.url.length>4096)
+                throw capabilityError('BROWSER_URL_INVALID');
+              return await session.call(method,{browser_instance_id:selected.id,url:input.url,active:input.active!==false});
+            }
+            const tabId=positiveInt(input.tab_id,'tab_id');
+            const expectedUrl=input.expected_url;
+            if(typeof expectedUrl!=='string'||!/^https?:\/\//.test(expectedUrl)||expectedUrl.length>4096)
+              throw capabilityError('BROWSER_TAB_TARGET_INVALID');
+            return await session.withTabLease(selected.id,tabId,peer=>peer.call(method,{
+              browser_instance_id:selected.id,tabId,expectedUrl}));
+          }finally{session.close()}
+        }
         if (action === "activate") return rpc(gateway, "tabs.activate", { browser_instance_id: browserId, tabId: positiveInt(input.tab_id, "tab_id") }, timeoutMs);
         if (action === "open") {
           const url = String(input.url || "");

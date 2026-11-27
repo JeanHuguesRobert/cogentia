@@ -72,7 +72,7 @@ test('provider discovery, explicit tab/instance, lease, stable IDs, method refus
   });
   await assert.rejects(()=>assistant.call('page.evaluate',{...req,tabId:undefined}));
   await assert.rejects(()=>assistant.call('page.evaluate',{...req,expectedUrl:url+'wrong'}));
-  await assert.rejects(()=>assistant.call('tabs.close',req),e=>e.code===-32601);
+  await assert.rejects(()=>assistant.call('page.insertText',req),e=>e.code===-32601);
   assert.equal(dispatches,1);
   await peer.close();
   peer=await provider.attachGateway(base+'/extension');

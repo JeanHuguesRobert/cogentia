@@ -5,7 +5,7 @@ import {randomUUID} from 'node:crypto';
 import {WebSocket} from 'ws';
 import {executeBidiFrameEvaluate} from '../browser-frame-bidi-evaluate.js';
 import {projectFrameTree} from '../browser-frame-tree.js';
-const METHODS=Object.freeze(['tabs.list','page.evaluate','page.frameTree']);
+const METHODS=Object.freeze(['tabs.list','page.evaluate','page.frameTree','tabs.create','tabs.activate','tabs.close']);
 const metadata=Object.freeze({engine:'firefox',transport:'bidi',methods:METHODS});
 function webUrl(value){try{const u=new URL(value);return ['http:','https:'].includes(u.protocol)&&!u.username&&!u.password}catch{return false}}
 export function createBidiNavigationProvider({session,instancePrefix='firefox'}={}){
@@ -14,7 +14,7 @@ export function createBidiNavigationProvider({session,instancePrefix='firefox'}=
  // A new engine session gets a new instance identity. Gateway reconnection
  // of the same provider preserves its IDs, never reassigns retired tab IDs.
  const browserId=instancePrefix+'-'+randomUUID();
- const byContext=new Map();let next=0,peer=null,inFlight=0,connecting=false,inventoryTail=Promise.resolve();
+ const byContext=new Map();let next=0,peer=null,inFlight=0,connecting=false,inventoryTail=Promise.resolve(),eventsSubscribed=false;
  async function readInventory(){
   const result=await session.call('browsingContext.getTree',{maxDepth:0});
   const roots=result?.contexts;
@@ -35,7 +35,19 @@ export function createBidiNavigationProvider({session,instancePrefix='firefox'}=
  function tabReceipt(tab){return {id:tab.id,url:tab.url,title:''}}
  async function dispatch(method,params={}){
   if(method==='tabs.list')return {tabs:(await inventory()).map(tabReceipt)};
-  if(!['page.evaluate','page.frameTree'].includes(method))throw Error('bidi_method_unsupported');
+  if(method==='tabs.create'){
+   if(!webUrl(params.url)||typeof params.url!=='string'||params.url.length>4096||
+    (params.active!==undefined&&typeof params.active!=='boolean'))throw Error('bidi_open_invalid');
+   const made=await session.call('browsingContext.create',{type:'tab',background:params.active===false});
+   const tab=(await inventory()).find(t=>t.context===made.context);
+   if(!tab)throw Error('bidi_open_unconfirmed');
+   // No silent cleanup or retry after an uncertain navigation.
+   await session.call('browsingContext.navigate',{context:tab.context,url:params.url,wait:'complete'});
+   const after=(await inventory()).find(t=>t.id===tab.id);
+   if(!after||after.context!==tab.context||!webUrl(after.url))throw Error('bidi_open_unconfirmed');
+   return {tab:tabReceipt(after)};
+  }
+  if(!['page.evaluate','page.frameTree','tabs.activate','tabs.close'].includes(method))throw Error('bidi_method_unsupported');
   if(!Number.isSafeInteger(params.tabId)||params.tabId<1||
    (method==='page.evaluate'&&(typeof params.code!=='string'||!params.code||params.code.length>16000))||
    (params.expectedUrl!==undefined&&!webUrl(params.expectedUrl)))throw Error('bidi_evaluation_invalid');
@@ -43,6 +55,18 @@ export function createBidiNavigationProvider({session,instancePrefix='firefox'}=
   if(!before||!webUrl(before.url)||(params.expectedUrl!==undefined&&params.expectedUrl!==before.url))
    throw Error('bidi_tab_target_changed');
   const expected=before.url;
+  if(method==='tabs.activate'||method==='tabs.close'){
+   if(params.expectedUrl!==expected)throw Error('bidi_tab_target_changed');
+   if(method==='tabs.close'){
+    await session.call('browsingContext.close',{context:before.context});
+    if((await inventory()).some(t=>t.context===before.context))throw Error('bidi_close_unconfirmed');
+    return {closedTabId:before.id};
+   }
+   await session.call('browsingContext.activate',{context:before.context});
+   const after=(await inventory()).find(t=>t.id===before.id);
+   if(!after||after.url!==expected)throw Error('bidi_activation_unconfirmed');
+   return {tab:tabReceipt(after)};
+  }
   if(method==='page.frameTree'){
    if(params.expectedUrl!==expected)throw Error('bidi_frame_target_invalid');
    const {contexts}=await session.call('browsingContext.getTree',{root:before.context});
@@ -79,16 +103,36 @@ export function createBidiNavigationProvider({session,instancePrefix='firefox'}=
   const url=new URL(endpoint);
   if(!['ws:','wss:'].includes(url.protocol)||url.pathname!=='/extension'||
    url.username||url.password||url.search||url.hash)throw Error('bidi_gateway_endpoint_invalid');
-  connecting=true;let ws,off=()=>{};
+  connecting=true;let ws,off=()=>{},offEvents=()=>{};
   try{
    ws=new WebSocket(url,{handshakeTimeout:timeoutMs});
    peer=ws;
    ws.on('error',()=>{});
-   ws.once('close',()=>{if(peer===ws)peer=null;off()});
+   ws.once('close',()=>{if(peer===ws)peer=null;off();offEvents()});
    off=session.onClose(()=>ws.terminate());
    await new Promise((resolve,reject)=>{
     ws.once('open',resolve);ws.once('error',reject);ws.once('close',()=>reject(Error('bidi_gateway_disconnected')));
    });
+   if(typeof session.onEvent==='function'){
+    offEvents=session.onEvent(message=>{
+     const p=message.params||{},context=p.context;
+     // Only already inventoried root contexts, never frames or guessed IDs.
+     const tabId=byContext.get(context);
+     if(!tabId||ws.readyState!==WebSocket.OPEN)return;
+     let method,params;
+     if(message.method==='browsingContext.contextDestroyed'){
+      method='page.tabRemoved';params={tabId};byContext.delete(context);
+     }else if(['browsingContext.navigationStarted','browsingContext.load'].includes(message.method)){
+      method=message.method.endsWith('navigationStarted')?'page.navigationStarted':'page.navigationCompleted';
+      params={tab:{id:tabId,title:'',url:typeof p.url==='string'?p.url:''}};
+     }else return;
+     ws.send(JSON.stringify({jsonrpc:'2.0',method,params}));
+    });
+    if(!eventsSubscribed){
+     await session.call('session.subscribe',{events:['browsingContext.navigationStarted','browsingContext.load','browsingContext.contextDestroyed']});
+     eventsSubscribed=true;
+    }
+   }
    await new Promise((resolve,reject)=>{
     const timer=setTimeout(()=>finish(Error('bidi_gateway_register_timeout')),timeoutMs);
     function finish(error){clearTimeout(timer);ws.off('message',registration);ws.off('close',closed);error?reject(error):resolve()}

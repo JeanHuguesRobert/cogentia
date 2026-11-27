@@ -9,17 +9,18 @@ export async function openBidiSession(endpoint,{timeoutMs=10000}={}){
   !url.port||url.pathname!=='/session'||url.search||url.hash||url.username||url.password||
   !Number.isInteger(timeoutMs)||timeoutMs<500||timeoutMs>30000)throw Error('bidi_endpoint_invalid');
  const socket=new WebSocket(url,{handshakeTimeout:timeoutMs});
- const pending=new Map(),listeners=new Set();let sequence=0,closed=false;
+ const pending=new Map(),listeners=new Set(),eventListeners=new Set();let sequence=0,closed=false;
  const disconnect=()=>{
   if(closed)return;closed=true;
   for(const job of pending.values()){clearTimeout(job.timer);job.reject(Error('bidi_disconnected'))}
   pending.clear();
   for(const listener of listeners)listener();
-  listeners.clear();
+  listeners.clear();eventListeners.clear();
  };
  socket.on('close',disconnect);socket.on('error',disconnect);
  socket.on('message',raw=>{
   let msg;try{msg=JSON.parse(String(raw))}catch{return}
+  if(msg.type==="event"){for(const listener of eventListeners){try{listener(msg)}catch{/* isolate observer */}}return}
   const job=pending.get(msg.id);if(!job)return;
   pending.delete(msg.id);clearTimeout(job.timer);
   if(msg.type==='error'){
@@ -48,6 +49,7 @@ export async function openBidiSession(endpoint,{timeoutMs=10000}={}){
    throw Error('bidi_session_invalid');
   return Object.freeze({sessionId:started.sessionId,capabilities:Object.freeze({...started.capabilities}),call,
    get closed(){return closed},
+   onEvent(listener){if(closed)throw Error("bidi_disconnected");eventListeners.add(listener);return ()=>eventListeners.delete(listener)},
    onClose(listener){if(closed){listener();return ()=>{}}listeners.add(listener);return ()=>listeners.delete(listener)},
    close(){disconnect();socket.terminate()}});
  }catch(error){disconnect();socket.terminate();throw error}

@@ -624,3 +624,37 @@ wrong-instance/origin refusal, stale UID refusal and parent isolation.
 No production signing key or mandate is exercised. The fixture needs
 OpenSSL and certutil; no application dependency or system trust store
 change is required. The temporary profile is removed.
+
+
+### Programmable composition and navigation — I3 third increment
+
+The disposable Firefox reality fixture now runs an Alan program through
+the existing MultiMCP runtime, COP bridge, SQLite packet source and
+scheduler. The fixture MCP catalog exposes the actual semantic capability
+descriptors; its two admitted reads call the real hosted capabilities.
+The governed fill suspends before execution. The fixture independently
+dispatches the bounded John runner and records the observed, redacted
+receipt and accounting in the temporary packet source. A fixture-only
+verifier accepts the matching receipt; forged returns fail. Recovery of
+the scheduler preserves the suspended or completed packet without
+replaying the reads or effect. This proves the composition mechanics,
+not a production mandate or a production browser CPS verifier. Alan
+currently declares the effect conservatively as P3 private-data access
+because its effect vocabulary has no internal-recoverable literal.
+
+The managed provider also implements the existing gateway methods
+`tabs.create`, `tabs.activate` and `tabs.close`. Select an explicit
+discovered Firefox instance in `browser.hosted.interact`; the managed
+activation/close routes require the exact current URL and tab lease.
+Opening creates a fresh tab and navigates it; the receipt reports the
+observed destination (including redirects). Uncertain operations are
+not replayed or silently compensated. The legacy Chromium path is unchanged.
+
+BiDi events for already inventoried top-level contexts are projected onto
+the existing `page.navigationStarted`, `page.navigationCompleted` and
+`page.tabRemoved` notifications. The gateway preserves instance/tab
+subscription filtering; `createGatewaySession().onEvent(listener)`
+receives subscribed notifications. No iframe events, historical replay,
+or event persistence is implied. Reconnecting a provider does not
+re-subscribe the same engine session. Native focused text insertion and
+file upload are not yet routed to Firefox.

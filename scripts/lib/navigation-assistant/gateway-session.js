@@ -2,6 +2,7 @@
 export async function createGatewaySession(endpoint, { WebSocketClass = WebSocket, timeoutMs = 10000 } = {}) {
   const socket = new WebSocketClass(endpoint);
   const pending = new Map();
+  const eventListeners = new Set();
   let sequence = 0;
   let closed = false;
   const ready = new Promise((resolve, reject) => {
@@ -11,6 +12,10 @@ export async function createGatewaySession(endpoint, { WebSocketClass = WebSocke
   });
   socket.addEventListener('message', event => {
     let msg; try { msg = JSON.parse(String(event.data)); } catch { return; }
+    if (msg.id === undefined && typeof msg.method === 'string' && msg.method.startsWith('page.')) {
+      for (const listener of eventListeners) { try { listener(msg); } catch { /* isolate observer */ } }
+      return;
+    }
     const job = pending.get(msg.id);
     if (!job) return;
     pending.delete(msg.id); clearTimeout(job.timer);
@@ -24,6 +29,7 @@ export async function createGatewaySession(endpoint, { WebSocketClass = WebSocke
     closed = true;
     for (const job of pending.values()) { clearTimeout(job.timer); job.reject(new Error('Gateway disconnected')); }
     pending.clear();
+    eventListeners.clear();
   };
   socket.addEventListener('close', failPending);
   try { await ready; } catch (error) { socket.close(); throw error; }
@@ -36,6 +42,11 @@ export async function createGatewaySession(endpoint, { WebSocketClass = WebSocke
         pending.set(id, { resolve, reject, timer });
         socket.send(JSON.stringify({ jsonrpc: '2.0', id, method, params }));
       });
+    },
+    onEvent(listener) {
+      if (closed || typeof listener !== 'function') throw new Error('Gateway event listener invalid');
+      eventListeners.add(listener);
+      return () => eventListeners.delete(listener);
     },
     async withTabLease(browserId, tabId, operation, ttlMs = 30000) {
       if (!Number.isInteger(tabId) || tabId < 0) throw new Error('Explicit integer tabId required');

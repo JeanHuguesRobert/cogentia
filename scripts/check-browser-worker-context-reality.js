@@ -10,6 +10,7 @@ import {spawn,spawnSync} from 'node:child_process';
 import {createServer as createHttpsServer} from 'node:https';
 import {createHostedBrowserCapabilities} from './lib/hosted-browser-capabilities.js';
 import {runJohnRequest} from './lib/john-run.js';
+import {proveBrowserComposition} from './fixtures/browser-multimcp-reality.mjs';
 import {mkdtemp,readFile,writeFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
@@ -417,12 +418,50 @@ try{
   await evaluate({context:frame.frame_id},`(() => {const el=document.querySelector('#uid-target');const next=el.cloneNode(true);next.value='untouched';el.replaceWith(next)})()`);
   await assert.rejects(()=>form.execute(args),e=>e.code==='BROWSER_ELEMENT_TARGET_STALE');
   assert.equal(await evaluate({context:frame.frame_id},'document.querySelector("#uid-target").value'),'untouched');
+  const renewed=await inspect.execute({...selected,action:'frame_structure',frame_id:frame.frame_id,
+   expected_frame_origin:frameOrigin,include_element_identity:true});
+  const composition=await proveBrowserComposition({dir,caps,request:{...request,input:{...request.input,
+   arguments:{...args,element_target:renewed.fields[0].element_target,text:'Alan COP — Corse'}}},
+   readValue:()=>evaluate({context:frame.frame_id},'document.querySelector("#uid-target").value')});
+  assert.equal(composition.calls,3);
   const top=await inspect.execute({...selected,action:'structure',include_element_identity:true});
   const topTarget=top.fields[0].element_target;
   assert.ok(topTarget);
   assert.equal((await form.execute({...selected,element_target:topTarget,text:'Hosted top'})).ok,true);
   assert.equal(await evaluate(tabs.get(41),'document.querySelector("#uid-target").value'),'Hosted top');
 
+  // New navigation and event paths use the existing semantic interaction
+  // capability and existing gateway subscription, not direct fixture commands.
+  const interact=caps.find(c=>c.name==='browser.hosted.interact');
+  const observer=await createGatewaySession(base+'/assistant');
+  const otherObserver=await createGatewaySession(base+'/assistant');
+  const notifications=[],otherNotifications=[];
+  try{
+   observer.onEvent(e=>notifications.push(e));
+   otherObserver.onEvent(e=>otherNotifications.push(e));
+   const methods=['page.navigationStarted','page.navigationCompleted','page.tabRemoved'];
+   await observer.call('events.subscribe',{...scope,methods});
+   await otherObserver.call('events.subscribe',{...scope,methods,tabIds:[managedTab]});
+   const opened=await interact.execute({action:'open',...scope,url:expectedUrl,active:false});
+   const openedId=opened.tab.id;
+   assert.equal(opened.tab.url,expectedUrl);assert.notEqual(openedId,managedTab);
+   assert.equal((await interact.execute({action:'activate',...scope,tab_id:openedId,expected_url:expectedUrl})).tab.id,openedId);
+   await assert.rejects(()=>interact.execute({action:'close',...scope,tab_id:openedId,expected_url:expectedUrl+'?wrong'}));
+   await session.withTabLease(provider.browserId,openedId,async()=>{
+    await assert.rejects(()=>interact.execute({action:'close',...scope,tab_id:openedId,expected_url:expectedUrl}),
+     e=>e.code===-32026);
+   });
+   assert.equal((await interact.execute({action:'close',...scope,tab_id:openedId,expected_url:expectedUrl})).closedTabId,openedId);
+   for(let i=0;i<100;i++){
+    if(methods.every(m=>notifications.some(e=>e.method===m&&(e.params.tabId??e.params.tab?.id)===openedId)))break;
+    await delay(20);
+   }
+   for(const method of methods)assert.ok(notifications.some(e=>e.method===method&&
+    (e.params.tabId??e.params.tab?.id)===openedId&&e.params.browser_instance_id===provider.browserId),method);
+   assert.equal(otherNotifications.length,0);
+   assert.ok(!(await session.call('tabs.list',scope)).tabs.some(t=>t.id===openedId));
+   await assert.rejects(()=>interact.execute({action:'activate',...scope,tab_id:openedId,expected_url:expectedUrl}));
+  }finally{observer.close();otherObserver.close()}
   const extra=await bidi.call('browsingContext.create',{type:'tab'});
   await bidi.call('browsingContext.navigate',{context:extra.context,url:expectedUrl,wait:'complete'});
   const more=await session.call('tabs.list',scope);
@@ -444,7 +483,7 @@ try{
   managedProvider=true;
  }
  console.log(JSON.stringify({ok:true,browser:version,engine,actual_chromium:engine==='chromium',actual_firefox:engine==='firefox',actual_gateway:true,
-  extension:engine==='firefox'?'fixture_bidi_peer':'fixture_cdp_peer',actual_inventory:true,uid_registry:true,uid_reinjection:true,uid_replacement_rejected:true,uid_document_isolation:true,uid_reload_invalidated:true,uid_fill:true,uid_stale_no_input:true,uid_reconnect:true,cross_origin_uid:crossOriginUid,managed_bidi_provider:managedProvider,hosted_frame_uid:managedProvider,john_bounded_fixture:managedProvider,engine_disconnect_retired_provider:managedProvider,distinct_workers:true,rediscovery:true,checkpoint_reload:true,reused_worker:true,
+  extension:engine==='firefox'?'fixture_bidi_peer':'fixture_cdp_peer',actual_inventory:true,uid_registry:true,uid_reinjection:true,uid_replacement_rejected:true,uid_document_isolation:true,uid_reload_invalidated:true,uid_fill:true,uid_stale_no_input:true,uid_reconnect:true,cross_origin_uid:crossOriginUid,managed_bidi_provider:managedProvider,hosted_frame_uid:managedProvider,john_bounded_fixture:managedProvider,multimcp_cop_fixture:managedProvider,managed_navigation_events:managedProvider,engine_disconnect_retired_provider:managedProvider,distinct_workers:true,rediscovery:true,checkpoint_reload:true,reused_worker:true,
   sandbox_disabled:false,personal_browser_used:false}));
 }catch(e){
  console.error(JSON.stringify({ok:false,reason:e.message,code:e.code||null,engine,browser_exit:exitInfo||null,browser_stderr:stderr,

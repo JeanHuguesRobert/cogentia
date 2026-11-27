@@ -3,7 +3,7 @@ title: "MultiMCP programmable composition — JavaScript and Alan reality slice"
 author: "Cogentia / Institut Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-11-24"
-last_modified_at: "2026-11-24"
+last_modified_at: "2026-11-27"
 status: working-paper
 document_role: operational
 document_kind: implementation-note
@@ -285,3 +285,17 @@ private catalog of its connected tools. Cogentia #342 owns mediated
 capabilities; #335 owns the OpenAI-compatible ChatGPT provider, and
 #330 owns the correlated governed MCP return. This prototype does
 not invoke the consumer-browser path.
+
+
+## Browser composition reality — Cogentia #349
+
+The shared Firefox reality fixture in
+[`check-browser-worker-context-reality.js`](../scripts/check-browser-worker-context-reality.js)
+uses the existing Alan runtime and packet-local COP bridge, with a
+fixture-only MCP catalog backed by the actual hosted browser capabilities.
+It proves discovery and frame inspection, suspension before a governed
+UID fill, independent bounded John execution, receipt-correlated resume,
+and recovery without replay. The temporary fixture verifier is not the
+production CPS verifier; it does not grant or use a production mandate.
+See [Navigation Assistant](navigation-assistant.md#programmable-composition-and-navigation--i3-third-increment)
+and [packet #349](https://github.com/JeanHuguesRobert/cogentia/issues/349).
