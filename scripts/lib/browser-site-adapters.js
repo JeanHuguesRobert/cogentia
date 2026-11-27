@@ -3,11 +3,11 @@
  * filename, script or URL. A new site extends this data table.
  */
 import {readFileSync} from 'node:fs';
-import {editorRole as facebookEditorRole} from '../../browser-stdlib/adapters/facebook-editor.js';
+import {editorRole as facebookEditorRole,editorContext as facebookEditorContext} from '../../browser-stdlib/adapters/facebook-editor.js';
 
 const sites=Object.freeze([
  Object.freeze({id:'facebook',domain:'facebook.com',
-  roles:Object.freeze(['facebook.comment-composer']),editorRole:facebookEditorRole}),
+  roles:Object.freeze(['facebook.comment-composer']),editorRole:facebookEditorRole,editorContext:facebookEditorContext}),
 ]);
 function siteFor(url){
  try{
@@ -18,7 +18,7 @@ function siteFor(url){
 }
 export function siteEditorProjection(url){
  const site=siteFor(url);
- return site?{id:site.id,matcher:'('+site.editorRole.toString()+')'}:null;
+ return site?{id:site.id,matcher:'('+site.editorRole.toString()+')',context:'('+site.editorContext.toString()+')'}:null;
 }
 export function projectSiteEditorRole(url,role){
  return siteFor(url)?.roles.includes(role)?{semantic_role:role}:{};
@@ -30,4 +30,16 @@ export function projectSiteEditorRole(url,role){
 export function facebookAdapterSource(){
  const source=readFileSync(new URL('../../browser-stdlib/adapters/facebook.js',import.meta.url),'utf8');
  return '(() => {const editorRole='+facebookEditorRole.toString()+';\n'+source+'\n})()';
+}
+
+
+// Only allow the small, typed relationship; never project nearby text.
+export function projectEditorContext(url,context,epoch){
+ if(!siteFor(url)||!context||typeof context!=='object'||!(/^[a-f0-9]{32}$/.test(epoch||'')))return {};
+ const valid=uid=>typeof uid==='string'&&/^[a-f0-9]{32}:[1-9][0-9]{0,15}$/.test(uid)&&uid.startsWith(epoch+':');
+ if(!valid(context.scope_uid)||!valid(context.cancel_uid)||context.scope_uid===context.cancel_uid||
+   !Number.isInteger(context.ancestor_distance)||context.ancestor_distance<1||context.ancestor_distance>12||
+   typeof context.actionable!=='boolean')return {};
+ return {edit_context:{scope_uid:context.scope_uid,cancel_uid:context.cancel_uid,
+  ancestor_distance:context.ancestor_distance,actionable:context.actionable}};
 }

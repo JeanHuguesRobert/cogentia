@@ -10,7 +10,7 @@ import {createHostedFrameTransport} from './lib/browser-frame-cdp-transport.js';
 import {createHostedBrowserCapabilities} from './lib/hosted-browser-capabilities.js';
 import {executeFrameEvaluate} from './lib/browser-frame-evaluate.js';
 import {SAFE_DOM_STRUCTURE_CODE} from './lib/browser-safe-dom-structure.js';
-import {proveInoxReplacement,proveInoxEditors,proveInoxSiteRole} from './fixtures/browser-inox-edit-reality.mjs';
+import {proveInoxReplacement,proveInoxEditors,proveInoxSiteRole,proveEditContext} from './fixtures/browser-inox-edit-reality.mjs';
 import {createInoxComparisonPlanner} from './lib/browser-inox-recipe.js';
 import {prepareFormAssistRequest} from './lib/browser-form-recipe-runner.js';
 import {createGatewaySession} from './lib/navigation-assistant/gateway-session.js';
@@ -113,6 +113,7 @@ try{
    const editors=await proveInoxEditors({directory:inoxDirectory,inspect,form:formFill,scope,evaluate,originalSelector:'#recipe'});
    console.log(JSON.stringify({ok:true,proof:'inox_generic_editors',engine:'chromium',editors,fixture_only:true}));
    const siteProof=await proveInoxSiteRole({directory:inoxDirectory,inspect,form:formFill,scope,evaluate});
+   console.log(JSON.stringify({proof:'edit_context',engine:'chromium',...await proveEditContext({inspect,scope,evaluate})}));
    console.log(JSON.stringify({ok:true,proof:'inox_site_role',engine:'chromium',...siteProof,fixture_only:true}));
    const planner=await createInoxComparisonPlanner(inoxDirectory);
    await assert.rejects(()=>prepareFormAssistRequest({...scope,planner,inspect:args=>inspect.execute(args),

@@ -1,4 +1,4 @@
-import {projectSiteEditorRole} from './browser-site-adapters.js';
+import {projectSiteEditorRole,projectEditorContext} from './browser-site-adapters.js';
 import {validElementTarget,ELEMENT_TARGET_SCHEMA,compileUidStructure,projectElementTarget,callUidFormFill} from "./browser-element-target.js";
 import {compileNonSecretFormFill} from "./browser-form-script.js";
 import { SAFE_DOM_STRUCTURE_CODE } from "./browser-safe-dom-structure.js";
@@ -181,7 +181,7 @@ export function createHostedBrowserCapabilities(options = {}) {
                 required:f.required===true,disabled:f.disabled===true,readonly:f.readonly===true,
                 contenteditable:f.contenteditable===true,
                 autocomplete:String(f.autocomplete||'').slice(0,64),
-                ...(identity?{element_target:projectElementTarget(raw,i,selected.id,tabId,frameId),...projectSiteEditorRole(expectedOrigin,f.semantic_role)}:{})
+                ...(identity?{element_target:projectElementTarget(raw,i,selected.id,tabId,frameId),...projectSiteEditorRole(expectedOrigin,f.semantic_role),...projectEditorContext(expectedOrigin,f.edit_context,raw.document_epoch)}:{})
               })):[],truncated:raw.truncated===true};
           }
           if(input.include_element_identity===true)throw capabilityError('BROWSER_ELEMENT_TARGET_INVALID');
@@ -239,7 +239,7 @@ export function createHostedBrowserCapabilities(options = {}) {
               disabled: f.disabled === true,
               readonly: f.readonly === true,
               autocomplete: String(f.autocomplete || "").slice(0, 64),
-              ...(identity?{element_target:projectElementTarget(raw,i,selected.id,targetTabId),...projectSiteEditorRole(input.expected_url,f.semantic_role)}:{}),
+              ...(identity?{element_target:projectElementTarget(raw,i,selected.id,targetTabId),...projectSiteEditorRole(input.expected_url,f.semantic_role),...projectEditorContext(input.expected_url,f.edit_context,raw.document_epoch)}:{}),
             })) : [],
             total_fields: boundedInteger(raw.total_fields, 0, 0, 100000),
             frames: boundedInteger(raw.frames, 0, 0, 100),

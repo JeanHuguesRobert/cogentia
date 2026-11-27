@@ -12,7 +12,7 @@ import {createHostedBrowserCapabilities} from './lib/hosted-browser-capabilities
 import {selectBidiFile} from './lib/browser-bidi-native.js';
 import {createBrowserFileUploadCapability} from './lib/browser-file-upload.js';
 import {runJohnRequest} from './lib/john-run.js';
-import {proveInoxReplacement,proveInoxEditors,proveInoxSiteRole} from './fixtures/browser-inox-edit-reality.mjs';
+import {proveInoxReplacement,proveInoxEditors,proveInoxSiteRole,proveEditContext} from './fixtures/browser-inox-edit-reality.mjs';
 import {proveBrowserComposition} from './fixtures/browser-multimcp-reality.mjs';
 import {mkdtemp,readFile,writeFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
@@ -403,6 +403,7 @@ try{
    const siteProof=await proveInoxSiteRole({directory:process.env.COGENTIA_INOX_DIRECTORY,
     inspect,form,scope:selected,evaluate:code=>evaluate(tabs.get(41),code)});
    console.log(JSON.stringify({ok:true,proof:'inox_site_role',engine:'firefox',...siteProof,fixture_only:true}));
+   console.log(JSON.stringify({proof:'edit_context',engine:'firefox',...await proveEditContext({inspect,scope:selected,evaluate:code=>evaluate(tabs.get(41),code)})}));
    assert.equal(await evaluate(tabs.get(42),'document.querySelector("#uid-target").value'),'');
    console.log(JSON.stringify({ok:true,proof:'inox_image_live_dom_parity',engine:'firefox',...proof,fixture_only:true}));
    const restored=await inspect.execute({...selected,action:'structure',include_element_identity:true});

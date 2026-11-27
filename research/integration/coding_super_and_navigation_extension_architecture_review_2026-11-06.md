@@ -263,3 +263,30 @@ Firefox multi-MCP fixtures pass. Repaired old Corse-Matin tests by
 providing WebCrypto to their mock browser, required since UID support.
 Live site labels remain an empirical question; no social draft or
 publication has been modified.
+
+### Edit context, first empirical relationship (2026-11-27)
+
+Dogfooding a published Facebook comment manually opened in edit mode
+shows two contenteditable controls with identical composer labels.
+Existing role-only selection is insufficient; the original comment
+permalink disappears from the browser text projection while editing.
+Do not infer persistent object identity from editor text, ordinal or
+mere presence of a cancellation control.
+
+Extend the existing identity-aware structure observation, not the
+effect API. For a recognized Facebook composer, inspect at most twelve
+ancestors, stopping before a scope containing multiple editable
+elements. Recognize only a local rendered Annuler/Cancel affordance,
+deduplicate nested labels and controls, and reject ambiguous matches.
+Return typed edit_context evidence: scope_uid, cancel_uid,
+ancestor_distance, actionable. This is a candidate contextual relation,
+not a validated edit session or new grant. No draft values or labels
+are returned. Existing composer roles and edit operation contracts
+are unchanged until the live observation establishes their successor.
+
+The same disposable Chromium and Firefox fixtures verify two composers
+with identical labels and independent drafts: only the editor with
+its own cancel control has an edit_context; its scope UID is stable
+across observations; removing the control removes that evidence.
+No personal page edits. Thirty-two targeted tests pass in the
+composed checkout, and both full browser fixtures pass.

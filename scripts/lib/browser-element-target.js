@@ -36,8 +36,10 @@ export function compileUidStructure(expectedUrl,{originOnly=false}={}){
  const registry=window.__cogentiaNavigationAssistant.elementIdentity;
  const structure=${SAFE_DOM_STRUCTURE_CODE};
  const elements=Array.from(document.querySelectorAll('input,textarea,select,button,[contenteditable="true"]')).slice(0,80);
- ${site?`structure.fields=structure.fields.map((field,index)=>({...field,
-  semantic_role:${site.matcher}(elements[index])}));`:''}
+ ${site?`structure.fields=structure.fields.map((field,index)=>{
+  const semantic_role=${site.matcher}(elements[index]);
+  return {...field,semantic_role,edit_context:semantic_role?${site.context}(elements[index],registry):null};
+ });`:''}
  return {...structure,document_epoch:registry.epoch,element_uids:elements.map(el=>registry.elementUid(el))};
  })()`;
 }

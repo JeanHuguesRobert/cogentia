@@ -102,3 +102,30 @@ export async function proveInoxSiteRole({directory,inspect,form,scope,evaluate})
   return {...proof,site_role:role,role_changed_rejected:true,unrelated_editor_unchanged:true,labels_not_returned:true};
  }finally{await evaluate('document.querySelector("#inox-site-parent")?.remove()')}
 }
+
+
+export async function proveEditContext({inspect,scope,evaluate}){
+ try{
+  await evaluate(`(() => {
+   const parent=document.createElement('section');parent.id='edit-context-fixture';
+   parent.innerHTML='<section id="edit-scope"><div role="textbox" contenteditable="true" aria-label="Commenter en tant que PRIVATE_FIXTURE_NAME">published text</div><button type="button"><span>Annuler</span></button></section><section><div role="textbox" contenteditable="true" aria-label="Commenter en tant que PRIVATE_FIXTURE_NAME">independent draft</div></section>';
+   document.body.append(parent);
+  })()`);
+  const observe=()=>inspect.execute({...scope,action:'structure',include_element_identity:true});
+  const first=await observe();
+  const candidates=first.fields.filter(f=>f.semantic_role==='facebook.comment-composer');
+  assert.equal(candidates.length,2);
+  assert.equal(candidates.filter(f=>f.edit_context).length,1);
+  const editor=candidates.find(f=>f.edit_context),context=editor.edit_context;
+  assert.equal(context.actionable,true);assert.equal(context.ancestor_distance,1);
+  const button=first.fields.find(f=>f.element_target?.uid===context.cancel_uid);
+  assert.equal(button?.tag,'button');
+  assert.equal((await observe()).fields.find(f=>f.element_target?.uid===editor.element_target.uid).edit_context.scope_uid,context.scope_uid);
+  assert.ok(!JSON.stringify(first).includes('PRIVATE_FIXTURE_NAME'));
+  assert.ok(!JSON.stringify(first).includes('published text'));
+  await evaluate('document.querySelector("#edit-scope button").remove()');
+  assert.equal((await observe()).fields.filter(f=>f.edit_context).length,0);
+  assert.equal(await evaluate('document.querySelector("#edit-scope [contenteditable]").innerText'),'published text');
+  return {exclusive_scope:true,stable_uid:true,cancel_removed_observed:true,read_only:true};
+ }finally{await evaluate('document.querySelector("#edit-context-fixture")?.remove()')}
+}

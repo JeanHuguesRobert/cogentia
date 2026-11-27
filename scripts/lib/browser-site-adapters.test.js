@@ -92,3 +92,26 @@ test('site role uses the default Inox planning route in a composed release',
  assert.deepEqual(req.input.arguments.element_target,target);
  assert.equal(req.input.arguments.semantic_role,role);
 });
+
+test('editor context projects only a bounded cancellation relationship in its own scope',async()=>{
+ const {editorContext}=await import('../../browser-stdlib/adapters/facebook-editor.js');
+ const {projectEditorContext}=await import('./browser-site-adapters.js');
+ const editor=node('Commenter en tant que PRIVATE_PERSON'),composer=node('Commenter en tant que PRIVATE_PERSON');
+ const cancel={getAttribute:()=>null,innerText:'Annuler',getClientRects:()=>[{}],
+   contains:n=>n===cancel,closest:()=>cancel};
+ editor.contains=n=>n===editor;composer.contains=n=>n===composer;
+ const scope={querySelectorAll:s=>s==='[contenteditable="true"]'?[editor]:[cancel],
+  contains:n=>[editor,cancel,scope].includes(n)};
+ const common={querySelectorAll:s=>s==='[contenteditable="true"]'?[editor,composer]:[cancel]};
+ editor.parentElement=scope;scope.parentElement=common;composer.parentElement=common;
+ const registry={elementUid:n=>epoch+':'+([scope,cancel].indexOf(n)+1)};
+ const context=editorContext(editor,registry);
+ assert.deepEqual(context,{scope_uid:epoch+':1',cancel_uid:epoch+':2',ancestor_distance:1,actionable:true});
+ assert.equal(editorContext(composer,registry),null);
+ assert.deepEqual(projectEditorContext(url,{...context,private_text:'discard me'},epoch),{edit_context:context});
+ assert.deepEqual(projectEditorContext(url,{...context,cancel_uid:'b'.repeat(32)+':2'},epoch),{});
+ assert.deepEqual(projectEditorContext('https://example.org',context,epoch),{});
+ cancel.getClientRects=()=>[];assert.equal(editorContext(editor,registry),null);
+ cancel.getClientRects=()=>[{}];cancel.closest=()=>null;
+ assert.equal(editorContext(editor,registry).actionable,false);
+});
