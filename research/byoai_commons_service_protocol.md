@@ -208,3 +208,7 @@ The [proposed revision of Article 72 of the French Constitution (2026-11-12)](ht
 ## Open decisions
 
 Stable namespace and discovery URL, canonicalization and signature requirements, curation governance, license compatibility, corrections/revocation mechanisms, and service-specific compliance. Resist feature inflation until the two-service interoperability test demonstrates a concrete need.
+
+## Related research — Minitelia (2026-11-27)
+
+The [New Social Contract research note](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/projects/capable/doctrine/nouveau-contrat-social.md) considers universal access to cognitive capacity with provider choice and alternatives without AI. KYS Services offers a possible interoperability substrate; the application does not amend this contract or establish a deployed service.

@@ -475,3 +475,7 @@ There is no need to wait for the full Learning Computer to deliver relief. **The
 Pour les conversations et Cognitive Packets, observer : (a) dérives non mandatées de niveau ; (b) nombre de sujets frères couverts avant approfondissement ; (c) décisions inutiles sollicitées ; (d) répétitions et interruptions ; (e) temps ou messages nécessaires pour retrouver Ithaca. Ne pas réduire la charge mentale à une seule métrique physiologique présumée. Réviser cette règle si elle devient un prétexte à éviter un approfondissement indispensable.
 
 **Application immédiate :** Unikia est enregistré comme dépendance différable de Casa Mariani ; le développement du dépôt reste en attente. La frontière BFS active revient à la construction globale de Casa Mariani, de son Musée et de sa Boutique Mobile. Une issue ouverte n'est pas un ordre implicite de l'exécuter immédiatement.
+
+## Related research — cognitive economies of scale (2026-11-27)
+
+The [New Social Contract research note](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/projects/capable/doctrine/nouveau-contrat-social.md) considers a fractal common cognitive fund as a possible institutional application of the Calculette. Reuse of validated work, diverse independent exploration and corrigibility are research questions to measure, not demonstrated savings.
