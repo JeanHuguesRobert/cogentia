@@ -12,10 +12,10 @@ export async function createInoxComparisonPlanner(directory){
  const [{VM},{loadDefinitions},{installZeroBrowser}]=await Promise.all([
   module('toy-runner.js'),module('definition-image.js'),module('zero-browser.js')]);
  const image=JSON.parse(await readFile(join(root,'browser-select-field-image.json'),'utf8'));
- return createFormPlanner({fieldSelector(fields,type,selection,operation){
+ return createFormPlanner({fieldSelector(fields,selection,operation){
   const vm=installZeroBrowser(new VM({maxSteps:100000}),fields);
   loadDefinitions(vm,image);
-  const stack=vm.evaluate([type,selection,operation].map(value=>JSON.stringify(value)).join(' ')+' plan-text-edit');
+  const stack=vm.evaluate([selection,operation].map(value=>JSON.stringify(value)).join(' ')+' plan-text-edit');
   const intent=stack[0],members=intent?.fields;
   const read=name=>members?.find(c=>c.name===name&&c.type==='literal')?.value;
   const index=read('index');

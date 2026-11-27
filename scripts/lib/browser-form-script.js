@@ -35,17 +35,17 @@ export function compileNonSecretFormFill({fieldIndex,text,expectedUrl,iframeInde
  if(registry?.epoch!==${JSON.stringify(elementTarget.document_epoch)})return {ok:false,reason:'document_epoch_changed'};
  const el=registry.resolveElementUid(${JSON.stringify(elementTarget.uid)});
  if(!el)return {ok:false,reason:'element_uid_stale'};`:`const el=targetDocument.querySelectorAll('input,textarea,select,button,[contenteditable="true"]')[${fieldIndex}];`}
- if(!el||!el.isConnected||el.disabled||el.readOnly||el.getAttribute?.('aria-disabled')==='true')
+ if(!el||!el.isConnected||el.disabled||el.readOnly||el.getAttribute?.('aria-disabled')==='true'||el.getAttribute?.('aria-readonly')==='true')
    return {ok:false,reason:'field_unavailable'};
  const kind=${JSON.stringify(fieldKind)};
- if(kind==='contenteditable' && (!el.isContentEditable || el.getAttribute('contenteditable')!=='true'))
+ if(kind==='contenteditable' && (!el.isContentEditable || el.getAttribute('contenteditable')!=='true' || ['INPUT','TEXTAREA'].includes(el.tagName)))
    return {ok:false,reason:'rich_text_field_unavailable'};
  if(kind==='plain' && !['INPUT','TEXTAREA'].includes(el.tagName))
    return {ok:false,reason:'field_unavailable'};
  const type=String(el.type||'text').toLowerCase();
  if(kind==='plain' && el.tagName==='INPUT' && !${JSON.stringify(textEditProfile("dom-replace").inputTypes)}.includes(type))
    return {ok:false,reason:'field_type_forbidden'};
- if(/username|password|one-time-code|cc-number|cc-csc/i.test(String(el.autocomplete||'')))
+ if(/username|password|one-time-code|cc-number|cc-csc/i.test(String(el.autocomplete||el.getAttribute?.('autocomplete')||'')))
    return {ok:false,reason:'sensitive_autocomplete'};
  const value=${encoded};
  if(${documentLocation}!==${urlLiteral})return {ok:false,reason:'document_url_changed'};

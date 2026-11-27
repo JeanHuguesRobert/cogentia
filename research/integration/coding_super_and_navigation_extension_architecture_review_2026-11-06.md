@@ -197,3 +197,28 @@ text inputs, not arbitrary editable elements, every engine-specific
 input type, or a general asynchronous effectful Inox VM. The fixture
 executes the existing semantic capability after comparing the prepared
 John request; it is not a new production COP admission proof.
+
+### Common editor abstraction
+
+The internal recipe generic.select-editable replaces generic.select-input,
+without an alias. For replace-all, field_type is optional: the planner
+projects operation-compatible editable candidates (ordinary supported
+inputs, textarea, explicit contenteditable) into the same Inox image.
+The VM receives only editable, disabled, readonly and autocomplete
+metadata, not DOM tag/type or element identity. The Core retains UID and
+the implementation kind; only the existing rich-text execution envelope
+carries field_kind. The legacy insert-at-selection operation still
+requires its input-type filter; unsupported email/number replacement
+remains excluded. Selection and ambiguity are compared independently
+against the JS reference. Rich-text execution now checks aria-readonly
+and the autocomplete attribute, and cannot bypass input-type checks
+by labelling an input as a rich editor.
+
+Real disposable Chromium and Firefox fixtures verify the same image
+and untyped replace-all intent on input, textarea and contenteditable,
+with independent exact readback, Unicode/multiline text, no submission,
+and actual mixed-editor ambiguity without modification. Existing
+cross-origin and Firefox multi-MCP/worker checks pass. No new capability,
+transport or signed mandate; no production deployment. The rich-text
+contract concerns textual content, not formatting or every application
+editor. The source change is intentionally not an additional selector.

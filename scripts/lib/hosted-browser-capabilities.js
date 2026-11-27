@@ -178,6 +178,7 @@ export function createHostedBrowserCapabilities(options = {}) {
               fields:Array.isArray(raw.fields)?raw.fields.slice(0,80).map((f,i)=>({
                 tag:String(f.tag||'').slice(0,16),type:String(f.type||'').slice(0,30),
                 required:f.required===true,disabled:f.disabled===true,readonly:f.readonly===true,
+                contenteditable:f.contenteditable===true,
                 autocomplete:String(f.autocomplete||'').slice(0,64),
                 ...(identity?{element_target:projectElementTarget(raw,i,selected.id,tabId,frameId)}:{})
               })):[],truncated:raw.truncated===true};
@@ -203,6 +204,7 @@ export function createHostedBrowserCapabilities(options = {}) {
             fields:Array.isArray(raw.fields)?raw.fields.slice(0,80).map(f=>({
               tag:String(f.tag||'').slice(0,16),type:String(f.type||'').slice(0,30),
               required:f.required===true,disabled:f.disabled===true,readonly:f.readonly===true,
+                contenteditable:f.contenteditable===true,
               autocomplete:String(f.autocomplete||'').slice(0,64)
             })):[],truncated:raw.truncated===true};
         }
@@ -231,6 +233,7 @@ export function createHostedBrowserCapabilities(options = {}) {
               tag: String(f.tag || "").slice(0, 16),
               type: String(f.type || "").slice(0, 30),
               role: String(f.role || "").slice(0, 40),
+              contenteditable: f.contenteditable === true,
               required: f.required === true,
               disabled: f.disabled === true,
               readonly: f.readonly === true,

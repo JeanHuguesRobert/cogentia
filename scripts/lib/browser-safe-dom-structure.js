@@ -5,8 +5,9 @@ export const SAFE_DOM_STRUCTURE_CODE = `(() => {
   type:el.tagName.toLowerCase()==='input' ? el.type : undefined,
   role:el.getAttribute('role')||undefined,
   required:el.required===true,
-  disabled:el.disabled===true,
-  readonly:el.readOnly===true,
+  contenteditable:el.isContentEditable===true&&el.getAttribute('contenteditable')==='true',
+  disabled:el.disabled===true||el.getAttribute('aria-disabled')==='true',
+  readonly:el.readOnly===true||el.getAttribute('aria-readonly')==='true',
   autocomplete:el.getAttribute('autocomplete')||undefined
  }));
  const iframe_metadata=Array.from(document.querySelectorAll('iframe')).slice(0,20).map(frame=>{

@@ -4,7 +4,7 @@ const structure={origin:'https://example.org',truncated:false,fields:[
  {tag:'input',type:'text',disabled:false,readonly:false,autocomplete:''},
  {tag:'input',type:'email',disabled:false,readonly:false,autocomplete:''},
 ]};
-const input={inspect:async()=>structure,recipe_id:'generic.select-input',version:1,field_type:'email',selection:'first',
+const input={inspect:async()=>structure,recipe_id:'generic.select-editable',version:1,field_type:'email',selection:'first',
  tab_id:51,expected_url:'https://example.org/form',text:'HELLO_NON_SECRET',request_id:'recipe-test-1'};
 test('daemon recipe prepares exact existing John bounded mandate request',async()=>{
  const req=await prepareFormAssistRequest(input);

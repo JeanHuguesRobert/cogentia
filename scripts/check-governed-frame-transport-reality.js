@@ -10,7 +10,7 @@ import {createHostedFrameTransport} from './lib/browser-frame-cdp-transport.js';
 import {createHostedBrowserCapabilities} from './lib/hosted-browser-capabilities.js';
 import {executeFrameEvaluate} from './lib/browser-frame-evaluate.js';
 import {SAFE_DOM_STRUCTURE_CODE} from './lib/browser-safe-dom-structure.js';
-import {proveInoxReplacement} from './fixtures/browser-inox-edit-reality.mjs';
+import {proveInoxReplacement,proveInoxEditors} from './fixtures/browser-inox-edit-reality.mjs';
 import {createInoxComparisonPlanner} from './lib/browser-inox-recipe.js';
 import {prepareFormAssistRequest} from './lib/browser-form-recipe-runner.js';
 import {createGatewaySession} from './lib/navigation-assistant/gateway-session.js';
@@ -103,13 +103,15 @@ try{
   const formFill=capabilities.find(c=>c.name==='browser.form.fill');
   if(inoxDirectory){
    const scope={browser_instance_id:'fixture-browser',tab_id:42,expected_url:expectedUrl};
-   const readValue=async()=>{
+   const evaluate=async code=>{
     const session=await createGatewaySession(base+'/assistant');
     try{return (await session.call('page.evaluate',{browser_instance_id:'fixture-browser',
-      tabId:42,expectedUrl,code:'document.querySelector("#recipe").value'})).value}
+      tabId:42,expectedUrl,code})).value}
     finally{session.close()}
    };
-   const proof=await proveInoxReplacement({directory:inoxDirectory,inspect,form:formFill,scope,readValue,expectedIndex:2});
+   const proof=await proveInoxReplacement({directory:inoxDirectory,inspect,form:formFill,scope,readValue:()=>evaluate('document.querySelector("#recipe").value'),expectedIndex:2});
+   const editors=await proveInoxEditors({directory:inoxDirectory,inspect,form:formFill,scope,evaluate,originalSelector:'#recipe'});
+   console.log(JSON.stringify({ok:true,proof:'inox_generic_editors',engine:'chromium',editors,fixture_only:true}));
    const planner=await createInoxComparisonPlanner(inoxDirectory);
    await assert.rejects(()=>prepareFormAssistRequest({...scope,planner,inspect:args=>inspect.execute(args),
     operation:'replace-all',field_type:'email',selection:'first',text:'fixture@example.test',

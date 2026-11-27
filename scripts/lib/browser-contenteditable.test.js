@@ -88,3 +88,13 @@ test('rich text gateway fills with Core-compiled recipe without changing extensi
     assert.equal(requests,1);
   }finally{extension?.close();await gateway.close()}
 });
+
+
+test('rich editor enforces semantic readonly and autocomplete attributes',()=>{
+ const readonly=fixture();readonly.element.getAttribute=k=>k==='aria-readonly'?'true':k==='contenteditable'?'true':null;
+ assert.equal(evaluate({fieldKind:'contenteditable',text:'X'},readonly).result.reason,'field_unavailable');
+ const sensitive=fixture();sensitive.element.getAttribute=k=>k==='autocomplete'?'current-password':k==='contenteditable'?'true':null;
+ assert.equal(evaluate({fieldKind:'contenteditable',text:'X'},sensitive).result.reason,'sensitive_autocomplete');
+ const wrong=fixture();wrong.element.tagName='INPUT';wrong.element.type='password';
+ assert.equal(evaluate({fieldKind:'contenteditable',text:'X'},wrong).result.reason,'rich_text_field_unavailable');
+});
