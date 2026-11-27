@@ -690,3 +690,46 @@ instance. No new gateway file-path primitive, signed policy amendment,
 production grant or deployment is introduced. A future operational
 extension requires explicit instance and file locality binding within
 the existing COP authority, not a bypass or silent substitution.
+
+
+### I4 — graphical hosted Firefox reality and integration boundary
+
+Run `node scripts/check-firefox-hosted-graphical-reality.js` on a
+FractaNode with KasmVNC, Openbox, Firefox, xauth and OpenSSL installed.
+The test allocates a new display via Xvnc's displayfd, a temporary
+Xauthority, KasmVNC credential and TLS certificate, an isolated home,
+a new Firefox profile and a loopback-only gateway. It never kills
+existing displays or reads personal browser profiles. KasmVNC's web
+root is explicit (`/usr/share/kasmvnc/www` on the tested package);
+Firefox's headless environment variable is removed, not set to "0".
+
+Verified on Fracta2: unauthenticated HTTPS returns 401, authenticated
+HTTPS returns 200 with certificate validation, listener is loopback,
+an actual Firefox window is visible in the X11 tree, the independent
+`navigation-assistant-bidi.js` CLI registers and drives hosted
+inspection, stopping the CLI retires the instance without closing
+Firefox, and temporary profile/credentials are removed. This is not
+an interactive remote framebuffer or public router acceptance test.
+The earlier headless Reality Test remains the evidence for DOM UID,
+frames, events, composition and native input.
+
+Production placement belongs to
+[Operium's Hosted Browser architecture](https://github.com/JeanHuguesRobert/operium/blob/main/docs/hosted-browser-kasmvnc-cdp.md).
+Its current launcher, supervisor, URL-opening and restart helpers are
+Chromium-specific; setting only the Firefox binary would be incorrect.
+The live gateway inventory on 2026-11-27 contained legacy registrations
+only; managed provider support in the deployed executable was not
+verified. No production workspace was changed.
+
+Proposed first dogfooding placement: a separate Firefox profile in the
+existing operator's hosted graphical workspace, without replacing the
+default Chromium profile or starting another VNC/router control plane.
+Validate available memory, same-Unix-user provider lifecycle, unique
+loopback BiDi endpoint, trusted gateway deployment and explicit instance
+discovery. Keep the provider foreground/supervised; a lost engine
+session must generate a new instance identity, never replay effects.
+Do not use a shared loopback port as proof of Unix-user isolation.
+The existing network authentication, workspace policy, Operium
+deployment procedure and signed COP permissions remain authoritative.
+An actual authenticated VNC framebuffer interaction and recovery
+test, then explicit bounded dogfooding, are the next acceptance steps.
