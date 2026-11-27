@@ -7,6 +7,8 @@
 
 import http from "node:http";
 import { verifyMcpOAuthToken } from "./lib/mcp-oauth-token.js";
+import { verifySupabaseWorkDeliveryToken } from "./lib/work-delivery-access.js";
+import { resolveVerifiedOAuthContext } from "./lib/mcp-oauth-identity.js";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -426,14 +428,16 @@ const server = http.createServer(async (req, res) => {
     }
     const method = headRequest ? "GET" : req.method;
     if (method === "OPTIONS") return sendNoContent(res, 204);
-    if (method === "GET" && pathOnly === "/.well-known/oauth-protected-resource") {
+    if (method === "GET" && ["/.well-known/oauth-protected-resource",
+        "/.well-known/oauth-protected-resource/mcp"].includes(pathOnly)) {
       const issuer = String(process.env.COGENTIA_MCP_OAUTH_ISSUER || "").trim();
       const resource = String(process.env.COGENTIA_MCP_OAUTH_RESOURCE || "").trim();
       if (!issuer || !resource) return sendJson(res, 404, { error: "oauth_not_configured" });
       return sendJson(res, 200, {
         resource,
         authorization_servers: [issuer],
-        scopes_supported: ["cogentia.private.read"],
+        scopes_supported: process.env.COGENTIA_MCP_OAUTH_PROFILE === "supabase"
+          ? ["openid"] : ["cogentia.private.read"],
         bearer_methods_supported: ["header"],
       });
     }
@@ -795,11 +799,15 @@ async function handleMcpPost(req, res) {
     const match = /^Bearer\s+(.+)$/i.exec(header);
     if (match) {
       try {
-        const principal = await verifyMcpOAuthToken(match[1], {
-          issuer, audience, jwksUrl,
-          requiredScopes: ["cogentia.private.read"],
-        });
-        transport.oauthPrincipal = principal;
+        if (process.env.COGENTIA_MCP_OAUTH_PROFILE === "supabase") {
+          // Only identity evidence: do not enter the legacy private-read path.
+          transport.oauthIdentityToken = await verifySupabaseWorkDeliveryToken(
+            match[1], { issuer, audience, jwksUrl });
+        } else {
+          transport.oauthPrincipal = await verifyMcpOAuthToken(match[1], {
+            issuer, audience, jwksUrl, requiredScopes: ["cogentia.private.read"],
+          });
+        }
       } catch {
         // A failed OAuth token never creates a principal. Preserve legacy
         // public and separately-attested JHN access during migration.
@@ -807,6 +815,19 @@ async function handleMcpPost(req, res) {
     }
   }
   const requests = Array.isArray(payload) ? payload : [payload];
+  if (requests.some(m => m?.method === "tools/call" && m?.params?.name === "cogentia_identity")) {
+    res.setHeader("Cache-Control", "no-store");
+    if (process.env.COGENTIA_MCP_OAUTH_PROFILE === "supabase" && issuer && audience && jwksUrl) {
+      const identity = resolveVerifiedOAuthContext(transport.oauthIdentityToken,
+        process.env.COGENTIA_MCP_OAUTH_IDENTITY_BINDINGS);
+      if (!identity) {
+        const metadata = new URL("/.well-known/oauth-protected-resource/mcp", audience).href;
+        res.setHeader("WWW-Authenticate", `Bearer resource_metadata="${metadata}", scope="openid"`);
+        return sendJson(res, 401, { error: "principal_authentication_required" });
+      }
+    }
+  }
+
   if (requests.some((message) => message?.method === "tools/call" && message?.params?.name === "cogentia_memory_capture")) {
     res.setHeader("Cache-Control", "no-store");
   }

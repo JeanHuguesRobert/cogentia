@@ -14,7 +14,7 @@ import {
   clientSupportsMcpTasks, isMcpTasksAdapterReady, formatMcpTask, validateMcpTaskId,
 } from "./mcp-tasks-2026-contract.mjs";
 import {bindJohnTransportClaims} from "./john-transport-binding.js";
-import { resolveOAuthIdentity } from "./mcp-oauth-identity.js";
+import { resolveOAuthIdentity, resolveVerifiedOAuthContext } from "./mcp-oauth-identity.js";
 import { isVerifiedMcpOAuthToken } from "./mcp-oauth-token.js";
 import { listAgentSkills, getAgentSkill, exportSkillAsMethodPackage, resolveRepoRoot } from "./cogentia-agent-skills.js";
 import {
@@ -227,6 +227,12 @@ export const TOOLS = [
       required:["objective","mandate_ref","expected_gain","exposure","recovery","durable_capacity_loss","ruin_possible","independent_recovery","third_party_commitment","critical_control_change","uncertain_tail"]
     },
     annotations:{readOnlyHint:true,destructiveHint:false},
+  },
+  {
+    name: "cogentia_identity",
+    description: "Return the current caller's independently authenticated Cogentia Principal identity, never a claimed identity or an implicit mandate. No private corpus read or effects.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+    annotations: { readOnlyHint: true, destructiveHint: false },
   },
   {
     name: "cogentia_agent_start",
@@ -1609,7 +1615,9 @@ export function createMcpCore(env = process.env, extras = {}) {
   }
 
   function toolsListResult(era, auth) {
+    const nativeOAuth = env.COGENTIA_MCP_OAUTH_PROFILE === "supabase";
     const oauthDiscoveryEnabled = Boolean(String(env.COGENTIA_MCP_OAUTH_ISSUER || "").trim());
+    const legacyOAuthDiscovery = oauthDiscoveryEnabled && !nativeOAuth;
     // Announce protected tools only when a real OAuth issuer is configured.
     // Discovery never grants authorization: tools/call remains fail-closed.
     const registeredTools=listRegisteredMcpAppTools({env});
@@ -1619,7 +1627,7 @@ export function createMcpCore(env = process.env, extras = {}) {
     }
     const optInProgramTools = extras.mcpProgramSurface?.tools || [];
     const visibleTools = [
-      ...(oauthDiscoveryEnabled ? TOOLS : toolsForAuth(auth)),
+      ...(legacyOAuthDiscovery ? TOOLS : toolsForAuth(auth)),
       ...registeredTools,
       ...optInProgramTools.filter(tool =>
         tool.name !== "multimcp_program_execute" ||
@@ -1628,7 +1636,9 @@ export function createMcpCore(env = process.env, extras = {}) {
     ];
     const callerTools = visibleTools.map((tool) => ({
       ...tool,
-      ...(oauthDiscoveryEnabled ? {
+      ...(nativeOAuth && oauthDiscoveryEnabled && tool.name === "cogentia_identity"
+        ? { securitySchemes: [{ type: "oauth2", scopes: ["openid"] }] }
+        : legacyOAuthDiscovery ? {
         securitySchemes: (PRIVATE_READ_TOOLS.has(tool.name) || MUTATE_TOOLS.has(tool.name))
           ? [{ type: "oauth2", scopes: MUTATE_TOOLS.has(tool.name)
             ? ["cogentia.mutate"] : ["cogentia.private.read"] }]
@@ -1949,7 +1959,7 @@ export function createMcpCore(env = process.env, extras = {}) {
           // Preserve the existing MCP tool visibility/authority boundary
           // before a task adapter can intercept the call. Task creation is
           // NEVER a back door into private/mutating or unknown capabilities.
-          const taskableTool=(TOOLS.some(tool=>tool.name===name) ||
+          const taskableTool=name!=="cogentia_identity"&&(TOOLS.some(tool=>tool.name===name) ||
             (extras.mcpProgramSurface?.tools?.some(tool=>tool.name===name) &&
               (name!== "multimcp_program_execute" ||
                 extras.mcpProgramSurface.verifiedTaskCaller(auth)===true)))&&
@@ -1994,7 +2004,8 @@ export function createMcpCore(env = process.env, extras = {}) {
               result=attachModernMeta(result,resolved.protocolVersion);
             return jsonRpcResult(message.id,result);
           }
-          const data = await callTool(name, args, { correlation, auth });
+          const data = await callTool(name, args, { correlation, auth,
+            oauthIdentityToken: transport.oauthIdentityToken });
           const envelope = wrapToolResult(name, data, ctx);
           if (auth.auth === "jhn") {
             envelope.actor = auth.actor;
@@ -2091,6 +2102,10 @@ export function createMcpCore(env = process.env, extras = {}) {
         const root = path.resolve(String(env.COGENTIA_CORPUS_ROOT || path.join(process.cwd(), "..")));
         return createDependencyExplorationCapability({ root }).execute(args);
       }
+      case "cogentia_identity":
+        return resolveVerifiedOAuthContext(callOpts.oauthIdentityToken,
+          env.COGENTIA_MCP_OAUTH_IDENTITY_BINDINGS) ||
+          { authenticated: false, principal_ref: null, mandate_ref: null, grants_authority: false };
       case "cogentia_agent_start":
         return daemonGet("/api/agent/start", {});
       case "cogentia_skill_list":
