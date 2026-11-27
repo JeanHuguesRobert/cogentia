@@ -37,16 +37,24 @@ test('provider discovery, explicit tab/instance, lease, stable IDs, method refus
  await gate.listen(0,['127.0.0.1']);
  const base='ws://127.0.0.1:'+gate._bound[0].address().port;
  const url='https://fixture.example/';
- let roots=[{context:'a',url},{context:'b',url}],closed=false,dispatches=0;
+ let roots=[{context:'a',url},{context:'b',url}],closed=false,dispatches=0,failAt=null;
  const listeners=new Set();
  const engine={
   get closed(){return closed},
   onClose(fn){listeners.add(fn);return ()=>listeners.delete(fn)},
   async call(method,params){
    if(method==='browsingContext.getTree')return {contexts:roots};
-   if(method==='script.getRealms')return {realms:[{realm:'r-'+params.context,context:params.context}]};
+   if(method==='script.getRealms'){if(failAt==='post_realm_command_failed')throw Error('private-secret');return {realms:[{realm:'r-'+params.context,context:params.context}]}}
    assert.equal(method,'script.evaluate');
-   if(params.target.context)return {type:'success',realm:'r-'+params.target.context,result:{value:url}};
+   if(params.target.context){
+    if(failAt==='realm_probe_command_failed')throw Error('private-secret');
+    if(failAt==='realm_probe_unconfirmed')return {type:'exception',exceptionDetails:{text:'private-secret'}};
+    return {type:'success',realm:'r-'+params.target.context,result:{value:url}};
+   }
+   if(failAt==='script_command_failed')throw Error('private-secret');
+   if(failAt==='script_exception')return {type:'exception',exceptionDetails:{text:'private-secret'}};
+   if(failAt==='script_result_unconfirmed')return {type:'success',realm:'wrong',result:{type:'string',value:'private-secret'}};
+   if(failAt==='post_target_unconfirmed')roots=roots.filter(r=>r.context!=='a');
    dispatches++;
    return {type:'success',realm:params.target.realm,result:{type:'string',value:JSON.stringify(params.target.realm)}};
   }
@@ -74,6 +82,11 @@ test('provider discovery, explicit tab/instance, lease, stable IDs, method refus
   await assert.rejects(()=>assistant.call('page.evaluate',{...req,expectedUrl:url+'wrong'}));
   await assert.rejects(()=>assistant.call('page.form.fill',req),e=>e.code===-32601);
   assert.equal(dispatches,1);
+  for(const stage of ['realm_probe_command_failed','realm_probe_unconfirmed','script_command_failed','script_exception','script_result_unconfirmed','post_realm_command_failed']){
+   failAt=stage;
+   await assert.rejects(()=>assistant.call('page.evaluate',req),e=>e.code===-32002&&e.message==='BiDi evaluation failed: '+stage&&!e.message.includes('private-secret'));
+  }
+  failAt=null;
   await peer.close();
   peer=await provider.attachGateway(base+'/extension');
   assert.equal((await assistant.call('tabs.list',scope)).tabs[1].id,tabId);

@@ -7,6 +7,20 @@ import {executeBidiFrameEvaluate} from '../browser-frame-bidi-evaluate.js';
 import {projectFrameTree} from '../browser-frame-tree.js';
 import {insertBidiNativeText} from '../browser-bidi-native.js';
 const METHODS=Object.freeze(['tabs.list','page.evaluate','page.frameTree','tabs.create','tabs.activate','tabs.close','page.insertText']);
+// Only fixed provider-generated categories cross the gateway. Never forward
+// an exception's message, stack, page URL, script source or browser text.
+const evaluationFailures=new Set([
+ 'target_changed','realm_probe_command_failed','realm_probe_unconfirmed',
+ 'script_command_failed','script_exception','script_result_unconfirmed',
+ 'post_inventory_failed','post_realm_command_failed','post_target_unconfirmed',
+ 'result_decode_failed'
+]);
+class EvaluationFailure extends Error{
+ constructor(stage){super('BiDi evaluation failed: '+stage);this.stage=stage;}
+}
+async function evaluationStep(stage,fn){
+ try{return await fn()}catch{throw new EvaluationFailure(stage)}
+}
 const metadata=Object.freeze({engine:'firefox',transport:'bidi',methods:METHODS});
 function webUrl(value){try{const u=new URL(value);return ['http:','https:'].includes(u.protocol)&&!u.username&&!u.password}catch{return false}}
 export function createBidiNavigationProvider({session,instancePrefix='firefox'}={}){
@@ -54,7 +68,7 @@ export function createBidiNavigationProvider({session,instancePrefix='firefox'}=
    (params.expectedUrl!==undefined&&!webUrl(params.expectedUrl)))throw Error('bidi_evaluation_invalid');
   const before=(await inventory()).find(t=>t.id===params.tabId);
   if(!before||!webUrl(before.url)||(params.expectedUrl!==undefined&&params.expectedUrl!==before.url))
-   throw Error('bidi_tab_target_changed');
+   throw new EvaluationFailure('target_changed');
   const expected=before.url;
   if(method==='tabs.activate'||method==='tabs.close'){
    if(params.expectedUrl!==expected)throw Error('bidi_tab_target_changed');
@@ -91,18 +105,23 @@ export function createBidiNavigationProvider({session,instancePrefix='firefox'}=
     frameId:params.frameId,expectedOrigin:params.expectedFrameOrigin,scriptForUrl:()=>params.code});
    return {tab:tabReceipt(before),value:detail.value,frameId:detail.frameId,origin:detail.origin};
   }
-  const probe=await session.call('script.evaluate',{expression:'location.href',target:{context:before.context},awaitPromise:true});
+  const probe=await evaluationStep('realm_probe_command_failed',()=>session.call('script.evaluate',
+   {expression:'location.href',target:{context:before.context},awaitPromise:true}));
   if(probe.type!=='success'||probe.result?.value!==expected||typeof probe.realm!=='string'||!probe.realm)
-   throw Error('bidi_tab_realm_unavailable');
+   throw new EvaluationFailure('realm_probe_unconfirmed');
   const expression=`Promise.resolve().then(()=>{if(location.href!==${JSON.stringify(expected)})throw Error('document_url_changed');return (0,eval)(${JSON.stringify(params.code)})}).then(v=>JSON.stringify(v??null))`;
-  const result=await session.call('script.evaluate',{expression,target:{realm:probe.realm},awaitPromise:true});
-  if(result.type!=='success'||result.realm!==probe.realm||result.result?.type!=='string')throw Error('bidi_evaluation_unconfirmed');
-  const after=(await inventory()).find(t=>t.id===before.id);
-  const realms=await session.call('script.getRealms',{context:before.context,type:'window'});
+  const result=await evaluationStep('script_command_failed',()=>session.call('script.evaluate',
+   {expression,target:{realm:probe.realm},awaitPromise:true}));
+  if(result.type==='exception')throw new EvaluationFailure('script_exception');
+  if(result.type!=='success'||result.realm!==probe.realm||result.result?.type!=='string')
+   throw new EvaluationFailure('script_result_unconfirmed');
+  const after=await evaluationStep('post_inventory_failed',async()=>(await inventory()).find(t=>t.id===before.id));
+  const realms=await evaluationStep('post_realm_command_failed',()=>session.call('script.getRealms',{context:before.context,type:'window'}));
   if(!after||after.context!==before.context||after.url!==expected||
    !Array.isArray(realms.realms)||!realms.realms.some(r=>r.realm===probe.realm&&r.context===before.context))
-   throw Error('bidi_evaluation_unconfirmed');
-  return {value:JSON.parse(result.result.value),tab:tabReceipt(after)};
+   throw new EvaluationFailure('post_target_unconfirmed');
+  const value=await evaluationStep('result_decode_failed',()=>JSON.parse(result.result.value));
+  return {value,tab:tabReceipt(after)};
  }
  async function attachGateway(endpoint,{timeoutMs=10000}={}){
   if(peer||connecting||inFlight||session.closed)throw Error('bidi_provider_busy_or_closed');
@@ -156,7 +175,10 @@ export function createBidiNavigationProvider({session,instancePrefix='firefox'}=
     if(req.jsonrpc!=='2.0'||req.id===undefined||typeof req.method!=='string')return;
     inFlight++;
     let reply;
-    try{reply={result:await dispatch(req.method,req.params)}}catch{reply={error:{code:-32002,message:'BiDi browser request failed'}}}
+    try{reply={result:await dispatch(req.method,req.params)}}catch(error){
+     const stage=error instanceof EvaluationFailure&&evaluationFailures.has(error.stage)?error.stage:null;
+     reply={error:{code:-32002,message:stage?'BiDi evaluation failed: '+stage:'BiDi browser request failed'}};
+    }
     finally{inFlight--}
     if(ws.readyState===WebSocket.OPEN)ws.send(JSON.stringify({jsonrpc:'2.0',id:req.id,...reply}));
    });

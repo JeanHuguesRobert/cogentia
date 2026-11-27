@@ -924,3 +924,34 @@ the original non-root workspace identity with a new dedicated profile.
 Use synthetic content first; loopback BiDi alone does not establish
 isolation from other local Unix accounts. No personal browser profile
 is imported, and no additional VNC service is needed.
+
+
+### I4 — first live Firefox dogfooding (FBF)
+
+The owner launched the separate Firefox companion in BYX on revision
+`a7b9948deea844571d54bce3d3af24b946f78d78`. The live hosted gateway
+registered three browser instances, including managed Firefox; its
+inventory returned three tabs. Synthetic dogfooding opened an additional
+loopback HTTP fixture tab, verified an actual HTTP request and the BiDi
+frame tree, and closed only the new tab. However page.evaluate failed
+even for constant 1, both background and foreground. All three synthetic
+tabs were closed successfully; no pre-existing tab was evaluated or
+changed. The underlying cause is not yet known. The disposable graphical
+fixture still passes under Node 22.
+
+The provider now reports fixed, allowlisted evaluation failure stages
+(realm probe, execution, post-inventory/realm verification, decoding).
+The existing RPC error code remains unchanged; no exception text, page
+contents, script source or stack crosses the gateway. No target check
+or authority requirement is relaxed. The new
+`scripts/check-firefox-bidi-production.js INSTANCE --synthetic-live-test`
+is explicitly opt-in, opens its own randomized loopback fixture and
+uses exact target-bound cleanup. It tests transport and local semantic
+capability integration, not canonical John/COP admission. The tool
+connector schema observed at this point does not expose the newly
+supported browser_instance_id read argument; do not silently route
+a John read to the default Chromium instance.
+
+Prepare a new versioned companion release and test it in a separate
+dedicated profile in the same graphical workspace before replacing the
+existing Firefox. Live evaluation diagnosis remains open.
