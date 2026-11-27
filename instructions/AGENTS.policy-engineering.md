@@ -3,7 +3,7 @@ title: "Engineering and publication operations"
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: '2026-11-20'
-last_modified_at: '2026-11-26'
+last_modified_at: '2026-11-27'
 status: "working-paper — active operational documentation"
 document_role: operational
 document_kind: agent-instructions
@@ -111,6 +111,8 @@ constraints into the experimental phase.
 In a clean, version-controlled Git repository, prefer direct scoped edits, status/diff, targeted tests, and commit/revert when these suffice. A renderer's writes to tracked generated files are not inherently a reason to duplicate the entire project; inspect its write set and existing protection first. If a generator could overwrite unique untracked/unversioned material, or external/frozen assets, state and address that specific risk proportionately. Preserve actual publication, disclosure and third-party authorization boundaries.
 
 The cost of making and later reconciling redundant copies—operator attention, storage, stale versions, semantic drift, delayed completion—is itself an Exposure under Measured Risk. **No precaution may be justified solely by invoking "safety", "prudence", or "best practices" without a case-specific rationale.** Do not ritualize a precaution once its initial trigger has disappeared.
+
+**Administrative friction — observed counterexample (2026-11-27).** A shared-runtime deployment script added `sudo -v` before any administrative action, imposing an unnecessary password prompt on the Principal. The Principal reaffirmed that minimizing their mental load and work is the objective; precautions are means, not ends. Use existing authorized capabilities directly and request a human gesture only for an actual authority boundary, meaningful choice or demonstrated operational need. Do not replace ritual authentication by ritual permission probes. Prefer proportionate recovery, traceability and repair; count every extra Principal interaction in the net cost of the act. A command-specific preflight is justified only when it materially changes the outcome. This does not enlarge the mandate or bypass independent authorization.
 
 ### Synthetic Skin in the Game — net lifecycle cost and residual ownership (mandatory)
 
