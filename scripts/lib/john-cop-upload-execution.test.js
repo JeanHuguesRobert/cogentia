@@ -59,6 +59,7 @@ test('upload rejects unapproved scope, issuer and envelope before any external c
       {...request,exposure:'bounded'},
       {...request,input:{...request.input,arguments:{...args,expected_url:'http://example.org/'}}},
       {...request,input:{...request.input,arguments:{...args,extra:'injected'}}},
+      {...request,input:{...request.input,arguments:{...args,browser_instance_id:'firefox-fixture'}}},
     ]){
      const x=await executeJohnCanonicalUpload({...opts,request:invalid,verifyIssuer:verifier});
      assert.equal(x.ok,false);

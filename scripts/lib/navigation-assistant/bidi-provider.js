@@ -5,7 +5,8 @@ import {randomUUID} from 'node:crypto';
 import {WebSocket} from 'ws';
 import {executeBidiFrameEvaluate} from '../browser-frame-bidi-evaluate.js';
 import {projectFrameTree} from '../browser-frame-tree.js';
-const METHODS=Object.freeze(['tabs.list','page.evaluate','page.frameTree','tabs.create','tabs.activate','tabs.close']);
+import {insertBidiNativeText} from '../browser-bidi-native.js';
+const METHODS=Object.freeze(['tabs.list','page.evaluate','page.frameTree','tabs.create','tabs.activate','tabs.close','page.insertText']);
 const metadata=Object.freeze({engine:'firefox',transport:'bidi',methods:METHODS});
 function webUrl(value){try{const u=new URL(value);return ['http:','https:'].includes(u.protocol)&&!u.username&&!u.password}catch{return false}}
 export function createBidiNavigationProvider({session,instancePrefix='firefox'}={}){
@@ -47,7 +48,7 @@ export function createBidiNavigationProvider({session,instancePrefix='firefox'}=
    if(!after||after.context!==tab.context||!webUrl(after.url))throw Error('bidi_open_unconfirmed');
    return {tab:tabReceipt(after)};
   }
-  if(!['page.evaluate','page.frameTree','tabs.activate','tabs.close'].includes(method))throw Error('bidi_method_unsupported');
+  if(!['page.evaluate','page.frameTree','tabs.activate','tabs.close','page.insertText'].includes(method))throw Error('bidi_method_unsupported');
   if(!Number.isSafeInteger(params.tabId)||params.tabId<1||
    (method==='page.evaluate'&&(typeof params.code!=='string'||!params.code||params.code.length>16000))||
    (params.expectedUrl!==undefined&&!webUrl(params.expectedUrl)))throw Error('bidi_evaluation_invalid');
@@ -66,6 +67,11 @@ export function createBidiNavigationProvider({session,instancePrefix='firefox'}=
    const after=(await inventory()).find(t=>t.id===before.id);
    if(!after||after.url!==expected)throw Error('bidi_activation_unconfirmed');
    return {tab:tabReceipt(after)};
+  }
+  if(method==='page.insertText'){
+   if(params.expectedUrl!==expected)throw Error('bidi_tab_target_changed');
+   const result=await insertBidiNativeText({send:session.call,context:before.context,expectedUrl:expected,text:params.text});
+   return {...result,tab:tabReceipt(before)};
   }
   if(method==='page.frameTree'){
    if(params.expectedUrl!==expected)throw Error('bidi_frame_target_invalid');

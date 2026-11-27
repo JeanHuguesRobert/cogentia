@@ -9,6 +9,8 @@ import {createServer} from 'node:http';
 import {spawn,spawnSync} from 'node:child_process';
 import {createServer as createHttpsServer} from 'node:https';
 import {createHostedBrowserCapabilities} from './lib/hosted-browser-capabilities.js';
+import {selectBidiFile} from './lib/browser-bidi-native.js';
+import {createBrowserFileUploadCapability} from './lib/browser-file-upload.js';
 import {runJohnRequest} from './lib/john-run.js';
 import {proveBrowserComposition} from './fixtures/browser-multimcp-reality.mjs';
 import {mkdtemp,readFile,writeFile,rm} from 'node:fs/promises';
@@ -433,6 +435,52 @@ try{
   // New navigation and event paths use the existing semantic interaction
   // capability and existing gateway subscription, not direct fixture commands.
   const interact=caps.find(c=>c.name==='browser.hosted.interact');
+  await evaluate(tabs.get(41),`(() => {const el=document.querySelector('#uid-target');el.focus();el.setSelectionRange(0,el.value.length);globalThis.nativeEvents=[];el.addEventListener('input',e=>nativeEvents.push(e.isTrusted))})()`);
+  const nativeArgs={...selected,action:'insert_text',text:'Corte été — à'};
+  const native=await interact.execute(nativeArgs);
+  assert.equal(native.insertedLength,nativeArgs.text.length);
+  assert.equal(await evaluate(tabs.get(41),'document.querySelector("#uid-target").value'),nativeArgs.text);
+  const events=await evaluate(tabs.get(41),'nativeEvents');
+  assert.ok(events.length>0&&events.every(Boolean));
+  assert.equal(await evaluate(tabs.get(42),'document.querySelector("#uid-target").value'),'');
+  await assert.rejects(()=>interact.execute({...nativeArgs,text:'bad\n'}));
+  await assert.rejects(()=>interact.execute({...nativeArgs,text:'\uE007'}));
+  await assert.rejects(()=>interact.execute({...nativeArgs,expected_url:expectedUrl+'?wrong'}));
+  await evaluate(tabs.get(41),`(() => {const e=document.createElement('input');e.type='password';e.id='secret';document.body.append(e);e.focus()})()`);
+  await assert.rejects(()=>interact.execute(nativeArgs));
+  assert.equal(await evaluate(tabs.get(41),'document.querySelector("#secret").value'),'');
+  await evaluate(tabs.get(41),`(() => {
+   const first=document.querySelector('#uid-target'),second=document.createElement('input');
+   second.id='redirect-focus';document.body.append(second);
+   first.value='';first.focus();first.addEventListener('input',()=>second.focus(),{once:true});
+  })()`);
+  await assert.rejects(()=>interact.execute({...nativeArgs,text:'AB'}));
+  assert.equal(await evaluate(tabs.get(41),'document.querySelector("#uid-target").value'),'A');
+  assert.equal(await evaluate(tabs.get(41),'document.querySelector("#redirect-focus").value'),'');
+  await evaluate(tabs.get(41),`(() => {for(let i=0;i<2;i++){const e=document.createElement('input');e.type='file';e.id='file-'+i;document.body.append(e);e.addEventListener('change',()=>globalThis.fileChanges=(globalThis.fileChanges||0)+1)}})()`);
+  // Separate local backend test. The production upload mandate names
+  // fracta2-hosted only; no gateway file path primitive is registered.
+  const asset=join(dir,'sample.txt');await writeFile(asset,'synthetic upload fixture');
+  const upload=createBrowserFileUploadCapability({allowedRoots:[dir],
+   selectFile:({tabId,expectedUrl,fileIndex,file})=>{
+    assert.equal(tabId,managedTab);
+    return session.withTabLease(provider.browserId,tabId,()=>selectBidiFile({
+     send:bidi.call,context:tabs.get(41).context,expectedUrl,fileIndex,file}));
+   }});
+  const uploadArgs={tab_id:managedTab,expected_url:expectedUrl,file_index:1,file_path:asset};
+  const selectedFile=await upload.execute(uploadArgs);
+  assert.equal(selectedFile.file_selected,true);
+  assert.equal(selectedFile.browser_verified_bytes,24);
+  assert.equal(selectedFile.upload_completion,'unverified');
+  assert.equal(selectedFile.submitted,false);
+  assert.ok(!JSON.stringify(selectedFile).includes(asset));
+  assert.equal(await evaluate(tabs.get(41),'document.querySelector("#file-0").files.length'),0);
+  assert.equal(await evaluate(tabs.get(41),'document.querySelector("#file-1").files[0].text()'),'synthetic upload fixture');
+  assert.equal(await evaluate(tabs.get(41),'fileChanges'),1);
+  await assert.rejects(()=>upload.execute({...uploadArgs,expected_url:expectedUrl+'?wrong'}));
+  await evaluate(tabs.get(41),'document.querySelector("#file-0").disabled=true');
+  await assert.rejects(()=>upload.execute({...uploadArgs,file_index:0}));
+  assert.equal(await evaluate(tabs.get(41),'fileChanges'),1);
   const observer=await createGatewaySession(base+'/assistant');
   const otherObserver=await createGatewaySession(base+'/assistant');
   const notifications=[],otherNotifications=[];
@@ -483,7 +531,7 @@ try{
   managedProvider=true;
  }
  console.log(JSON.stringify({ok:true,browser:version,engine,actual_chromium:engine==='chromium',actual_firefox:engine==='firefox',actual_gateway:true,
-  extension:engine==='firefox'?'fixture_bidi_peer':'fixture_cdp_peer',actual_inventory:true,uid_registry:true,uid_reinjection:true,uid_replacement_rejected:true,uid_document_isolation:true,uid_reload_invalidated:true,uid_fill:true,uid_stale_no_input:true,uid_reconnect:true,cross_origin_uid:crossOriginUid,managed_bidi_provider:managedProvider,hosted_frame_uid:managedProvider,john_bounded_fixture:managedProvider,multimcp_cop_fixture:managedProvider,managed_navigation_events:managedProvider,engine_disconnect_retired_provider:managedProvider,distinct_workers:true,rediscovery:true,checkpoint_reload:true,reused_worker:true,
+  extension:engine==='firefox'?'fixture_bidi_peer':'fixture_cdp_peer',actual_inventory:true,uid_registry:true,uid_reinjection:true,uid_replacement_rejected:true,uid_document_isolation:true,uid_reload_invalidated:true,uid_fill:true,uid_stale_no_input:true,uid_reconnect:true,cross_origin_uid:crossOriginUid,managed_bidi_provider:managedProvider,hosted_frame_uid:managedProvider,john_bounded_fixture:managedProvider,multimcp_cop_fixture:managedProvider,managed_navigation_events:managedProvider,managed_native_text:managedProvider,local_bidi_file_selection:managedProvider,engine_disconnect_retired_provider:managedProvider,distinct_workers:true,rediscovery:true,checkpoint_reload:true,reused_worker:true,
   sandbox_disabled:false,personal_browser_used:false}));
 }catch(e){
  console.error(JSON.stringify({ok:false,reason:e.message,code:e.code||null,engine,browser_exit:exitInfo||null,browser_stderr:stderr,

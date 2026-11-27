@@ -88,3 +88,20 @@ test('a CDP success is NOT a verified file when browser sees zero or wrong bytes
   );
  }finally{await rm(dir,{recursive:true,force:true})}
 });
+
+test('local alternate backend shares file admission and receipt verification',async()=>{
+ const dir=await mkdtemp(path.join(tmpdir(),'cogentia-upload-backend-'));
+ try{
+  const file=path.join(dir,'sample.txt');await writeFile(file,'bytes');
+  let calls=0;
+  const cap=createBrowserFileUploadCapability({allowedRoots:[dir],selectFile:async args=>{
+   calls++;assert.equal(args.file.resolved,file);assert.equal(args.file.bytes,5);
+   return {selected:true,browserBytes:5};
+  }});
+  const args={tab_id:42,expected_url:target,file_index:0,file_path:file};
+  await assert.rejects(()=>cap.execute({...args,file_path:'/etc/hosts'}),e=>e.code==='BROWSER_UPLOAD_OUTSIDE_ALLOWED_ROOTS');
+  assert.equal(calls,0);
+  assert.equal((await cap.execute(args)).browser_verified_bytes,5);
+  assert.equal(calls,1);
+ }finally{await rm(dir,{recursive:true,force:true})}
+});

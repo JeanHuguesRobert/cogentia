@@ -292,7 +292,7 @@ export function createHostedBrowserCapabilities(options = {}) {
         const action = String(input.action || "");
         const selected=await selectedBrowser(input);
         if(selected.managed){
-          const methods={open:'tabs.create',activate:'tabs.activate',close:'tabs.close'};
+          const methods={open:'tabs.create',activate:'tabs.activate',close:'tabs.close',insert_text:'page.insertText'};
           const method=methods[action];
           if(!method||!selected.methods.includes(method))throw capabilityError('BROWSER_ACTION_NOT_ALLOWED');
           const session=await createGatewaySession(gateway,{timeoutMs});
@@ -308,7 +308,8 @@ export function createHostedBrowserCapabilities(options = {}) {
             if(typeof expectedUrl!=='string'||!/^https?:\/\//.test(expectedUrl)||expectedUrl.length>4096)
               throw capabilityError('BROWSER_TAB_TARGET_INVALID');
             return await session.withTabLease(selected.id,tabId,peer=>peer.call(method,{
-              browser_instance_id:selected.id,tabId,expectedUrl}));
+              browser_instance_id:selected.id,tabId,expectedUrl,
+              ...(action==='insert_text'?{text:input.text}:{})}));
           }finally{session.close()}
         }
         if (action === "activate") return rpc(gateway, "tabs.activate", { browser_instance_id: browserId, tabId: positiveInt(input.tab_id, "tab_id") }, timeoutMs);

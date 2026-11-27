@@ -658,3 +658,35 @@ receives subscribed notifications. No iframe events, historical replay,
 or event persistence is implied. Reconnecting a provider does not
 re-subscribe the same engine session. Native focused text insertion and
 file upload are not yet routed to Firefox.
+
+
+### Native input and file selection — I3 fourth increment
+
+The managed provider now advertises the existing `page.insertText` RPC,
+selected through `browser.hosted.interact` with an explicit Firefox
+instance, tab and exact HTTPS URL under the existing lease. The BiDi
+implementation sends native keyDown/keyUp pairs, not a DOM value setter.
+It pins the initially focused ordinary top-document input or textarea in
+its actual realm and checks focus, value and caret before each character
+and after dispatch. A site-driven focus change stops the remaining keys;
+a partial insertion is an unconfirmed effect, not a reason to replay.
+This first bounded variant accepts at most 128 Unicode scalars and excludes
+control, WebDriver private-use, format and combining characters. It does
+not claim parity with CDP's arbitrary text insertion or contenteditable.
+The Firefox reality test verifies trusted input events, Unicode, tab
+isolation and interruption on focus redirection.
+
+The local BiDi file-selection backend uses the shared native node reference
+with `input.setFiles`, then verifies the same node/realm, one selected file,
+expected size and actual byte readability. The existing generic upload
+capability can accept a host-injected selector while retaining the exact
+same allowed-root, realpath, size and redacted-receipt checks. The real
+Firefox fixture uses only a synthetic local file and a tab lease, never
+sends it over the network, and verifies its contents and change event.
+
+The production upload capability remains CDP-backed: its signed policy
+explicitly names `fracta2-hosted`, not a dynamically discovered Firefox
+instance. No new gateway file-path primitive, signed policy amendment,
+production grant or deployment is introduced. A future operational
+extension requires explicit instance and file locality binding within
+the existing COP authority, not a bypass or silent substitution.

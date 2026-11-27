@@ -1,5 +1,5 @@
 /**
- * Generic governed file-input transport for hosted Chromium.
+ * Generic governed file-input capability; default hosted Chromium transport.
  *
  * Selecting a file may immediately start a network upload. This operation is
  * an EXTERNAL effect, not form.fill and not permission to publish or submit.
@@ -50,10 +50,10 @@ async function admittedLocalFile(filePath, roots, maxBytes) {
 }
 
 export function createBrowserFileUploadCapability({
-  transport, allowedRoots = process.env.COGENTIA_BROWSER_UPLOAD_ROOTS,
+  transport, selectFile, allowedRoots = process.env.COGENTIA_BROWSER_UPLOAD_ROOTS,
   maxBytes = DEFAULT_MAX_BYTES
 } = {}) {
-  if (!transport || typeof transport.withFrame !== 'function') throw error('BROWSER_UPLOAD_TRANSPORT_INVALID');
+  if (selectFile!==undefined ? (typeof selectFile!=='function'||transport!==undefined) : typeof transport?.withFrame!=='function') throw error('BROWSER_UPLOAD_TRANSPORT_INVALID');
   if (!Number.isSafeInteger(maxBytes) || maxBytes < 1 || maxBytes > DEFAULT_MAX_BYTES)
     throw error('BROWSER_UPLOAD_LIMIT_INVALID');
   return Object.freeze({
@@ -81,10 +81,10 @@ export function createBrowserFileUploadCapability({
         || typeof expected_url !== 'string' || expected_url.length > 4096
         || !expected_url.startsWith('https://'))
         throw error('BROWSER_UPLOAD_TARGET_INVALID');
-      // Admission is done before any CDP interaction; path and file bytes
+      // Local file admission precedes browser interaction; path and file bytes
       // are never returned in the capability receipt.
       const file = await admittedLocalFile(file_path, allowedRoots, maxBytes);
-      const receipt = await transport.withFrame({
+      const receipt = selectFile ? await selectFile({tabId:tab_id,expectedUrl:expected_url,fileIndex:file_index,file}) : await transport.withFrame({
         tabId:tab_id,expectedUrl:expected_url,
         operation:async ({send,frameTree}) => {
           if (frameTree?.frame?.url !== expected_url)
