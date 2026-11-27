@@ -1,17 +1,18 @@
 /** Same intent, image and semantic capability in both disposable engines. */
 import assert from 'node:assert/strict';
 import {createInoxComparisonPlanner} from '../lib/browser-inox-recipe.js';
+import {FORM_PLANNER} from '../lib/browser-form-recipes.js';
 import {prepareFormAssistRequest} from '../lib/browser-form-recipe-runner.js';
-export async function proveInoxReplacement({directory,inspect,form,scope,readValue,expectedIndex,fieldType,expectedKind='plain',text='fixture-inox-only'}){
+export async function proveInoxReplacement({directory,inspect,form,scope,readValue,expectedIndex,fieldType,semanticRole,expectedKind='plain',text='fixture-inox-only'}){
  const old=await readValue();
  assert.equal(typeof old,'string');
  assert.ok(old.length>0);
  assert.notEqual(old,text);
  const planner=await createInoxComparisonPlanner(directory);
  const input={...scope,inspect:args=>inspect.execute(args),operation:'replace-all',
-  recipe_id:'generic.select-editable',...(fieldType===undefined?{}:{field_type:fieldType}),selection:'unique',text,
+  recipe_id:'generic.select-editable',...(fieldType===undefined?{}:{field_type:fieldType}),...(semanticRole===undefined?{}:{semantic_role:semanticRole}),selection:'unique',text,
   request_id:'fixture-inox-replace'};
- const reference=await prepareFormAssistRequest(input);
+ const reference=await prepareFormAssistRequest({...input,planner:FORM_PLANNER});
  const actual=await prepareFormAssistRequest({...input,planner});
  assert.deepEqual(actual,reference);
  assert.ok(actual.input.arguments.element_target);
@@ -69,4 +70,35 @@ export async function proveInoxEditors({directory,inspect,form,scope,evaluate,or
   await evaluate(`(() => {document.querySelector('#inox-mixed-fixture')?.remove();document.querySelector('#inox-editor-fixture')?.remove();document.querySelector(${original}).disabled=false;})()`);
  }
  return results;
+}
+
+
+// A local fixture under a browser-local mapped Facebook subdomain.
+// The page's personalized label is never returned from inspect.
+export async function proveInoxSiteRole({directory,inspect,form,scope,evaluate}){
+ const role='facebook.comment-composer',selector='#inox-site-fixture';
+ try{
+  await evaluate(`(() => {
+   const parent=document.createElement('section');parent.id='inox-site-parent';
+   parent.innerHTML='<div id="inox-site-fixture" role="textbox" contenteditable="true" aria-label="Commenter en tant que PRIVATE_FIXTURE_NAME">old draft</div><div id="inox-site-other" role="textbox" contenteditable="true" aria-label="Reply to PRIVATE_FIXTURE_NAME">untouched reply</div>';
+   document.body.append(parent);
+  })()`);
+  const observed=await inspect.execute({...scope,action:'structure',include_element_identity:true});
+  const expectedIndex=observed.fields.findIndex(f=>f.semantic_role===role);
+  assert.ok(expectedIndex>=0);assert.equal(observed.fields.filter(f=>f.semantic_role===role).length,1);
+  assert.ok(!JSON.stringify(observed).includes('PRIVATE_FIXTURE_NAME'));
+  const readValue=()=>evaluate('document.querySelector("#inox-site-fixture").innerText');
+  const proof=await proveInoxReplacement({directory,inspect,form,scope,readValue,expectedIndex,
+   semanticRole:role,expectedKind:'contenteditable',text:'Corte — brouillon'});
+  assert.equal(await evaluate('document.querySelector("#inox-site-other").innerText'),'untouched reply');
+  const planner=await createInoxComparisonPlanner(directory);
+  const input={...scope,inspect:args=>inspect.execute(args),operation:'replace-all',selection:'unique',
+   semantic_role:role,text:'must not be written',request_id:'fixture-role-changed',planner};
+  const pending=await prepareFormAssistRequest(input);
+  await evaluate('document.querySelector("#inox-site-fixture").setAttribute("aria-label","Reply to PRIVATE_FIXTURE_NAME")');
+  await assert.rejects(()=>form.execute(pending.input.arguments),e=>e.code==='BROWSER_ELEMENT_TARGET_STALE');
+  assert.equal(await readValue(),'Corte — brouillon');
+  await assert.rejects(()=>prepareFormAssistRequest(input),/field_not_found/);
+  return {...proof,site_role:role,role_changed_rejected:true,unrelated_editor_unchanged:true,labels_not_returned:true};
+ }finally{await evaluate('document.querySelector("#inox-site-parent")?.remove()')}
 }

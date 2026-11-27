@@ -77,7 +77,7 @@
 
   function commentComposer() {
     const candidates = [...document.querySelectorAll('[role="textbox"][contenteditable="true"]')]
-      .filter((node) => /^(Commenter en tant que|Comment as )/i.test(node.getAttribute("aria-label") || ""));
+      .filter(node => editorRole(node) !== null);
     const active = document.activeElement;
     const activeCandidate = candidates.find((node) => node === active);
     return {
@@ -191,7 +191,8 @@
 
   Object.defineProperty(navigation.adapters, "facebook", {
     value: Object.freeze({
-      version: "0.2.1",
+      version: "0.2.2",
+      editorRole,
       visibleItems,
       currentPost,
       commentSort,

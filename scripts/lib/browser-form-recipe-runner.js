@@ -1,13 +1,16 @@
 /** Compile a trusted, data-only recipe plan into the existing signed John v1 path.
  * This code changes on the daemon, never in the extension worker.
  */
+import {createInoxComparisonPlanner} from './browser-inox-recipe.js';
 import {FORM_PLANNER} from './browser-form-recipes.js';
-export async function prepareFormAssistRequest({inspect,recipe_id,version=1,field_type,selection,
-  tab_id,expected_url,text,request_id,operation='insert-at-selection',browser_instance_id,planner=FORM_PLANNER}={}){
+export async function prepareFormAssistRequest({inspect,recipe_id,version=1,field_type,selection,semantic_role,
+  tab_id,expected_url,text,request_id,operation='insert-at-selection',browser_instance_id,planner}={}){
  if(typeof inspect!=='function')throw Error('trusted_structure_inspector_required');
  if(typeof request_id!=='string'||!/^[-\w:.]{1,120}$/.test(request_id))throw Error('request_id_invalid');
+ // Site-specific planning uses the pinned Inox program, with reference parity.
+ planner??=semantic_role===undefined?FORM_PLANNER:await createInoxComparisonPlanner();
  const structure=await inspect({action:'structure',tab_id,...(operation==='replace-all'?{browser_instance_id,expected_url,include_element_identity:true}:{})});
- const plan=planner.plan({recipe_id,version,field_type,selection,structure,tab_id,expected_url,text,operation,browser_instance_id});
+ const plan=planner.plan({recipe_id,version,field_type,selection,semantic_role,structure,tab_id,expected_url,text,operation,browser_instance_id});
  // Do not invent authority: resulting packet must still pass the MCP's
  // independent Principal signature, per-capability COP and budget gate.
  return {version:'john.request.v1',request_id,principal:{id:'principal:jhn'},

@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import vm from "node:vm";
+import {webcrypto} from "node:crypto";
 
 const NAVIGATION_PATH = new URL("../browser-stdlib/navigation.js", import.meta.url);
 const ADAPTER_PATH = new URL("../browser-stdlib/adapters/corsematin.js", import.meta.url);
@@ -159,6 +160,7 @@ async function createEnvironment({ url = "https://www.corsematin.com/article/pol
     location: new URL(url),
     document,
     Element: MockNode,
+    crypto: webcrypto,
     URL,
     console,
     setTimeout,

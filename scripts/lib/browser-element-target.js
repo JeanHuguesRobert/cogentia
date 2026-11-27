@@ -3,6 +3,7 @@
  * Frame identity is explicit; hosted top-document callers remain top-only by default.
  */
 import {readFileSync} from 'node:fs';
+import {siteEditorProjection} from './browser-site-adapters.js';
 import {SAFE_DOM_STRUCTURE_CODE} from './browser-safe-dom-structure.js';
 
 const EPOCH=/^[a-f0-9]{32}$/;
@@ -25,6 +26,7 @@ export const ELEMENT_TARGET_SCHEMA={type:'object',properties:{
 export function compileUidStructure(expectedUrl,{originOnly=false}={}){
  if(typeof expectedUrl!=='string'||!expectedUrl||expectedUrl.length>4096)throw Error('element_target_url_invalid');
  if(originOnly&&new URL(expectedUrl).origin!==expectedUrl)throw Error('element_target_origin_invalid');
+ const site=siteEditorProjection(expectedUrl);
  const stdlib=readFileSync(new URL('../../browser-stdlib/navigation.js',import.meta.url),'utf8');
  return `(() => {
  if(location.${originOnly?"origin":"href"}!==${JSON.stringify(expectedUrl)})return {ok:false,reason:'document_url_changed'};
@@ -33,8 +35,10 @@ export function compileUidStructure(expectedUrl,{originOnly=false}={}){
  }
  const registry=window.__cogentiaNavigationAssistant.elementIdentity;
  const structure=${SAFE_DOM_STRUCTURE_CODE};
- return {...structure,document_epoch:registry.epoch,element_uids:Array.from(
- document.querySelectorAll('input,textarea,select,button,[contenteditable="true"]')).slice(0,80).map(el=>registry.elementUid(el))};
+ const elements=Array.from(document.querySelectorAll('input,textarea,select,button,[contenteditable="true"]')).slice(0,80);
+ ${site?`structure.fields=structure.fields.map((field,index)=>({...field,
+  semantic_role:${site.matcher}(elements[index])}));`:''}
+ return {...structure,document_epoch:registry.epoch,element_uids:elements.map(el=>registry.elementUid(el))};
  })()`;
 }
 export function projectElementTarget(raw,index,browserId,tabId,frameId="top"){

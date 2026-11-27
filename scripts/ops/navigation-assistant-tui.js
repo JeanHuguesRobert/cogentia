@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {facebookAdapterSource} from '../lib/browser-site-adapters.js';
 /** Resident terminal UI for the local Brave navigation assistant. */
 
 import fs from "node:fs/promises";
@@ -166,28 +167,28 @@ function startAssistantScript(state, code) {
       facebookFeed: async () => {
         const [navigationSource, adapterSource] = await Promise.all([
           fs.readFile(new URL("../../browser-stdlib/navigation.js", import.meta.url), "utf8"),
-          fs.readFile(new URL("../../browser-stdlib/adapters/facebook.js", import.meta.url), "utf8"),
+          facebookAdapterSource(),
         ]);
         return evaluatePage(state, `${navigationSource}\n${adapterSource}\nwindow.__cogentiaNavigationAssistant.adapters.facebook.visibleItems()`, "script-facebook-feed", `assistant-script:${id}`);
       },
       facebookPost: async (options = {}) => {
         const [navigationSource, adapterSource] = await Promise.all([
           fs.readFile(new URL("../../browser-stdlib/navigation.js", import.meta.url), "utf8"),
-          fs.readFile(new URL("../../browser-stdlib/adapters/facebook.js", import.meta.url), "utf8"),
+          facebookAdapterSource(),
         ]);
         return evaluatePage(state, `${navigationSource}\n${adapterSource}\nwindow.__cogentiaNavigationAssistant.adapters.facebook.currentPost(${JSON.stringify(options)})`, "script-facebook-post", `assistant-script:${id}`);
       },
       facebookDiscussion: async (options = {}) => {
         const [navigationSource, adapterSource] = await Promise.all([
           fs.readFile(new URL("../../browser-stdlib/navigation.js", import.meta.url), "utf8"),
-          fs.readFile(new URL("../../browser-stdlib/adapters/facebook.js", import.meta.url), "utf8"),
+          facebookAdapterSource(),
         ]);
         return evaluatePage(state, `${navigationSource}\n${adapterSource}\nwindow.__cogentiaNavigationAssistant.adapters.facebook.discussion(${JSON.stringify(options)})`, "script-facebook-discussion", `assistant-script:${id}`);
       },
       facebookInsertComment: async (text) => {
         const [navigationSource, adapterSource] = await Promise.all([
           fs.readFile(new URL("../../browser-stdlib/navigation.js", import.meta.url), "utf8"),
-          fs.readFile(new URL("../../browser-stdlib/adapters/facebook.js", import.meta.url), "utf8"),
+          facebookAdapterSource(),
         ]);
         const outboundText = formatFacebookComment(text);
         return evaluatePage(state, `${navigationSource}\n${adapterSource}\nwindow.__cogentiaNavigationAssistant.adapters.facebook.insertComment(${JSON.stringify(outboundText)})`, "script-facebook-insert-comment", `assistant-script:${id}`);
@@ -195,7 +196,7 @@ function startAssistantScript(state, code) {
       facebookReplaceComment: async (text, expected = {}) => {
         const [navigationSource, adapterSource] = await Promise.all([
           fs.readFile(new URL("../../browser-stdlib/navigation.js", import.meta.url), "utf8"),
-          fs.readFile(new URL("../../browser-stdlib/adapters/facebook.js", import.meta.url), "utf8"),
+          facebookAdapterSource(),
         ]);
         const outboundText = formatFacebookComment(text);
         return evaluatePage(state, `${navigationSource}\n${adapterSource}\nwindow.__cogentiaNavigationAssistant.adapters.facebook.replaceComment(${JSON.stringify(outboundText)}, ${JSON.stringify(expected)})`, "script-facebook-replace-comment", `assistant-script:${id}`);
@@ -652,7 +653,7 @@ function startBridge(state) {
     }
     if (request.method === "GET" && request.url === "/stdlib/adapters/facebook.js") {
       try {
-        const source = await fs.readFile(new URL("../../browser-stdlib/adapters/facebook.js", import.meta.url), "utf8");
+        const source = await facebookAdapterSource();
         response.writeHead(200, { "content-type": "application/javascript; charset=utf-8", "cache-control": "no-cache" });
         response.end(source);
       } catch {

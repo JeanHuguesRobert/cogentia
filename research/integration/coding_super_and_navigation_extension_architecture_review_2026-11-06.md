@@ -222,3 +222,44 @@ cross-origin and Firefox multi-MCP/worker checks pass. No new capability,
 transport or signed mandate; no production deployment. The rich-text
 contract concerns textual content, not formatting or every application
 editor. The source change is intentionally not an additional selector.
+
+### 27 November — site knowledge as composable semantic observations
+
+The Principal confirms the two orthogonal axes: browser-engine adapters
+materialize generic operations, while site libraries capture local
+procedural knowledge. Reuse the September Facebook adapter rather than
+introducing Facebook-specific transport methods or a competing library.
+The first production candidate is facebook.comment-composer: a reviewed
+site matcher in browser-stdlib/adapters/facebook-editor.js, used both
+by the old TUI adapter and by identity-aware observation/editing.
+The Core chooses the matcher by parsed HTTPS domain, injects only the
+pure function, and projects a bounded allowlisted semantic_role, never
+the personalized aria-label. Generic Inox selection receives a role
+filter (empty = any); no site-specific VM primitive or extra image.
+The default site-role planning path uses the pinned Inox runtime
+and checks parity with the JS reference. The runtime pin is
+browser-stdlib/inox-runtime.json; a composed MCP release contains its
+sibling Inox experiment tree with matching REVISION.
+
+The existing UID-bound browser.form.fill envelope accepts an optional
+semantic_role as a narrowing constraint; canonical admission still
+requires the same signed mandate, scope and budget. The same matcher
+rechecks role before focus, before insertion and after insertion.
+A changed role before insertion is stale; after insertion it is an
+unconfirmed effect, never an automatic retry. No new capability,
+extension RPC or broader effect permission. The legacy Facebook
+paragraph formatting methods remain because their precise behavior is
+not yet subsumed by generic replacement.
+
+Chromium and Firefox 158.0.1 real disposable fixtures serve a local
+synthetic Facebook page under browser-local DNS mapping (no live
+Facebook contact), with a comment composer and unrelated reply editor.
+The same image selects the correct UID, replaces 17 characters without
+submission, independently reads the result, and rejects a same-UID
+role change. The original full-adapter injection exceeded BiDi's
+16000-character code limit; extracting the canonical pure matcher
+fixed the root cause without raising the limit. Existing OOPIF and
+Firefox multi-MCP fixtures pass. Repaired old Corse-Matin tests by
+providing WebCrypto to their mock browser, required since UID support.
+Live site labels remain an empirical question; no social draft or
+publication has been modified.

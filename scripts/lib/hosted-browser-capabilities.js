@@ -1,3 +1,4 @@
+import {projectSiteEditorRole} from './browser-site-adapters.js';
 import {validElementTarget,ELEMENT_TARGET_SCHEMA,compileUidStructure,projectElementTarget,callUidFormFill} from "./browser-element-target.js";
 import {compileNonSecretFormFill} from "./browser-form-script.js";
 import { SAFE_DOM_STRUCTURE_CODE } from "./browser-safe-dom-structure.js";
@@ -180,7 +181,7 @@ export function createHostedBrowserCapabilities(options = {}) {
                 required:f.required===true,disabled:f.disabled===true,readonly:f.readonly===true,
                 contenteditable:f.contenteditable===true,
                 autocomplete:String(f.autocomplete||'').slice(0,64),
-                ...(identity?{element_target:projectElementTarget(raw,i,selected.id,tabId,frameId)}:{})
+                ...(identity?{element_target:projectElementTarget(raw,i,selected.id,tabId,frameId),...projectSiteEditorRole(expectedOrigin,f.semantic_role)}:{})
               })):[],truncated:raw.truncated===true};
           }
           if(input.include_element_identity===true)throw capabilityError('BROWSER_ELEMENT_TARGET_INVALID');
@@ -238,7 +239,7 @@ export function createHostedBrowserCapabilities(options = {}) {
               disabled: f.disabled === true,
               readonly: f.readonly === true,
               autocomplete: String(f.autocomplete || "").slice(0, 64),
-              ...(identity?{element_target:projectElementTarget(raw,i,selected.id,targetTabId)}:{}),
+              ...(identity?{element_target:projectElementTarget(raw,i,selected.id,targetTabId),...projectSiteEditorRole(input.expected_url,f.semantic_role)}:{}),
             })) : [],
             total_fields: boundedInteger(raw.total_fields, 0, 0, 100000),
             frames: boundedInteger(raw.frames, 0, 0, 100),
@@ -347,6 +348,7 @@ export function createHostedBrowserCapabilities(options = {}) {
         expected_url:{type:"string",minLength:1,maxLength:4096},
         text:{type:"string",minLength:1,maxLength:2048},
         field_kind:{type:"string",enum:["contenteditable"]},
+        semantic_role:{type:"string",maxLength:100},
         frame_id:{type:"string",minLength:1,maxLength:160},
         iframe_index:{type:"integer",minimum:0,maximum:19},
         expected_frame_origin:{type:"string",minLength:1,maxLength:256},
@@ -359,6 +361,8 @@ export function createHostedBrowserCapabilities(options = {}) {
         if(!["plain","contenteditable"].includes(fieldKind))throw capabilityError("BROWSER_FORM_FIELD_KIND_INVALID");
         if(!expected.startsWith('https://')||!value||value.length>2048)throw capabilityError('BROWSER_FORM_INPUT_INVALID');
         const uidMode=input.element_target!==undefined;
+        if(input.semantic_role!==undefined&&(!uidMode||!projectSiteEditorRole(input.element_target?.frame_id==='top'?expected:input.expected_frame_origin,input.semantic_role).semantic_role))
+          throw capabilityError('BROWSER_ELEMENT_ROLE_INVALID');
         const chosen=input.browser_instance_id??browserId;
         if(input.browser_instance_id!==undefined&&!uidMode)throw capabilityError('BROWSER_ELEMENT_TARGET_INVALID');
         if(uidMode?(input.field_index!==undefined||!validElementTarget(input.element_target,{tabId:tab,browserId:chosen,allowFrame:input.browser_instance_id!==undefined&&chosen!==browserId})):
@@ -377,16 +381,16 @@ export function createHostedBrowserCapabilities(options = {}) {
             const reply=await managedFrameCall(selected,tab,expected,'page.evaluate',{
               frameId:target.frame_id,expectedFrameOrigin:input.expected_frame_origin,
               code:compileNonSecretFormFill({elementTarget:target,text:value,
-                expectedUrl:input.expected_frame_origin,originOnly:true,fieldKind})});
+                expectedUrl:input.expected_frame_origin,originOnly:true,fieldKind,semanticRole:input.semantic_role})});
             receipt=reply.value;
           }else{
             const session=await createGatewaySession(gateway,{timeoutMs});
             try{
               receipt=await callUidFormFill({session,target,expectedUrl:expected,
-                code:compileNonSecretFormFill({elementTarget:target,text:value,expectedUrl:expected,fieldKind})});
+                code:compileNonSecretFormFill({elementTarget:target,text:value,expectedUrl:expected,fieldKind,semanticRole:input.semantic_role})});
             }finally{session.close()}
           }
-          if(receipt?.ok===false&&['element_uid_stale','document_epoch_changed'].includes(receipt.reason))
+          if(receipt?.ok===false&&['element_uid_stale','document_epoch_changed','element_role_changed'].includes(receipt.reason))
             throw capabilityError('BROWSER_ELEMENT_TARGET_STALE');
           if(receipt?.ok!==true||receipt.submitted!==false||receipt.insertedLength!==value.length||
             receipt.document_epoch!==target.document_epoch||receipt.uid!==target.uid)

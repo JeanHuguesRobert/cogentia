@@ -49,3 +49,16 @@ test('managed frame UID admission pins explicit instance and origin',async()=>{
   {...args,element_target:{...element_target,frame_id:'top'}},{...args,field_index:0}])
   assert.equal((await invoke(bad)).error,'canonical_form_envelope_invalid');
 });
+
+test('semantic role narrows an existing UID grant, cannot authorize another site or index',async()=>{
+ const epoch='a'.repeat(32),element_target={browser_instance_id:'fixture',tab_id:7,frame_id:'top',document_epoch:epoch,uid:epoch+':1'};
+ const {field_index,...rest}=input;
+ const args={...rest,expected_url:'https://www.facebook.com/post/fixture',browser_instance_id:'fixture',element_target,
+  field_kind:'contenteditable',semantic_role:'facebook.comment-composer'};
+ const invoke=arguments_=>executeJohnCanonicalForm({request:{...req,input:{...req.input,arguments:arguments_}},
+  authorizedKeysPath:'/no-such-file',run:()=>assert.fail('must not execute')});
+ assert.equal((await invoke(args)).error,'trusted_form_issuer_missing');
+ for(const bad of [{...args,expected_url:'https://facebook.com.example.org'},{...args,semantic_role:'unknown'},
+  {...args,element_target:undefined,field_index:0},{...args,field_index:0}])
+  assert.equal((await invoke(bad)).error,'canonical_form_envelope_invalid');
+});

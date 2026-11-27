@@ -1,3 +1,4 @@
+import {projectSiteEditorRole} from './browser-site-adapters.js';
 /** Explicit, separately signed form-assistance COP effect gate. */
 import {validElementTarget} from './browser-element-target.js';
 import {readFileSync} from 'node:fs';
@@ -29,7 +30,8 @@ export async function executeJohnCanonicalForm({store,authorizedKeysPath,auth,re
     'browser_instance_id,element_target,expected_url,tab_id,text',
     'browser_instance_id,element_target,expected_url,field_kind,tab_id,text',
     'browser_instance_id,element_target,expected_frame_origin,expected_url,tab_id,text',
-    'browser_instance_id,element_target,expected_frame_origin,expected_url,field_kind,tab_id,text'].includes(Object.keys(args).sort().join(','))||
+    'browser_instance_id,element_target,expected_frame_origin,expected_url,field_kind,tab_id,text'].includes(Object.keys(args).filter(k=>k!=='semantic_role').sort().join(','))||
+   (Object.hasOwn(args,'semantic_role')&&(!args.element_target||!projectSiteEditorRole(args.element_target.frame_id==='top'?args.expected_url:args.expected_frame_origin,args.semantic_role).semantic_role))||
    (args.field_kind!==undefined && args.field_kind!=='contenteditable')||
    (args.frame_id!==undefined && (!/^[A-Za-z0-9_-]{1,160}$/.test(args.frame_id)||
      !exactHttpsOrigin(args.expected_frame_origin)))||

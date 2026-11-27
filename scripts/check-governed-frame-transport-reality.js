@@ -10,7 +10,7 @@ import {createHostedFrameTransport} from './lib/browser-frame-cdp-transport.js';
 import {createHostedBrowserCapabilities} from './lib/hosted-browser-capabilities.js';
 import {executeFrameEvaluate} from './lib/browser-frame-evaluate.js';
 import {SAFE_DOM_STRUCTURE_CODE} from './lib/browser-safe-dom-structure.js';
-import {proveInoxReplacement,proveInoxEditors} from './fixtures/browser-inox-edit-reality.mjs';
+import {proveInoxReplacement,proveInoxEditors,proveInoxSiteRole} from './fixtures/browser-inox-edit-reality.mjs';
 import {createInoxComparisonPlanner} from './lib/browser-inox-recipe.js';
 import {prepareFormAssistRequest} from './lib/browser-form-recipe-runner.js';
 import {createGatewaySession} from './lib/navigation-assistant/gateway-session.js';
@@ -32,11 +32,11 @@ try{
  main=await listen((req,res)=>html(res,`<!doctype html><title>isolated parent</title><input type="text" autocomplete="username"><input type="text" disabled><input type="text" id="recipe" autocomplete="off" value="old fixture text"><input type="email"><iframe src="https://localhost:${assertPort(frame)}/inside"></iframe>`));
  const probe=await new Promise((yes,no)=>{const s=https.createServer(tls,(req,res)=>res.end());s.listen(0,'127.0.0.1',()=>yes(s));s.once('error',no)});
  const unused=assertPort(probe);await new Promise(r=>probe.close(r));
- const expectedUrl=`https://127.0.0.1:${assertPort(main)}/main`;
+ const expectedUrl=`https://${inoxDirectory?"cogentia-fixture.facebook.com":"127.0.0.1"}:${assertPort(main)}/main`;
  const childOrigin=`https://localhost:${assertPort(frame)}`;
  chrome=spawn('/usr/bin/chromium',['--headless=new','--no-sandbox','--disable-gpu','--no-first-run','--disable-extensions',
   '--disable-background-networking','--no-proxy-server','--no-default-browser-check','--disable-dev-shm-usage',
-  '--ignore-certificate-errors','--host-resolver-rules=MAP localhost 127.0.0.1','--remote-allow-origins=*',`--remote-debugging-port=${unused}`,
+  '--ignore-certificate-errors','--host-resolver-rules=MAP localhost 127.0.0.1, MAP cogentia-fixture.facebook.com 127.0.0.1','--remote-allow-origins=*',`--remote-debugging-port=${unused}`,
   `--user-data-dir=${dir}/profile`,expectedUrl],{stdio:'ignore'});
  let cdpTarget;
  for(let i=0;i<45;i++){
@@ -112,6 +112,8 @@ try{
    const proof=await proveInoxReplacement({directory:inoxDirectory,inspect,form:formFill,scope,readValue:()=>evaluate('document.querySelector("#recipe").value'),expectedIndex:2});
    const editors=await proveInoxEditors({directory:inoxDirectory,inspect,form:formFill,scope,evaluate,originalSelector:'#recipe'});
    console.log(JSON.stringify({ok:true,proof:'inox_generic_editors',engine:'chromium',editors,fixture_only:true}));
+   const siteProof=await proveInoxSiteRole({directory:inoxDirectory,inspect,form:formFill,scope,evaluate});
+   console.log(JSON.stringify({ok:true,proof:'inox_site_role',engine:'chromium',...siteProof,fixture_only:true}));
    const planner=await createInoxComparisonPlanner(inoxDirectory);
    await assert.rejects(()=>prepareFormAssistRequest({...scope,planner,inspect:args=>inspect.execute(args),
     operation:'replace-all',field_type:'email',selection:'first',text:'fixture@example.test',

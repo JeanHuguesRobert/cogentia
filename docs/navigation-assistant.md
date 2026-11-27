@@ -128,6 +128,20 @@ it classifies visible `role=article` elements as `post`, `comment`, `reply`, or
 `page.facebookPost({ expand: true })` may explicitly activate its local
 "En voir plus" control before extraction. It never submits, reacts, or replies.
 
+For identity-aware structure inspection, the Core now projects a reviewed site
+role such as `facebook.comment-composer` (not the personalized label). Use
+`browser.hosted.inspect` with `action: structure`, the exact URL, instance/tab
+and `include_element_identity: true`. The ordinary UID-bound
+`browser.form.fill` may carry that `semantic_role` and the existing
+`field_kind: contenteditable`; the role is rechecked on the same element
+before editing, without submitting. The default site-role
+`prepareFormAssistRequest` planner uses the composed, pinned Inox runtime
+and returns the existing John request, still requiring canonical admission.
+The shared recognition function lives in `browser-stdlib/adapters/facebook-editor.js`.
+The old TUI adapter is assembled with this function, not maintained as a
+second recognition implementation. New sites extend the same role library,
+not the extension protocol.
+
 The Corse-Matin adapter (`browser-stdlib/adapters/corsematin.js`) provides territorial
 media source extraction feeding the Corsica Cogentia Digital Twin (initially exposed
 via Agent JHN). `page.corseMatinArticle()` normalizes visible article semantics

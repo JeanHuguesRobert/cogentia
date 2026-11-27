@@ -1,10 +1,11 @@
+import {siteEditorProjection,projectSiteEditorRole} from './browser-site-adapters.js';
 import {textEditProfile} from './browser-text-edit-contract.js';
 import {validElementTarget} from './browser-element-target.js';
 /** Trusted client-side recipe compiled into one existing page.evaluate call.
  * No caller-provided JavaScript; non-secret ordinary text inputs only.
  * The input text is embedded in the CDP RPC: NEVER use this for secrets.
  */
-export function compileNonSecretFormFill({fieldIndex,text,expectedUrl,iframeIndex,expectedFrameOrigin,fieldKind="plain",elementTarget,allowLoopbackFixture=false,originOnly=false}={}){
+export function compileNonSecretFormFill({fieldIndex,text,expectedUrl,iframeIndex,expectedFrameOrigin,fieldKind="plain",elementTarget,allowLoopbackFixture=false,originOnly=false,semanticRole}={}){
  const uidMode=elementTarget!==undefined;
  const fixtureUrl=allowLoopbackFixture&&typeof expectedUrl==='string'&&/^http:\/\/127\.0\.0\.1:\d+\//.test(expectedUrl);
  if((uidMode?(fieldIndex!==undefined||!validElementTarget(elementTarget,{allowFrame:true})):(!Number.isInteger(fieldIndex)||fieldIndex<0||fieldIndex>79))||
@@ -18,6 +19,11 @@ export function compileNonSecretFormFill({fieldIndex,text,expectedUrl,iframeInde
  if(originOnly&&(!uidMode||elementTarget.frame_id==='top'||new URL(expectedUrl).origin!==expectedUrl))
   throw Error('form_script_origin_scope_invalid');
  if(uidMode&&scoped)throw Error('form_script_uid_frame_unsupported');
+ const site=semanticRole===undefined?null:siteEditorProjection(expectedUrl);
+ if(semanticRole!==undefined&&(!uidMode||!site||!projectSiteEditorRole(expectedUrl,semanticRole).semantic_role))
+  throw Error('form_script_semantic_role_invalid');
+ const roleCheck=site?`if(siteEditorRole(el)!==${JSON.stringify(semanticRole)})
+ return {ok:false,reason:'element_role_changed'};`:'';
  const encoded=JSON.stringify(text);
  const urlLiteral=JSON.stringify(expectedUrl);
  const documentLocation=originOnly?"location.origin":"location.href";
@@ -47,6 +53,8 @@ export function compileNonSecretFormFill({fieldIndex,text,expectedUrl,iframeInde
    return {ok:false,reason:'field_type_forbidden'};
  if(/username|password|one-time-code|cc-number|cc-csc/i.test(String(el.autocomplete||el.getAttribute?.('autocomplete')||'')))
    return {ok:false,reason:'sensitive_autocomplete'};
+ ${site?`const siteEditorRole=${site.matcher};`:''}
+ ${roleCheck}
  const value=${encoded};
  if(${documentLocation}!==${urlLiteral})return {ok:false,reason:'document_url_changed'};
  el.focus({preventScroll:true});
@@ -66,12 +74,14 @@ export function compileNonSecretFormFill({fieldIndex,text,expectedUrl,iframeInde
  ${uidMode?`if(window.__cogentiaNavigationAssistant?.elementIdentity!==registry||
  registry.resolveElementUid(${JSON.stringify(elementTarget.uid)})!==el)
  return {ok:false,reason:'element_uid_stale'};`:''}
+ ${roleCheck}
  const inserted=targetDocument.execCommand('insertText',false,value);
  if(${documentLocation}!==${urlLiteral}||!el.isConnected)
    return {ok:false,reason:'document_or_element_changed_after_edit'};
  ${uidMode?`if(window.__cogentiaNavigationAssistant?.elementIdentity!==registry||
  registry.resolveElementUid(${JSON.stringify(elementTarget.uid)})!==el)
  return {ok:false,reason:'element_changed_after_edit'};`:''}
+ ${roleCheck.replace('element_role_changed','element_role_changed_after_edit')}
  const actual=kind==='contenteditable'
    ? String(el.innerText||el.textContent||'').replace(/\\r\\n/g,'\\n')
    : el.value;

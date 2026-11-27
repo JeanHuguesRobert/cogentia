@@ -12,7 +12,7 @@ import {createHostedBrowserCapabilities} from './lib/hosted-browser-capabilities
 import {selectBidiFile} from './lib/browser-bidi-native.js';
 import {createBrowserFileUploadCapability} from './lib/browser-file-upload.js';
 import {runJohnRequest} from './lib/john-run.js';
-import {proveInoxReplacement,proveInoxEditors} from './fixtures/browser-inox-edit-reality.mjs';
+import {proveInoxReplacement,proveInoxEditors,proveInoxSiteRole} from './fixtures/browser-inox-edit-reality.mjs';
 import {proveBrowserComposition} from './fixtures/browser-multimcp-reality.mjs';
 import {mkdtemp,readFile,writeFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
@@ -105,7 +105,7 @@ try{
   local('openssl',['req','-x509','-newkey','rsa:2048','-nodes','-days','1','-subj','/CN=Cogentia fixture CA',
    '-addext','basicConstraints=critical,CA:TRUE','-addext','keyUsage=critical,keyCertSign,cRLSign','-keyout',caKey,'-out',ca]);
   local('openssl',['req','-new','-newkey','rsa:2048','-nodes','-subj','/CN=127.0.0.1','-keyout',key,'-out',csr]);
-  await writeFile(ext,'basicConstraints=critical,CA:FALSE\nsubjectAltName=IP:127.0.0.1\nextendedKeyUsage=serverAuth\nkeyUsage=critical,digitalSignature,keyEncipherment\n');
+  await writeFile(ext,'basicConstraints=critical,CA:FALSE\nsubjectAltName=IP:127.0.0.1,DNS:cogentia-fixture.facebook.com\nextendedKeyUsage=serverAuth\nkeyUsage=critical,digitalSignature,keyEncipherment\n');
   local('openssl',['x509','-req','-in',csr,'-CA',ca,'-CAkey',caKey,'-CAcreateserial','-days','1','-extfile',ext,'-out',cert]);
   local('certutil',['-N','--empty-password','-d','sql:'+dir]);
   local('certutil',['-A','-d','sql:'+dir,'-n','Cogentia disposable fixture','-t','CT,,','-i',ca]);
@@ -126,7 +126,10 @@ try{
   else{res.writeHead(404);res.end()}
  });
  await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve)});
- const expectedUrl=scheme+'://127.0.0.1:'+server.address().port+'/probe';
+ const siteFixture=firefox&&!!process.env.COGENTIA_INOX_DIRECTORY;
+ if(siteFixture)await writeFile(join(dir,'user.js'),
+  'user_pref("network.dns.localDomains", "cogentia-fixture.facebook.com");\nuser_pref("network.trr.mode", 5);\nuser_pref("network.proxy.type", 0);\n');
+ const expectedUrl=scheme+'://'+(siteFixture?'cogentia-fixture.facebook.com':'127.0.0.1')+':'+server.address().port+'/probe';
  browser=spawn(firefox?(process.env.FIREFOX_BIN||'/usr/lib/firefox/firefox'):(process.env.CHROMIUM_BIN||'/usr/bin/chromium'),
   firefox?['--headless','--no-remote','--profile',dir,'--remote-debugging-port','0','about:blank']:[
   '--headless=new','--remote-debugging-address=127.0.0.1','--remote-debugging-port=0',
@@ -397,6 +400,9 @@ try{
    const editors=await proveInoxEditors({directory:process.env.COGENTIA_INOX_DIRECTORY,
     inspect,form,scope:selected,evaluate:code=>evaluate(tabs.get(41),code),originalSelector:'#uid-target'});
    console.log(JSON.stringify({ok:true,proof:'inox_generic_editors',engine:'firefox',editors,fixture_only:true}));
+   const siteProof=await proveInoxSiteRole({directory:process.env.COGENTIA_INOX_DIRECTORY,
+    inspect,form,scope:selected,evaluate:code=>evaluate(tabs.get(41),code)});
+   console.log(JSON.stringify({ok:true,proof:'inox_site_role',engine:'firefox',...siteProof,fixture_only:true}));
    assert.equal(await evaluate(tabs.get(42),'document.querySelector("#uid-target").value'),'');
    console.log(JSON.stringify({ok:true,proof:'inox_image_live_dom_parity',engine:'firefox',...proof,fixture_only:true}));
    const restored=await inspect.execute({...selected,action:'structure',include_element_identity:true});
