@@ -905,3 +905,30 @@ record seven LIVE_VERIFIED books and 48 document projections on 2026-11-26.
 owns the operational topology and activation evidence. This is not proof of
 autonomous deployment: the owner still activates the bounded releases while
 the standing administrative admission bridge (#285) is unfinished.
+
+### Publication profile: parameters, not parallel factories (2026-11-27)
+
+All 13 declared Barons Living Books now use the same explicit resource
+selection and CI artifact contract (64 selected document projections,
+plus indexes). The [Barons assembler](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/scripts/ops/prepare-living-book-ci-releases.py)
+keeps deployment choices local to that Corpus:
+
+- Default: existing immutable site root, index.html, nav, canonical root URL.
+- Entry page and route: DIASPORA serves its whole release root and redirects
+  to web/index.html; preserve the seed and interactive application bytes.
+- Navigation container: Suicide Corse uses header; preserve every dated
+  edition and limit link rewriting to explicitly selected working pages.
+- Initial site: Orta assembles from the committed site tree, with
+  BOOTSTRAP_PREPARED distinct from a provisioned origin or live publication.
+- External deployment owner: Capable uses its existing working deployer;
+  BUILD_VERIFIED_EXTERNAL_OWNER means the resource artifact was verified,
+  not installed. Integrate the overlay under that single owner and lock,
+  with complete byte identity; do not introduce a competing current switch.
+
+These parameters belong to the deployment/assembly layer rather than the
+editorial source or renderer. Keep defaults implicit and factor additional
+options only as concrete independent uses warrant them. The observed run
+[45934231737](https://github.com/JeanHuguesRobert/barons-Mariani/actions/runs/45934231737)
+verified all 13 builds; 7 books were still live at that observation, 6
+existing-site candidates (including 2 updates) and one bootstrap prepared.
+The external-owner integration and bootstrap infrastructure are outstanding.
