@@ -135,7 +135,16 @@ export function createNavigationGateway(options = {}) {
               if (message.id !== undefined) fail(ws, message.id, -32022, "duplicate or invalid browser instance");
               return;
             }
+            const provider=message.params.provider;
+            if(provider!==undefined&&(!provider||provider.engine!=="firefox"||provider.transport!=="bidi"||
+              !Array.isArray(provider.methods)||provider.methods.length<1||provider.methods.length>32||
+              new Set(provider.methods).size!==provider.methods.length||
+              !provider.methods.every(m=>typeof m==="string"&&/^(tabs|page)\.[a-zA-Z]+$/.test(m)))) {
+              if(message.id!==undefined)fail(ws,message.id,-32602,"Invalid browser provider metadata");
+              return;
+            }
             ws.browserInstanceId = id;
+            ws.provider=provider===undefined?undefined:{engine:provider.engine,transport:provider.transport,methods:[...provider.methods]};
             if (message.id !== undefined) sendJson(ws, { jsonrpc: "2.0", id: message.id, result: { registered: true, browser_instance_id: id } });
             return;
           }
@@ -208,6 +217,7 @@ export function createNavigationGateway(options = {}) {
             browsers: [...sockets.extension].filter((peer) => peer.readyState === 1).map((peer) => ({
               browser_instance_id: peer.browserInstanceId || null,
               registered: Boolean(peer.browserInstanceId),
+              ...(peer.provider?{provider:peer.provider}:{}),
             })),
           } });
           return;
@@ -223,6 +233,12 @@ export function createNavigationGateway(options = {}) {
           return;
         }
         const target = candidates[0];
+        if(target.provider&&targetId===undefined){
+          fail(ws,message.id,-32602,"explicit browser_instance_id required by provider");return;
+        }
+        if(target.provider&&!target.provider.methods.includes(message.method)){
+          fail(ws,message.id,-32601,"browser provider method unsupported");return;
+        }
         // An implicitly chosen active tab could bypass a tab-specific lease.
         // Fail closed while any lease exists for this browser; explicit targets
         // remain available through the owner or after release.

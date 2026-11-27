@@ -13,6 +13,8 @@ import {join} from 'node:path';
 import {setTimeout as delay} from 'node:timers/promises';
 import {WebSocket as Ws} from 'ws';
 import {createNavigationGateway} from './ops/navigation-assistant-gateway.js';
+import {openBidiSession} from './lib/navigation-assistant/bidi-session.js';
+import {createBidiNavigationProvider} from './lib/navigation-assistant/bidi-provider.js';
 import {createGatewaySession} from './lib/navigation-assistant/gateway-session.js';
 import {compileUidStructure,projectElementTarget,callUidFormFill} from './lib/browser-element-target.js';
 import {executeBidiFrameEvaluate} from './lib/browser-frame-bidi-evaluate.js';
@@ -39,7 +41,7 @@ globalThis.worker=createWorker({id:host.load()?.id||crypto.randomUUID(),host,pro
  }
 }});
 </script>`;
-let server,frameServer,browser,exited,exitInfo,gate,peer,session,bidi,stderr='';
+let server,frameServer,browser,exited,exitInfo,gate,peer,managedPeer,session,bidi,stderr='';
 const tabs=new Map();
 const browserId='worker-reality-fixture';
 async function json(url,options={}){
@@ -61,35 +63,6 @@ async function cdp(tab,method,params={}){
    });
   });
  }finally{ws.terminate()}
-}
-// Fixture-only transport: no live browser/session discovery or authority.
-function bidiConnection(url){
- const ws=new Ws(url,{handshakeTimeout:4000});let id=0;const pending=new Map();
- const ready=new Promise((resolve,reject)=>{
-  ws.once('open',resolve);ws.once('error',reject);
- });
- ws.on('message',raw=>{
-  const msg=JSON.parse(String(raw)),job=pending.get(msg.id);
-  if(!job)return;
-  pending.delete(msg.id);clearTimeout(job.timer);
-  if(msg.type==='error')job.reject(Error(msg.error+':'+msg.message));
-  else job.resolve(msg.result);
- });
- const disconnected=()=>{for(const job of pending.values()){clearTimeout(job.timer);job.reject(Error('bidi_disconnected'))}pending.clear()};
- ws.on('close',disconnected);ws.on('error',disconnected);
- return {
-  async call(method,params={}){
-   await ready;
-   if(ws.readyState!==Ws.OPEN)throw Error('bidi_disconnected');
-   const callId=++id;
-   return new Promise((resolve,reject)=>{
-    const timer=setTimeout(()=>{pending.delete(callId);reject(Error('bidi_timeout:'+method))},4000);
-    pending.set(callId,{resolve,reject,timer});
-    ws.send(JSON.stringify({id:callId,method,params}));
-   });
-  },
-  close(){ws.terminate()}
- };
 }
 async function evaluate(tab,expression){
  if(engine==='firefox'){
@@ -152,9 +125,8 @@ try{
  if(!port)throw Error(engine+'_debug_endpoint_unavailable');
  const debugBase='http://127.0.0.1:'+port;
  if(firefox){
-  bidi=bidiConnection('ws://127.0.0.1:'+port+'/session');
-  const started=await bidi.call('session.new',{capabilities:{alwaysMatch:{}}});
-  version='Firefox/'+started.capabilities.browserVersion;
+  bidi=await openBidiSession('ws://127.0.0.1:'+port+'/session');
+  version='Firefox/'+bidi.capabilities.browserVersion;
  }else version=(await json(debugBase+'/json/version')).Browser;
  for(const tabId of [41,42]){
   let tab;
@@ -352,14 +324,69 @@ try{
  await invoke('assign',[{id:'task-2',program:'demo'}]);
  assert.equal((await invoke('step')).locals.started,2);
  assert.equal((await invoke('step',[{type:'resume',increment:2}])).lastResult.value,3);
+ let managedProvider=false;
+ if(firefox){
+  // The reusable provider, unlike the fixture peer above, discovers and maps
+  // every root itself and advertises the exact supported gateway methods.
+  const provider=createBidiNavigationProvider({session:bidi,instancePrefix:'reality-firefox'});
+  const scope={browser_instance_id:provider.browserId};
+  managedPeer=await provider.attachGateway(base+'/extension');
+  const instances=await session.call('browser.instances');
+  assert.deepEqual(instances.browsers.find(b=>b.browser_instance_id===provider.browserId)?.provider,provider.metadata);
+  const list=await session.call('tabs.list',scope);
+  const candidates=list.tabs.filter(t=>t.url===expectedUrl);
+  assert.equal(candidates.length,2);
+  const worker=bindBrowserWorkerContext({session,browserId:provider.browserId,expectedUrl,workerId:id});
+  const located=await worker.locate();
+  const managedTab=located.tabId;
+  const managedSnapshot=await worker.invoke({tabId:managedTab,method:'snapshot'});
+  assert.equal(managedSnapshot.lastResult.value,3);
+  const query={...scope,tabId:managedTab,expectedUrl,code:compileUidStructure(expectedUrl)};
+  const observed=await session.call('page.evaluate',query);
+  const target=projectElementTarget(observed.value,0,provider.browserId,managedTab);
+  assert.ok(target);
+  const fillManaged=text=>callUidFormFill({session,target,expectedUrl,
+   code:compileNonSecretFormFill({elementTarget:target,expectedUrl,text,allowLoopbackFixture:true})});
+  assert.equal((await fillManaged('managed provider')).ok,true);
+  await assert.rejects(()=>session.call('page.evaluate',{...query,tabId:undefined}));
+  await assert.rejects(()=>session.call('page.evaluate',{...query,expectedUrl:expectedUrl+'?wrong'}));
+  await assert.rejects(()=>session.call('page.form.fill',{...scope,tabId:managedTab}),e=>e.code===-32601);
+  // Gateway peer reconnect, not engine session reconnect: same instance,
+  // stable numeric tabs, same document-local identity.
+  await managedPeer.close();
+  await assert.rejects(()=>session.call('tabs.list',scope),e=>e.code===-32020);
+  managedPeer=await provider.attachGateway(base+'/extension');
+  assert.equal((await worker.locate()).tabId,managedTab);
+  assert.equal((await fillManaged('after provider reconnect')).ok,true);
+  assert.equal(await evaluate(tabs.get(41),'document.querySelector("#uid-target").value'),'after provider reconnect');
+  const extra=await bidi.call('browsingContext.create',{type:'tab'});
+  await bidi.call('browsingContext.navigate',{context:extra.context,url:expectedUrl,wait:'complete'});
+  const more=await session.call('tabs.list',scope);
+  const oldIds=new Set(list.tabs.map(t=>t.id));
+  const added=more.tabs.find(t=>!oldIds.has(t.id));assert.ok(added);
+  await bidi.call('browsingContext.close',{context:extra.context});
+  assert.ok(!(await session.call('tabs.list',scope)).tabs.some(t=>t.id===added.id));
+  const another=await bidi.call('browsingContext.create',{type:'tab'});
+  const afterClose=await session.call('tabs.list',scope);
+  assert.ok(afterClose.tabs.some(t=>t.id>added.id));
+  await assert.rejects(()=>session.call('page.evaluate',{...query,tabId:added.id}));
+  await bidi.call('browsingContext.close',{context:another.context});
+  // Losing the engine connection retires the provider, not merely its gateway
+  // socket. A new engine session must use a different instance identity.
+  const gone=new Promise(resolve=>managedPeer.onClose(resolve));
+  bidi.close();await gone;
+  await assert.rejects(()=>provider.attachGateway(base+'/extension'),/bidi_provider_busy_or_closed/);
+  await assert.rejects(()=>session.call('tabs.list',scope),e=>e.code===-32020);
+  managedProvider=true;
+ }
  console.log(JSON.stringify({ok:true,browser:version,engine,actual_chromium:engine==='chromium',actual_firefox:engine==='firefox',actual_gateway:true,
-  extension:engine==='firefox'?'fixture_bidi_peer':'fixture_cdp_peer',actual_inventory:true,uid_registry:true,uid_reinjection:true,uid_replacement_rejected:true,uid_document_isolation:true,uid_reload_invalidated:true,uid_fill:true,uid_stale_no_input:true,uid_reconnect:true,cross_origin_uid:crossOriginUid,distinct_workers:true,rediscovery:true,checkpoint_reload:true,reused_worker:true,
+  extension:engine==='firefox'?'fixture_bidi_peer':'fixture_cdp_peer',actual_inventory:true,uid_registry:true,uid_reinjection:true,uid_replacement_rejected:true,uid_document_isolation:true,uid_reload_invalidated:true,uid_fill:true,uid_stale_no_input:true,uid_reconnect:true,cross_origin_uid:crossOriginUid,managed_bidi_provider:managedProvider,engine_disconnect_retired_provider:managedProvider,distinct_workers:true,rediscovery:true,checkpoint_reload:true,reused_worker:true,
   sandbox_disabled:false,personal_browser_used:false}));
 }catch(e){
  console.error(JSON.stringify({ok:false,reason:e.message,engine,browser_exit:exitInfo||null,browser_stderr:stderr,
   sandbox_disabled:false,personal_browser_used:false}));process.exitCode=1;
 }finally{
- session?.close();peer?.close();await gate?.close();bidi?.close();
+ session?.close();peer?.close();await managedPeer?.close();await gate?.close();bidi?.close();
  if(browser?.pid&&!exitInfo){
   try{process.kill(-browser.pid,'SIGTERM')}catch{}
   await Promise.race([exited,delay(2500)]);

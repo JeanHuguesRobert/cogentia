@@ -555,3 +555,39 @@ cross-origin frame UID fill, wrong-root/origin refusal, clone replacement
 and frame reload invalidation. Chromium remains blocked at launch by the
 sandbox issue tracked in [#285](https://github.com/JeanHuguesRobert/cogentia/issues/285).
 This is not an installed Firefox extension or a production deployment.
+
+
+### Managed BiDi provider — I3 source increment
+
+The foreground provider can attach to an explicitly started Firefox with
+a loopback WebDriver BiDi endpoint and to the existing trusted gateway:
+
+```sh
+node scripts/ops/navigation-assistant-bidi.js \
+  --bidi-endpoint ws://127.0.0.1:PORT/session \
+  --gateway ws://HOST:8776/extension
+```
+
+No default browser or profile is selected. The provider creates a session,
+registers a session-scoped browser instance, and advertises only `tabs.list`
+and `page.evaluate` via the existing `browser.instances` discovery. Numeric
+tab IDs remain associated with actual top-level BiDi contexts; retired IDs
+are not reused. It does not infer an active tab or collect titles.
+Evaluation requires an explicit tab, checks the URL, pins the actual realm,
+and verifies the receipt. An expected URL, when supplied, must match exactly.
+The existing gateway leases and upstream COP admission remain authoritative.
+Unsupported methods are rejected, not forwarded to another browser.
+
+The reusable provider preserves its instance ID and tab mapping when its
+gateway peer reconnects to the same live engine session. A lost BiDi session
+retires the provider; a new session gets a different instance ID. There is
+no automatic reconnect or replay of uncertain effects. The foreground CLI
+exits on disconnection; no service installation is implied.
+
+Reality test on Fracta2: Firefox 158.0.1 and the real gateway discover the
+managed provider, locate and invoke the existing Worker, observe and fill a
+DOM UID, reconnect the provider while retaining live targets, reject a
+retired tab ID, and remove the provider after engine disconnection.
+The installed Chromium extension's protocol and legacy registration are
+unchanged. Frame evaluation is not yet routed through the managed provider;
+the direct frame reality test above remains distinct.
