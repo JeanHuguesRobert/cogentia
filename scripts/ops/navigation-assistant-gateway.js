@@ -214,6 +214,7 @@ export function createNavigationGateway(options = {}) {
         }
         if (message.method === "browser.instances" && message.id !== undefined) {
           sendJson(ws, { jsonrpc: "2.0", id: message.id, result: {
+            managed_provider_registration: 1,
             browsers: [...sockets.extension].filter((peer) => peer.readyState === 1).map((peer) => ({
               browser_instance_id: peer.browserInstanceId || null,
               registered: Boolean(peer.browserInstanceId),

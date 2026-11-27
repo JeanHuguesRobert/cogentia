@@ -733,3 +733,64 @@ The existing network authentication, workspace policy, Operium
 deployment procedure and signed COP permissions remain authoritative.
 An actual authenticated VNC framebuffer interaction and recovery
 test, then explicit bounded dogfooding, are the next acceptance steps.
+
+
+### I4 — managed graphical companion and explicit activation
+
+The source-level owner-facing companion is
+`scripts/ops/navigation-assistant-firefox.js`. It runs in the foreground
+as the selected unprivileged graphical workspace user. It requires
+explicit X11 DISPLAY/XAUTHORITY, an absolute private directory owned by
+that user, an explicitly selected new profile, and the local gateway.
+It never chooses an existing default browser profile. The invocation is:
+
+```sh
+node scripts/ops/navigation-assistant-firefox.js \
+  --profile-dir "$HOME/.hosted-browser/firefox-managed" \
+  --gateway ws://127.0.0.1:8776/extension
+```
+
+The private parent must already exist. On subsequent intentional starts,
+add `--reuse-managed-profile`; only a profile marked by the companion
+and owned by the caller is admitted. The sibling launch lock excludes
+concurrent starts. Never remove Firefox's own profile locks or clear
+an uncertain companion lock automatically. No profile content is
+copied from another browser.
+
+Before creating any profile or browser the companion checks the existing
+`browser.instances` reply for `managed_provider_registration: 1`.
+This additive reply field is independent of how many providers are
+registered. Legacy gateways refuse the preflight without browser effects.
+The companion starts Firefox with a dynamic loopback BiDi port, verifies
+its provider descriptor from the gateway, and remains foreground.
+Gateway/provider loss leaves the graphical browser available to the
+human, without automatic reconnect or replay. An explicit stop closes
+the provider and requests native `browser.close`; an unconfirmed
+graceful close is reported, and only the owned browser process group
+can be terminated by the companion. The profile survives normal stop
+and the next session obtains a new browser instance ID.
+
+The graphical reality fixture now verifies rejection of a legacy
+gateway, exclusion of concurrent launch, a persistent localStorage
+marker after native close and restart, fresh instance identity,
+and preservation of the window on gateway loss. It additionally
+opens the KasmVNC TLS WebSocket with its synthetic credentials and
+validates the RFB version greeting; the unauthenticated upgrade
+is refused with HTTP 401. This does not yet prove full framebuffer
+decoding or remote pointer/keyboard interaction.
+
+Read-only live observation (2026-11-27) showed that neither the hosted
+gateway (:8776) nor ONA's local gateway (:8765) advertised the new
+preflight marker. Hosted gateway and ONA are separate services.
+The existing owner-delegated service.deploy descriptors cover MCP and
+ONA, not the hosted gateway, which runs as its dedicated workspace
+Unix user. Do not reuse the ONA delegation for the hosted gateway.
+For actual dogfooding, Operium must first stage the exact published
+gateway revision with its pinned runtime and existing execution
+identity; verify old extension compatibility and active leases, obtain
+the node owner's explicit deployment authority, replace only the
+gateway service through the reviewed deployment path, and verify
+health, the marker, and reconnection of the previous instances.
+Then the workspace owner can explicitly launch the companion in
+the existing X11 workspace. A successful source test is not
+authorization or evidence of that production migration.

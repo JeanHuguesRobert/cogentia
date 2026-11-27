@@ -5,12 +5,13 @@
 import assert from 'node:assert/strict';
 import {spawn,spawnSync} from 'node:child_process';
 import {randomBytes} from 'node:crypto';
-import {mkdtemp,mkdir,writeFile,readFile,rm} from 'node:fs/promises';
+import {mkdtemp,mkdir,writeFile,readFile,rm,lstat} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createServer as createNetServer} from 'node:net';
 import {createServer as createHttpServer} from 'node:http';
 import https from 'node:https';
+import {WebSocket,WebSocketServer} from 'ws';
 import {setTimeout as delay} from 'node:timers/promises';
 import {createNavigationGateway} from './ops/navigation-assistant-gateway.js';
 import {createGatewaySession} from './lib/navigation-assistant/gateway-session.js';
@@ -36,7 +37,7 @@ function run(cmd,args,options={}){
 }
 async function stop(entry){
  if(!entry.exit){try{process.kill(-entry.child.pid,'SIGTERM')}catch{}
-  await Promise.race([entry.done,delay(3000)]);
+  await Promise.race([entry.done,delay(15000)]);
   if(!entry.exit){try{process.kill(-entry.child.pid,'SIGKILL')}catch{};await entry.done}
  }
 }
@@ -63,6 +64,31 @@ function httpStatus(port,cert,auth){
   req.once('error',reject);req.once('timeout',()=>req.destroy(Error('https_timeout')));req.end();
  });
 }
+function vncHandshake(port,cert,auth){
+ return new Promise((resolve,reject)=>{
+  const ws=new WebSocket('wss://127.0.0.1:'+port+'/websockify','binary',{
+   ca:cert,handshakeTimeout:3000,origin:'https://127.0.0.1:'+port,
+   ...(auth?{headers:{Authorization:'Basic '+Buffer.from(auth).toString('base64')}}:{})
+  });
+  let buffer=Buffer.alloc(0),done=false;
+  const finish=(error,value)=>{
+   if(done)return;done=true;clearTimeout(timer);ws.terminate();
+   error?reject(error):resolve(value);
+  };
+  const timer=setTimeout(()=>finish(Error('vnc_websocket_timeout')),5000);
+  ws.on('unexpected-response',(_req,res)=>{res.resume();finish(null,{httpStatus:res.statusCode})});
+  ws.on('error',()=>finish(Error('vnc_websocket_failed')));
+  ws.on('close',()=>finish(Error('vnc_websocket_closed')));
+  ws.on('message',raw=>{
+   buffer=Buffer.concat([buffer,Buffer.from(raw)]);
+   if(buffer.length>=12){
+    const banner=buffer.subarray(0,12).toString('ascii');
+    if(!/^RFB 00[3-9]\.00[0-9]\n$/.test(banner))return finish(Error('vnc_rfb_banner_invalid'));
+    finish(null,{rfb:true});
+   }
+  });
+ });
+}
 try{
  // Let X server choose an unused display (-displayfd) rather than killing
  // or claiming an existing workspace display. X11 authentication is private.
@@ -85,6 +111,10 @@ try{
  const pem=await readFile(cert);
  await until(async()=>{try{return await httpStatus(port,pem)===401}catch{return false}},'vnc_auth',xvnc);
  assert.equal(await httpStatus(port,pem,'fixture:'+password),200);
+ const noAuth=await vncHandshake(port,pem);
+ assert.equal(noAuth.httpStatus,401);
+ const vnc=await vncHandshake(port,pem,'fixture:'+password);
+ assert.equal(vnc.rfb,true);
  const listeners=local('ss',['-H','-ltn','sport','=',':'+port]).trim();
  assert.ok(listeners.includes('127.0.0.1:'+port));
  assert.ok(!listeners.includes('0.0.0.0:'+port)&&!listeners.includes('[::]:'+port));
@@ -122,8 +152,57 @@ try{
  await stop(provider);
  await until(async()=>!(await assistant.call('browser.instances')).browsers.some(b=>b.browser_instance_id===scope.browser_instance_id),'retired_provider');
  assert.equal(firefox.exit,null);
- console.log(JSON.stringify({ok:true,graphical_firefox:true,kasmvnc_https_auth_challenge:true,kasmvnc_authenticated_http:true,
-  loopback_listener:true,x_window_observed:true,standalone_provider_cli:true,hosted_inspect:true,provider_retired:true,firefox_survives_provider_stop:true,existing_workspace_used:false}));
+ await stop(firefox);
+ // The owner-facing companion is separately exercised, including preflight
+ // against the old gateway protocol before any profile or browser creation.
+ const managedProfile=join(dir,'managed-profile');
+ const legacy=new WebSocketServer({host:'127.0.0.1',port:0});
+ await new Promise((r,j)=>{legacy.once('listening',r);legacy.once('error',j)});
+ try{
+  legacy.on('connection',ws=>ws.on('message',raw=>{
+   const message=JSON.parse(String(raw));
+   ws.send(JSON.stringify({jsonrpc:'2.0',id:message.id,result:{browsers:[]}}));
+  }));
+  const refused=run(process.execPath,['scripts/ops/navigation-assistant-firefox.js',
+   '--profile-dir',managedProfile,'--gateway','ws://127.0.0.1:'+legacy.address().port+'/extension'],{env});
+  await refused.done;
+  assert.equal(refused.exit.code,1);assert.match(refused.err,/managed_gateway_upgrade_required/);
+  await assert.rejects(()=>lstat(managedProfile),e=>e.code==='ENOENT');
+ }finally{for(const ws of legacy.clients)ws.terminate();await new Promise(r=>legacy.close(r))}
+ const managedArgs=['scripts/ops/navigation-assistant-firefox.js','--profile-dir',managedProfile,'--gateway',base+'/extension'];
+ const registered=entry=>until(()=>{try{return JSON.parse(entry.out.split('\n')[0])}catch{return null}},'companion',entry);
+ const launch=async(reuse=false)=>{
+  const proc=run(process.execPath,[...managedArgs,...(reuse?['--reuse-managed-profile']:[])],{env});
+  const reg=await registered(proc);assert.equal(reg.status,'registered');
+  return {proc,reg,scope:{browser_instance_id:reg.browser_instance_id}};
+ };
+ let first=await launch();
+ const firstTab=(await interact.execute({action:'open',...first.scope,url})).tab;
+ const evaluate=async(instance,tab,code)=>assistant.call('page.evaluate',{browser_instance_id:instance,tabId:tab.id,expectedUrl:url,code});
+ assert.equal((await evaluate(first.reg.browser_instance_id,firstTab,"localStorage.setItem('fixture-marker','preserved');localStorage.getItem('fixture-marker')")).value,'preserved');
+ // Concurrent launch/reuse must fail before starting another browser.
+ const conflict=run(process.execPath,[...managedArgs,'--reuse-managed-profile'],{env});
+ await conflict.done;assert.equal(conflict.exit.code,1);
+ await stop(first.proc);
+ assert.equal(first.proc.exit.code,0);
+ await assert.rejects(()=>lstat(managedProfile+'.launch-lock'),e=>e.code==='ENOENT');
+ assert.equal((await lstat(managedProfile)).isDirectory(),true);
+ await until(async()=>!(await assistant.call('browser.instances')).browsers.some(b=>b.browser_instance_id===first.reg.browser_instance_id),'first_companion_retired');
+ const second=await launch(true);
+ assert.notEqual(second.reg.browser_instance_id,first.reg.browser_instance_id);
+ const secondTab=(await interact.execute({action:'open',...second.scope,url})).tab;
+ assert.equal((await evaluate(second.reg.browser_instance_id,secondTab,"localStorage.getItem('fixture-marker')")).value,'preserved');
+ await until(()=>local('xwininfo',['-root','-tree'],{env}).includes('Graphical Firefox reality'),'companion_window',second.proc);
+ assistant.close();assistant=null;
+ await gateway.close();gateway=null;
+ await until(()=>second.proc.out.includes('"browser_preserved":true'),'companion_disconnect',second.proc);
+ assert.equal(second.proc.exit,null);
+ assert.ok(local('xwininfo',['-root','-tree'],{env}).includes('Graphical Firefox reality'));
+ await stop(second.proc);
+ assert.equal(second.proc.exit.code,0);
+ await assert.rejects(()=>lstat(managedProfile+'.launch-lock'),e=>e.code==='ENOENT');
+ console.log(JSON.stringify({ok:true,graphical_firefox:true,kasmvnc_https_auth_challenge:true,kasmvnc_authenticated_http:true,kasmvnc_authenticated_rfb_banner:true,kasmvnc_unauthenticated_websocket_refused:true,
+  loopback_listener:true,x_window_observed:true,standalone_provider_cli:true,hosted_inspect:true,provider_retired:true,firefox_survives_provider_stop:true,managed_companion:true,legacy_preflight_refusal:true,profile_lock_conflict_refused:true,profile_persistence:true,fresh_instance_after_restart:true,browser_preserved_on_gateway_loss:true,existing_workspace_used:false}));
 }catch(e){
  console.error(JSON.stringify({ok:false,reason:e.message,children:children.map(c=>({command:c.child.spawnfile,exit:c.exit,stderr:c.err.slice(-1600)}))}));
  process.exitCode=1;
