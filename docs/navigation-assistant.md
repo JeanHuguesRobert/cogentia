@@ -851,3 +851,39 @@ Never automatically replay an interrupted browser operation. On failure
 restore the previous configuration and verify reconnection. Record the
 actual restart, release hash, verified runtime and remaining exceptions
 in Operium. The live migration remains separate from this source work.
+
+
+### I4 — one-time owner migration procedure
+
+`scripts/ops/migrate-navigation-gateway.py` is a one-time owner-operated
+installer for the observed Fracta2 baseline, not an agent-callable
+deployment API. It requires a root-private staging directory containing
+the independently reviewed installer and exact prepared archive, with
+the published full revision and expected SHA-256 supplied explicitly.
+Run without `--apply` for validation only. After pausing browser agent
+dispatch and choosing the maintenance window, repeat with `--apply`.
+It refuses unexpected unit configuration, existing drop-ins, a
+previous candidate or an unresolved migration lock.
+
+It verifies the archive before extracting only bounded regular files
+and directories under the fixed root-controlled release base. It
+retains the workspace service UID and environment, adds a single
+hardened systemd drop-in and restarts only the hosted gateway. The
+acceptance checks the effective configuration, actual process UID,
+empty capability sets, working directory, loopback/mesh listeners,
+health and managed marker, and re-registration of every previously
+registered instance. An offline previously registered instance can
+therefore cause conservative rollback. The old gateway's unregistered
+connections cannot be correlated individually; their count is recorded
+without claiming they all returned. The procedure never replays a
+browser operation.
+
+Private `migration-before.json` and `migration-result.json` in the
+owner staging directory retain the baseline and outcome. On failure
+the installer removes its own drop-in, restores the original service
+configuration and verifies reconnection. A failed verification retains
+the migration lock for owner reconciliation; the candidate release is
+kept for inspection. Never retry blindly after an interrupted run.
+Fixture tests exercise archive safety, exact baseline, listener boundary,
+reconnection predicate, receipts, rollback and lock retention; actual
+owner invocation and production recovery remain untested until migration.
