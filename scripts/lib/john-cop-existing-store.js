@@ -3,6 +3,9 @@
  * migrates or creates authority; write admission needs a separate reviewed path.
  */
 import {DatabaseSync} from 'node:sqlite';
+import {createHash} from 'node:crypto';
+import {validateCopEventEnvelope} from '../../../inseme/packages/cop-core/src/cop-event-envelope.js';
+import {validateFractalogActRecord,FRACTALOG_ACT_RECORD_SCHEMA} from '../../../inseme/packages/cop-core/src/fractalog.js';
 import {realpathSync,statSync} from 'node:fs';
 const refuse=error=>({ok:false,error,store:null});
 export function openExistingJohnCopStore(filename){
@@ -18,10 +21,39 @@ export function openExistingJohnCopStore(filename){
   }
   const byTopic=db.prepare('SELECT envelope FROM cop_events WHERE topic=? ORDER BY seq');
   const replay=db.prepare('SELECT envelope FROM cop_events ORDER BY topic,seq');
+  const readHead=db.prepare('SELECT seq,head FROM cop_topic_commitments WHERE topic=?');
+  const auditRows=db.prepare('SELECT seq,envelope FROM cop_events WHERE topic=? ORDER BY seq');
+  // Same byte-chain and canonical validation as Inseme's writer audit.
+  // A read snapshot prevents a concurrent append from racing head vs rows;
+  // never open the writer (which can perform schema maintenance) for audit.
+  function auditTopicCommitment(id){
+   db.exec('BEGIN');
+   try{
+    const head=readHead.get(id),errors=[];
+    let seq=0,hash='';
+    for(const row of auditRows.iterate(id)){
+     seq++;
+     if(row.seq!==seq)errors.push('sequence_gap_or_reordering_at:'+seq);
+     let event;
+     try{event=JSON.parse(row.envelope)}catch{errors.push('malformed_envelope_at:'+seq);continue}
+     if(event.topic?.id!==id||event.topic?.seq!==row.seq)
+      errors.push('topic_binding_mismatch_at:'+seq);
+     if(!validateCopEventEnvelope(event,{requirePositiveSeq:true}).ok)
+      errors.push('invalid_envelope_at:'+seq);
+     if(event.payload?.schema===FRACTALOG_ACT_RECORD_SCHEMA&&!validateFractalogActRecord(event.payload).ok)
+      errors.push('fractalog_document_hash_mismatch_at:'+seq);
+     hash='sha256:'+createHash('sha256').update(hash).update(row.envelope).digest('hex');
+    }
+    if(!head)errors.push('commitment_missing');
+    else if(head.seq!==seq||head.head!==hash)errors.push('commitment_mismatch');
+    return {topic:id,ok:errors.length===0,events:seq,head:hash||null,committed_head:head?.head||null,errors};
+   }finally{db.exec('ROLLBACK')}
+  }
   const store=Object.freeze({
    kind:'canonical-inseme-readonly',
    listTopic:id=>byTopic.all(id).map(row=>JSON.parse(row.envelope)),
    replay:()=>replay.all().map(row=>JSON.parse(row.envelope)),
+   auditTopicCommitment,
    append:()=>({ok:false,error:'read_only_cop_store'}),
   });
   return {ok:true,store,close:()=>db.close()};

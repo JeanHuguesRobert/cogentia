@@ -18,10 +18,13 @@ test('read-only attachment never invents a database or modifies canonical events
   const dbpath=join(dir,'existing.db');
   const initial=createSqliteCopEventStore(dbpath);
   recordMandateDeclaration(initial,{mandate_id:'mandate:test',principal_ref:'principal:jhn',logical_agent_ref:'agent:jhn',scope:{allowed_actions:['browser.hosted.inspect']}});
-  const count=initial.replay().length;initial.close();
+  const count=initial.replay().length;
+  const expectedAudit=initial.auditTopicCommitment('mandate:mandate:test');initial.close();
   const attached=openExistingJohnCopStore(dbpath);
   assert.equal(attached.ok,true,attached.error);
   assert.equal(attached.store.replay().length,count);
+  assert.deepEqual(attached.store.auditTopicCommitment('mandate:mandate:test'),expectedAudit);
+  assert.equal(attached.store.auditTopicCommitment('unknown-topic').ok,false);
   assert.equal(attached.store.listTopic('mandate:mandate:test').length,1);
   assert.equal(attached.store.append({}).error,'read_only_cop_store');
   attached.close();
@@ -63,4 +66,33 @@ test('real Inseme store reopened read-only admits only preflight, never an effec
    assert.equal(ledger.snapshot().available.max_steps,3);
   } finally {attached.close();}
  }finally{rmSync(dir,{recursive:true,force:true});}
+});
+
+test('read-only audit detects actual stored envelope corruption without rewriting the source',()=>{
+ const dir=mkdtempSync(join(tmpdir(),'john-cop-audit-'));
+ try{
+  const path=join(dir,'existing.db');
+  const writer=createSqliteCopEventStore(path);
+  const topic='mandate:mandate:test';
+  recordMandateDeclaration(writer,{mandate_id:'mandate:test',principal_ref:'principal:jhn',
+    logical_agent_ref:'agent:jhn',scope:{allowed_actions:['host.process.run']}});
+  assert.equal(writer.auditTopicCommitment(topic).ok,true);
+  writer.close();
+  const db=new DatabaseSync(path);
+  const row=db.prepare('SELECT envelope FROM cop_events WHERE topic=?').get(topic);
+  const corrupted=JSON.parse(row.envelope);corrupted.payload.scope.allowed_actions.push('fixture:altered');
+  const raw=JSON.stringify(corrupted);
+  db.prepare('UPDATE cop_events SET envelope=? WHERE topic=?').run(raw,topic);
+  db.close();
+  const attached=openExistingJohnCopStore(path);assert.equal(attached.ok,true);
+  try{
+   const audit=attached.store.auditTopicCommitment(topic);
+   assert.equal(audit.ok,false);
+   assert.ok(audit.errors.includes('commitment_mismatch'));
+   assert.ok(audit.errors.includes('invalid_envelope_at:1'));
+  }finally{attached.close()}
+  const reader=new DatabaseSync(path,{readOnly:true});
+  try{assert.equal(reader.prepare('SELECT envelope FROM cop_events WHERE topic=?').get(topic).envelope,raw)}
+  finally{reader.close()}
+ }finally{rmSync(dir,{recursive:true,force:true})}
 });
