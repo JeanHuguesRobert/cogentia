@@ -7,7 +7,7 @@ import {editorRole as facebookEditorRole,editorContext as facebookEditorContext,
 
 const sites=Object.freeze([
  Object.freeze({id:'facebook',domain:'facebook.com',
-  roles:Object.freeze(['facebook.comment-composer']),editorRole:facebookEditorRole,editorContext:facebookEditorContext,writeParagraphs:facebookWriteParagraphs}),
+  nativeRichEdit:true,roles:Object.freeze(['facebook.comment-composer']),editorRole:facebookEditorRole,editorContext:facebookEditorContext,writeParagraphs:facebookWriteParagraphs}),
 ]);
 function siteFor(url){
  try{
@@ -19,6 +19,9 @@ function siteFor(url){
 export function siteEditorProjection(url){
  const site=siteFor(url);
  return site?{id:site.id,matcher:'('+site.editorRole.toString()+')',context:'('+site.editorContext.toString()+')',writeParagraphs:'('+site.writeParagraphs.toString()+')'}:null;
+}
+export function usesNativeRichEdit(url,role){
+ const site=siteFor(url);return site?.nativeRichEdit===true&&site.roles.includes(role);
 }
 export function projectSiteEditorRole(url,role){
  return siteFor(url)?.roles.includes(role)?{semantic_role:role}:{};

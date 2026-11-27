@@ -112,7 +112,7 @@ try{
    const proof=await proveInoxReplacement({directory:inoxDirectory,inspect,form:formFill,scope,readValue:()=>evaluate('document.querySelector("#recipe").value'),expectedIndex:2});
    const editors=await proveInoxEditors({directory:inoxDirectory,inspect,form:formFill,scope,evaluate,originalSelector:'#recipe'});
    console.log(JSON.stringify({ok:true,proof:'inox_generic_editors',engine:'chromium',editors,fixture_only:true}));
-   const siteProof=await proveInoxSiteRole({directory:inoxDirectory,inspect,form:formFill,scope,evaluate});
+   const siteProof=await proveInoxSiteRole({directory:inoxDirectory,inspect,form:formFill,scope,evaluate,nativeKeys:true});
    console.log(JSON.stringify({proof:'edit_context',engine:'chromium',...await proveEditContext({inspect,scope,evaluate})}));
    console.log(JSON.stringify({ok:true,proof:'inox_site_role',engine:'chromium',...siteProof,fixture_only:true}));
    const planner=await createInoxComparisonPlanner(inoxDirectory);

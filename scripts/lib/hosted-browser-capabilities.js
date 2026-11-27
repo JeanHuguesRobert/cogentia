@@ -1,4 +1,5 @@
-import {projectSiteEditorRole,projectEditorContext} from './browser-site-adapters.js';
+import {replaceCdpRichText} from './browser-cdp-rich-edit.js';
+import {projectSiteEditorRole,projectEditorContext,usesNativeRichEdit} from './browser-site-adapters.js';
 import {validElementTarget,ELEMENT_TARGET_SCHEMA,compileUidStructure,projectElementTarget,callUidFormFill} from "./browser-element-target.js";
 import {compileNonSecretFormFill} from "./browser-form-script.js";
 import { SAFE_DOM_STRUCTURE_CODE } from "./browser-safe-dom-structure.js";
@@ -383,6 +384,12 @@ export function createHostedBrowserCapabilities(options = {}) {
               code:compileNonSecretFormFill({elementTarget:target,text:value,
                 expectedUrl:input.expected_frame_origin,originOnly:true,fieldKind,semanticRole:input.semantic_role})});
             receipt=reply.value;
+          }else if(!selected.managed&&fieldKind==='contenteditable'&&usesNativeRichEdit(expected,input.semantic_role)){
+            // The existing tab-proof transport binds native CDP commands to
+            // the exact admitted document; never fall back to another tab.
+            receipt=await frameTransport.withFrame({tabId:tab,expectedUrl:expected,
+              operation:({send})=>replaceCdpRichText({send,elementTarget:target,
+                expectedUrl:expected,semanticRole:input.semantic_role,text:value})});
           }else{
             const session=await createGatewaySession(gateway,{timeoutMs});
             try{

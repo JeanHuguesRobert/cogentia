@@ -75,7 +75,7 @@ export async function proveInoxEditors({directory,inspect,form,scope,evaluate,or
 
 // A local fixture under a browser-local mapped Facebook subdomain.
 // The page's personalized label is never returned from inspect.
-export async function proveInoxSiteRole({directory,inspect,form,scope,evaluate}){
+export async function proveInoxSiteRole({directory,inspect,form,scope,evaluate,nativeKeys=false}){
  const role='facebook.comment-composer',selector='#inox-site-fixture';
  try{
   await evaluate(`(() => {
@@ -91,6 +91,11 @@ export async function proveInoxSiteRole({directory,inspect,form,scope,evaluate})
   const proof=await proveInoxReplacement({directory,inspect,form,scope,readValue,expectedIndex,
    semanticRole:role,expectedKind:'contenteditable',text:'Corte — brouillon'});
   assert.equal(await evaluate('document.querySelector("#inox-site-other").innerText'),'untouched reply');
+  if(nativeKeys)await evaluate(`(() => {
+   const el=document.querySelector('#inox-site-fixture');
+   window.__fixtureKeys=[];
+   el.addEventListener('keydown',e=>window.__fixtureKeys.push({key:e.key,shift:e.shiftKey,ctrl:e.ctrlKey,trusted:e.isTrusted}));
+  })()`);
   const multiline='Premier paragraphe — été\n\nSecond paragraphe';
   const multilinePlan=await prepareFormAssistRequest({...scope,inspect:args=>inspect.execute(args),operation:'replace-all',
    selection:'unique',semantic_role:role,text:multiline,request_id:'fixture-facebook-paragraphs'});
@@ -98,6 +103,14 @@ export async function proveInoxSiteRole({directory,inspect,form,scope,evaluate})
   assert.equal(multilineReceipt.ok,true);assert.equal(multilineReceipt.submitted,false);
   const normalized=s=>s.replace(/\n{2,}/g,'\n\n').replace(/\n+$/,'');
   assert.equal(normalized(await readValue()),multiline);
+  if(nativeKeys){
+   const keys=await evaluate('window.__fixtureKeys');
+   assert.equal(keys.filter(k=>k.key==='Enter'&&k.shift&&k.trusted).length,2);
+   assert.equal(keys.filter(k=>k.key==='Enter'&&!k.shift).length,0);
+   assert.ok(keys.some(k=>k.key.toLowerCase()==='a'&&k.ctrl&&k.trusted));
+   assert.ok(keys.some(k=>k.key==='Backspace'&&k.trusted));
+  }
+
   assert.equal(await evaluate('document.querySelector("#inox-site-other").innerText'),'untouched reply');
 
   const planner=await createInoxComparisonPlanner(directory);
@@ -108,7 +121,7 @@ export async function proveInoxSiteRole({directory,inspect,form,scope,evaluate})
   await assert.rejects(()=>form.execute(pending.input.arguments),e=>e.code==='BROWSER_ELEMENT_TARGET_STALE');
   assert.equal(normalized(await readValue()),multiline);
   await assert.rejects(()=>prepareFormAssistRequest(input),/field_not_found/);
-  return {...proof,site_role:role,paragraphs_verified:true,role_changed_rejected:true,unrelated_editor_unchanged:true,labels_not_returned:true};
+  return {...proof,site_role:role,paragraphs_verified:true,...(nativeKeys?{trusted_key_events:true}:{}),role_changed_rejected:true,unrelated_editor_unchanged:true,labels_not_returned:true};
  }finally{await evaluate('document.querySelector("#inox-site-parent")?.remove()')}
 }
 

@@ -319,3 +319,30 @@ paragraph-losing insertText, and disposable Chromium and Firefox
 full fixtures pass with independent multiline readback. The real
 Facebook editor remains the next acceptance test; the local browser
 fixtures do not implement Facebook's controlled-editor internals.
+
+### Native keyboard materialization, observed on Facebook (2026-11-27)
+
+The explicit DOM delete/insertParagraph repair did not clear the real
+controlled editor. The Principal manually cleared it; insertion then
+produced all the new text but still no paragraph separators. The
+Principal positioned the caret and pressed Shift+Enter twice. An
+independent readback confirmed two LF characters exactly at that
+boundary. Keep this empirical site knowledge separate from semantics.
+
+For the recognized top-document Facebook editor on hosted Chromium,
+reuse the existing tab-proof CDP transport inside the same admitted
+form.fill operation and tab lease. No extension change, new public
+keyboard capability, or new authority. The Core emits fixed Ctrl+A,
+Backspace, Shift+Enter and text-insertion operations only. Recheck the
+same document epoch, UID, role, focus and selection containment before
+editing. Verify selection coverage before deleting and emptiness before
+insertion. Never send an unmodified Enter. Stop on failed checks, and
+verify exact internal paragraph boundaries on readback. No retry.
+
+Disposable Chromium verifies actual trusted key events, including
+two Shift+Enter events, zero unmodified Enter events, native select-all
+and Backspace, independent multiline readback and stale-role refusal.
+43 focused tests including the parallel OAuth pilot pass; full Firefox
+fixture also passes on its unchanged DOM route. Native rich-text
+materialization is currently Chromium-only; do not claim Firefox
+native parity. The next acceptance test is the open real draft.
