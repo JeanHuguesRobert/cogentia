@@ -86,13 +86,14 @@ export function createCanonicalStandingMissionResolver({
   store, verifyIssuer, mandate_ref=STANDING_MANDATE_REF,
   budget_id=STANDING_BUDGET_ID,
   transport_mandate_label=STANDING_TRANSPORT_LABEL,
-  now=()=>new Date(),
+  now=()=>new Date(), resolvePacketContext=null,
 }={}) {
   if (store?.kind!=="sqlite" || typeof store.listTopic!=="function" ||
       typeof store.append!=="function" ||
       typeof verifyIssuer!=="function" ||
       mandate_ref!==STANDING_MANDATE_REF ||
-      budget_id!==STANDING_BUDGET_ID)
+      budget_id!==STANDING_BUDGET_ID ||
+      (resolvePacketContext!==null && typeof resolvePacketContext!=="function"))
     throw new TypeError("canonical_standing_authority_configuration_required");
   return async function standingMission(request={}) {
     const auth=request.caller_auth;
@@ -114,9 +115,55 @@ export function createCanonicalStandingMissionResolver({
     if (!mandate || !activeStandingOperation(mandate.scope,request))
       return denied("standing_operation_outside_signed_scope");
 
-    const ledger=createEventSourcedExecutionBudgetLedger({
+    // Direct calls retain their root budget. A packet-bound call must use
+    // its real primary store and an existing active parent allocation.
+    // A failed packet resolution never falls back to root.
+    const parentLedger=createEventSourcedExecutionBudgetLedger({
       store,budget_id,require_authority_grant:true,
     });
+    let ledger=parentLedger,local=null;
+    function resolveLocal(){
+      try{
+        const c=resolvePacketContext?.({packet_ref:request.packet_ref,
+          actor_ref:auth.actor,principal_ref:auth.principal_ref,
+          mandate_ref,mandate_version:mandate.version});
+        if(!c || c.budget_id===budget_id || c.budget_id!=="budget:"+request.packet_ref ||
+           typeof c.primary_store_id!=="string" || !c.primary_store_id ||
+           typeof c.store?.auditTopicCommitment!=="function")return null;
+        const topic="packet:"+request.packet_ref;
+        const created=c.store.listTopic(topic)[0]?.payload?.packet;
+        const primary=created?.placements?.filter(p=>p.is_primary===true);
+        if(created?.packet_id!==request.packet_ref || primary?.length!==1 ||
+           primary[0].store_id!==c.primary_store_id ||
+           c.store.auditTopicCommitment(topic)?.ok!==true ||
+           c.store.auditTopicCommitment("execution-budget:"+c.budget_id)?.ok!==true)return null;
+        const l=createEventSourcedExecutionBudgetLedger({store:c.store,budget_id:c.budget_id,require_authority_grant:true});
+        const b=l.snapshot();
+        const events=store.listTopic("execution-budget:"+budget_id);
+        const a=events.find(e=>e.event_type==="ExecutionBudgetReservation"&&
+          e.payload?.reservation?.reservation_id===c.allocation_ref)?.payload?.reservation;
+        if(!b.has_grant||b.mandate_ref!==mandate_ref||
+           Object.keys(b.limits||{}).length!==1||!Number.isSafeInteger(b.limits.max_steps)||
+           !a?.idempotency_key?.startsWith("delegate:"+c.budget_id+":")||
+           a.demand?.max_steps!==b.limits.max_steps||
+           events.some(e=>["ExecutionBudgetSettlement","ExecutionBudgetRelease"].includes(e.event_type)&&
+             e.payload?.reservation_id===c.allocation_ref)||
+           c.store.listTopic("execution-budget:"+c.budget_id).some(e=>e.event_type==="ExecutionBudgetSeal"))
+          return null;
+        return {context:c,ledger:l};
+      }catch{return null}
+    }
+    if(request.packet_ref!=null){
+      if(typeof request.packet_ref!=="string"||!request.packet_ref||request.packet_ref.length>255)
+        return denied("standing_packet_context_unverified");
+      local=resolveLocal();
+      if(!local)return denied("standing_packet_context_unverified");
+      ledger=local.ledger;
+    }
+    const accountingContext={budget_id:local?.context.budget_id??budget_id,
+      accounting_locality:local?"packet":"principal",
+      packet_ref:local?request.packet_ref:null,
+      ...(local?{primary_store_id:local.context.primary_store_id,allocation_ref:local.context.allocation_ref}:{})};
     const preflight=assessJohnCopAuthority({
       store,auth,mandate_ref,version_pin:mandate.version,
       transport_mandate_label,capability:request.capability,
@@ -158,6 +205,7 @@ export function createCanonicalStandingMissionResolver({
       allowed_execution_modes:["normal"],
       issuer_ref:mandate_ref,mandate_version:mandate.version,
       expires_at:mandate.valid_until,
+      ...accountingContext,
       async beforeDispatch() {
         // A previous reservation is NOT authority to execute after the
         // Principal revokes or amends the standing mandate. Revalidate
@@ -166,6 +214,12 @@ export function createCanonicalStandingMissionResolver({
         const current=resolveMandate(store,mandate_ref);
         if (current?.version!==mandate.version ||
             !activeStandingOperation(current.scope,request)) return false;
+        if(local){
+          const currentLocal=resolveLocal();
+          if(!currentLocal||currentLocal.context.store!==local.context.store||
+             currentLocal.context.primary_store_id!==local.context.primary_store_id||
+             currentLocal.context.allocation_ref!==local.context.allocation_ref)return false;
+        }
         const fresh=assessJohnCopAuthority({
           store,auth,mandate_ref,version_pin:mandate.version,
           transport_mandate_label,capability:request.capability,
@@ -181,11 +235,16 @@ export function createCanonicalStandingMissionResolver({
         const outcome=updateBudget(ledger,method,reservationId,
           attempted ? {outcome:ok ? "success" : "failed_or_uncertain",
             payload_hash:request.payload_hash,
-            ...(receipt?.status ? {status:receipt.status} : {})} : null);
+            ...accountingContext,
+            ...(receipt?.status ? {status:receipt.status} : {}),
+            ...(/^hct_[0-9a-f-]{36}$/.test(receipt?.trace_id||"")?{trace_id:receipt.trace_id}:{}),
+            ...(/^sha256:[a-f0-9]{64}$/.test(receipt?.receipt_hash||"")?{provider_receipt_hash:receipt.receipt_hash,
+              output_truncated:receipt.output_truncated===true}:{})} : null);
         finished=true;
         return {ok:outcome.ok,canonical_cop:true,
           budget_action:method,reservation_id:reservationId,
           mandate_ref,mandate_version:mandate.version,
+          ...accountingContext,
           accounting_complete:outcome.ok===true};
       },
     };

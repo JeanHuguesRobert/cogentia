@@ -241,6 +241,7 @@ export function createHostCapabilityRouter(options = {}) {
     let providerAttempted = false;
     let missionFinalized = false;
     let canonicalSettlement = null;
+    let providerReceipt = null;
 
     const traceBase = {
       protocol: "cogentia.host_capability_trace/v1",
@@ -390,6 +391,8 @@ export function createHostCapabilityRouter(options = {}) {
             // the lock-enabled router copy, whose spread loses its WeakSet brand.
             caller_auth: ctx.trustedCallerAuth || null,
             command: argsIn.command || null,
+            // Internal handler context only; never take a packet ID from tool args.
+            packet_ref: ctx.packet_ref ?? null,
           });
           if (!missionAuthority) {
             const err = new Error("authorization_missing: no verified mission or effect grant");
@@ -438,10 +441,19 @@ export function createHostCapabilityRouter(options = {}) {
         { capability, args, _providerInstance: providerInstance },
         { auth: ctx.auth, provider: providerName }
       );
+      // Bind what the provider actually returned, without copying its
+      // potentially confidential output into accounting. This is transport
+      // evidence, not proof that arbitrary stdout is an authoritative receipt.
+      providerReceipt = {
+        trace_id: traceId,
+        receipt_hash: canonicalPayloadHash(result ?? null),
+        status: result?.ok === true ? "success" : "failed",
+        output_truncated: result?.output_truncated === true,
+      };
       if (missionAuthority?.finalize) {
         canonicalSettlement = await missionAuthority.finalize({
           attempted: true, ok: result?.ok === true,
-          receipt: {status: result?.ok === true ? "success" : "failed"},
+          receipt: providerReceipt,
         });
         missionFinalized = true;
         if (canonicalSettlement?.ok !== true) {
@@ -518,6 +530,7 @@ export function createHostCapabilityRouter(options = {}) {
         observed_os: result.identity?.os || null,
         exit_code: result.exit_code ?? null,
         authorization_id: ctx.authorization?.authorization_id || missionAuthority?.authority_id || null,
+        provider_receipt: providerReceipt,
         authority_origin: missionAuthority ? "verified_mission" : "effect_grant",
         verification: effectVerification
           ? {
@@ -536,7 +549,7 @@ export function createHostCapabilityRouter(options = {}) {
         try {
           const settled = await missionAuthority.finalize({
             attempted: providerAttempted, ok:false,
-            receipt:{status: providerAttempted ? "failed_or_uncertain" : "not_dispatched"},
+            receipt:providerReceipt || {trace_id:traceId,status: providerAttempted ? "failed_or_uncertain" : "not_dispatched"},
           });
           missionFinalized=settled?.ok===true;
           if (!missionFinalized) err.canonical_accounting_error="standing_finalize_unconfirmed";
@@ -549,6 +562,7 @@ export function createHostCapabilityRouter(options = {}) {
         error_class: err.error_class || "host_capability_error",
         error: err.message,
         authorization_id: ctx.authorization?.authorization_id || missionAuthority?.authority_id || null,
+        provider_receipt: providerReceipt,
         verification: { ok: false, accounting_complete: missionFinalized,
           ...(err.canonical_accounting_error ? {accounting_error:err.canonical_accounting_error} : {}) },
       });

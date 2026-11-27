@@ -16,6 +16,8 @@ import {createCanonicalStandingMissionResolver,STANDING_DIAGNOSTIC_PROFILE,
   STANDING_GENERAL_HOST_PROFILE,STANDING_MANDATE_REF,STANDING_BUDGET_ID}
   from "./john-standing-mission-authority.js";
 import {resolveHostMissionAuthority} from "./host-mission-authority.js";
+import {reserveEventSourcedDelegatedBudget} from "../../../inseme/packages/cop-core/src/delegated-budget.js";
+import {canonicalPayloadHash} from "./side-effect-authorization.js";
 
 const AT=new Date("2026-11-15T12:00:00Z");
 const REF=STANDING_MANDATE_REF;
@@ -42,7 +44,7 @@ const request=(caller=auth(),extra={})=>({
   caller_auth:caller,...extra,
 });
 function fixture({actions=true,standing=true,general=false,steps=8,issuerValid=true,
-  until="2027-01-01T00:00:00Z"}={}){
+  until="2027-01-01T00:00:00Z",resolvePacketContext=null}={}){
   const store=createSqliteCopEventStore(":memory:");
   const proposal={kind:ROOT_MANDATE_KIND,mandate_id:REF,version:"v1",
     principal_ref:"principal:jhn",logical_agent_ref:"agent:jhn",
@@ -61,7 +63,7 @@ function fixture({actions=true,standing=true,general=false,steps=8,issuerValid=t
   const verifyIssuer=issuerValid
     ?createOfflineJohnIssuerVerifier({trustedPublicKeyPem:pem,now:()=>AT})
     :()=>({verified:false});
-  const resolver=createCanonicalStandingMissionResolver({store,verifyIssuer,now:()=>AT});
+  const resolver=createCanonicalStandingMissionResolver({store,verifyIssuer,now:()=>AT,resolvePacketContext});
   return {store,resolver,ledger:()=>createEventSourcedExecutionBudgetLedger({
     store,budget_id:STANDING_BUDGET_ID,require_authority_grant:true})};
 }
@@ -257,4 +259,70 @@ test("v4 diagnostics-only profile remains unable to run general shell code",asyn
     }
     assert.equal(f.ledger().snapshot().reserved.max_steps,0);
   }finally{f.store.close();}
+});
+
+test("provider response is hash-bound to durable accounting, without copying its contents",async()=>{
+  const {createHostCapabilityRouter}=await import("./host-capability-router.js");
+  const f=fixture({general:true});
+  const response={ok:true,upstream_tool:"fixture",stdout:'{"request_id":"fixture-ticket","state":"verified"}',
+    stderr:"fixture-private-output",exit_code:0,output_truncated:false};
+  const router=createHostCapabilityRouter({cacheKey:"standing-receipt-fbf",providerName:"unix-process",
+    missionAuthorityResolver:f.resolver,providerFactory:async()=>({start:async()=>{},invoke:async()=>response})});
+  const caller=auth(),ctx={actor:caller.actor,principal:caller.principal_ref,mandate:caller.mandate_ref,
+    trustedCallerAuth:caller,auth:{lockers:{private:{write:true}}},target:"node:fracta2",provider:"unix-process"};
+  try{
+    const result=await router.invoke("host.process.run",{command:"hostname"},ctx);
+    const settlement=f.store.listTopic("execution-budget:"+STANDING_BUDGET_ID).find(e=>e.event_type==="ExecutionBudgetSettlement");
+    assert.equal(settlement.payload.evidence.trace_id,result.trace.trace_id);
+    assert.equal(settlement.payload.evidence.provider_receipt_hash,canonicalPayloadHash(response));
+    assert.equal(result.trace.provider_receipt.receipt_hash,settlement.payload.evidence.provider_receipt_hash);
+    assert.equal(settlement.payload.evidence.accounting_locality,"principal");
+    assert.equal(settlement.payload.evidence.packet_ref,null);
+    assert.equal(result.trace.verification.cop_spend.accounting_locality,"principal");
+    assert.ok(!JSON.stringify(settlement).includes("fixture-private-output"));
+    assert.ok(!JSON.stringify(settlement).includes("fixture-ticket"));
+  }finally{await router.stop();f.store.close()}
+});
+test("trusted packet allocation uses its own budget, and parent receives only the summary",async()=>{
+  const {createHostCapabilityRouter}=await import("./host-capability-router.js");
+  const packet="pkt-standing-local",primary="sqlite:fixture-local",budget="budget:"+packet;
+  const local=createSqliteCopEventStore(":memory:");
+  let context=null,invoked=0;
+  const f=fixture({general:true,steps:2,resolvePacketContext:q=>q.packet_ref===packet&&q.actor_ref==="agent:jhn"?context:null});
+  const router=createHostCapabilityRouter({cacheKey:"standing-packet-fbf",providerName:"unix-process",
+    missionAuthorityResolver:f.resolver,providerFactory:async()=>({start:async()=>{},invoke:async()=>{invoked++;return {ok:true,stdout:"fixture"}}})});
+  try{
+    assert.equal(local.append({topic:{id:"packet:"+packet,seq:1},payload:{packet:{
+      packet_id:packet,placements:[{store_id:primary,is_primary:true}]}}}).ok,true);
+    const allocation=reserveEventSourcedDelegatedBudget({store:f.store,child_store:local,child_source_ref:primary+"#"+packet,
+      parent_ledger:f.ledger(),child_budget_id:budget,child_mandate_ref:REF,principal_ref:"principal:jhn",
+      allocation:{max_steps:2},idempotency_key:packet});
+    assert.equal(allocation.ok,true,JSON.stringify(allocation));
+    context={store:local,primary_store_id:primary,budget_id:budget,allocation_ref:allocation.reservation.reservation_id};
+    const rootBefore=f.store.replay();
+    const caller=auth(),ctx={actor:caller.actor,principal:caller.principal_ref,mandate:caller.mandate_ref,
+      trustedCallerAuth:caller,auth:{lockers:{private:{write:true}}},target:"node:fracta2",provider:"unix-process",packet_ref:packet};
+    const result=await router.invoke("host.process.run",{command:"hostname"},ctx);
+    assert.equal(invoked,1);
+    assert.equal(result.trace.verification.cop_spend.accounting_locality,"packet");
+    assert.equal(result.trace.verification.cop_spend.packet_ref,packet);
+    assert.equal(result.trace.verification.cop_spend.budget_id,budget);
+    const settlement=local.listTopic("execution-budget:"+budget).find(e=>e.event_type==="ExecutionBudgetSettlement");
+    assert.equal(settlement.payload.evidence.provider_receipt_hash,result.trace.provider_receipt.receipt_hash);
+    assert.equal(allocation.child_ledger.snapshot().settled.max_steps,1);
+    assert.deepEqual(f.store.replay(),rootBefore);
+    for(const invalid of [{...ctx,packet_ref:"pkt-unknown"},{...ctx,packet_ref:packet}]){
+      const saved=context;
+      if(invalid.packet_ref===packet)context={...context,allocation_ref:"fake-allocation"};
+      await assert.rejects(()=>router.invoke("host.process.run",{command:"hostname"},invalid),e=>e.error_class==="authorization_missing");
+      context=saved;
+    }
+    assert.equal(invoked,1);
+    assert.deepEqual(f.store.replay(),rootBefore);
+    const closed=allocation.close();
+    assert.equal(closed.ok,true,JSON.stringify(closed));
+    assert.equal(f.ledger().snapshot().settled.max_steps,1);
+    await assert.rejects(()=>router.invoke("host.process.run",{command:"hostname"},ctx),e=>e.error_class==="authorization_missing");
+    assert.equal(invoked,1);
+  }finally{await router.stop();local.close();f.store.close()}
 });
