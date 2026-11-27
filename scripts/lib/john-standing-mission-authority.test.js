@@ -5,6 +5,12 @@ import {createSqliteCopEventStore} from
   "../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js";
 import {createEventSourcedExecutionBudgetLedger} from
   "../../../inseme/packages/cop-core/src/execution-budget.js";
+import {assignPacketWork} from "../../../inseme/packages/cop-core/src/packet-work-assignment.js";
+import {createCopMcpTasksPilot,packetRefForMcpTask} from "./mcp-tasks-cop-pilot.mjs";
+import {buildWorkCommissioningContract} from "./work-commissioning-contract.js";
+import {hashPayload} from "../../../inseme/packages/cop-core/src/cop-event-envelope.js";
+import {hostname} from "node:os";
+import {UnixProcessProvider} from "./unix-process-provider.js";
 import {recordMandateControl} from
   "../../../inseme/packages/cop-core/src/governed-act.js";
 import {issueVerifiedJohnRoot} from "./john-root-issuance.js";
@@ -283,46 +289,92 @@ test("provider response is hash-bound to durable accounting, without copying its
     assert.ok(!JSON.stringify(settlement).includes("fixture-ticket"));
   }finally{await router.stop();f.store.close()}
 });
-test("trusted packet allocation uses its own budget, and parent receives only the summary",async()=>{
+test("commissioned COP Task executes real Unix process under its local allocation, returns only summary",async()=>{
   const {createHostCapabilityRouter}=await import("./host-capability-router.js");
-  const packet="pkt-standing-local",primary="sqlite:fixture-local",budget="budget:"+packet;
+  const primary="sqlite:fixture-local";
   const local=createSqliteCopEventStore(":memory:");
-  let context=null,invoked=0;
-  const f=fixture({general:true,steps:2,resolvePacketContext:q=>q.packet_ref===packet&&q.actor_ref==="agent:jhn"?context:null});
-  const router=createHostCapabilityRouter({cacheKey:"standing-packet-fbf",providerName:"unix-process",
-    missionAuthorityResolver:f.resolver,providerFactory:async()=>({start:async()=>{},invoke:async()=>{invoked++;return {ok:true,stdout:"fixture"}}})});
+  let packet=null,context=null,allocation=null,rootBefore=null;
+  const f=fixture({general:true,steps:2,resolvePacketContext:q=>
+    q.packet_ref===packet&&q.actor_ref==="agent:jhn"?context:null});
+  const router=createHostCapabilityRouter({cacheKey:"standing-packet-real",providerName:"unix-process",
+    missionAuthorityResolver:f.resolver,
+    // On Fracta2 exercise the built-in provider and target check. Elsewhere
+    // this fixture binds the signed fixture target to a real local provider.
+    ...(hostname().toLowerCase()!=="fracta2"?{providerFactory:async()=>new UnixProcessProvider()}: {})});
+  const caller=auth(),ctx={actor:caller.actor,principal:caller.principal_ref,mandate:caller.mandate_ref,
+    trustedCallerAuth:caller,auth:{lockers:{private:{write:true}}},target:"node:fracta2",provider:"unix-process"};
+  const args={command:"hostname"};
+  const toolName="fixture-host-process";
+  const built=buildWorkCommissioningContract({intent:{
+    submission_key:"standing-packet-fixture",request_hash:hashPayload(args),
+    principal_ref:caller.principal_ref,responsible_agent_ref:caller.actor,
+    capability:"host.process.run",mandate_ref:REF,mandate_version:"v1",
+    parent_budget_ref:STANDING_BUDGET_ID,allocation:{max_steps:2}
+  },context:{verified:true,principal_ref:caller.principal_ref,
+    request_hash:hashPayload(args),requesting_agent_ref:caller.actor,
+    commissioned_by_principal_ref:caller.principal_ref,
+    commissioning_ref:"fixture:commissioned-host-process",destination_ref:"fixture:local",
+    recipient_ref:caller.principal_ref,result_visibility:"restricted"}});
+  assert.equal(built.ok,true,JSON.stringify(built));
+  const pilot=createCopMcpTasksPilot({store:local,toolName,primaryStoreId:primary,
+    prepareCreation:()=>({admitted:true,submission_key:"standing-packet-fixture",
+      assignment:built.assignment,access_context:built.contract}),
+    async handler(input,{taskId,auth:actualCaller}){
+      assert.equal(actualCaller,caller);
+      packet=packetRefForMcpTask(taskId);
+      const budget="budget:"+packet;
+      allocation=reserveEventSourcedDelegatedBudget({store:f.store,child_store:local,
+        child_source_ref:primary+"#"+packet,parent_ledger:f.ledger(),
+        child_budget_id:budget,child_mandate_ref:REF,principal_ref:caller.principal_ref,
+        allocation:built.contract.funding.allocation,idempotency_key:packet});
+      assert.equal(allocation.ok,true,JSON.stringify(allocation));
+      context={store:local,primary_store_id:primary,budget_id:budget,allocation_ref:allocation.reservation.reservation_id};
+      rootBefore=f.store.replay();
+      const result=await router.invoke("host.process.run",input,{...ctx,packet_ref:packet});
+      assert.equal(result.ok,true,JSON.stringify(result));
+      assert.equal(result.stdout.trim(),hostname());
+      assert.equal(result.identity.hostname,hostname());
+      assert.equal(result.trace.verification.cop_spend.accounting_locality,"packet");
+      assert.equal(result.trace.verification.cop_spend.packet_ref,packet);
+      assert.equal(result.trace.verification.cop_spend.budget_id,budget);
+      const settlement=local.listTopic("execution-budget:"+budget).find(e=>e.event_type==="ExecutionBudgetSettlement");
+      assert.equal(settlement.payload.evidence.provider_receipt_hash,result.trace.provider_receipt.receipt_hash);
+      assert.ok(settlement.payload.evidence.assignment_ref);
+      assert.equal(allocation.child_ledger.snapshot().settled.max_steps,1);
+      assert.deepEqual(f.store.replay(),rootBefore);
+      await assert.rejects(()=>router.invoke("host.process.run",input,{...ctx,packet_ref:"pkt-unknown"}),
+        e=>e.error_class==="authorization_missing");
+      const originalContext=context;
+      context={...context,allocation_ref:"fixture:wrong-allocation"};
+      await assert.rejects(()=>router.invoke("host.process.run",input,{...ctx,packet_ref:packet}),
+        e=>e.error_class==="authorization_missing");
+      context=originalContext;
+      // A changed assignment between admission and dispatch invalidates
+      // the prepared work, without moving the spend to the root budget.
+      const g=await f.resolver(request(caller,{packet_ref:packet}));
+      assert.equal(g.allowed,true,JSON.stringify(g));
+      assert.equal(assignPacketWork(local,{packet_ref:"packet:"+packet,
+        responsible_agent_ref:"agent:fixture-other",commissioned_by_principal_ref:caller.principal_ref,
+        assignment_id:"fixture-transfer",expected_revision:1,source_ref:"fixture:transfer"}).ok,true);
+      assert.equal(await g.beforeDispatch(),false);
+      assert.equal((await g.finalize({attempted:false})).budget_action,"release");
+      await assert.rejects(()=>router.invoke("host.process.run",input,{...ctx,packet_ref:packet}),
+        e=>e.error_class==="authorization_missing");
+      assert.deepEqual(f.store.replay(),rootBefore);
+      assert.equal(allocation.close().ok,true);
+      return {hostname:result.stdout.trim(),trace_id:result.trace.trace_id};
+    }});
   try{
-    assert.equal(local.append({topic:{id:"packet:"+packet,seq:1},payload:{packet:{
-      packet_id:packet,placements:[{store_id:primary,is_primary:true}]}}}).ok,true);
-    const allocation=reserveEventSourcedDelegatedBudget({store:f.store,child_store:local,child_source_ref:primary+"#"+packet,
-      parent_ledger:f.ledger(),child_budget_id:budget,child_mandate_ref:REF,principal_ref:"principal:jhn",
-      allocation:{max_steps:2},idempotency_key:packet});
-    assert.equal(allocation.ok,true,JSON.stringify(allocation));
-    context={store:local,primary_store_id:primary,budget_id:budget,allocation_ref:allocation.reservation.reservation_id};
-    const rootBefore=f.store.replay();
-    const caller=auth(),ctx={actor:caller.actor,principal:caller.principal_ref,mandate:caller.mandate_ref,
-      trustedCallerAuth:caller,auth:{lockers:{private:{write:true}}},target:"node:fracta2",provider:"unix-process",packet_ref:packet};
-    const result=await router.invoke("host.process.run",{command:"hostname"},ctx);
-    assert.equal(invoked,1);
-    assert.equal(result.trace.verification.cop_spend.accounting_locality,"packet");
-    assert.equal(result.trace.verification.cop_spend.packet_ref,packet);
-    assert.equal(result.trace.verification.cop_spend.budget_id,budget);
-    const settlement=local.listTopic("execution-budget:"+budget).find(e=>e.event_type==="ExecutionBudgetSettlement");
-    assert.equal(settlement.payload.evidence.provider_receipt_hash,result.trace.provider_receipt.receipt_hash);
-    assert.equal(allocation.child_ledger.snapshot().settled.max_steps,1);
-    assert.deepEqual(f.store.replay(),rootBefore);
-    for(const invalid of [{...ctx,packet_ref:"pkt-unknown"},{...ctx,packet_ref:packet}]){
-      const saved=context;
-      if(invalid.packet_ref===packet)context={...context,allocation_ref:"fake-allocation"};
-      await assert.rejects(()=>router.invoke("host.process.run",{command:"hostname"},invalid),e=>e.error_class==="authorization_missing");
-      context=saved;
-    }
-    assert.equal(invoked,1);
-    assert.deepEqual(f.store.replay(),rootBefore);
-    const closed=allocation.close();
-    assert.equal(closed.ok,true,JSON.stringify(closed));
+    const {taskId}=await pilot.adapter.create({name:toolName,args,auth:caller});
+    const done=await pilot.run(taskId,caller);
+    assert.equal(done.status,"completed",JSON.stringify(done));
+    assert.equal(done.result.hostname,hostname());
     assert.equal(f.ledger().snapshot().settled.max_steps,1);
-    await assert.rejects(()=>router.invoke("host.process.run",{command:"hostname"},ctx),e=>e.error_class==="authorization_missing");
-    assert.equal(invoked,1);
+    assert.equal(f.ledger().snapshot().reserved.max_steps,0);
+    assert.equal(local.auditTopicCommitment("execution-budget:budget:"+packet).ok,true);
+    await assert.rejects(()=>router.invoke("host.process.run",args,{...ctx,packet_ref:packet}),
+      e=>e.error_class==="authorization_missing");
+    console.log("COMMISSIONED_PACKET_REAL_UNIX_PASS",JSON.stringify({hostname:done.result.hostname,
+      packet_local_steps:1,parent_summary_steps:1,assignment_transfer_rechecked:true}));
   }finally{await router.stop();local.close();f.store.close()}
 });

@@ -15,6 +15,7 @@ import { randomUUID } from "node:crypto";
 import { createEventSourcedExecutionBudgetLedger } from
   "../../../inseme/packages/cop-core/src/execution-budget.js";
 import { resolveMandate } from "../../../inseme/packages/cop-core/src/governed-act.js";
+import { projectPacketWorkAssignment } from "../../../inseme/packages/cop-core/src/packet-work-assignment.js";
 import { assessJohnCopAuthority } from "./john-cop-authority-preflight.js";
 import { isResolvedCallerAuth } from "./cogentia-mcp-auth.js";
 
@@ -131,12 +132,30 @@ export function createCanonicalStandingMissionResolver({
            typeof c.primary_store_id!=="string" || !c.primary_store_id ||
            typeof c.store?.auditTopicCommitment!=="function")return null;
         const topic="packet:"+request.packet_ref;
-        const created=c.store.listTopic(topic)[0]?.payload?.packet;
+        const history=c.store.listTopic(topic);
+        const creation=history[0]?.payload;
+        const created=creation?.packet;
+        const work=creation?.access_context;
+        const assignment=projectPacketWorkAssignment(c.store,{packet_ref:topic});
+        const taskPhase=history.findLast(e=>e.payload?.profile==="cogentia.mcp-tasks-cop-pilot/v1"&&
+          ["claimed","input_required","input_received","cancel_requested","completed","failed","cancelled",
+           "reconciliation_required"].includes(e.payload.phase))?.payload.phase;
         const primary=created?.placements?.filter(p=>p.is_primary===true);
         if(created?.packet_id!==request.packet_ref || primary?.length!==1 ||
            primary[0].store_id!==c.primary_store_id ||
            c.store.auditTopicCommitment(topic)?.ok!==true ||
            c.store.auditTopicCommitment("execution-budget:"+c.budget_id)?.ok!==true)return null;
+        // The canonical commissioning and responsibility, not the handler
+        // name or the transport's owner string, identify this work.
+        if(work?.schema!=="cogentia.work-commissioning/v1"||
+           work.principal_ref!==auth.principal_ref||
+           work.authority?.mandate_ref!==mandate_ref||
+           work.authority?.version!==mandate.version||
+           work.authority?.capability!==request.capability||
+           work.funding?.parent_budget_ref!==budget_id||
+           assignment.ok!==true||assignment.status!=="assigned"||
+           assignment.responsible_agent_ref!==auth.actor||
+           taskPhase!=="claimed")return null;
         const l=createEventSourcedExecutionBudgetLedger({store:c.store,budget_id:c.budget_id,require_authority_grant:true});
         const b=l.snapshot();
         const events=store.listTopic("execution-budget:"+budget_id);
@@ -144,13 +163,15 @@ export function createCanonicalStandingMissionResolver({
           e.payload?.reservation?.reservation_id===c.allocation_ref)?.payload?.reservation;
         if(!b.has_grant||b.mandate_ref!==mandate_ref||
            Object.keys(b.limits||{}).length!==1||!Number.isSafeInteger(b.limits.max_steps)||
-           !a?.idempotency_key?.startsWith("delegate:"+c.budget_id+":")||
+           a?.idempotency_key!=="delegate:"+c.budget_id+":"+request.packet_ref||
            a.demand?.max_steps!==b.limits.max_steps||
+           work.funding?.allocation?.max_steps!==b.limits.max_steps||
            events.some(e=>["ExecutionBudgetSettlement","ExecutionBudgetRelease"].includes(e.event_type)&&
              e.payload?.reservation_id===c.allocation_ref)||
            c.store.listTopic("execution-budget:"+c.budget_id).some(e=>e.event_type==="ExecutionBudgetSeal"))
           return null;
-        return {context:c,ledger:l};
+        return {context:c,ledger:l,assignment_revision:assignment.revision,
+          assignment_ref:assignment.receipt_ref};
       }catch{return null}
     }
     if(request.packet_ref!=null){
@@ -163,7 +184,8 @@ export function createCanonicalStandingMissionResolver({
     const accountingContext={budget_id:local?.context.budget_id??budget_id,
       accounting_locality:local?"packet":"principal",
       packet_ref:local?request.packet_ref:null,
-      ...(local?{primary_store_id:local.context.primary_store_id,allocation_ref:local.context.allocation_ref}:{})};
+      ...(local?{primary_store_id:local.context.primary_store_id,allocation_ref:local.context.allocation_ref,
+        assignment_ref:local.assignment_ref}:{})};
     const preflight=assessJohnCopAuthority({
       store,auth,mandate_ref,version_pin:mandate.version,
       transport_mandate_label,capability:request.capability,
@@ -218,7 +240,9 @@ export function createCanonicalStandingMissionResolver({
           const currentLocal=resolveLocal();
           if(!currentLocal||currentLocal.context.store!==local.context.store||
              currentLocal.context.primary_store_id!==local.context.primary_store_id||
-             currentLocal.context.allocation_ref!==local.context.allocation_ref)return false;
+             currentLocal.context.allocation_ref!==local.context.allocation_ref||
+             currentLocal.assignment_revision!==local.assignment_revision||
+             currentLocal.assignment_ref!==local.assignment_ref)return false;
         }
         const fresh=assessJohnCopAuthority({
           store,auth,mandate_ref,version_pin:mandate.version,
