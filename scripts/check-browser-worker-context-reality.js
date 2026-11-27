@@ -21,7 +21,8 @@ if(process.argv.length>3||(process.argv[2]&&!['--firefox','--chromium'].includes
  throw Error('usage: check-browser-worker-context-reality.js [--firefox|--chromium]');
 const dir=await mkdtemp(join(tmpdir(),'cogentia-worker-reality-'));
 const runtime=await readFile(new URL('./fixtures/browser-worker-probe.js',import.meta.url));
-const html=`<!doctype html><meta charset="utf-8"><title>Worker fixture</title>
+const stdlib=await readFile(new URL('../browser-stdlib/navigation.js',import.meta.url),'utf8');
+const html=`<!doctype html><meta charset="utf-8"><title>Worker fixture</title><input id="uid-target"><iframe srcdoc="&lt;input id=uid-target&gt;"></iframe>
 <script src="/worker.js"></script><script>
 const host={
  load:()=>JSON.parse(sessionStorage.getItem('worker')||'null'),
@@ -173,6 +174,48 @@ try{
   return result;
  }
  assert.deepEqual((await inventory()).map(t=>[t.id,t.url]),[[42,expectedUrl],[41,expectedUrl]]);
+ // UID registry tests use the actual standard library in both document
+ // realms, not a provider-supplied ID or a mock DOM.
+ const inject=tab=>evaluate(tab,stdlib);
+ const getUid=tab=>evaluate(tab,'__cogentiaNavigationAssistant.elementIdentity.elementUid(document.querySelector("#uid-target"))');
+ const resolves=(tab,uid)=>evaluate(tab,`!!__cogentiaNavigationAssistant.elementIdentity.resolveElementUid(${JSON.stringify(uid)})`);
+ await inject(tabs.get(41));await inject(tabs.get(42));
+ const uid=await getUid(tabs.get(41));
+ assert.equal(typeof uid,'string');
+ assert.equal(await getUid(tabs.get(41)),uid);
+ await inject(tabs.get(41));
+ assert.equal(await getUid(tabs.get(41)),uid,'reinjection preserves registry');
+ assert.notEqual(await getUid(tabs.get(42)),uid);
+ assert.equal(await resolves(tabs.get(42),uid),false);
+ const frameUid=await evaluate(tabs.get(41),`(() => {
+  const frame=document.querySelector('iframe').contentWindow;
+  frame.eval(${JSON.stringify(stdlib)});
+  const registry=frame.__cogentiaNavigationAssistant.elementIdentity;
+  if(registry.resolveElementUid(${JSON.stringify(uid)})!==null)throw Error('cross_frame_uid');
+  return registry.elementUid(frame.document.querySelector('#uid-target'));
+ })()`);
+ assert.notEqual(frameUid,uid);
+ assert.equal(await resolves(tabs.get(41),frameUid),false);
+ const replacementUid=await evaluate(tabs.get(41),`(() => {
+  const registry=__cogentiaNavigationAssistant.elementIdentity;
+  const node=registry.resolveElementUid(${JSON.stringify(uid)});
+  const replacement=node.cloneNode(true);
+  node.replaceWith(replacement);
+  if(registry.resolveElementUid(${JSON.stringify(uid)})!==null)throw Error('stale_uid_retargeted');
+  return registry.elementUid(replacement);
+ })()`);
+ assert.notEqual(replacementUid,uid);
+ assert.equal(await resolves(tabs.get(41),replacementUid),true);
+ const reinsertedUid=await evaluate(tabs.get(41),`(() => {
+  const registry=__cogentiaNavigationAssistant.elementIdentity;
+  const node=registry.resolveElementUid(${JSON.stringify(replacementUid)});
+  node.remove();
+  if(registry.resolveElementUid(${JSON.stringify(replacementUid)})!==null)throw Error('removed_uid_resolved');
+  document.body.append(node);
+  return registry.elementUid(node);
+ })()`);
+ assert.notEqual(reinsertedUid,replacementUid);
+ assert.equal(await resolves(tabs.get(41),replacementUid),false);
  const id=await evaluate(tabs.get(41),'worker.id');
  assert.notEqual(id,await evaluate(tabs.get(42),'worker.id'));
  gate=createNavigationGateway({instance:'worker-reality-fixture'});
@@ -215,13 +258,16 @@ try{
   try{restored=await evaluate(tabs.get(41),'!!globalThis.worker&&!globalThis.transientMarker');if(restored)break}catch{}
  }
  assert.equal(restored,true);
+ await inject(tabs.get(41));
+ assert.notEqual(await getUid(tabs.get(41)),reinsertedUid);
+ assert.equal(await resolves(tabs.get(41),reinsertedUid),false);
  assert.deepEqual(await invoke('snapshot'),waiting);
  assert.equal((await invoke('step',[{type:'resume',increment:5}])).lastResult.value,16);
  await invoke('assign',[{id:'task-2',program:'demo'}]);
  assert.equal((await invoke('step')).locals.started,2);
  assert.equal((await invoke('step',[{type:'resume',increment:2}])).lastResult.value,3);
  console.log(JSON.stringify({ok:true,browser:version,engine,actual_chromium:engine==='chromium',actual_firefox:engine==='firefox',actual_gateway:true,
-  extension:engine==='firefox'?'fixture_bidi_peer':'fixture_cdp_peer',actual_inventory:true,distinct_workers:true,rediscovery:true,checkpoint_reload:true,reused_worker:true,
+  extension:engine==='firefox'?'fixture_bidi_peer':'fixture_cdp_peer',actual_inventory:true,uid_registry:true,uid_reinjection:true,uid_replacement_rejected:true,uid_document_isolation:true,uid_reload_invalidated:true,distinct_workers:true,rediscovery:true,checkpoint_reload:true,reused_worker:true,
   sandbox_disabled:false,personal_browser_used:false}));
 }catch(e){
  console.error(JSON.stringify({ok:false,reason:e.message,engine,browser_exit:exitInfo||null,browser_stderr:stderr,

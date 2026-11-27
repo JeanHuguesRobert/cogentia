@@ -44,8 +44,50 @@
     };
   }
 
+  // Document-local identity, not a selector, durable anchor or COP grant.
+  // The transport must still bind the browser instance, tab and frame.
+  function createElementIdentity() {
+    const owner = document;
+    const epoch = Array.from(crypto.getRandomValues(new Uint32Array(4)),
+      value => value.toString(16).padStart(8, "0")).join("");
+    const byElement = new WeakMap();
+    const byUid = new Map();
+    const collected = new FinalizationRegistry(uid => byUid.delete(uid));
+    let next = 0;
+    const valid = element => element instanceof Element &&
+      element.ownerDocument === owner && element.isConnected && document === owner;
+    function elementUid(element) {
+      if (!valid(element)) return null;
+      const previous = byElement.get(element);
+      if (previous && byUid.has(previous)) return previous;
+      const uid = epoch + ":" + (++next);
+      byElement.set(element, uid);
+      byUid.set(uid, new WeakRef(element));
+      collected.register(element, uid);
+      return uid;
+    }
+    function resolveElementUid(uid) {
+      if (typeof uid !== "string") return null;
+      const element = byUid.get(uid)?.deref();
+      if (valid(element)) return element;
+      byUid.delete(uid);
+      // Once observed stale, a UID is never revived, even if the same
+      // element is subsequently reinserted into this document.
+      if (element && byElement.get(element) === uid) byElement.delete(element);
+      return null;
+    }
+    return Object.freeze({ epoch, elementUid, resolveElementUid });
+  }
+
+  // TUI recipes can inject the standard library repeatedly into one page.
+  // Keep its registry for the current library version/document realm.
+  const previous = window.__cogentiaNavigationAssistant;
+  const elementIdentity = previous?.version === "0.2.3" && previous.elementIdentity
+    ? previous.elementIdentity : createElementIdentity();
+
   const api = {
-    version: "0.2.2",
+    version: "0.2.3",
+    elementIdentity,
     // Adapters are intentionally extensible while the generic API itself is
     // frozen. Site-specific code must not mutate generic capabilities.
     adapters: Object.create(null),
