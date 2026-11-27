@@ -1,4 +1,5 @@
 /** Explicit, separately signed form-assistance COP effect gate. */
+import {validElementTarget} from './browser-element-target.js';
 import {readFileSync} from 'node:fs';
 import {createEventSourcedExecutionBudgetLedger} from '../../../inseme/packages/cop-core/src/execution-budget.js';
 import {assessJohnCopAuthority} from './john-cop-authority-preflight.js';
@@ -23,12 +24,14 @@ export async function executeJohnCanonicalForm({store,authorizedKeysPath,auth,re
    !args||!['expected_url,field_index,tab_id,text',
     'expected_url,field_index,field_kind,tab_id,text',
     'expected_frame_origin,expected_url,field_index,frame_id,tab_id,text',
-    'expected_frame_origin,expected_url,field_index,field_kind,frame_id,tab_id,text'].includes(Object.keys(args).sort().join(','))||
+    'expected_frame_origin,expected_url,field_index,field_kind,frame_id,tab_id,text',
+    'element_target,expected_url,tab_id,text','element_target,expected_url,field_kind,tab_id,text'].includes(Object.keys(args).sort().join(','))||
    (args.field_kind!==undefined && args.field_kind!=='contenteditable')||
    (args.frame_id!==undefined && (!/^[A-Za-z0-9_-]{1,160}$/.test(args.frame_id)||
      !exactHttpsOrigin(args.expected_frame_origin)))||
    !Number.isInteger(args.tab_id)||args.tab_id<1||
-   !Number.isInteger(args.field_index)||args.field_index<0||args.field_index>79||
+   (args.element_target!==undefined?!validElementTarget(args.element_target,{tabId:args.tab_id}):
+    (!Number.isInteger(args.field_index)||args.field_index<0||args.field_index>79))||
    typeof args.expected_url!=='string'||!args.expected_url.startsWith('https://')||
    typeof args.text!=='string'||args.text.length<1||args.text.length>2048)
    return fail('canonical_form_envelope_invalid');

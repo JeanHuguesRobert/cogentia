@@ -14,12 +14,17 @@ export function normalizeJohnReadArguments(capability,args){
   if(Object.keys(args).length)throw Error('john_read_arguments_invalid');
   return {};
  }
- if(Object.keys(args).some(k=>!['action','tab_id','max_chars','include_url','expected_url','frame_id','expected_frame_origin'].includes(k)) || !ACTIONS.has(args.action))
+ if(Object.keys(args).some(k=>!['action','tab_id','max_chars','include_url','expected_url','frame_id','expected_frame_origin','include_element_identity'].includes(k)) || !ACTIONS.has(args.action))
   throw Error('john_read_arguments_invalid');
  if(['structure','frames','context','frame_tree','frame_structure'].includes(args.action)){
   if(!Number.isSafeInteger(args.tab_id)||args.tab_id<1)throw Error('john_read_arguments_tab_required');
  }else if(args.tab_id!==undefined)throw Error('john_read_arguments_invalid');
- if(['frame_tree','frame_structure'].includes(args.action)){
+ if(args.include_element_identity!==undefined&&(args.action!=='structure'||typeof args.include_element_identity!=='boolean'))
+  throw Error('john_read_arguments_invalid');
+ if(args.action==='structure'&&args.include_element_identity===true){
+  if(typeof args.expected_url!=='string'||!args.expected_url.startsWith('https://')||args.frame_id!==undefined||args.expected_frame_origin!==undefined)
+   throw Error('john_read_arguments_invalid');
+ }else if(['frame_tree','frame_structure'].includes(args.action)){
   if(typeof args.expected_url!=='string'||!args.expected_url.startsWith('https://'))throw Error('john_read_arguments_invalid');
   if(args.action==='frame_structure' && (!/^[A-Za-z0-9_-]{1,160}$/.test(args.frame_id||'')||
     !exactHttpsOrigin(args.expected_frame_origin)))throw Error('john_read_arguments_invalid');

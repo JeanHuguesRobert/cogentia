@@ -14,6 +14,8 @@ import {setTimeout as delay} from 'node:timers/promises';
 import {WebSocket as Ws} from 'ws';
 import {createNavigationGateway} from './ops/navigation-assistant-gateway.js';
 import {createGatewaySession} from './lib/navigation-assistant/gateway-session.js';
+import {compileUidStructure,projectElementTarget,callUidFormFill} from './lib/browser-element-target.js';
+import {compileNonSecretFormFill} from './lib/browser-form-script.js';
 import {bindBrowserWorkerContext} from './lib/browser-worker-context.js';
 
 const engine=process.argv[2]==='--firefox'?'firefox':'chromium';
@@ -241,6 +243,39 @@ try{
   }catch{peer.send(JSON.stringify({jsonrpc:'2.0',id:req.id,error:{code:-32002,message:'fixture_evaluation_failed'}}))}
  });
  session=await createGatewaySession(base+'/assistant');
+ // Exercise the existing compiled non-secret form recipe through the real
+ // gateway/lease and engine. Loopback HTTP is accepted only by the fixture,
+ // never by the hosted capability or COP gate.
+ async function observeTarget(){
+  const reply=await session.call('page.evaluate',{browser_instance_id:browserId,tabId:41,
+    expectedUrl,code:compileUidStructure(expectedUrl)});
+  assert.equal(reply.tab.id,41);assert.equal(reply.tab.url,expectedUrl);
+  const target=projectElementTarget(reply.value,0,browserId,41);
+  assert.ok(target);return target;
+ }
+ const fill=(target,text)=>callUidFormFill({session,target,expectedUrl,
+  code:compileNonSecretFormFill({elementTarget:target,text,expectedUrl,allowLoopbackFixture:true})});
+ const observed=await observeTarget();
+ assert.equal(observed.uid,reinsertedUid);
+ const filled=await fill(observed,'Corte — été');
+ assert.equal(filled.ok,true);assert.equal(filled.submitted,false);assert.equal(filled.uid,observed.uid);
+ assert.equal(await evaluate(tabs.get(41),'document.querySelector("#uid-target").value'),'Corte — été');
+ assert.equal(await evaluate(tabs.get(42),'document.querySelector("#uid-target").value'),'');
+ await evaluate(tabs.get(41),`(() => {
+  const el=document.querySelector('#uid-target'),clone=el.cloneNode(true);
+  clone.value='unchanged';el.replaceWith(clone);
+  globalThis.inputEvents=0;clone.addEventListener('input',()=>inputEvents++);
+ })()`);
+ const stale=await fill(observed,'must not be inserted');
+ assert.deepEqual(stale,{ok:false,reason:'element_uid_stale'});
+ assert.equal(await evaluate(tabs.get(41),'document.querySelector("#uid-target").value'),'unchanged');
+ assert.equal(await evaluate(tabs.get(41),'inputEvents'),0);
+ const fresh=await observeTarget();
+ assert.notEqual(fresh.uid,observed.uid);
+ // A new assistant session must not invalidate a live document identity.
+ session.close();session=await createGatewaySession(base+'/assistant');
+ assert.equal((await fill(fresh,'new session')).ok,true);
+ assert.equal(await evaluate(tabs.get(41),'inputEvents'),1);
  const worker=bindBrowserWorkerContext({session,browserId,expectedUrl,workerId:id});
  const locator=await worker.locate();
  assert.equal(locator.tabId,41);
@@ -261,13 +296,15 @@ try{
  await inject(tabs.get(41));
  assert.notEqual(await getUid(tabs.get(41)),reinsertedUid);
  assert.equal(await resolves(tabs.get(41),reinsertedUid),false);
+ assert.deepEqual(await fill(fresh,'wrong epoch'),{ok:false,reason:'document_epoch_changed'});
+ assert.equal(await evaluate(tabs.get(41),'document.querySelector("#uid-target").value'),'');
  assert.deepEqual(await invoke('snapshot'),waiting);
  assert.equal((await invoke('step',[{type:'resume',increment:5}])).lastResult.value,16);
  await invoke('assign',[{id:'task-2',program:'demo'}]);
  assert.equal((await invoke('step')).locals.started,2);
  assert.equal((await invoke('step',[{type:'resume',increment:2}])).lastResult.value,3);
  console.log(JSON.stringify({ok:true,browser:version,engine,actual_chromium:engine==='chromium',actual_firefox:engine==='firefox',actual_gateway:true,
-  extension:engine==='firefox'?'fixture_bidi_peer':'fixture_cdp_peer',actual_inventory:true,uid_registry:true,uid_reinjection:true,uid_replacement_rejected:true,uid_document_isolation:true,uid_reload_invalidated:true,distinct_workers:true,rediscovery:true,checkpoint_reload:true,reused_worker:true,
+  extension:engine==='firefox'?'fixture_bidi_peer':'fixture_cdp_peer',actual_inventory:true,uid_registry:true,uid_reinjection:true,uid_replacement_rejected:true,uid_document_isolation:true,uid_reload_invalidated:true,uid_fill:true,uid_stale_no_input:true,uid_reconnect:true,distinct_workers:true,rediscovery:true,checkpoint_reload:true,reused_worker:true,
   sandbox_disabled:false,personal_browser_used:false}));
 }catch(e){
  console.error(JSON.stringify({ok:false,reason:e.message,engine,browser_exit:exitInfo||null,browser_stderr:stderr,

@@ -461,7 +461,8 @@ export async function runJohnRequest(request, options = {}) {
                 capability: step.capability,
                 input: step.capability === "workspace.write" ? redactWorkspaceWriteInput(step.input)
                   : step.capability === "browser.form.fill"
-                    ? {tab_id:step.input?.tab_id,field_index:step.input?.field_index,
+                    ? {tab_id:step.input?.tab_id,
+                       ...(step.input?.element_target?{element_target:step.input.element_target}:{field_index:step.input?.field_index}),
                        expected_origin:"[redacted]",text:"[redacted]",text_length:String(step.input?.text||"").length}
                     : step.capability === "browser.form.upload"
                       ? {tab_id:step.input?.tab_id,file_index:step.input?.file_index,

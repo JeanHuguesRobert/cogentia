@@ -21,3 +21,18 @@ test('form canonical gate validates target and budget before any execution',asyn
  assert.equal((await executeJohnCanonicalForm({request:rich,authorizedKeysPath:'/no-such-file',run})).error,'trusted_form_issuer_missing');
  assert.equal(calls,0);
 });
+
+test('UID target uses the same canonical admission and cannot mix selectors or frames',async()=>{
+ const epoch='a'.repeat(32);
+ const target={browser_instance_id:'fracta2-hosted',tab_id:7,frame_id:'top',document_epoch:epoch,uid:epoch+':1'};
+ const {field_index,...rest}=input;
+ const invoke=args=>executeJohnCanonicalForm({request:{...req,input:{...req.input,arguments:args}},
+  authorizedKeysPath:'/no-such-file',run:()=>assert.fail('must not execute')});
+ assert.equal((await invoke({...rest,element_target:target})).error,'trusted_form_issuer_missing');
+ for(const args of [{...rest,element_target:{...target,tab_id:8}},
+  {...rest,element_target:{...target,uid:'b'.repeat(32)+':1'}},
+  {...rest,element_target:{...target,frame_id:'other'}},
+  {...rest,element_target:target,field_index:0},
+  {...rest,element_target:target,frame_id:'other',expected_frame_origin:'https://example.org'}])
+  assert.equal((await invoke(args)).error,'canonical_form_envelope_invalid');
+});

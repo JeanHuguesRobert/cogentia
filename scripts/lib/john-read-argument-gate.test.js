@@ -11,3 +11,11 @@ test('no arbitrary fields, capability escalation or missing actions reach COP',(
   ['browser.navigation.instances',{action:'tabs'}],['browser.hosted.inspect',{action:'structure',tab_id:0}],
   ['browser.hosted.inspect',{action:'tabs',max_chars:3}]])assert.throws(()=>normalizeJohnReadArguments(cap,arg));
 });
+
+test('UID observation is opt-in and URL-pinned, without enlarging the action set',()=>{
+ const args={action:'structure',tab_id:42,include_element_identity:true,expected_url:'https://example.org/form'};
+ assert.deepEqual(normalizeJohnReadArguments('browser.hosted.inspect',args),args);
+ for(const bad of [{...args,expected_url:undefined},{...args,expected_url:'http://example.org'},
+  {...args,action:'context'},{...args,frame_id:'other'},{...args,include_element_identity:false}])
+  assert.throws(()=>normalizeJohnReadArguments('browser.hosted.inspect',bad));
+});
