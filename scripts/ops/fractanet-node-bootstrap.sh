@@ -13,7 +13,7 @@
 # Optional:
 #   NODE_HOSTNAME=rpi3-view
 #   TAILNET_USER=pi
-#   FRACTA_TS_IP=100.91.12.74
+#   FRACTA_TS_IP=100.84.109.87
 #   THINKPAD_TS_IP=100.122.121.68
 #   ENABLE_POSTURE_CHECKING=1
 
@@ -21,7 +21,7 @@ set -euo pipefail
 
 NODE_HOSTNAME="${NODE_HOSTNAME:-$(hostname -s)}"
 TAILNET_USER="${TAILNET_USER:-${USER}}"
-FRACTA_TS_IP="${FRACTA_TS_IP:-100.91.12.74}"
+FRACTA_TS_IP="${FRACTA_TS_IP:-100.84.109.87}"
 THINKPAD_TS_IP="${THINKPAD_TS_IP:-100.122.121.68}"
 
 if [[ -z "${TAILSCALE_AUTH_KEY:-}" ]]; then
@@ -79,7 +79,7 @@ Host thinkpad i7-thinkpad-jhr
     IdentityFile ~/.ssh/fractanet-mesh
     IdentitiesOnly yes
 
-Host fracta-ts fracta
+Host fracta2 fracta-ts fracta
     HostName ${FRACTA_TS_IP}
     User ubuntu
     IdentityFile ~/.ssh/fractanet-mesh

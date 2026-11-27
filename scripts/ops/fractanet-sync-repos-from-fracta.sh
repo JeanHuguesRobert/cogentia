@@ -4,13 +4,13 @@
 #   bash ~/fractanet-sync-repos-from-fracta.sh
 #
 # Optional env:
-#   FRACTA_HOST=fracta
+#   FRACTA_HOST=fracta2
 #   FRACTA_REPOS=/srv/cogentia/repos
 #   LOCAL_REPOS=~/srv/cogentia/repos
 
 set -euo pipefail
 
-FRACTA_HOST="${FRACTA_HOST:-fracta}"
+FRACTA_HOST="${FRACTA_HOST:-fracta2}"
 FRACTA_REPOS="${FRACTA_REPOS:-/srv/cogentia/repos}"
 LOCAL_REPOS="${LOCAL_REPOS:-${HOME}/srv/cogentia/repos}"
 

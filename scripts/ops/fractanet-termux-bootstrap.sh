@@ -11,7 +11,7 @@
 #
 # Optional env:
 #   NODE_HOSTNAME=poco-jhr
-#   FRACTA_TS_IP=100.91.12.74
+#   FRACTA_TS_IP=100.84.109.87
 #   THINKPAD_TS_IP=100.122.121.68
 #   RPI3_TS_IP=100.117.135.27
 #   TERMUX_USER=jh
@@ -20,7 +20,7 @@ set -euo pipefail
 
 NODE_HOSTNAME="${NODE_HOSTNAME:-poco-jhr}"
 TERMUX_USER="${TERMUX_USER:-${USER}}"
-FRACTA_TS_IP="${FRACTA_TS_IP:-100.91.12.74}"
+FRACTA_TS_IP="${FRACTA_TS_IP:-100.84.109.87}"
 THINKPAD_TS_IP="${THINKPAD_TS_IP:-100.122.121.68}"
 RPI3_TS_IP="${RPI3_TS_IP:-100.117.135.27}"
 LAYOUT_SCRIPT="${LAYOUT_SCRIPT:-${HOME}/fractanet-termux-layout.sh}"
@@ -71,7 +71,7 @@ Host thinkpad i7-thinkpad-jhr
     IdentitiesOnly yes
     ServerAliveInterval 30
 
-Host fracta-ts fracta
+Host fracta2 fracta-ts fracta
     HostName ${FRACTA_TS_IP}
     User ubuntu
     Port 22

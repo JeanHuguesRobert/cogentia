@@ -1,6 +1,6 @@
 const DEFAULT_PROBES = [
   "https://cogentia.fractavolta.com/guide/health",
-  "http://100.91.12.74:8791/health",
+  "http://100.84.109.87:8791/health",
 ];
 
 export async function probeFractanet(options = {}) {

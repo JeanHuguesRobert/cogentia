@@ -20,7 +20,7 @@ if ! proot-distro login "${PROOT_NAME}" -- true >/dev/null 2>&1; then
 fi
 
 # Mesh IPs (override via env when tailnet addresses change)
-FRACTA_TS_IP="${FRACTA_TS_IP:-100.91.12.74}"
+FRACTA_TS_IP="${FRACTA_TS_IP:-100.84.109.87}"
 THINKPAD_TS_IP="${THINKPAD_TS_IP:-100.122.121.68}"
 RPI3_TS_IP="${RPI3_TS_IP:-100.117.135.27}"
 POCO_TS_IP="${POCO_TS_IP:-100.97.223.45}"
@@ -42,7 +42,7 @@ Host thinkpad i7-thinkpad-jhr
     ServerAliveInterval 30
     StrictHostKeyChecking accept-new
 
-Host fracta-ts fracta
+Host fracta2 fracta-ts fracta
     HostName ${FRACTA_TS_IP}
     User ubuntu
     Port 22
