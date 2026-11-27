@@ -1,4 +1,23 @@
 ---
+title: "Navigation Assistant — local Brave and hosted browser operations"
+author: unknown
+affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
+date: "2026-09-07"
+last_modified_at: "2026-11-27"
+status: working-paper
+license: MIT
+language: en
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/navigation-assistant.md
+update_policy: UP-DEFAULT-REVIEWED
+provenance:
+  origin_type: repository
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: edaf9f3271f6f24fc146b79642fd2a19de153662
+  origin_date: "2026-09-07"
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
 document_role: "operational"
 document_kind: "guide"
 visibility: "public"
