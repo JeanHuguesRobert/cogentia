@@ -35,3 +35,16 @@ test('opt-in comparison cannot alter the reference plan or bypass validation',()
  assert.throws(()=>reg.plan({...task,expected_url:'https://other.example',recipe_id:'generic.first-text',version:1}),/structure_unreliable/);
  assert.equal(calls,1);
 });
+
+
+test('unique-text requires exactly one admissible field and leaves first-text unchanged',()=>{
+ const req={...task,recipe_id:'generic.unique-text',version:1};
+ assert.equal(FORM_RECIPES.plan(req).arguments.field_index,1);
+ const duplicate={...structure,fields:[...structure.fields,structure.fields[1]]};
+ assert.throws(()=>FORM_RECIPES.plan({...req,structure:duplicate}),/field_ambiguous/);
+ assert.equal(FORM_RECIPES.plan({...req,structure:duplicate,recipe_id:'generic.first-text'}).arguments.field_index,1);
+ assert.throws(()=>FORM_RECIPES.plan({...req,structure:{...structure,fields:[]}}),/field_not_found/);
+ const r=createFormRecipeRegistry({fieldSelector:()=>0});
+ r.register({id:'unique',version:1,match:{type:'text'},selection:'unique'});
+ assert.throws(()=>r.plan({...req,recipe_id:'unique',structure:duplicate}),/parity_mismatch/);
+});

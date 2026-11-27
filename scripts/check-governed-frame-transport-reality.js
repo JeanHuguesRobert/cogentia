@@ -111,9 +111,18 @@ try{
    const emailPlan=await prepareFormAssistRequest({...email,registry});
    assert.deepEqual(emailPlan,await prepareFormAssistRequest(email));
    assert.equal(emailPlan.input.arguments.field_index,3);
-   const receipt=await formFill.execute(compared.input.arguments);
+   const unique={...input,recipe_id:'generic.unique-text'};
+   const uniquePlan=await prepareFormAssistRequest({...unique,registry});
+   assert.deepEqual(uniquePlan,await prepareFormAssistRequest(unique));
+   assert.equal(uniquePlan.input.arguments.field_index,2);
+   // Use the real observed metadata, then add a second admissible
+   // candidate to verify ambiguity without making a browser write.
+   const observed=await inspect.execute({action:'structure',tab_id:42});
+   const ambiguous={...observed,fields:[...observed.fields,observed.fields[2]]};
+   await assert.rejects(()=>prepareFormAssistRequest({...unique,registry,inspect:async()=>ambiguous}),/field_ambiguous/);
+   const receipt=await formFill.execute(uniquePlan.input.arguments);
    assert.equal(receipt.ok,true);assert.equal(receipt.submitted,false);
-   console.log(JSON.stringify({ok:true,proof:'inox_image_live_dom_parity',field_index:2,request_equal:true,inserted_length:receipt.inserted_length,submitted:false,fixture_only:true}));
+   console.log(JSON.stringify({ok:true,proof:'inox_image_live_dom_parity',field_index:2,request_equal:true,unique_recipe:true,ambiguity_rejected:true,email_plan_only:true,inserted_length:receipt.inserted_length,submitted:false,fixture_only:true}));
   }
   const frameList=await inspect.execute({action:'frame_tree',tab_id:42,expected_url:expectedUrl});
   assert.equal(frameList.oopif_frames?.length,1);

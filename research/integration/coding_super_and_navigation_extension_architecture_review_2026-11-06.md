@@ -95,3 +95,21 @@ the [materialization doctrine](https://github.com/JeanHuguesRobert/Inox/blob/mas
 and the continuing [packet #291](https://github.com/JeanHuguesRobert/cogentia/issues/291).
 The next implementation step is method dispatch convergence, not a new
 browser-specific RPC.
+
+## 27 November 2026 — InoxBrowser unique-field dogfooding
+
+The explicit generic.unique-text@1 recipe requires exactly one eligible
+ordinary text input. It rejects ambiguity instead of selecting the first
+candidate. The optional comparison registry runs the new Inox image on
+the same bounded metadata, using native object Cells and the existing
+sensitive-field predicate. It accepts no deviation from the reference
+plan. Existing first-match recipes are unchanged. The isolated Chromium
+fixture verifies plan equality, insertion of 17 fictitious characters
+without submission, and rejection of a synthetic duplicate in observed
+metadata; cross-origin transport checks remain in place.
+
+A separate pre-existing discrepancy is now recorded: generic.first-email
+produces a planning result, but the current plain-input client-script and
+native BiDi fill backends exclude email (and number). The fixture's email
+comparison was planning only, not an end-to-end email write proof.
+Do not broaden backend field policy merely to obtain a green recipe test.

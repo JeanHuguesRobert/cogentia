@@ -12,11 +12,13 @@ export async function createInoxComparisonRegistry(directory){
  const [{VM},{loadDefinitions},{installZeroBrowser}]=await Promise.all([
   module('toy-runner.js'),module('definition-image.js'),module('zero-browser.js')]);
  const image=JSON.parse(await readFile(join(root,'browser-fields-image.json'),'utf8'));
- return createDefaultFormRecipes({fieldSelector(fields,type){
+ const uniqueImage=JSON.parse(await readFile(join(root,'browser-unique-field-image.json'),'utf8'));
+ return createDefaultFormRecipes({fieldSelector(fields,type,selection){
   const vm=installZeroBrowser(new VM({maxSteps:100000}),fields);
   loadDefinitions(vm,image);
-  const stack=vm.evaluate(JSON.stringify(type)+' first-field');
-  if(stack.length!==1||!Number.isInteger(stack[0])||stack[0]<-1||stack[0]>=fields.length||vm.CSP!==0)
+  if(selection==='unique')loadDefinitions(vm,uniqueImage);
+  const stack=vm.evaluate(JSON.stringify(type)+(selection==='unique'?' unique-field':' first-field'));
+  if(stack.length!==1||!Number.isInteger(stack[0])||stack[0]<(selection==='unique'?-2:-1)||stack[0]>=fields.length||vm.CSP!==0)
    throw Error('form_recipe_inox_invalid_result');
   return stack[0];
  }});
