@@ -794,3 +794,60 @@ health, the marker, and reconnection of the previous instances.
 Then the workspace owner can explicitly launch the companion in
 the existing X11 workspace. A successful source test is not
 authorization or evidence of that production migration.
+
+
+### I4 — versioned gateway release preparation
+
+The hosted gateway uses a different Unix identity from the MCP and ONA
+services. Do not add it to the current Ubuntu-role deployment descriptors:
+their agent-writable release tree would then allow code from one account
+to execute as the hosted workspace account. Reuse the existing versioned
+release, baseline, receipt and rollback conventions, not that delegation.
+
+Prepare an exact published Git revision in ordinary Unix context:
+
+```sh
+mkdir -m 700 PRIVATE_STAGING_DIRECTORY
+node scripts/ops/prepare-navigation-gateway-release.js FULL_COMMIT PRIVATE_STAGING_DIRECTORY
+```
+
+This produces a gateway-only archive with its revision, source hash,
+minimal module manifest and the exact ws tarball from the committed lock.
+The cached npm tarball is checked against its SHA-512 integrity before
+extraction, with no lifecycle scripts or new dependency. The archive
+SHA-256 is the transfer checksum, not evidence of owner approval.
+Extract the checked archive in a fresh private temporary directory as
+the ordinary preparation user and run
+`node scripts/check-navigation-gateway-release.js EXTRACTED_RELEASE`.
+This tests legacy and managed registration/routing and a restart/reconnect
+fixture, without touching the actual gateway.
+
+For the first live migration, Operium and the node owner must review the
+exact release artifact and the old unit, retain the existing service
+identity and environment, and stage the reviewed tree under a root-owned,
+non-agent-writable release base (for example
+`/opt/operium/releases/navigation-assistant-gateway/FULL_COMMIT`).
+Transfer and verify the reviewed archive hash in a private owner stage
+before extracting without inherited ownership. Ensure all installed
+files and ancestor directories are non-writable by the agent and hosted
+workspace user; the node owner, not the Ubuntu-role broker, controls
+publication of executable releases. Do not execute the archive as root.
+A minimal service drop-in can select the pinned working directory and
+fixed Node entrypoint while preserving the existing user, group, port and
+mesh routing. Verify effective configuration and unprivileged runtime.
+No owner policy or additional systemd service is implied by preparation.
+
+The new /health reply adds only aggregate registered-instance,
+pending-request and active-lease counts plus the managed-provider marker.
+These support future planned restarts, but a quiet sample is not a drain
+lock. The old live gateway lacks these counters. Therefore schedule an
+explicit maintenance window for the first restart, suspend agent dispatch,
+capture the registered instance IDs privately and baseline health, and
+retain a rollback copy of the original unit/configuration. Do not infer
+idle from a connection count. After the restart, require healthy service,
+managed marker and re-registration of the expected still-online legacy
+instances; account separately for unregistered or offline connections.
+Never automatically replay an interrupted browser operation. On failure
+restore the previous configuration and verify reconnection. Record the
+actual restart, release hash, verified runtime and remaining exceptions
+in Operium. The live migration remains separate from this source work.

@@ -82,6 +82,10 @@ export function createNavigationGateway(options = {}) {
       instance,
       extensionConnected: sockets.extension.size > 0,
       assistants: sockets.assistant.size,
+      managed_provider_registration: 1,
+      registered_instances: [...sockets.extension].filter(ws=>ws.readyState===1&&ws.browserInstanceId).length,
+      pending_requests: pending.size,
+      active_leases: [...leases.keys()].filter(key=>currentLease(key)).length,
     };
   }
 

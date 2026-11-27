@@ -18,11 +18,17 @@ try {
  await new Promise(r=>setTimeout(r,30));
  const inventory=a1.received.find(m=>m.id===6)?.result?.browsers;
  assert.deepEqual(inventory?.map(b=>b.browser_instance_id).sort(),['hosted','thinkpad']);
+ const status=()=>fetch('http://127.0.0.1:'+port+'/health').then(r=>r.json());
+ assert.equal((await status()).managed_provider_registration,1);
+ assert.equal((await status()).registered_instances,2);
+ assert.equal((await status()).pending_requests,0);
+ assert.equal((await status()).active_leases,0);
  a1.send(JSON.stringify({jsonrpc:'2.0',id:7,method:'tabs.list',params:{browser_instance_id:'hosted'}}));
  await new Promise(r=>setTimeout(r,50));
  const deliveries=[e1,e2].map(s=>s.received.filter(m=>m.method==='tabs.list').length);
  console.log('routing of one request over two extensions:',JSON.stringify(deliveries));
  assert.deepEqual(deliveries,[1,0],'request must reach precisely one extension');
+ assert.equal((await status()).pending_requests,1);
  const wireId=e1.received.find(m=>m.method==='tabs.list')?.id;
  e1.send(JSON.stringify({jsonrpc:'2.0',id:wireId,result:{tabs:[{title:'confidential'}]}}));
  await new Promise(r=>setTimeout(r,50));
@@ -74,6 +80,7 @@ try {
  a1.send(JSON.stringify({jsonrpc:'2.0',id:31,method:'tabs.lease.acquire',params:{browser_instance_id:'hosted',tabId:44,ttlMs:3000}}));
  await new Promise(r=>setTimeout(r,25));
  assert.equal(a1.received.find(m=>m.id===31)?.result?.acquired,true);
+ assert.equal((await status()).active_leases,1);
  a2.send(JSON.stringify({jsonrpc:'2.0',id:32,method:'page.evaluate',params:{browser_instance_id:'hosted',tabId:44,code:'1'}}));
  await new Promise(r=>setTimeout(r,25));
  assert.equal(a2.received.find(m=>m.id===32)?.error?.code,-32026);
@@ -84,6 +91,7 @@ try {
  a1.send(JSON.stringify({jsonrpc:'2.0',id:34,method:'tabs.lease.release',params:{browser_instance_id:'hosted',tabId:44}}));
  await new Promise(r=>setTimeout(r,25));
  assert.equal(a1.received.find(m=>m.id===34)?.result?.released,true);
+ assert.equal((await status()).active_leases,0);
  a2.send(JSON.stringify({jsonrpc:'2.0',id:35,method:'tabs.lease.acquire',params:{browser_instance_id:'hosted',tabId:44,ttlMs:3000}}));
  await new Promise(r=>setTimeout(r,25));
  assert.equal(a2.received.find(m=>m.id===35)?.result?.acquired,true);
