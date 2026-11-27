@@ -3,7 +3,7 @@ title: "Evidence, research and communication"
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: '2026-11-20'
-last_modified_at: '2026-11-20'
+last_modified_at: '2026-11-27'
 status: "working-paper — active operational documentation"
 document_role: operational
 document_kind: agent-instructions
@@ -152,6 +152,16 @@ This is not a license for abstraction-for-abstraction's-sake. Apply Occam, local
 - **Public criticism**: In public output, frame negative judgments as `[act/fitness] vs [explicit standard]`, not `[person] is [pejorative]`; subjectivity markers do not neutralize invective.
 - **Reputational claims**: Assert a potentially reputation-harming fact only to the exact extent supported by evidence; otherwise state the established facts, uncertainty, and inference separately. Truth permits precision, not extrapolation.
 - Preserve provenance. Do not infer missing author, source, reference, review or visibility information.
+
+### Doctrinal promotion and editorial autonomy — Principal decision, 2026-11-27
+
+The public Corpus is a living research environment, not a list of propositions personally adopted by its Principal. Agents are co-researchers and may contribute, publish and propagate attributed research, observations, objections, conditional deductions, conceptual connections and hypotheses under the [standing editorial mandate](AGENTS.policy-effects.md#standing-public-corpus-editorial-mandate--principal-decision-2026-11-27). No fresh editorial permission is needed for each faithful propagation. Preserve the actual provenance, epistemic status and authority of each contribution, including when it appears within an existing doctrinal document.
+
+**Doctrinal promotion belongs to the Principal.** Adoption, revision, extension or withdrawal of a principle or a position attributed to the Principal, promotion of a hypothesis into adopted doctrine, and creation of an institutional or political commitment are decisions, not mere editorial propagation. Distinguish a logically entailed consequence of a settled decision from an inference that requires a further value judgment. Do not treat inclusion in a canonical source, public visibility, a commit, or agent confidence as evidence of human adoption.
+
+**Whenever any doubt arises about the doctrinal nature or scope of a proposed change, ask the Principal to clarify the substantive point before promoting it.** Present the precise ambiguity, existing source, and proposed meaning or alternatives. Do not ask separately for every file or commit that would faithfully implement the resulting decision. While awaiting clarification, retain the proposition as research or a proposal where the existing mandate permits, without presenting it as adopted doctrine; continue independent authorized work. The Principal's explicit doctrinal decision then governs all faithful, traceable propagations within the standing editorial mandate.
+
+Example: documenting an inference scenario with 90% externally supplied compute is research; attributing a 90% target or a universal entitlement to the Principal is a new political/doctrinal decision. If its status is unclear, ask whether the proposition is adopted or remains exploratory, rather than requesting permission to edit a list of documents. This rule protects the Principal's sovereignty while minimizing attention cost; it does not delegate external commitments or alter independent execution and privacy controls.
 
 ### Canonical agile frontmatter — establish metadata when authoring
 
