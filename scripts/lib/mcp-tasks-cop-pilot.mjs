@@ -31,6 +31,26 @@ export function mcpTaskIdFromPacketTopic(value) {
   return "task:" + value.slice("packet:pkt-mcp-".length);
 }
 const topic = packetTopicForMcpTask;
+// Optional trusted creation metadata, not a caller-supplied timer or grant.
+// Crossing review_at parks new dispatches for a relevance decision; it
+// does not terminate an already claimed act or release its budget blindly.
+function normalizeTemporalWindow(value) {
+  if (value == null) return null;
+  const iso = v => typeof v === "string" && Number.isFinite(Date.parse(v))
+    && new Date(v).toISOString() === v;
+  if (!valid(value) || Object.keys(value).length !== 2 ||
+      !iso(value.not_before) || !iso(value.review_at) ||
+      Date.parse(value.review_at) <= Date.parse(value.not_before))
+    throw new Error("invalid_work_temporal_window");
+  return {not_before:value.not_before,review_at:value.review_at};
+}
+export function temporalWorkEligibility(window, now = Date.now()) {
+  if (window == null) return "ready";
+  const w=normalizeTemporalWindow(window);
+  if (now >= Date.parse(w.review_at)) return "temporal_review_required";
+  if (now < Date.parse(w.not_before)) return "not_due";
+  return "ready";
+}
 const unknown = () => Object.assign(new Error("unknown_task"), { code: "unknown_task" });
 
 export function stableMcpWorkTaskId(owner,toolName,submissionKey){
@@ -140,6 +160,9 @@ export function createCopMcpTasksPilot({
     const status = completed ? "completed" : failed ? "failed" : cancelled ? "cancelled" :
       input && (!answered || answered.topic.seq < input.topic.seq)
         ? "input_required" : "working";
+    const temporal = temporalWorkEligibility(created.temporal_window);
+    const currentClaim = events.some(e => e.payload?.phase === "claimed" &&
+      (e.payload.resume_from_event ?? null) === (answered?.event_id ?? null));
     const result = {
       taskId, status, createdAt: created.createdAt,
       lastUpdatedAt: last?.time?.recorded_at || created.createdAt,
@@ -151,6 +174,9 @@ export function createCopMcpTasksPilot({
       ...(completed ? { result: completed.payload.result } : {}),
       ...(failed ? { error: failed.payload.error } : {}),
       ...(status === "input_required" ? { inputRequests: input.payload.inputRequests } : {}),
+      ...(created.temporal_window ? {temporal_window:created.temporal_window,
+        ...(status === "working" && !currentClaim && !unresolved && !cancel && temporal !== "ready"
+          ? {statusMessage:temporal} : {})} : {}),
     };
     return result;
   }
@@ -225,8 +251,10 @@ export function createCopMcpTasksPilot({
       // submission and persisted with the source work, never client metadata.
       const accessContext = admission?.access_context ?? null;
       if (accessContext !== null && !valid(accessContext)) throw new Error("invalid_work_access_context");
+      const temporalWindow=normalizeTemporalWindow(admission?.temporal_window);
       const digest = admission ? hashPayload({ name, args, assignment,
-        ...(accessContext ? {access_context:accessContext} : {}) }) : null;
+        ...(accessContext ? {access_context:accessContext} : {}),
+        ...(temporalWindow ? {temporal_window:temporalWindow} : {}) }) : null;
       const taskId = admission ? stableMcpWorkTaskId(owner,submissionNamespace,admission.submission_key) : "task:" + randomUUID();
       const createdAt = new Date().toISOString();
       const packetRef = packetRefForMcpTask(taskId);
@@ -260,7 +288,8 @@ export function createCopMcpTasksPilot({
         const creation = commit(taskId, "created", { owner, toolName: name, args,
           createdAt, packetRef, packet, continuation,
           ...(admission ? { submission_digest: digest } : {}),
-          ...(accessContext ? { access_context: accessContext } : {}) },
+          ...(accessContext ? { access_context: accessContext } : {}),
+          ...(temporalWindow ? {temporal_window:temporalWindow} : {}) },
           "mcp-created:" + taskId, tx);
         if (assignment) {
           const assigned = assignPacketWorkWithinTransaction(tx, {
@@ -473,6 +502,10 @@ export function createCopMcpTasksPilot({
         if (!stopped.ok) throw new Error("cannot_cancel");
         return "cancelled";
       }
+      // Recheck inside the same transaction as the claim, including direct
+      // runner calls that did not pass through the scheduler.
+      if (temporalWorkEligibility(created.temporal_window) !== "ready")
+        return "temporal_boundary";
       const ev = commit(taskId, "claimed", {
         ...(currentAnswer ? {resume_from_event:currentAnswer.event_id} : {}),
       }, claimKey, tx);

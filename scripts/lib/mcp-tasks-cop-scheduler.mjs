@@ -9,7 +9,7 @@
 import { COPBus } from "../../../inseme/packages/cop-kernel/src/bus.js";
 import { COPScheduler } from "../../../inseme/packages/cop-kernel/src/scheduler.js";
 import { COPJobScheduler } from "../../../inseme/packages/cop-kernel/src/jobScheduler.js";
-import { packetTopicForMcpTask, mcpTaskIdFromPacketTopic } from "./mcp-tasks-cop-pilot.mjs";
+import { packetTopicForMcpTask, mcpTaskIdFromPacketTopic, temporalWorkEligibility } from "./mcp-tasks-cop-pilot.mjs";
 
 const PROFILE = "cogentia.mcp-tasks-cop-pilot/v1";
 const createdEvent = event => event.payload?.profile === PROFILE &&
@@ -52,6 +52,8 @@ export function createCopMcpTasksScheduledPilot({
       if (!auth) return { admitted: false, reason: "no_verified_dispatch_authority" };
       try {
         const state = await pilot.adapter.get({ taskId, auth });
+        const temporal=temporalWorkEligibility(state.temporal_window);
+        if(temporal!=="ready")return {admitted:false,reason:temporal};
         if (state.status === "input_required")
           return { admitted: false, reason: "task_waiting_for_input" };
         if (["completed", "failed", "cancelled"].includes(state.status))
@@ -98,6 +100,9 @@ export function createCopMcpTasksScheduledPilot({
       return { scheduled: false, reason: "terminal" };
     if (record.status === "input_required")
       return { scheduled: false, reason: "waiting_input" };
+    const temporal=temporalWorkEligibility(record.temporal_window);
+    if(temporal==="temporal_review_required")
+      return {scheduled:false,reason:temporal};
     const history = store.listTopic(packetTopicForMcpTask(taskId));
     if (stageEligibility(history) !== "ready")
       return { scheduled: false, reason: "claimed_or_terminal_needs_reconciliation" };
@@ -121,7 +126,9 @@ export function createCopMcpTasksScheduledPilot({
       packetRef: created.payload.packetRef || null,
       topicId: packetTopicForMcpTask(taskId),
       resumeTo: "handler:mcp-tasks-cop-pilot",
-      schedule: { type: "delay", delayMs: startDelayMs },
+      schedule: record.temporal_window
+        ? {type:"once",resumeAfter:record.temporal_window.not_before}
+        : { type: "delay", delayMs: startDelayMs },
     });
     return { scheduled: true };
   }
@@ -183,6 +190,8 @@ export function createCopMcpTasksScheduledPilot({
       const scheduled = await schedule(taskId, auth);
       if (scheduled.scheduled) result.scheduled++;
       if (scheduled.reason === "waiting_input") result.waiting_input++;
+      if (scheduled.reason === "temporal_review_required")
+        result.temporal_review_required=(result.temporal_review_required||0)+1;
     }
     return result;
   }

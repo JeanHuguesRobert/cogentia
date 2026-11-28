@@ -359,3 +359,73 @@ test("MCP scheduled Tasks work with the existing Inseme portable COP SQLite stor
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("host-admitted absolute window survives restart and cannot be bypassed by direct dispatch", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "cop-scheduled-window-"));
+  const filename = join(dir, "cop.sqlite");
+  let store, pilot, dispatch, executions=0, executedAt=0;
+  const auth={auth:"jhn",actor:"agent:jhn"};
+  const toolName="cogentia_pattern_list";
+  const window={not_before:new Date(Date.now()+1200).toISOString(),
+    review_at:new Date(Date.now()+30000).toISOString()};
+  let admittedWindow=window;
+  function open() {
+    store=createSqliteCopEventStore(filename);
+    pilot=createCopMcpTasksPilot({store,toolName,primaryStoreId:"sqlite:temporal-test",
+      prepareCreation:()=>({admitted:true,submission_key:"absolute-window",
+        assignment:{responsible_agent_ref:"agent:jhn",commissioned_by_principal_ref:"principal:jhn"},
+        temporal_window:admittedWindow}),
+      handler:async()=>{executions++;executedAt=Date.now();return {ok:true,value:42};}});
+    dispatch=createCopMcpTasksScheduledPilot({pilot,store,authorizationForTask:async()=>auth}).start();
+  }
+  function close(){dispatch?.stop();store?.close();}
+  open();
+  try {
+    const {taskId}=await dispatch.adapter.create({name:toolName,args:{},auth});
+    assert.equal(dispatch.jobs.jobs.get(taskId).nextRunAt,window.not_before);
+    const early=await pilot.run(taskId,auth);
+    assert.equal(early.statusMessage,"not_due");
+    assert.equal(executions,0);
+    assert.ok(!store.listTopic(packetTopicForMcpTask(taskId)).some(e=>e.payload?.phase==="claimed"));
+    admittedWindow={...window,review_at:new Date(Date.parse(window.review_at)+1000).toISOString()};
+    await assert.rejects(()=>pilot.adapter.create({name:toolName,args:{},auth}),/task_submission_conflict/);
+    admittedWindow=window;
+    close();open();
+    const recovery=await dispatch.recover();
+    assert.equal(recovery.scheduled,1);
+    assert.equal(dispatch.jobs.jobs.get(taskId).nextRunAt,window.not_before);
+    await until(async()=> (await pilot.adapter.get({taskId,auth})).status==="completed",7000);
+    assert.equal(executions,1);
+    assert.ok(executedAt>=Date.parse(window.not_before));
+    assert.deepEqual((await pilot.adapter.get({taskId,auth})).result,{ok:true,value:42});
+    close();open();
+    assert.equal((await dispatch.recover()).scheduled,0);
+    assert.equal(executions,1);
+  }finally{close();rmSync(dir,{recursive:true,force:true});}
+});
+
+test("elapsed review boundary parks work without claiming, including restart and direct invocation", async () => {
+  const dir=mkdtempSync(join(tmpdir(),"cop-expired-window-"));
+  const store=createSqliteCopEventStore(join(dir,"cop.sqlite"));
+  const auth={auth:"jhn",actor:"agent:jhn"};
+  const toolName="cogentia_pattern_list";
+  let executions=0;
+  const temporal_window={not_before:new Date(Date.now()-2000).toISOString(),
+    review_at:new Date(Date.now()-1000).toISOString()};
+  const pilot=createCopMcpTasksPilot({store,toolName,primaryStoreId:"sqlite:review-test",
+    prepareCreation:()=>({admitted:true,submission_key:"review-window",
+      assignment:{responsible_agent_ref:"agent:jhn",commissioned_by_principal_ref:"principal:jhn"},
+      temporal_window}),handler:async()=>{executions++;return {ok:true};}});
+  const dispatch=createCopMcpTasksScheduledPilot({pilot,store,authorizationForTask:async()=>auth}).start();
+  try {
+    const {taskId}=await dispatch.adapter.create({name:toolName,args:{},auth});
+    assert.equal((await dispatch.schedule(taskId,auth)).reason,"temporal_review_required");
+    assert.equal((await pilot.run(taskId,auth)).statusMessage,"temporal_review_required");
+    const recovered=await dispatch.recover();
+    assert.equal(recovered.scheduled,0);
+    assert.equal(recovered.temporal_review_required,1);
+    assert.equal(executions,0);
+    assert.ok(!store.listTopic(packetTopicForMcpTask(taskId)).some(e=>e.payload?.phase==="claimed"));
+    assert.equal(store.auditCommitments().ok,true);
+  }finally{dispatch.stop();store.close();rmSync(dir,{recursive:true,force:true});}
+});
