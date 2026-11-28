@@ -85,7 +85,7 @@ export async function executeServiceDeploy(r,a){
   if(!await a.lock(r.request_id))return fail('deployment_busy_or_reconciliation_required');
   let receipt={schema:'cogentia.service-deploy.receipt/v1',request_id:r.request_id,service,
     revision:r.revision,authority:'node-owner-local-role',at:new Date().toISOString(),
-    authority_scope:'local-broker-socket-role',state:'prepared',ok:false,executed:false};
+    authority_scope:'local-broker-socket-role',recovery_mode:'forward_only',state:'prepared',ok:false,executed:false};
   let saved=null,previous=null,changed=false,retainLock=false;
   try{
     if(!await a.authorized())return fail('owner_delegation_required');
@@ -126,13 +126,21 @@ export async function executeServiceDeploy(r,a){
   }catch(error){
     receipt={...receipt,error:['new_configuration_not_effective','new_release_health_failed'].includes(error.message)?error.message:'deployment_failed'};
     if(changed){
+      // Super Agile: do not restore the previous code or configuration.
+      // A known failed deployment is repairable by the next prepared revision.
+      // An ambiguous effect must not unlock the broker for a subsequent change.
       try{
-        await a.writeConfig(deploymentConfig(previous,service));await a.reload();
-        if(!safeUnit(await a.inspect(),previous,{hardened:true,service}))throw Error('rollback_configuration_not_effective');
-        await a.restart();
-        if(!await a.verify(previous))throw Error('rollback_health_failed');
-        receipt={...receipt,state:'rolled_back',rollback_verified:true};
-      }catch{retainLock=true;receipt={...receipt,state:'attention_required',rollback_verified:false};}
+        const observed=await a.inspect();
+        const known=await a.readConfig()===deploymentConfig(r.revision,service)&&
+          safeUnit(observed,r.revision,{hardened:true,service})&&
+          await a.failureStateKnown(observed,r.revision);
+        if(!known)throw Error('deployment_state_uncertain');
+        receipt={...receipt,state:'forward_repair_required',observed_revision:r.revision,
+          observed_active_state:observed.ActiveState,observed_pid:observed.MainPID};
+      }catch{
+        retainLock=true;
+        receipt={...receipt,state:'attention_required',effect_state:'uncertain'};
+      }
     }else receipt={...receipt,state:'failed_before_change'};
     try{await a.saveReceipt(receipt);}catch(e){if(changed)retainLock=true;throw e;}
     return receipt;
@@ -207,6 +215,17 @@ export async function deployFromProtectedBroker(r){
     readConfig:()=>fs.readFileSync(d.drop,'utf8'),
     writeConfig:content=>atomic(d.drop,content,0o644),
     reload:()=>systemctl('daemon-reload'),restart:()=>systemctl('restart',service),
+    failureStateKnown(state,revision){
+      // Stable inactive/failed units can receive a corrected revision without
+      // being healthy. A running process must still be the expected confined
+      // process; transitions and mismatches need actual-state reconciliation.
+      if(['inactive','failed'].includes(state.ActiveState))return state.MainPID==='0';
+      if(state.ActiveState!=='active'||!Number.isSafeInteger(Number(state.MainPID))||Number(state.MainPID)<=0)return false;
+      try{
+        return fs.realpathSync('/proc/'+state.MainPID+'/cwd')===cwd(revision,d)&&
+          runtimeHardened(fs.readFileSync('/proc/'+state.MainPID+'/status','utf8'),uid);
+      }catch{return false;}
+    },
     async verify(revision){
       for(let i=0;i<20;i++){
         try{

@@ -52,9 +52,8 @@ attestation of the mutable files owned by Ubuntu. Root never imports or runs
 the release as root. The provider changes only the existing
 `/etc/systemd/system/mcp-cogentia.service.d/zz-release-330.conf` release slot.
 It rejects unexpected unit configuration, non-Ubuntu execution, privileged
-ExecStart flags and hooks, and ensures both the new release and any automatic
-rollback run with `NoNewPrivileges=yes`, empty capability bounding and
-ambient sets. These hardening flags intentionally persist on rollback.
+ExecStart flags and hooks, and ensures the new release runs with `NoNewPrivileges=yes`, empty capability
+bounding and ambient sets.
 The verification checks effective unit configuration, PID, actual process
 UID/no-new-privs/capabilities and working directory, and the fixed loopback
 MCP health endpoint. Other services are not restarted.
@@ -72,10 +71,16 @@ restart and records the before/after state in
 `/var/lib/cogentia-super/service-deploy-receipts/<ticket>.json`.
 A same-revision repeat returns its existing receipt without another effect.
 A distinct ticket for an already active hardened revision verifies without a
-restart. An unsuccessful new revision restores the previous one. If rollback
-cannot be verified, or the broker crashes mid-effect, the lock remains:
-the owner inspects the actual systemd state and receipt before reconciling.
-Do not automatically delete the lock or retry a new ticket.
+restart. Under the Super Agile Principal decision of 2026-11-28, the source
+engine is forward-only: an unsuccessful new revision is not restored to an
+old version. If the protected drop-in, effective hardened unit and observed
+process state agree, the receipt is `forward_repair_required` and the lock
+is released. Prepare and deploy a corrected revision with a new ticket.
+An ambiguous effect or a broker crash retains the lock for actual-state
+reconciliation. Do not automatically delete the lock or retry a new ticket.
+This source change becomes operational only when the owner installs and
+verifies the pinned new root-owned module; it does not change existing
+owner policies or broaden their scope. Older historical receipts remain valid.
 
 ## One-time owner activation and revocation
 
@@ -109,7 +114,7 @@ node --test scripts/super/service-deploy.test.mjs scripts/super/broker.test.mjs 
   scripts/super/broker-route.test.mjs scripts/super/broker-trust.test.mjs
 ```
 Fixture tests cover rejection, scope, revocation, restart, non-escalation,
-idempotency, rollback and uncertain outcome. Installation and live deployment
+idempotency, forward correction and uncertain outcome. Installation and live deployment
 are separate evidence: verify the actual broker response, receipt and active
 MCP revision before declaring #342 deployed. Re-run the public John corpus
 search from the connected MCP afterwards.
@@ -133,8 +138,8 @@ an owner-installed drop-in and an independent owner policy. First migration
 must be owner-operated, separately reviewed and reversible. Preserve the
 existing state directory, registry, service identity, environment and
 credentials; test actual ONA jobs, recovery and navigation before enabling
-delegation. The normal deployment engine will not restore an unhardened
-ONA baseline. The root broker module is not updated by preparing sources.
+delegation. The current forward-only engine does not automatically restore any
+previous release. The root broker module is not updated by preparing sources.
 
 The release layout is
 `/srv/cogentia/releases/operium-node-agent/<operium-sha>/operium`.

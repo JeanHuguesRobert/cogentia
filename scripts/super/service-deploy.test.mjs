@@ -5,11 +5,11 @@ import os from 'node:os';
 import path from 'node:path';
 import {executeServiceDeploy,validateDeployRequest,validateOwnerPolicy,deploymentConfig,safeUnit,runtimeHardened,SERVICE,ONA_SERVICE,serviceDescriptor,releaseValid} from './service-deploy.mjs';
 import {handle} from './broker.mjs';
-const a='a'.repeat(40),b='b'.repeat(40);
+const a='a'.repeat(40),b='b'.repeat(40),c='c'.repeat(40);
 const dir=r=>'/srv/cogentia/releases/mcp-cogentia/'+r+'/cogentia';
 const legacy=r=>deploymentConfig(r).split('NoNewPrivileges=')[0];
 const request=(revision=b,id='deploy-0001')=>({op:'service.deploy',service:SERVICE,revision,request_id:id});
-function fixture({allow=true,healthy=true,rollbackHealthy=true,prepared=true,oldHardened=false,unsafe=false,privilegedExec=false,revoke=false,service=SERVICE,checkoutBaseline=false}={}){
+function fixture({allow=true,healthy=true,failureKnown=true,prepared=true,oldHardened=false,unsafe=false,privilegedExec=false,revoke=false,service=SERVICE,checkoutBaseline=false}={}){
   const descriptor=serviceDescriptor(service);
   const serviceDir=r=>descriptor.base+'/'+r+'/'+descriptor.repo;
   const entry=descriptor.entry;
@@ -23,7 +23,8 @@ function fixture({allow=true,healthy=true,rollbackHealthy=true,prepared=true,old
     MainPID:String(pid),ActiveState:'active'});
   const adapter={
     authorized:()=>allow&&(!revoke||++checks<3),inspect,
-    releaseValid:r=>r===a||(prepared&&r===b),
+    releaseValid:r=>r===a||(prepared&&[b,c].includes(r)),
+    failureStateKnown:()=>failureKnown,
     readReceipt:id=>receipts.get(id)||null,
     saveReceipt:r=>{receipts.set(r.request_id,{...r});},
     lock:()=>{if(locked)return false;locked=true;return true;},
@@ -32,7 +33,7 @@ function fixture({allow=true,healthy=true,rollbackHealthy=true,prepared=true,old
     writeConfig:c=>{calls.push('write');config=c;revision=/releases\/[^/]+\/([a-f0-9]{40})/.exec(c)[1];},
     reload:()=>calls.push('reload'),
     restart:()=>{calls.push('restart');pid++;},
-    verify:r=>{calls.push('verify:'+r);return r===b?healthy:rollbackHealthy;}
+    verify:r=>{calls.push('verify:'+r);return r===b?healthy:true;}
   };
   return {adapter,calls,inspect,locked:()=>locked,receipts};
 }
@@ -90,19 +91,43 @@ test('revocation before dispatch denies without effect',async()=>{
   assert.equal((await executeServiceDeploy(request(),f.adapter)).error,'owner_delegation_required');
   assert.deepEqual(f.calls,[]);
 });
-test('failed health rolls back to prior revision, keeping non-escalation',async()=>{
+test('failed health leaves new revision and admits forward correction',async()=>{
   const f=fixture({healthy:false});
   const r=await executeServiceDeploy(request(),f.adapter);
-  assert.equal(r.ok,false);assert.equal(r.state,'rolled_back');assert.equal(r.rollback_verified,true);
-  assert.equal(safeUnit(f.inspect(),a,{hardened:true}),true);
+  assert.equal(r.ok,false);assert.equal(r.state,'forward_repair_required');
+  assert.equal(r.recovery_mode,'forward_only');assert.equal(r.observed_revision,b);
+  assert.equal(safeUnit(f.inspect(),b,{hardened:true}),true);
+  assert.deepEqual(f.calls,['write','reload','restart','verify:'+b]);
+  assert.equal(f.locked(),false);
+  const duplicate=await executeServiceDeploy(request(),f.adapter);
+  assert.equal(duplicate.duplicate,true);
+  const repaired=await executeServiceDeploy(request(c,'deploy-0002'),f.adapter);
+  assert.equal(repaired.ok,true);assert.equal(repaired.previous_revision,b);
+  assert.equal(safeUnit(f.inspect(),c,{hardened:true}),true);
+  assert.deepEqual(f.calls,['write','reload','restart','verify:'+b,'write','reload','restart','verify:'+c]);
+});
+test('known stopped revision is eligible for forward repair',async()=>{
+  const f=fixture({healthy:false});
+  const inspect=f.adapter.inspect;
+  f.adapter.inspect=()=>({...inspect(),ActiveState:'failed',MainPID:'0'});
+  const r=await executeServiceDeploy(request(),f.adapter);
+  assert.equal(r.state,'forward_repair_required');assert.equal(r.observed_pid,'0');
   assert.equal(f.locked(),false);
 });
-test('rollback failure preserves lock for reconciliation; new request cannot dispatch',async()=>{
-  const f=fixture({healthy:false,rollbackHealthy:false});
+test('uncertain failed effect preserves lock; no rollback and no new dispatch',async()=>{
+  const f=fixture({healthy:false,failureKnown:false});
   const r=await executeServiceDeploy(request(),f.adapter);
-  assert.equal(r.state,'attention_required');
+  assert.equal(r.state,'attention_required');assert.equal(r.effect_state,'uncertain');
   assert.equal(f.locked(),true);
-  assert.equal((await executeServiceDeploy(request(a,'deploy-0002'),f.adapter)).error,'deployment_busy_or_reconciliation_required');
+  assert.deepEqual(f.calls,['write','reload','restart','verify:'+b]);
+  assert.equal((await executeServiceDeploy(request(c,'deploy-0002'),f.adapter)).error,'deployment_busy_or_reconciliation_required');
+});
+test('failed config write before observable activation retains the lock',async()=>{
+  const f=fixture();
+  f.adapter.writeConfig=()=>{throw Error('write failed');};
+  const r=await executeServiceDeploy(request(),f.adapter);
+  assert.equal(r.state,'attention_required');assert.equal(f.locked(),true);
+  assert.equal(safeUnit(f.inspect(),a),true);
 });
 test('existing broker refuses deployment in unprivileged fixture; no authority created',async()=>{
   if(process.geteuid()!==0)assert.equal((await handle(request())).error,'protected_deploy_executor_required');
@@ -118,7 +143,7 @@ test('live process must retain the unprivileged UID and empty capability sets',(
 test('failed terminal receipt keeps the deployment lock for reconciliation',async()=>{
   const f=fixture({healthy:false});
   const save=f.adapter.saveReceipt;
-  f.adapter.saveReceipt=r=>{if(r.state==='rolled_back')throw Error('receipt storage unavailable');save(r);};
+  f.adapter.saveReceipt=r=>{if(r.state==='forward_repair_required')throw Error('receipt storage unavailable');save(r);};
   await assert.rejects(executeServiceDeploy(request(),f.adapter),/receipt storage unavailable/);
   assert.equal(f.locked(),true);
 });
@@ -160,7 +185,7 @@ test('ONA refuses mutable checkout or unhardened initial baseline; owner migrati
     assert.deepEqual(f.calls,[]);
   }
 });
-test('ONA deploys and rolls back through same engine, preserving scoped receipt and isolation',async()=>{
+test('ONA deploys and repairs forward through same engine, preserving scoped receipt and isolation',async()=>{
   const f=fixture({service:ONA_SERVICE,oldHardened:true});
   const r=await executeServiceDeploy(onaRequest(),f.adapter);
   assert.equal(r.ok,true);assert.equal(r.service,ONA_SERVICE);
@@ -168,9 +193,10 @@ test('ONA deploys and rolls back through same engine, preserving scoped receipt 
   assert.equal((await executeServiceDeploy(onaRequest(),f.adapter)).duplicate,true);
   assert.equal((await executeServiceDeploy(request(b,'deploy-ona-001'),f.adapter)).error,'deployment_request_id_conflict');
   const g=fixture({service:ONA_SERVICE,oldHardened:true,healthy:false});
-  const rolled=await executeServiceDeploy(onaRequest(),g.adapter);
-  assert.equal(rolled.state,'rolled_back');assert.equal(rolled.rollback_verified,true);
-  assert.equal(safeUnit(g.inspect(),a,{hardened:true,service:ONA_SERVICE}),true);
+  const failed=await executeServiceDeploy(onaRequest(),g.adapter);
+  assert.equal(failed.state,'forward_repair_required');assert.equal(failed.observed_revision,b);
+  assert.equal(safeUnit(g.inspect(),b,{hardened:true,service:ONA_SERVICE}),true);
+  assert.equal((await executeServiceDeploy(onaRequest(c,'deploy-ona-002'),g.adapter)).ok,true);
 });
 
 
