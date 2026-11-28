@@ -11,6 +11,10 @@ const typed=(v,prefix)=>ref(v)&&v.startsWith(prefix)&&v.length>prefix.length;
 const agent=v=>typed(v,'agent:')||typed(v,'logical-agent:');
 const principal=v=>typed(v,'principal:');
 const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
+const validWindow=w=>object(w)&&Object.keys(w).length===2&&
+ ['not_before','review_at'].every(k=>typeof w[k]==='string'&&
+ Number.isFinite(Date.parse(w[k]))&&new Date(w[k]).toISOString()===w[k])&&
+ Date.parse(w.review_at)>Date.parse(w.not_before);
 const digest=v=>typeof v==='string'&&/^sha256:[a-f0-9]{64}$/.test(v);
 const deny=error=>({ok:false,error,grants_authority:false});
 // A work can bind one legacy capability or an exact set of capabilities.
@@ -29,6 +33,7 @@ const budget=v=>object(v)&&Object.keys(v).length>0&&Object.keys(v).length<=16&&
  */
 export function buildWorkCommissioningContract({intent:i,context:c}={}){
  if(!object(i)||!object(c)||c.verified!==true)return deny('verified_work_context_required');
+ if(c.temporal_window!==undefined&&!validWindow(c.temporal_window))return deny('invalid_work_temporal_window');
  if(!principal(i.principal_ref)||!agent(i.responsible_agent_ref)||
     typeof i.submission_key!=='string'||!(/^[A-Za-z0-9_.:-]{1,128}$/.test(i.submission_key))||
     !digest(i.request_hash)||!validCapabilities(i)||!typed(i.mandate_ref,'mandate:')||
@@ -60,6 +65,7 @@ export function buildWorkCommissioningContract({intent:i,context:c}={}){
    commissioned_by_principal_ref:cp,commissioned_by_agent_ref:ca,source_ref:c.commissioning_ref};
  const contract={schema:'cogentia.work-commissioning/v1',
    submission_key:i.submission_key,request_hash:i.request_hash,
+   ...(c.temporal_window?{temporal_window:{...c.temporal_window}}:{}),
    principal_ref:i.principal_ref,requesting_agent_ref:c.requesting_agent_ref??null,
    ...(c.requesting_principal_ref?{requesting_principal_ref:c.requesting_principal_ref}:{}),
    subject_ref:c.subject_ref??null,twin_ref:c.twin_ref??null,

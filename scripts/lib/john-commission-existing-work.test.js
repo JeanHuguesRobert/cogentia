@@ -220,12 +220,13 @@ test('multiple proposals share one catalog, and a replacement handler resolves c
 });
 
 
-async function withTurns(f,body){
+async function withTurns(f,body,{temporal_window}={}){
  let clock=now;
  const plan=structuredClone(f.plan);
  const {command,timeout_ms,...route}=plan.request.first_act;
  delete plan.request.first_act;plan.request.route=route;
  plan.request.turn_policy={kind:'agent_selected_normal/v1',valid_until:'2026-11-27T12:30:00.000Z'};
+ if(temporal_window)plan.request.temporal_window=temporal_window;
  plan.intent.request_hash=hashPayload(plan.request);
  const options={...f,primaryStoreId:'sqlite:fixture-local',ownerInstanceRef:'instance:fixture-work',
    authenticatePrincipal:f.workflow.authenticate,handler:async()=>{throw Error('must_not_execute')},now:()=>clock};
@@ -440,4 +441,43 @@ test('one semantic packet alternates real Unix and existing navigation gateway, 
    assert.equal((await call(finish)).duplicate,true);
    console.log('SEMANTIC_MIXED_REAL_GATEWAY_UNIX_PASS',{allocated:3,used:2,returned:1,capabilities:plan.intent.capabilities});
  }finally{await router?.stop();ext?.close();await gate.close();f.close()}
+});
+
+test('reviewed temporal window binds commission and denies early/late acts; closing returns unused budget',async()=>{
+ const f=fixture();
+ const temporal_window={not_before:'2026-11-27T12:05:00.000Z',review_at:'2026-11-27T12:20:00.000Z'};
+ try{await withTurns(f,async({a,run,finish,setClock,local})=>{
+   const topic='packet:'+a.packet_ref;
+   const creation=f.packetStore.listTopic(topic)[0].payload;
+   assert.deepEqual(creation.temporal_window,temporal_window);
+   assert.deepEqual(creation.args.request.temporal_window,temporal_window);
+   assert.deepEqual(creation.access_context.temporal_window,temporal_window);
+   assert.equal((await run('early')).ok,false);
+   assert.ok(!f.packetStore.listTopic(topic).some(e=>e.payload?.phase==='claimed'));
+   assert.equal(local().settled.max_steps,0);
+   setClock('2026-11-27T12:05:00Z');
+   const first=await run('due');assert.equal(first.ok,true,JSON.stringify(first));
+   assert.equal(first.turn_receipt.result.stdout.trim(),hostname());
+   setClock('2026-11-27T12:19:55Z');
+   assert.equal((await run('too-long')).ok,false);
+   setClock('2026-11-27T12:20:00Z');
+   assert.equal((await run('expired')).ok,false);
+   assert.equal((await run('due')).duplicate,true);
+   const closed=await finish('blocked');assert.equal(closed.ok,true,JSON.stringify(closed));
+   assert.equal(closed.turn_receipt.work_complete,false);
+   assert.equal(f.ledger().snapshot().settled.max_steps,1);
+   assert.equal(f.ledger().snapshot().reserved.max_steps,0);
+   assert.equal(f.packetStore.auditTopicCommitment(topic).ok,true);
+ },{temporal_window})}finally{f.close()}
+});
+
+test('unstarted scheduled work may be closed before due with zero Steps',async()=>{
+ const f=fixture();
+ try{await withTurns(f,async({run,finish})=>{
+   assert.equal((await run('early')).ok,false);
+   const closed=await finish('blocked');assert.equal(closed.ok,true,JSON.stringify(closed));
+   assert.equal(f.ledger().snapshot().settled.max_steps,0);
+   assert.equal(f.ledger().snapshot().reserved.max_steps,0);
+ },{temporal_window:{not_before:'2026-11-27T12:05:00.000Z',review_at:'2026-11-27T12:20:00.000Z'}})}
+ finally{f.close()}
 });

@@ -34,7 +34,7 @@ const topic = packetTopicForMcpTask;
 // Optional trusted creation metadata, not a caller-supplied timer or grant.
 // Crossing review_at parks new dispatches for a relevance decision; it
 // does not terminate an already claimed act or release its budget blindly.
-function normalizeTemporalWindow(value) {
+export function normalizeTemporalWindow(value) {
   if (value == null) return null;
   const iso = v => typeof v === "string" && Number.isFinite(Date.parse(v))
     && new Date(v).toISOString() === v;
@@ -64,6 +64,7 @@ export function createCopMcpTasksPilot({
   ownerInstanceRef = "instance:mcp-tasks-cop-pilot",
   primaryStoreId = null, verifyExternalResult = null, prepareCreation = null,
   verifyHostInput = null, submissionNamespace = toolName,
+  now = Date.now, allowTemporalReconciliation = null,
 } = {}) {
   if (!store || typeof store.append !== "function" ||
       typeof store.transaction !== "function" || typeof store.listTopic !== "function")
@@ -80,6 +81,9 @@ export function createCopMcpTasksPilot({
   if (verifyHostInput !== null && typeof verifyHostInput !== "function")
     throw new TypeError("trusted host input verifier required");
 
+  if (typeof now !== "function" || (allowTemporalReconciliation !== null &&
+      (typeof allowTemporalReconciliation !== "function" || !verifyHostInput)))
+    throw new TypeError("trusted temporal reconciliation requires host input verifier");
   if (prepareCreation !== null && typeof prepareCreation !== "function")
     throw new TypeError("trusted creation admission required");
 
@@ -160,7 +164,7 @@ export function createCopMcpTasksPilot({
     const status = completed ? "completed" : failed ? "failed" : cancelled ? "cancelled" :
       input && (!answered || answered.topic.seq < input.topic.seq)
         ? "input_required" : "working";
-    const temporal = temporalWorkEligibility(created.temporal_window);
+    const temporal = temporalWorkEligibility(created.temporal_window, now());
     const currentClaim = events.some(e => e.payload?.phase === "claimed" &&
       (e.payload.resume_from_event ?? null) === (answered?.event_id ?? null));
     const result = {
@@ -504,22 +508,33 @@ export function createCopMcpTasksPilot({
       }
       // Recheck inside the same transaction as the claim, including direct
       // runner calls that did not pass through the scheduler.
-      if (temporalWorkEligibility(created.temporal_window) !== "ready")
-        return "temporal_boundary";
+      const temporal=temporalWorkEligibility(created.temporal_window, now());
+      if (temporal !== "ready") {
+        // Only a host-verified, hash-bound input may reach a trusted
+        // reconciliation handler. It must not dispatch the deferred act.
+        const reconcile=currentSuspension?.payload?.verified_host_input_required===true &&
+          currentAnswer && allowTemporalReconciliation?.({
+            temporal, input:currentAnswer.payload.inputResponses
+          })===true;
+        if(!reconcile)return "temporal_boundary";
+      }
       const ev = commit(taskId, "claimed", {
         ...(currentAnswer ? {resume_from_event:currentAnswer.event_id} : {}),
+        ...(temporal!=="ready"?{temporal_reconciliation:true}:{}),
       }, claimKey, tx);
       if (!ev.ok) throw new Error("cannot_claim");
-      return "claimed";
+      return temporal==="ready"?"claimed":"claimed_for_temporal_reconciliation";
     });
     if (!claim.ok) throw new Error(claim.error);
-    if (claim.value !== "claimed") return project(taskId, auth);
+    if (!["claimed","claimed_for_temporal_reconciliation"].includes(claim.value))
+      return project(taskId, auth);
     try {
       // The effective caller was revalidated by the COP dispatcher before
       // this invocation. Pass its identity to adapters that enforce
       // program-level and per-capability permissions; old handlers can
       // ignore the additional contextual argument.
       const result = await handler(created.args, {taskId,auth,
+        ...(claim.value==="claimed_for_temporal_reconciliation"?{temporal_reconciliation:true}:{}),
         ...(answered ? {resume:{
           checkpoint:suspended.payload.checkpoint,
           pending:suspended.payload.pending,

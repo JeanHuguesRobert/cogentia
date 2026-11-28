@@ -116,3 +116,13 @@ test('multi-capability authority binds one exact capability set, preserving lega
  assert.equal(build({intent:{...multi,capability:'host.process.run'},context}).ok,false);
  assert.equal(build({intent,context}).contract.authority.capability,intent.capability);
 });
+
+test('trusted temporal window is bound in the contract and cannot be substituted',()=>{
+ const temporal_window={not_before:'2026-11-28T13:00:00.000Z',review_at:'2026-12-01T13:00:00.000Z'};
+ const a=build({intent,context:{...context,temporal_window}});
+ assert.equal(a.ok,true);
+ assert.deepEqual(a.contract.temporal_window,temporal_window);
+ assert.equal(compare(a.contract,build({intent,context})).ok,false);
+ assert.equal(compare(a.contract,build({intent,context:{...context,temporal_window:{...temporal_window,review_at:'2026-12-02T13:00:00.000Z'}}})).ok,false);
+ assert.equal(build({intent,context:{...context,temporal_window:{...temporal_window,review_at:temporal_window.not_before}}}).ok,false);
+});

@@ -15,7 +15,7 @@ import {reserveEventSourcedDelegatedBudget} from '../../../inseme/packages/cop-c
 import {buildWorkCommissioningContract} from './work-commissioning-contract.js';
 import {HOST_PROCESS,exactKeys,validNormalWorkRoute,routeInSignedScope,normalizeWorkAct} from './commissioned-work-routes.js';
 import {assessJohnCopAuthority} from './john-cop-authority-preflight.js';
-import {createCopMcpTasksPilot,packetRefForMcpTask,stableMcpWorkTaskId} from './mcp-tasks-cop-pilot.mjs';
+import {createCopMcpTasksPilot,packetRefForMcpTask,stableMcpWorkTaskId,normalizeTemporalWindow,temporalWorkEligibility} from './mcp-tasks-cop-pilot.mjs';
 import {STANDING_MANDATE_REF,STANDING_BUDGET_ID,STANDING_TRANSPORT_LABEL} from './john-standing-mission-authority.js';
 
 const deny=(error,details={})=>({ok:false,error,grants_authority:false,...details});
@@ -28,6 +28,21 @@ const TURN_POLICY='agent_selected_normal/v1';
 const turnPolicy=p=>exactKeys(p,['kind','valid_until'])&&p.kind===TURN_POLICY&&
  typeof p.valid_until==='string'&&Number.isFinite(Date.parse(p.valid_until))&&
  new Date(p.valid_until).toISOString()===p.valid_until;
+// Optional window is part of the reviewed request hash. Preserve old
+// commissions byte-for-byte; do not invent a date for historical work.
+function validReviewedRequest(r){
+ if(!r||typeof r!=='object')return false;
+ const {temporal_window,...base}=r;
+ if(Object.hasOwn(r,'temporal_window')){
+   try{if(!normalizeTemporalWindow(temporal_window))return false}catch{return false}
+   // The legacy single-act path cannot close unspent funding after an
+   // elapsed review. Only opt in through the existing multi-turn lifecycle.
+   if(!turnPolicy(r.turn_policy)||Date.parse(temporal_window.review_at)>Date.parse(r.turn_policy.valid_until))return false;
+ }
+ return exactKeys(base,['work_ref','source_issue_id','purpose','first_act','completion'])||
+   ((exactKeys(base,['work_ref','source_issue_id','purpose','route','completion','turn_policy'])||
+     exactKeys(base,['work_ref','source_issue_id','purpose','routes','completion','turn_policy']))&&turnPolicy(r.turn_policy));
+}
 const turnId=v=>typeof v==='string'&&/^[A-Za-z0-9_.:-]{1,128}$/.test(v);
 const routesOf=r=>{
  if(r.routes)return r.routes;
@@ -62,9 +77,7 @@ export function createWorkCommissioner({
    throw TypeError('trusted_work_commissioning_dependencies_required');
  const reviewed=structuredClone(plan),r=reviewed?.request,i=reviewed?.intent;
  if(!exactKeys(reviewed,['request','intent'])||
-    !(exactKeys(r,['work_ref','source_issue_id','purpose','first_act','completion'])||
-      (exactKeys(r,['work_ref','source_issue_id','purpose','route','completion','turn_policy'])||
-       exactKeys(r,['work_ref','source_issue_id','purpose','routes','completion','turn_policy']))&&turnPolicy(r.turn_policy))||
+    !validReviewedRequest(r)||
     !source.test(r.work_ref)||sourceRef!==r.work_ref||typeof r.source_issue_id!=='string'||!r.source_issue_id||
     typeof r.purpose!=='string'||!r.purpose.trim()||typeof r.completion!=='string'||!r.completion.trim()||
     !validRoutes(r,i)||
@@ -123,6 +136,8 @@ export function createWorkCommissioner({
  async function commission({session,auth,presented_plan_hash}={},directPrincipal=false){
      if(presented_plan_hash!==plan_hash)return deny('work_plan_hash_mismatch');
      if(r.turn_policy&&Date.parse(r.turn_policy.valid_until)<=now().getTime())return deny('work_turn_policy_expired');
+     if(temporalWorkEligibility(r.temporal_window,now().getTime())==='temporal_review_required')
+       return deny('work_temporal_review_required');
      let identity;
      try{identity=await authenticatePrincipal({session})}catch{return deny('principal_session_unverified')}
      if(identity?.ok!==true||identity.authenticated!==true||identity.principal_ref!==i.principal_ref)
@@ -135,6 +150,7 @@ export function createWorkCommissioner({
        commissioned_by_principal_ref:identity.principal_ref,
        commissioning_ref:sourceRef,destination_ref:'destination:jhn:work',recipient_ref:i.principal_ref,
        result_visibility:'restricted',
+       ...(r.temporal_window?{temporal_window:r.temporal_window}:{}),
      }});
      if(!built.ok)return deny(built.error);
      // This is the authenticated decision recorded atomically with the
@@ -144,19 +160,23 @@ export function createWorkCommissioner({
        source_work_ref:r.work_ref,source_issue_id:r.source_issue_id,source_ref:sourceRef,
      }};
      const pilot=createCopMcpTasksPilot({store:packetStore,toolName:toolNameFor(r),submissionNamespace:LEGACY_TOOL,
-       primaryStoreId,ownerInstanceRef,handler,
+       primaryStoreId,ownerInstanceRef,handler,now:()=>now().getTime(),
        prepareCreation:()=>({admitted:true,submission_key:i.submission_key,
-         assignment:built.assignment,access_context})});
+         assignment:built.assignment,access_context,
+         ...(r.temporal_window?{temporal_window:r.temporal_window}:{})})});
      let task;
      try{
        task=directPrincipal?await pilot.createCommissioned({args:{request:r},admission:{
-         admitted:true,submission_key:i.submission_key,assignment:built.assignment,access_context}})
+         admitted:true,submission_key:i.submission_key,assignment:built.assignment,access_context,
+         ...(r.temporal_window?{temporal_window:r.temporal_window}:{})}})
          :await pilot.adapter.create({name:toolNameFor(r),args:{request:r},auth});
      }catch(e){return deny(e.message||'work_creation_failed')}
      const packet_ref=packetRefForMcpTask(task.taskId);
      const status=directPrincipal?task.status:(await pilot.adapter.get({taskId:task.taskId,auth})).status;
      if(status!=='working')return {ok:true,duplicate:true,task_id:task.taskId,packet_ref,
        status,grants_authority:false};
+     if(temporalWorkEligibility(r.temporal_window,now().getTime())==='temporal_review_required')
+       return deny('work_temporal_review_required',{packet_ref,created:true,funded:false});
      const fresh=inspectAuthority(auth,{directPrincipal});
      if(!fresh.ok)return deny(fresh.error,{packet_ref,created:true,funded:false});
      const existing=allocationFor(packet_ref);
@@ -233,6 +253,8 @@ export function createCommissionedWorkRunner({rootStore,packetStore,primaryStore
    const assigned=projectPacketWorkAssignment(packetStore,{packet_ref:topic});
    if(first?.toolName!==toolNameFor(r)||first?.owner!=='jhn:'+i.responsible_agent_ref||
       hashPayload(first?.args?.request)!==i.request_hash||
+      hashPayload(first?.temporal_window??null)!==hashPayload(r.temporal_window??null)||
+      hashPayload(c?.temporal_window??null)!==hashPayload(r.temporal_window??null)||
       c?.request_hash!==i.request_hash||c?.authority?.mandate_ref!==i.mandate_ref||
       !authorityMatches(c?.authority,i)||
       c?.principal_ref!==i.principal_ref||c?.funding?.parent_budget_ref!==i.parent_budget_ref||
@@ -259,7 +281,12 @@ export function createCommissionedWorkRunner({rootStore,packetStore,primaryStore
       packetStore.listTopic('execution-budget:'+budget_id).some(e=>e.event_type==='ExecutionBudgetSeal'))return null;
    return {store:packetStore,primary_store_id:primaryStoreId,budget_id,allocation_ref:a.reservation_id};
  }
+ const temporal=()=>temporalWorkEligibility(r.temporal_window,now().getTime());
+ const actFitsWindow=act=>temporal()==='ready'&&(!r.temporal_window||
+   Date.parse(r.temporal_window.review_at)-now().getTime()>=act.timeout_ms);
  function resolvePacketContext(q){
+   // The standing resolver calls this again immediately before dispatch.
+   if(temporal()!=='ready')return null;
    if(q.packet_ref!==packet_ref||q.actor_ref!==i.responsible_agent_ref||
       q.principal_ref!==i.principal_ref||q.mandate_ref!==i.mandate_ref||
       q.mandate_version!==i.mandate_version||
@@ -305,7 +332,7 @@ export function createCommissionedWorkRunner({rootStore,packetStore,primaryStore
    if(!candidate)return deny('work_turn_invalid');
    const digest=hashPayload(candidate),id=candidate.turn.id;
    const localLedger=()=>createEventSourcedExecutionBudgetLedger({store:packetStore,budget_id,require_authority_grant:true});
-   const actWithinTime=v=>Date.parse(r.turn_policy.valid_until)-now().getTime()>=v.act.timeout_ms;
+   const actWithinTime=v=>actFitsWindow(v.act)&&Date.parse(r.turn_policy.valid_until)-now().getTime()>=v.act.timeout_ms;
    const check=(capability)=>assessJohnCopAuthority({store:rootStore,auth,verifyIssuer,
      ledger:localLedger(),mandate_ref:i.mandate_ref,version_pin:i.mandate_version,capability,
      transport_mandate_label:STANDING_TRANSPORT_LABEL,at_time:now()});
@@ -315,7 +342,11 @@ export function createCommissionedWorkRunner({rootStore,packetStore,primaryStore
    // Every actual act is admitted by the same standing COP resolver.
    // The host-input validator also binds the accepted turn to its suspension.
    const pilot=createCopMcpTasksPilot({store:packetStore,toolName:toolNameFor(r),submissionNamespace:LEGACY_TOOL,primaryStoreId,
-     ownerInstanceRef:'instance:jhn-host-work',
+     ownerInstanceRef:'instance:jhn-host-work',now:()=>now().getTime(),
+     // A verified final judgment or previously admitted act at a boundary
+     // can reconcile accounting/checkpoint, never dispatch a new effect.
+     allowTemporalReconciliation:({input})=>input?.turn?.kind==='finish'||
+       (input?.turn?.kind==='act'&&!actWithinTime(input)),
      verifyHostInput:({candidate:next})=>{
        const v=normalizeTurn({work_ref:r.work_ref,work_turn:next?.turn,
          ...(r.routes&&next?.act?{capability:next.capability,arguments:next.act}:next?.act)});
@@ -325,7 +356,7 @@ export function createCommissionedWorkRunner({rootStore,packetStore,primaryStore
           localLedger().snapshot().available.max_steps<1))return {verified:false};
        return {verified:true,value:v};
      },
-     handler:async(_created,{resume})=>{
+     handler:async(_created,{resume,temporal_reconciliation})=>{
        const next=resume?.inputResponses;
        if(!next)throw Error("work_turn_input_not_admitted");
        const active=context();
@@ -344,7 +375,7 @@ export function createCommissionedWorkRunner({rootStore,packetStore,primaryStore
            work_complete:next.turn.status==='completed',postcondition_status:'agent_assessed',
            packet_status:next.turn.status};
        }
-       if(!actWithinTime(next)||!checkTurn(next)){
+       if(temporal_reconciliation||!actWithinTime(next)||!checkTurn(next)){
          // The provider has not been called. Keep the packet resumable so
          // a subsequent authorized judgment can reconcile its unused funds.
          return {type:'cop.task.host-input/v1',checkpoint:{turn:next.turn,input_hash:hashPayload(next),
@@ -408,9 +439,10 @@ export function createCommissionedWorkRunner({rootStore,packetStore,primaryStore
      if(work_ref!==r.work_ref||(mandate!=null&&mandate!==STANDING_TRANSPORT_LABEL)||
         hashPayload(given)!==hashPayload(expected))return deny('work_exact_act_mismatch');
      const pilot=createCopMcpTasksPilot({store:packetStore,toolName:toolNameFor(r),submissionNamespace:LEGACY_TOOL,primaryStoreId,
-       ownerInstanceRef:'instance:jhn-host-work',handler:async()=>{
+       ownerInstanceRef:'instance:jhn-host-work',now:()=>now().getTime(),handler:async()=>{
          const active=context();
          if(!active)throw Error('work_context_or_allocation_unavailable');
+         if(!actFitsWindow(expected))throw Error('work_temporal_boundary');
          const result=await invoke(expected,{packet_ref});
          const spend=result?.trace?.verification?.cop_spend;
          if(spend?.accounting_complete!==true||spend.accounting_locality!=='packet'||
@@ -439,6 +471,7 @@ export function createCommissionedWorkRunner({rootStore,packetStore,primaryStore
        return {ok:status.status==='completed'&&status.result?.result?.ok===true,
          duplicate:true,packet_ref,task:status,grants_authority:false};
      if(!context())return deny('work_context_or_allocation_unavailable');
+     if(!actFitsWindow(expected))return deny('work_temporal_boundary',{packet_ref,task:status});
      const done=await pilot.run(taskId,auth);
      return {ok:done.status==='completed'&&done.result?.result?.ok===true,
        packet_ref,task:done,grants_authority:false};
