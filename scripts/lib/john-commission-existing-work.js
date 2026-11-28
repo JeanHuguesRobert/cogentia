@@ -13,14 +13,15 @@ import {resolveMandate,evaluateMandate} from '../../../inseme/packages/cop-core/
 import {createEventSourcedExecutionBudgetLedger} from '../../../inseme/packages/cop-core/src/execution-budget.js';
 import {reserveEventSourcedDelegatedBudget} from '../../../inseme/packages/cop-core/src/delegated-budget.js';
 import {buildWorkCommissioningContract} from './work-commissioning-contract.js';
+import {HOST_PROCESS,exactKeys,validNormalWorkRoute,routeInSignedScope,normalizeWorkAct} from './commissioned-work-routes.js';
 import {assessJohnCopAuthority} from './john-cop-authority-preflight.js';
 import {createCopMcpTasksPilot,packetRefForMcpTask,stableMcpWorkTaskId} from './mcp-tasks-cop-pilot.mjs';
-import {STANDING_MANDATE_REF,STANDING_BUDGET_ID,STANDING_TRANSPORT_LABEL,
- STANDING_GENERAL_HOST_PROFILE} from './john-standing-mission-authority.js';
+import {STANDING_MANDATE_REF,STANDING_BUDGET_ID,STANDING_TRANSPORT_LABEL} from './john-standing-mission-authority.js';
 
 const deny=(error,details={})=>({ok:false,error,grants_authority:false,...details});
-const TOOL='cogentia_host_process_run';
-const exactKeys=(x,keys)=>x&&typeof x==='object'&&!Array.isArray(x)&&Object.keys(x).length===keys.length&&keys.every(k=>Object.hasOwn(x,k));
+const LEGACY_TOOL='cogentia_host_process_run';
+// Preserve the original stable work identity namespace across surface migrations.
+const toolNameFor=r=>r?.routes?'cogentia_work_turn':LEGACY_TOOL;
 const source=/^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/issues\/[1-9][0-9]*$/;
 const ref=x=>typeof x==='string'&&/^[A-Za-z0-9][A-Za-z0-9_.:/@-]{1,255}$/.test(x);
 const TURN_POLICY='agent_selected_normal/v1';
@@ -28,11 +29,30 @@ const turnPolicy=p=>exactKeys(p,['kind','valid_until'])&&p.kind===TURN_POLICY&&
  typeof p.valid_until==='string'&&Number.isFinite(Date.parse(p.valid_until))&&
  new Date(p.valid_until).toISOString()===p.valid_until;
 const turnId=v=>typeof v==='string'&&/^[A-Za-z0-9_.:-]{1,128}$/.test(v);
+const routesOf=r=>{
+ if(r.routes)return r.routes;
+ if(r.route)return [r.route];
+ const {capability,target,provider,execution_mode}=r.first_act??{};
+ return [{capability,target,provider,execution_mode}];
+};
+const capabilitiesOf=i=>i.capabilities??[i.capability];
+const authorityMatches=(a,i)=>hashPayload(a)===hashPayload({mandate_ref:i.mandate_ref,
+ version:i.mandate_version,...(i.capabilities?{capabilities:i.capabilities}:{capability:i.capability})});
+const validRoutes=(r,i)=>{
+ if(r.routes!==undefined){
+   return r.turn_policy&&Array.isArray(r.routes)&&r.routes.length>=1&&r.routes.length<=16&&
+     r.routes.every(validNormalWorkRoute)&&new Set(r.routes.map(hashPayload)).size===r.routes.length&&
+     Array.isArray(i?.capabilities)&&hashPayload(i.capabilities)===hashPayload([...new Set(r.routes.map(x=>x.capability))]);
+ }
+ if(r.route)return r.route.capability===HOST_PROCESS&&validNormalWorkRoute(r.route)&&i?.capability===HOST_PROCESS;
+ const {capability,...act}=r.first_act??{};
+ return capability===HOST_PROCESS&&i?.capability===HOST_PROCESS&&!!normalizeWorkAct(routesOf(r)[0],act);
+};
 
 
 // A host-owned plan is immutable for the lifetime of this adapter; no
 // command, budget, actor or permission is taken from the confirmation body.
-export function createExistingHostWorkCommissioner({
+export function createWorkCommissioner({
  rootStore,packetStore,primaryStoreId,ownerInstanceRef,verifyIssuer,
  authenticatePrincipal,plan,sourceRef,handler,now=()=>new Date(),
 }={}){
@@ -40,20 +60,17 @@ export function createExistingHostWorkCommissioner({
     typeof verifyIssuer!=='function'||typeof authenticatePrincipal!=='function'||
     typeof handler!=='function'||!ref(sourceRef))
    throw TypeError('trusted_work_commissioning_dependencies_required');
- const reviewed=structuredClone(plan),r=reviewed?.request,i=reviewed?.intent,a=r?.route??r?.first_act;
+ const reviewed=structuredClone(plan),r=reviewed?.request,i=reviewed?.intent;
  if(!exactKeys(reviewed,['request','intent'])||
     !(exactKeys(r,['work_ref','source_issue_id','purpose','first_act','completion'])||
-      exactKeys(r,['work_ref','source_issue_id','purpose','route','completion','turn_policy'])&&turnPolicy(r.turn_policy))||
+      (exactKeys(r,['work_ref','source_issue_id','purpose','route','completion','turn_policy'])||
+       exactKeys(r,['work_ref','source_issue_id','purpose','routes','completion','turn_policy']))&&turnPolicy(r.turn_policy))||
     !source.test(r.work_ref)||sourceRef!==r.work_ref||typeof r.source_issue_id!=='string'||!r.source_issue_id||
     typeof r.purpose!=='string'||!r.purpose.trim()||typeof r.completion!=='string'||!r.completion.trim()||
-    !(r.turn_policy?exactKeys(a,['capability','target','provider','execution_mode']):
-       exactKeys(a,['capability','target','provider','execution_mode','command','timeout_ms'])&&
-       typeof a.command==='string'&&a.command.trim()&&a.command.length<=32768&&
-       Number.isSafeInteger(a.timeout_ms)&&a.timeout_ms>=1&&a.timeout_ms<=120000)||
-    a.capability!=='host.process.run'||a.execution_mode!=='normal'||
-    !exactKeys(i,['submission_key','request_hash','principal_ref','responsible_agent_ref','capability','mandate_ref','mandate_version','parent_budget_ref','allocation'])||
+    !validRoutes(r,i)||
+    !exactKeys(i,['submission_key','request_hash','principal_ref','responsible_agent_ref',r.routes?'capabilities':'capability','mandate_ref','mandate_version','parent_budget_ref','allocation'])||
     i.request_hash!==hashPayload(r)||i.principal_ref!=='principal:jhn'||i.responsible_agent_ref!=='agent:jhn'||
-    i.capability!==a.capability||i.mandate_ref!==STANDING_MANDATE_REF||i.parent_budget_ref!==STANDING_BUDGET_ID||
+    i.mandate_ref!==STANDING_MANDATE_REF||i.parent_budget_ref!==STANDING_BUDGET_ID||
     !exactKeys(i.allocation,['max_steps'])||!Number.isSafeInteger(i.allocation.max_steps)||i.allocation.max_steps<1)
    throw TypeError('reviewed_work_plan_invalid');
  const plan_hash=hashPayload(reviewed);
@@ -68,26 +85,27 @@ export function createExistingHostWorkCommissioner({
      // Commissioning is a human act. Verify the existing agent mandate
      // without pretending the human session is an agent bearer.
      const proof=verifyIssuer({mandate,mandate_ref:i.mandate_ref,store:rootStore});
-     const grant=evaluateMandate(rootStore,{mandate_ref:i.mandate_ref,
+     const grants=capabilitiesOf(i).map(capability=>evaluateMandate(rootStore,{mandate_ref:i.mandate_ref,
        version_pin:i.mandate_version,expected_principal_ref:i.principal_ref,
-       expected_actor_ref:i.responsible_agent_ref,capability:i.capability,at_time:now()});
+       expected_actor_ref:i.responsible_agent_ref,capability,at_time:now()}));
      const budget=parent().snapshot();
      if(proof?.verified!==true||proof.principal_ref!==i.principal_ref||
-        proof.mandate_ref!==i.mandate_ref||grant?.granted!==true||
+        proof.mandate_ref!==i.mandate_ref||grants.some(g=>g?.granted!==true)||
         budget.has_grant!==true||budget.mandate_ref!==i.mandate_ref||
         !Number.isSafeInteger(mandate.scope?.budget_ceiling?.max_steps)||
         budget.limits?.max_steps>mandate.scope.budget_ceiling.max_steps)
        return deny('work_mandate_denied');
    }else{
-     const p=assessJohnCopAuthority({store:rootStore,auth,verifyIssuer,ledger:parent(),
-       mandate_ref:i.mandate_ref,version_pin:i.mandate_version,capability:a.capability,
-       transport_mandate_label:STANDING_TRANSPORT_LABEL,at_time:now()});
-     if(!p.preflight_ok)return deny(p.error||'work_mandate_denied');
+     for(const capability of capabilitiesOf(i)){
+       const p=assessJohnCopAuthority({store:rootStore,auth,verifyIssuer,ledger:parent(),
+         mandate_ref:i.mandate_ref,version_pin:i.mandate_version,capability,
+         transport_mandate_label:STANDING_TRANSPORT_LABEL,at_time:now()});
+       if(!p.preflight_ok)return deny(p.error||'work_mandate_denied');
+     }
    }
    // Reuse the already signed general normal profile. Diagnostic-only
    // mandates do not get upgraded by commissioning a general work order.
-   if(!mandate.scope?.standing_operations?.some(op=>op.profile===STANDING_GENERAL_HOST_PROFILE&&
-     op.capability===a.capability&&op.target===a.target&&op.provider===a.provider&&op.execution_mode===a.execution_mode))
+   if(!routesOf(r).every(route=>routeInSignedScope(mandate.scope,route)))
      return deny('work_general_normal_scope_missing');
    return {ok:true};
  }
@@ -125,7 +143,7 @@ export function createExistingHostWorkCommissioner({
        scheme:'supabase_authenticated_owner_work_intent/v1',plan_hash,
        source_work_ref:r.work_ref,source_issue_id:r.source_issue_id,source_ref:sourceRef,
      }};
-     const pilot=createCopMcpTasksPilot({store:packetStore,toolName:TOOL,
+     const pilot=createCopMcpTasksPilot({store:packetStore,toolName:toolNameFor(r),submissionNamespace:LEGACY_TOOL,
        primaryStoreId,ownerInstanceRef,handler,
        prepareCreation:()=>({admitted:true,submission_key:i.submission_key,
          assignment:built.assignment,access_context})});
@@ -133,7 +151,7 @@ export function createExistingHostWorkCommissioner({
      try{
        task=directPrincipal?await pilot.createCommissioned({args:{request:r},admission:{
          admitted:true,submission_key:i.submission_key,assignment:built.assignment,access_context}})
-         :await pilot.adapter.create({name:TOOL,args:{request:r},auth});
+         :await pilot.adapter.create({name:toolNameFor(r),args:{request:r},auth});
      }catch(e){return deny(e.message||'work_creation_failed')}
      const packet_ref=packetRefForMcpTask(task.taskId);
      const status=directPrincipal?task.status:(await pilot.adapter.get({taskId:task.taskId,auth})).status;
@@ -197,15 +215,15 @@ export function openConfiguredExistingWork(env=process.env){
  * through the ordinary governed host router is exact for legacy plans and
  * bounded by the reviewed route and signed mandate for multi-turn plans.
  */
-export function createCommissionedHostWorkRunner({rootStore,packetStore,primaryStoreId,
+export function createCommissionedWorkRunner({rootStore,packetStore,primaryStoreId,
  plan,verifyIssuer,now=()=>new Date()}={}){
  const reviewed=structuredClone(plan),r=reviewed?.request,i=reviewed?.intent;
  // Reuse the plan validator with a verifier that cannot authenticate a human.
  // This construction is read-only; the worker never invokes commission().
- const validator=createExistingHostWorkCommissioner({rootStore,packetStore,primaryStoreId,
+ const validator=createWorkCommissioner({rootStore,packetStore,primaryStoreId,
    ownerInstanceRef:'instance:jhn-host-work',plan:reviewed,sourceRef:r?.work_ref,verifyIssuer,
    authenticatePrincipal:async()=>({ok:false}),handler:async()=>{throw Error('not_a_commissioner')},now});
- const taskId=stableMcpWorkTaskId('jhn:'+i.responsible_agent_ref,TOOL,i.submission_key);
+ const taskId=stableMcpWorkTaskId('jhn:'+i.responsible_agent_ref,LEGACY_TOOL,i.submission_key);
  const packet_ref=packetRefForMcpTask(taskId),topic='packet:'+packet_ref,budget_id='budget:'+packet_ref;
  const parent=()=>createEventSourcedExecutionBudgetLedger({store:rootStore,
    budget_id:STANDING_BUDGET_ID,require_authority_grant:true});
@@ -213,10 +231,10 @@ export function createCommissionedHostWorkRunner({rootStore,packetStore,primaryS
    const first=packetStore.listTopic(topic)[0]?.payload;
    const c=first?.access_context,e=c?.commissioning_evidence;
    const assigned=projectPacketWorkAssignment(packetStore,{packet_ref:topic});
-   if(first?.toolName!==TOOL||first?.owner!=='jhn:'+i.responsible_agent_ref||
+   if(first?.toolName!==toolNameFor(r)||first?.owner!=='jhn:'+i.responsible_agent_ref||
       hashPayload(first?.args?.request)!==i.request_hash||
       c?.request_hash!==i.request_hash||c?.authority?.mandate_ref!==i.mandate_ref||
-      c?.authority?.version!==i.mandate_version||c?.authority?.capability!==i.capability||
+      !authorityMatches(c?.authority,i)||
       c?.principal_ref!==i.principal_ref||c?.funding?.parent_budget_ref!==i.parent_budget_ref||
       hashPayload(c?.funding?.allocation)!==hashPayload(i.allocation)||
       c?.delivery?.recipient_ref!==i.principal_ref||c?.delivery?.visibility!=='restricted'||
@@ -244,12 +262,15 @@ export function createCommissionedHostWorkRunner({rootStore,packetStore,primaryS
  function resolvePacketContext(q){
    if(q.packet_ref!==packet_ref||q.actor_ref!==i.responsible_agent_ref||
       q.principal_ref!==i.principal_ref||q.mandate_ref!==i.mandate_ref||
-      q.mandate_version!==i.mandate_version)return null;
+      q.mandate_version!==i.mandate_version||
+      (q.capability!==undefined&&!routesOf(r).some(route=>
+       route.capability===q.capability&&route.target===q.target&&route.provider===q.provider&&
+       route.execution_mode===q.execution_mode)))return null;
    return context();
  }
  // Multi-turn policy is part of the Principal-reviewed request hash.
- // All commands, including the first, are chosen by the responsible agent
- // within the reviewed route, signed normal profile and local budget.
+ // All acts, including the first, are chosen by the responsible agent
+ // within the reviewed routes, signed scope and local budget.
  // The final judgment is not a command and does not consume an execution Step.
  function normalizeTurn(args){
    const {work_ref,mandate,work_turn:t,...act}=args||{};
@@ -257,12 +278,15 @@ export function createCommissionedHostWorkRunner({rootStore,packetStore,primaryS
    if(exactKeys(t,['id','kind','status','summary'])&&t.kind==='finish'&&
       ['completed','blocked'].includes(t.status)&&typeof t.summary==='string'&&t.summary.trim()&&t.summary.length<=2048&&
       Object.keys(act).length===0)return {turn:t};
-   if(!exactKeys(t,['id','kind'])||t.kind!=='act'||
-      !exactKeys(act,['target','provider','execution_mode','command','timeout_ms'])||
-      act.target!==r.route.target||act.provider!==r.route.provider||act.execution_mode!=='normal'||
-      typeof act.command!=='string'||!act.command.trim()||act.command.length>32768||
-      !Number.isSafeInteger(act.timeout_ms)||act.timeout_ms<1||act.timeout_ms>120000)return null;
-   return {turn:t,act};
+   if(!exactKeys(t,['id','kind'])||t.kind!=='act')return null;
+   if(r.routes){
+     if(!exactKeys(act,['capability','arguments']))return null;
+     const route=r.routes.find(x=>x.capability===act.capability&&normalizeWorkAct(x,act.arguments));
+     const normalized=normalizeWorkAct(route,act.arguments);
+     return normalized?{turn:t,capability:act.capability,act:normalized}:null;
+   }
+   const normalized=normalizeWorkAct(r.route,act);
+   return normalized?{turn:t,act:normalized}:null;
  }
  function storedTurn(rows,id){
    for(const e of rows){
@@ -282,17 +306,21 @@ export function createCommissionedHostWorkRunner({rootStore,packetStore,primaryS
    const digest=hashPayload(candidate),id=candidate.turn.id;
    const localLedger=()=>createEventSourcedExecutionBudgetLedger({store:packetStore,budget_id,require_authority_grant:true});
    const actWithinTime=v=>Date.parse(r.turn_policy.valid_until)-now().getTime()>=v.act.timeout_ms;
-   const check=()=>assessJohnCopAuthority({store:rootStore,auth,verifyIssuer,
-     ledger:localLedger(),mandate_ref:i.mandate_ref,version_pin:i.mandate_version,capability:i.capability,
+   const check=(capability)=>assessJohnCopAuthority({store:rootStore,auth,verifyIssuer,
+     ledger:localLedger(),mandate_ref:i.mandate_ref,version_pin:i.mandate_version,capability,
      transport_mandate_label:STANDING_TRANSPORT_LABEL,at_time:now()});
-   // Every actual command is admitted by the same standing COP resolver.
+   const checkTurn=v=>v.turn.kind==='finish'
+     ? capabilitiesOf(i).every(capability=>check(capability).preflight_ok)
+     : check(v.capability??i.capability).preflight_ok;
+   // Every actual act is admitted by the same standing COP resolver.
    // The host-input validator also binds the accepted turn to its suspension.
-   const pilot=createCopMcpTasksPilot({store:packetStore,toolName:TOOL,primaryStoreId,
+   const pilot=createCopMcpTasksPilot({store:packetStore,toolName:toolNameFor(r),submissionNamespace:LEGACY_TOOL,primaryStoreId,
      ownerInstanceRef:'instance:jhn-host-work',
      verifyHostInput:({candidate:next})=>{
-       const v=normalizeTurn({work_ref:r.work_ref,work_turn:next?.turn,...next?.act});
+       const v=normalizeTurn({work_ref:r.work_ref,work_turn:next?.turn,
+         ...(r.routes&&next?.act?{capability:next.capability,arguments:next.act}:next?.act)});
        if(!v||hashPayload(v)!==hashPayload(next)||!context())return {verified:false};
-       if(!check().preflight_ok)return {verified:false};
+       if(!checkTurn(v))return {verified:false};
        if(v.turn.kind==='act'&&(!actWithinTime(v)||
           localLedger().snapshot().available.max_steps<1))return {verified:false};
        return {verified:true,value:v};
@@ -303,7 +331,7 @@ export function createCommissionedHostWorkRunner({rootStore,packetStore,primaryS
        const active=context();
        if(!active)throw Error('work_context_or_allocation_unavailable');
        if(next.turn.kind==='finish'){
-         if(!check().preflight_ok)throw Error('work_finish_authority_unverified');
+         if(!checkTurn(next))throw Error('work_finish_authority_unverified');
          const allocation=reserveEventSourcedDelegatedBudget({store:rootStore,child_store:packetStore,
            child_source_ref:primaryStoreId+'#'+packet_ref,parent_ledger:parent(),
            child_budget_id:budget_id,child_mandate_ref:i.mandate_ref,principal_ref:i.principal_ref,
@@ -316,7 +344,7 @@ export function createCommissionedHostWorkRunner({rootStore,packetStore,primaryS
            work_complete:next.turn.status==='completed',postcondition_status:'agent_assessed',
            packet_status:next.turn.status};
        }
-       if(!actWithinTime(next)||!check().preflight_ok){
+       if(!actWithinTime(next)||!checkTurn(next)){
          // The provider has not been called. Keep the packet resumable so
          // a subsequent authorized judgment can reconcile its unused funds.
          return {type:'cop.task.host-input/v1',checkpoint:{turn:next.turn,input_hash:hashPayload(next),
@@ -324,24 +352,26 @@ export function createCommissionedHostWorkRunner({rootStore,packetStore,primaryS
            remaining_steps:localLedger().snapshot().available.max_steps,work_complete:false},
            pending:{kind:'agent_work_turn'}};
        }
-       const result=await invoke(next.act,{packet_ref});
+       const result=await invoke(next.act,{packet_ref,capability:next.capability??HOST_PROCESS});
        const spend=result?.trace?.verification?.cop_spend;
        if(spend?.accounting_complete!==true||spend.accounting_locality!=='packet'||
-          spend.packet_ref!==packet_ref||spend.budget_id!==budget_id)
+          spend.packet_ref!==packet_ref||spend.budget_id!==budget_id||
+          (r.routes&&result.trace.capability!==next.capability))
          throw Error('work_effect_accounting_requires_reconciliation');
-       const checkpoint={turn:next.turn,input_hash:hashPayload(next),result,packet_ref,
+       const checkpoint={turn:next.turn,...(next.capability?{capability:next.capability}:{}),
+         input_hash:hashPayload(next),result,packet_ref,
          remaining_steps:localLedger().snapshot().available.max_steps,work_complete:false};
        return {type:'cop.task.host-input/v1',checkpoint,pending:{kind:'agent_work_turn'}};
      }});
    let task;
    try{task=await pilot.adapter.get({taskId,auth})}catch{return deny('commissioned_work_not_found')}
    let rows=packetStore.listTopic(topic);
-   if(!verifiedWorkIdentity()||!check().preflight_ok)return deny('work_history_or_authority_unverified');
+   if(!verifiedWorkIdentity()||!checkTurn(candidate))return deny('work_history_or_authority_unverified');
    const receipt=storedTurn(rows,id);
    if(receipt)return receipt.input_hash===digest?turnResponse(task,receipt,true):deny('work_turn_id_conflict');
    if(['completed','failed','cancelled'].includes(task.status))return deny('work_turn_terminal');
    if(!context())return deny('work_context_or_allocation_unavailable');
-   if(!check().preflight_ok)return deny('work_turn_authority_unverified');
+   if(!checkTurn(candidate))return deny('work_turn_authority_unverified');
    if(candidate.turn.kind==='act'&&(!actWithinTime(candidate)||
        localLedger().snapshot().available.max_steps<1))return deny('work_turn_time_or_budget_exhausted');
    let open=rows.findLast(e=>e.payload?.phase==='input_required');
@@ -365,18 +395,19 @@ export function createCommissionedHostWorkRunner({rootStore,packetStore,primaryS
  }
  return Object.freeze({
    resolvePacketContext,
-   async run({args,auth,invoke}={}){
+   async run({args,auth,invoke,semanticSurface=false}={}){
      if(!isResolvedCallerAuth(auth)||auth.actor!==i.responsible_agent_ref||
         auth.principal_ref!==i.principal_ref||auth.allowMutate!==true||
         auth.mandate_ref!==STANDING_TRANSPORT_LABEL||typeof invoke!=='function')
        return deny('work_authenticated_agent_required');
+     if(Boolean(r.routes)!==semanticSurface)return deny('work_turn_surface_mismatch');
      if(r.turn_policy)return runTurns({args,auth,invoke});
      // No independent effect grant or arbitrary substitutions in this path.
      const {work_ref,mandate,...given}=args||{};
      const {capability,...expected}=r.first_act;
      if(work_ref!==r.work_ref||(mandate!=null&&mandate!==STANDING_TRANSPORT_LABEL)||
         hashPayload(given)!==hashPayload(expected))return deny('work_exact_act_mismatch');
-     const pilot=createCopMcpTasksPilot({store:packetStore,toolName:TOOL,primaryStoreId,
+     const pilot=createCopMcpTasksPilot({store:packetStore,toolName:toolNameFor(r),submissionNamespace:LEGACY_TOOL,primaryStoreId,
        ownerInstanceRef:'instance:jhn-host-work',handler:async()=>{
          const active=context();
          if(!active)throw Error('work_context_or_allocation_unavailable');
@@ -423,24 +454,24 @@ export function createCommissionedHostWorkRunner({rootStore,packetStore,primaryS
  */
 function planFromCreation(c){
  const r=c?.args?.request,w=c?.access_context,e=w?.commissioning_evidence;
- if(c?.phase!=='created'||c?.toolName!==TOOL||
+ if(c?.phase!=='created'||c?.toolName!==toolNameFor(r)||
     w?.schema!=='cogentia.work-commissioning/v1'||
     e?.scheme!=='supabase_authenticated_owner_work_intent/v1'||!r)return null;
  const plan={request:r,intent:{submission_key:w.submission_key,request_hash:w.request_hash,
    principal_ref:w.principal_ref,responsible_agent_ref:w.assignment?.responsible_agent_ref,
-   capability:w.authority?.capability,mandate_ref:w.authority?.mandate_ref,
+   ...(w.authority?.capabilities?{capabilities:w.authority.capabilities}:{capability:w.authority?.capability}),mandate_ref:w.authority?.mandate_ref,
    mandate_version:w.authority?.version,parent_budget_ref:w.funding?.parent_budget_ref,
    allocation:w.funding?.allocation}};
  return hashPayload(plan)===e.plan_hash?plan:null;
 }
-export function createExistingHostWorkCatalog({plans,getPlans,...options}={}){
+export function createWorkCommissionCatalog({plans,getPlans,...options}={}){
  if((plans===undefined)===(getPlans===undefined)||getPlans!==undefined&&typeof getPlans!=='function')
    throw TypeError('one_work_plan_catalog_source_required');
  const build=entries=>{
    if(!Array.isArray(entries)||entries.length>128)throw TypeError('work_plan_catalog_invalid');
    const byHash=new Map(),byRef=new Set();
    for(const plan of entries){
-     const c=createExistingHostWorkCommissioner({...options,plan,sourceRef:plan?.request?.work_ref});
+     const c=createWorkCommissioner({...options,plan,sourceRef:plan?.request?.work_ref});
      if(byHash.has(c.plan_hash)||byRef.has(plan.request.work_ref))
        throw TypeError('work_plan_catalog_ambiguous');
      byHash.set(c.plan_hash,c);byRef.add(plan.request.work_ref);
@@ -457,7 +488,7 @@ export function createExistingHostWorkCatalog({plans,getPlans,...options}={}){
    },
  });
 }
-export function createCommissionedHostWorkDispatcher({packetStore,...options}={}){
+export function createCommissionedWorkDispatcher({packetStore,...options}={}){
  if(packetStore?.kind!=='sqlite')throw TypeError('canonical_work_store_required');
  function forPacket(packet_ref){
    if(typeof packet_ref!=='string'||!/^pkt-mcp-[0-9a-f-]{36}$/.test(packet_ref))return null;
@@ -465,15 +496,15 @@ export function createCommissionedHostWorkDispatcher({packetStore,...options}={}
      const topic='packet:'+packet_ref,rows=packetStore.listTopic(topic);
      if(packetStore.auditTopicCommitment(topic)?.ok!==true)return null;
      const p=planFromCreation(rows[0]?.payload);
-     if(!p||packetRefForMcpTask(stableMcpWorkTaskId('jhn:'+p.intent.responsible_agent_ref,TOOL,p.intent.submission_key))!==packet_ref)return null;
-     return createCommissionedHostWorkRunner({...options,packetStore,plan:p});
+     if(!p||packetRefForMcpTask(stableMcpWorkTaskId('jhn:'+p.intent.responsible_agent_ref,LEGACY_TOOL,p.intent.submission_key))!==packet_ref)return null;
+     return createCommissionedWorkRunner({...options,packetStore,plan:p});
    }catch{return null}
  }
  function forRef(work_ref){
    if(/^pkt-mcp-[0-9a-f-]{36}$/.test(work_ref||''))return forPacket(work_ref);
    if(typeof work_ref!=='string'||!source.test(work_ref))return null;
    const matches=packetStore.replay().filter(e=>e.payload?.phase==='created'&&
-     e.payload?.toolName===TOOL&&e.payload?.args?.request?.work_ref===work_ref);
+     e.payload?.toolName===toolNameFor(e.payload?.args?.request)&&e.payload?.args?.request?.work_ref===work_ref);
    // Never silently pick a newer/older commission of the same Issue.
    if(matches.length!==1)return null;
    return forPacket(matches[0].payload.packetRef);
@@ -493,3 +524,11 @@ export function createCommissionedHostWorkDispatcher({packetStore,...options}={}
    },
  });
 }
+
+// Legacy import names remain source-compatible during the surface migration.
+export {
+ createWorkCommissioner as createExistingHostWorkCommissioner,
+ createCommissionedWorkRunner as createCommissionedHostWorkRunner,
+ createWorkCommissionCatalog as createExistingHostWorkCatalog,
+ createCommissionedWorkDispatcher as createCommissionedHostWorkDispatcher
+};

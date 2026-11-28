@@ -101,3 +101,18 @@ test('workshop recursion: one Principal, a Root Agent and two levels of delegate
  // The constructor does not itself prove attenuation, reserve funds, or
  // delegate authority. These remain existing COP admission obligations.
 });
+
+test('multi-capability authority binds one exact capability set, preserving legacy contracts',()=>{
+ const multi={...intent,capabilities:['host.process.run','browser.navigation.instances']};delete multi.capability;
+ const a=build({intent:multi,context});
+ assert.equal(a.ok,true);
+ assert.deepEqual(a.contract.authority.capabilities,multi.capabilities);
+ assert.equal(Object.hasOwn(a.contract.authority,'capability'),false);
+ assert.equal(compare(a.contract,build({intent:multi,context})).ok,true);
+ assert.equal(compare(a.contract,build({intent:{...multi,capabilities:['host.process.run']},context})).ok,false);
+ for(const capabilities of [[],['host.process.run','host.process.run'],[null]]){
+   assert.equal(build({intent:{...multi,capabilities},context}).ok,false);
+ }
+ assert.equal(build({intent:{...multi,capability:'host.process.run'},context}).ok,false);
+ assert.equal(build({intent,context}).contract.authority.capability,intent.capability);
+});

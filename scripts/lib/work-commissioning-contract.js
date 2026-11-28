@@ -13,6 +13,13 @@ const principal=v=>typed(v,'principal:');
 const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
 const digest=v=>typeof v==='string'&&/^sha256:[a-f0-9]{64}$/.test(v);
 const deny=error=>({ok:false,error,grants_authority:false});
+// A work can bind one legacy capability or an exact set of capabilities.
+export const workAuthorityAllows=(authority,capability)=>
+ typeof capability==="string"&&(authority?.capability===capability ||
+ Array.isArray(authority?.capabilities)&&authority.capabilities.includes(capability));
+const validCapabilities=i=>(ref(i.capability)&&i.capabilities===undefined)||
+ (i.capability===undefined&&Array.isArray(i.capabilities)&&i.capabilities.length>=1&&
+ i.capabilities.length<=16&&i.capabilities.every(ref)&&new Set(i.capabilities).size===i.capabilities.length);
 const budget=v=>object(v)&&Object.keys(v).length>0&&Object.keys(v).length<=16&&
  Object.entries(v).every(([k,n])=>/^max_[a-z0-9_]{1,64}$/.test(k)&&Number.isSafeInteger(n)&&n>=0);
 
@@ -24,7 +31,7 @@ export function buildWorkCommissioningContract({intent:i,context:c}={}){
  if(!object(i)||!object(c)||c.verified!==true)return deny('verified_work_context_required');
  if(!principal(i.principal_ref)||!agent(i.responsible_agent_ref)||
     typeof i.submission_key!=='string'||!(/^[A-Za-z0-9_.:-]{1,128}$/.test(i.submission_key))||
-    !digest(i.request_hash)||!ref(i.capability)||!typed(i.mandate_ref,'mandate:')||
+    !digest(i.request_hash)||!validCapabilities(i)||!typed(i.mandate_ref,'mandate:')||
     typeof i.mandate_version!=='string'||!(/^v?[1-9][0-9]*$/.test(i.mandate_version))||
     !typed(i.parent_budget_ref,'budget:')||!budget(i.allocation))
    return deny('invalid_work_intent');
@@ -57,7 +64,8 @@ export function buildWorkCommissioningContract({intent:i,context:c}={}){
    ...(c.requesting_principal_ref?{requesting_principal_ref:c.requesting_principal_ref}:{}),
    subject_ref:c.subject_ref??null,twin_ref:c.twin_ref??null,
    assignment,parent_work_ref:parent,
-   authority:{mandate_ref:i.mandate_ref,version:i.mandate_version,capability:i.capability},
+   authority:{mandate_ref:i.mandate_ref,version:i.mandate_version,
+     ...(i.capabilities?{capabilities:[...i.capabilities]}:{capability:i.capability})},
    funding:{parent_budget_ref:i.parent_budget_ref,allocation:{...i.allocation}},
    delivery:{destination_ref:c.destination_ref,recipient_ref:c.recipient_ref,
      provider_account_ref:c.provider_account_ref??null,

@@ -18,6 +18,8 @@ import {createCanonicalStandingMissionResolver} from './john-standing-mission-au
 import {createHostCapabilityRouter} from './host-capability-router.js';
 import {createMcpCore} from './cogentia-mcp-core.js';
 import {hostname} from 'node:os';
+import {WebSocket} from 'ws';
+import {createNavigationGateway} from '../ops/navigation-assistant-gateway.js';
 import {request as httpRequest} from 'node:http';
 import {createExistingHostWorkCommissioner,createCommissionedHostWorkRunner,createExistingHostWorkCatalog,createCommissionedHostWorkDispatcher} from './john-commission-existing-work.js';
 const REF='mandate:jhn:john-root',BUDGET='budget:'+REF;
@@ -25,12 +27,12 @@ const now=new Date('2026-11-27T12:00:00Z');
 const owner='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const authClient={auth:{getUser:async t=>({data:{user:{id:t==='owner-session'?owner:'other',email_confirmed_at:'confirmed',is_anonymous:false}}})}};
 const adminClient={from(){return {select(){return {eq(){return {single:async()=>({data:{id:JHN_VAULT_INSTANCE_ID,canonical_slug:'jhn',status:'autonomous',principal_id:owner}})}}}}}}};
-function fixture(){
+function fixture(allowed=['host.process.run']){
  const rootStore=createSqliteCopEventStore(':memory:'),packetStore=createSqliteCopEventStore(':memory:');
  const key=generateKeyPairSync('ed25519'),pem=key.publicKey.export({type:'spki',format:'pem'});
  const proposal={kind:ROOT_MANDATE_KIND,mandate_id:REF,version:'v1',principal_ref:'principal:jhn',
    logical_agent_ref:'agent:jhn',valid_from:'2026-11-01T00:00:00Z',valid_until:'2027-01-01T00:00:00Z',
-   scope:{allowed_actions:['host.process.run'],forbidden_actions:[...RESERVED_ACTIONS],
+   scope:{allowed_actions:allowed,forbidden_actions:[...RESERVED_ACTIONS],
      standing_operations:[{profile:'host.process-general/v1',capability:'host.process.run',target:'node:fracta2',provider:'unix-process',execution_mode:'normal'}]},
    max_delegation_depth:2,budget_limits:{max_steps:5}};
  assert.equal(issueVerifiedJohnRoot({store:rootStore,proposal,approval:{kind:'cogentia.principal-signature/v1',
@@ -329,4 +331,113 @@ test('proposal catalog reloads without service restart and refuses a removed has
    const dispatcher=createCommissionedHostWorkDispatcher({...f,primaryStoreId:'sqlite:fixture-local',now:()=>now});
    assert.ok(dispatcher.resolvePacketContext({packet_ref:result.packet_ref,actor_ref:'agent:jhn',principal_ref:'principal:jhn',mandate_ref:REF,mandate_version:'v1'}));
  }finally{f.close()}
+});
+
+const navRoute={capability:'browser.navigation.instances',target:'node:fracta2',
+ provider:'navigation-gateway',execution_mode:'normal'};
+function mixedPlan(f){
+ const plan=structuredClone(f.plan);
+ const {command,timeout_ms,...hostRoute}=plan.request.first_act;
+ delete plan.request.first_act;plan.request.routes=[hostRoute,{...navRoute}];
+ plan.request.turn_policy={kind:'agent_selected_normal/v1',valid_until:'2026-11-27T12:30:00.000Z'};
+ delete plan.intent.capability;plan.intent.capabilities=plan.request.routes.map(x=>x.capability);
+ plan.intent.request_hash=hashPayload(plan.request);
+ return plan;
+}
+const mixedOptions=f=>({...f,primaryStoreId:'sqlite:fixture-local',
+ ownerInstanceRef:'instance:fixture-work',authenticatePrincipal:f.workflow.authenticate,
+ handler:async()=>{throw Error('must_not_execute')},now:()=>now});
+test('a work order cannot add a semantic capability outside the signed mandate',async()=>{
+ const f=fixture();try{
+   const plan=mixedPlan(f),catalog=createExistingHostWorkCatalog({...mixedOptions(f),plans:[plan]});
+   const result=await catalog.commissionFromPrincipal({session:f.input.session,presented_plan_hash:hashPayload(plan)});
+   assert.equal(result.ok,false);assert.equal(f.packetStore.replay().length,0);
+   assert.equal(f.ledger().snapshot().reserved.max_steps,0);
+ }finally{f.close()}
+});
+test('semantic route set must exactly match the capability set, without duplicates or external routes',()=>{
+ const f=fixture(['host.process.run','browser.navigation.instances']);try{
+   for(const mutate of [
+     p=>p.intent.capabilities.pop(),
+     p=>p.request.routes.push({...navRoute}),
+     p=>{p.request.routes[1]={...navRoute,capability:'gmail.send'};p.intent.capabilities[1]='gmail.send'},
+     p=>p.request.routes[1].provider='other',
+     p=>p.request.routes[0].execution_mode='super',
+   ]){
+     const p=mixedPlan(f);mutate(p);p.intent.request_hash=hashPayload(p.request);
+     assert.throws(()=>createExistingHostWorkCatalog({...mixedOptions(f),plans:[p]}),/reviewed_work_plan_invalid/);
+   }
+ }finally{f.close()}
+});
+test('legacy and semantic surfaces share stable submission identity, not two budgets',async()=>{
+ const f=fixture(['host.process.run','browser.navigation.instances']);try{
+   const old=await f.commissioner.commission(f.input);assert.equal(old.ok,true);
+   const plan=mixedPlan(f),catalog=createExistingHostWorkCatalog({...mixedOptions(f),plans:[plan]});
+   const before=f.packetStore.replay();
+   const result=await catalog.commissionFromPrincipal({session:f.input.session,presented_plan_hash:hashPayload(plan)});
+   assert.equal(result.ok,false);assert.match(result.error,/task_submission_conflict/);
+   assert.deepEqual(f.packetStore.replay(),before);assert.equal(f.ledger().snapshot().reserved.max_steps,3);
+ }finally{f.close()}
+});
+test('one semantic packet alternates real Unix and existing navigation gateway, with one allocation and one finish',async()=>{
+ const f=fixture(['host.process.run','browser.navigation.instances']);
+ const gate=createNavigationGateway({instance:'commissioned-inventory-fixture'});
+ let ext,router;
+ try{
+   await gate.listen(0,['127.0.0.1']);
+   const base='ws://127.0.0.1:'+gate._bound[0].address().port;
+   ext=new WebSocket(base+'/extension');
+   await new Promise((resolve,reject)=>{ext.once('open',resolve);ext.once('error',reject)});
+   ext.send(JSON.stringify({jsonrpc:'2.0',id:1,method:'browser.register',params:{browser_instance_id:'fixture-browser'}}));
+   await new Promise(resolve=>ext.once('message',resolve));
+   const plan=mixedPlan(f),options=mixedOptions(f);
+   const catalog=createExistingHostWorkCatalog({...options,plans:[plan]});
+   const a=await catalog.commissionFromPrincipal({session:f.input.session,presented_plan_hash:hashPayload(plan)});
+   assert.equal(a.ok,true,JSON.stringify(a));
+   assert.equal(f.packetStore.listTopic('packet:'+a.packet_ref)[0].payload.toolName,'cogentia_work_turn');
+   assert.deepEqual(f.packetStore.listTopic('packet:'+a.packet_ref)[0].payload.access_context.authority.capabilities,plan.intent.capabilities);
+   const dispatcher=createCommissionedHostWorkDispatcher(options);
+   const resolver=createCanonicalStandingMissionResolver({store:f.rootStore,verifyIssuer:f.verifyIssuer,
+      now:()=>now,resolvePacketContext:dispatcher.resolvePacketContext});
+   router=createHostCapabilityRouter({missionAuthorityResolver:resolver});
+   const extras={hostRouter:router,runCommissionedWork:dispatcher.run,missionAuthorityResolver:resolver};
+   const env={COGENTIA_JHN_CANONICAL_READ_ENABLED:'1',COGENTIA_HOSTED_BROWSER_GATEWAY:base+'/assistant'};
+   const core=createMcpCore(env,extras),disabled=createMcpCore({},extras);
+   const call=(x,c=core)=>c.callTool('cogentia_work_turn',{work_ref:a.packet_ref,...x},{auth:f.input.auth});
+   const {capability:hostCap,...hostArgs}=plan.request.routes[0],{capability:navCap,...navArgs}=navRoute;
+   const host={work_turn:{id:'host',kind:'act'},capability:hostCap,arguments:{...hostArgs,command:'hostname',timeout_ms:10000}};
+   const nav={work_turn:{id:'nav',kind:'act'},capability:navCap,arguments:{...navArgs,timeout_ms:10000}};
+   const initial=f.packetStore.replay();
+   await assert.rejects(core.callTool('cogentia_work_turn',{work_ref:a.packet_ref,...nav}),/mutate|forbidden|auth/i);
+   assert.equal((await call(nav,disabled)).ok,false);
+   assert.equal((await call({...nav,capability:'gmail.send'})).ok,false);
+   assert.equal((await call({...nav,arguments:{...nav.arguments,command:'id'}})).ok,false);
+   assert.equal((await call({...nav,arguments:{...nav.arguments,provider:'other'}})).ok,false);
+   assert.equal((await core.callTool('cogentia_host_process_run',{work_ref:a.packet_ref,...host.arguments,work_turn:host.work_turn},{auth:f.input.auth})).ok,false);
+   assert.deepEqual(f.packetStore.replay(),initial);
+   const x=await call(host);assert.equal(x.ok,true,JSON.stringify(x));
+   assert.equal(x.turn_receipt.result.stdout.trim(),hostname());
+   assert.equal(x.turn_receipt.capability,hostCap);
+   assert.equal(x.turn_receipt.remaining_steps,2);
+   const y=await call(nav);assert.equal(y.ok,true,JSON.stringify(y));
+   assert.equal(y.turn_receipt.remaining_steps,1);
+   assert.equal(y.turn_receipt.capability,navCap);
+   assert.deepEqual(y.turn_receipt.result.browsers,[{browser_instance_id:'fixture-browser',registered:true}]);
+   assert.equal(y.turn_receipt.result.trace.verification.cop_spend.packet_ref,a.packet_ref);
+   assert.equal(y.turn_receipt.result.trace.verification.cop_spend.accounting_locality,'packet');
+   const root=f.rootStore.replay(),local=f.packetStore.replay();
+   assert.equal((await call(nav)).duplicate,true);
+   assert.equal((await call({...nav,work_turn:host.work_turn})).ok,false);
+   assert.deepEqual(f.rootStore.replay(),root);assert.deepEqual(f.packetStore.replay(),local);
+   const finish={work_turn:{id:'finish',kind:'finish',status:'completed',summary:'Both providers verified'}};
+   const done=await call(finish);assert.equal(done.ok,true,JSON.stringify(done));
+   assert.equal(done.task.status,'completed');
+   assert.equal(done.turn_receipt.work_complete,true);
+   assert.equal(f.ledger().snapshot().settled.max_steps,2);assert.equal(f.ledger().snapshot().reserved.max_steps,0);
+   const budgetEvents=f.packetStore.listTopic('execution-budget:'+a.budget_id);
+   assert.equal(budgetEvents.filter(e=>e.event_type==='ExecutionBudgetSettlement').length,2);
+   assert.equal(budgetEvents.at(-1).event_type,'ExecutionBudgetSeal');
+   assert.equal((await call(finish)).duplicate,true);
+   console.log('SEMANTIC_MIXED_REAL_GATEWAY_UNIX_PASS',{allocated:3,used:2,returned:1,capabilities:plan.intent.capabilities});
+ }finally{await router?.stop();ext?.close();await gate.close();f.close()}
 });

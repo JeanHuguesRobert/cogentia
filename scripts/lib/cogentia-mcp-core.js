@@ -37,6 +37,8 @@ import { createHostedBrowserCapabilities } from "./hosted-browser-capabilities.j
 import { auditCapabilitySymmetry } from "./symmetry-audit.js";
 import { listPatterns, getPattern } from "./cogentia-patterns.js";
 import { createHostCapabilityRouter } from "./host-capability-router.js";
+import {HOST_PROCESS,BROWSER_INSTANCES} from "./commissioned-work-routes.js";
+import {executeCommissionedNavigation} from "./commissioned-navigation-executor.js";
 import { createSuperCopClient } from "./super-cop-client.js";
 import { prepareHostProcessRun } from "./host-process-prepare.js";
 import { invokeThroughGateway } from "./agent-gateway-client.js";
@@ -99,6 +101,7 @@ export const MUTATE_TOOLS = new Set([
   "cogentia_concepts_init",
   "cogentia_host_fs_write",
   "cogentia_host_process_run",
+  "cogentia_work_turn",
   "cogentia_communication_send",
   "cogentia_agent_mail_send",
   "cogentia_github_write",
@@ -1196,6 +1199,22 @@ export const TOOLS = [
       required: [],
       additionalProperties: false,
     },
+  },
+  {
+    name: "cogentia_work_turn",
+    description: "Advance an already commissioned semantic work packet. An act selects a reviewed capability and bounded arguments; finish records the responsible agent judgment and reconciles the same allocation. No authority or budget is issued. Private mutate.",
+    inputSchema: {type:"object",properties:{
+      work_ref:{type:"string",minLength:1},
+      work_turn:{type:"object",properties:{
+        id:{type:"string",minLength:1,maxLength:128},kind:{type:"string",enum:["act","finish"]},
+        status:{type:"string",enum:["completed","blocked"]},summary:{type:"string",maxLength:2048},
+      },required:["id","kind"],additionalProperties:false},
+      capability:{type:"string",enum:[HOST_PROCESS,BROWSER_INSTANCES]},
+      arguments:{type:"object",description:"Exact reviewed route. Command is required only for host.process.run.",
+        properties:{target:{type:"string"},provider:{type:"string"},execution_mode:{type:"string",enum:["normal"]},
+          timeout_ms:{type:"integer",minimum:1,maximum:120000},command:{type:"string",minLength:1,maxLength:32768}},
+        required:["target","provider","execution_mode","timeout_ms"],additionalProperties:false},
+    },required:["work_ref","work_turn"],additionalProperties:false},
   },
   {
     name: "cogentia_agent_mail_status",
@@ -3025,11 +3044,29 @@ export function createMcpCore(env = process.env, extras = {}) {
         return callHostCapability("host.fs.search", args, auth);
       case "cogentia_host_process_prepare":
         return prepareHostProcessRun(args);
+      case "cogentia_work_turn": {
+        const runWork=extras.runCommissionedWork??extras.runCommissionedHostWork;
+        if(typeof runWork!=="function")
+          throw Error("commissioned_work_runtime_not_enabled");
+        if(args.work_turn?.kind==="act"&&args.capability===BROWSER_INSTANCES&&
+           (typeof extras.missionAuthorityResolver!=="function"||
+            env.COGENTIA_JHN_CANONICAL_READ_ENABLED!=="1"||
+            /^(0|false|no)$/i.test(String(env.COGENTIA_JHN_HOSTED_BROWSER_ENABLED||"1"))))
+          return {ok:false,error:"commissioned_navigation_unavailable",grants_authority:false};
+        return runWork({args,auth,semanticSurface:true,
+          invoke:(act,context)=>{
+            if(context.capability===HOST_PROCESS)return callHostCapability(HOST_PROCESS,act,auth,context);
+            if(context.capability===BROWSER_INSTANCES)return executeCommissionedNavigation({
+              act,context,auth,env,resolveAuthority:extras.missionAuthorityResolver});
+            throw Error("commissioned_capability_not_registered");
+          }});
+      }
       case "cogentia_host_process_run": {
         if(args.work_ref!=null){
-          if(typeof extras.runCommissionedHostWork!=="function")
+          const runWork=extras.runCommissionedWork??extras.runCommissionedHostWork;
+          if(typeof runWork!=="function")
             throw Error("commissioned_work_runtime_not_enabled");
-          return extras.runCommissionedHostWork({args,auth,
+          return runWork({args,auth,
             invoke:(act,workContext)=>callHostCapability("host.process.run",act,auth,workContext)});
         }
         if(args.work_turn!=null)throw Error("work_turn_requires_work_ref");

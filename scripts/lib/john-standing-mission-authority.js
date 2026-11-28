@@ -18,6 +18,8 @@ import { resolveMandate } from "../../../inseme/packages/cop-core/src/governed-a
 import { projectPacketWorkAssignment } from "../../../inseme/packages/cop-core/src/packet-work-assignment.js";
 import { assessJohnCopAuthority } from "./john-cop-authority-preflight.js";
 import { isResolvedCallerAuth } from "./cogentia-mcp-auth.js";
+import {workAuthorityAllows} from "./work-commissioning-contract.js";
+import {BROWSER_INSTANCES,routeInSignedScope} from "./commissioned-work-routes.js";
 
 export const STANDING_DIAGNOSTIC_PROFILE = "host.readonly-diagnostics/v1";
 export const STANDING_GENERAL_HOST_PROFILE = "host.process-general/v1";
@@ -40,6 +42,12 @@ const denied = (reason) => ({ allowed:false, verified:false, reason });
 
 function activeStandingOperation(scope, request) {
   if (request.execution_mode!=="normal") return false;
+  // Inventory is a signed, read-only semantic capability, not a shell
+  // command. Only a commissioned packet may use this adapter.
+  if(request.capability===BROWSER_INSTANCES)
+    return typeof request.packet_ref==="string"&&request.command==null&&
+      routeInSignedScope(scope,{capability:request.capability,target:request.target,
+        provider:request.provider,execution_mode:request.execution_mode});
   const operations = scope?.standing_operations;
   if (!Array.isArray(operations)) return false;
   if (request.capability !== "host.process.run" ||
@@ -127,7 +135,8 @@ export function createCanonicalStandingMissionResolver({
       try{
         const c=resolvePacketContext?.({packet_ref:request.packet_ref,
           actor_ref:auth.actor,principal_ref:auth.principal_ref,
-          mandate_ref,mandate_version:mandate.version});
+          mandate_ref,mandate_version:mandate.version,capability:request.capability,
+          target:request.target,provider:request.provider,execution_mode:request.execution_mode});
         if(!c || c.budget_id===budget_id || c.budget_id!=="budget:"+request.packet_ref ||
            typeof c.primary_store_id!=="string" || !c.primary_store_id ||
            typeof c.store?.auditTopicCommitment!=="function")return null;
@@ -151,7 +160,7 @@ export function createCanonicalStandingMissionResolver({
            work.principal_ref!==auth.principal_ref||
            work.authority?.mandate_ref!==mandate_ref||
            work.authority?.version!==mandate.version||
-           work.authority?.capability!==request.capability||
+           !workAuthorityAllows(work.authority,request.capability)||
            work.funding?.parent_budget_ref!==budget_id||
            assignment.ok!==true||assignment.status!=="assigned"||
            assignment.responsible_agent_ref!==auth.actor||
@@ -261,7 +270,7 @@ export function createCanonicalStandingMissionResolver({
             payload_hash:request.payload_hash,
             ...accountingContext,
             ...(receipt?.status ? {status:receipt.status} : {}),
-            ...(/^hct_[0-9a-f-]{36}$/.test(receipt?.trace_id||"")?{trace_id:receipt.trace_id}:{}),
+            ...(/^(?:hct|sct)_[0-9a-f-]{36}$/.test(receipt?.trace_id||"")?{trace_id:receipt.trace_id}:{}),
             ...(/^sha256:[a-f0-9]{64}$/.test(receipt?.receipt_hash||"")?{provider_receipt_hash:receipt.receipt_hash,
               output_truncated:receipt.output_truncated===true}:{})} : null);
         finished=true;

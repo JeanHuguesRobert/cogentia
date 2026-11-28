@@ -43,3 +43,17 @@ test('governed surface admits new bounds without public execution', async () => 
   const anonymous = createMcpCore({COGENTIA_MCP_VIEW:'public'});
   assert.ok(!anonymous.tools.some(t=>t.name==='cogentia_host_process_run'));
 });
+
+test('semantic work turn is protected, describes reviewed capabilities and has a bounded normal-only argument contract',async()=>{
+ const n='cogentia_work_turn';
+ const anonymous=createMcpCore({COGENTIA_MCP_VIEW:'public'});
+ assert.ok(!anonymous.tools.some(t=>t.name===n));
+ await assert.rejects(anonymous.callTool(n,{work_ref:'pkt-mcp-untrusted',work_turn:{id:'x',kind:'act'}}),/tier_forbidden/);
+ const full=createMcpCore({COGENTIA_MCP_VIEW:'full',COGENTIA_ADMIN_TOKEN:'fixture',COGENTIA_MCP_ALLOW_MUTATE:'1'});
+ const tool=full.tools.find(t=>t.name===n);
+ assert.deepEqual(tool.inputSchema.required,['work_ref','work_turn']);
+ assert.deepEqual(tool.inputSchema.properties.capability.enum,['host.process.run','browser.navigation.instances']);
+ assert.deepEqual(tool.inputSchema.properties.arguments.properties.execution_mode.enum,['normal']);
+ assert.equal(tool.inputSchema.properties.arguments.additionalProperties,false);
+ await assert.rejects(full.callTool(n,{work_ref:'pkt-mcp-untrusted',work_turn:{id:'x',kind:'finish',status:'completed',summary:'x'}}),/commissioned_work_runtime_not_enabled/);
+});

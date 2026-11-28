@@ -43,13 +43,15 @@ export function createCopMcpTasksPilot({
   store, toolName, handler, allowAnonymous = false,
   ownerInstanceRef = "instance:mcp-tasks-cop-pilot",
   primaryStoreId = null, verifyExternalResult = null, prepareCreation = null,
-  verifyHostInput = null,
+  verifyHostInput = null, submissionNamespace = toolName,
 } = {}) {
   if (!store || typeof store.append !== "function" ||
       typeof store.transaction !== "function" || typeof store.listTopic !== "function")
     throw new TypeError("COP event store required");
   if (typeof toolName !== "string" || !toolName || typeof handler !== "function")
     throw new TypeError("explicit pilot tool and handler required");
+  if (typeof submissionNamespace !== "string" || !submissionNamespace)
+    throw new TypeError("explicit stable submission namespace required");
   if (typeof primaryStoreId !== "string" || !/^sqlite:[a-zA-Z0-9:._-]+$/.test(primaryStoreId))
     throw new TypeError("explicit local primaryStoreId required");
   if (verifyExternalResult !== null && typeof verifyExternalResult !== "function")
@@ -225,7 +227,7 @@ export function createCopMcpTasksPilot({
       if (accessContext !== null && !valid(accessContext)) throw new Error("invalid_work_access_context");
       const digest = admission ? hashPayload({ name, args, assignment,
         ...(accessContext ? {access_context:accessContext} : {}) }) : null;
-      const taskId = admission ? stableMcpWorkTaskId(owner,toolName,admission.submission_key) : "task:" + randomUUID();
+      const taskId = admission ? stableMcpWorkTaskId(owner,submissionNamespace,admission.submission_key) : "task:" + randomUUID();
       const createdAt = new Date().toISOString();
       const packetRef = packetRefForMcpTask(taskId);
       const { packet, continuation } = await createPacketWithInitialContinuation({

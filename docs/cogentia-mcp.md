@@ -228,11 +228,67 @@ An expired work can be closed without a new command while its agent's mandate
 is still valid. Revoked authority or an unresolved effect requires the existing
 COP reconciliation path rather than pretending the work has completed.
 
-Legacy exact-act plans retain their former one-act behavior. The current
-multi-turn route is the existing normal host capability only; other semantic
-capabilities and autonomous deadline wake-ups are not added by this increment.
-A deployment must verify the live authenticated schema, refresh the connector
-and execute a real multi-turn commission before declaring production readiness.
+Legacy exact-act and single-route plans retain their existing tool, packet
+identity and behavior.
+
+### Semantic multi-route work
+
+A new work request may instead use `routes` (an array of exact reviewed
+normal routes) and `intent.capabilities` (the corresponding unique
+capabilities, in first-route order), in place of the legacy singular fields.
+Every route must already be allowed by the independently verified signed
+mandate. The Principal's confirmation binds the whole plan hash; it is not
+a mandate amendment. The same local hard allocation, assignment, deadline,
+COP Task input/claim/receipt lifecycle and final parent settlement apply.
+
+Initial supported routes:
+
+| Capability | Target | Provider | Arguments in addition to route and timeout |
+|---|---|---|---|
+| `host.process.run` | `node:fracta2` | `unix-process` | command |
+| `host.process.run` | `node:i7-thinkpad-jhr` | `windows-ssh` | command |
+| `browser.navigation.instances` | `node:fracta2` | `navigation-gateway` | none; registered inventory only |
+
+The protected `cogentia_work_turn` tool advances a semantic work, e.g.:
+
+```json
+{
+  "work_ref": "pkt-mcp-<commissioned-id>",
+  "work_turn": {"id": "inventory", "kind": "act"},
+  "capability": "browser.navigation.instances",
+  "arguments": {
+    "target": "node:fracta2",
+    "provider": "navigation-gateway",
+    "execution_mode": "normal",
+    "timeout_ms": 10000
+  }
+}
+```
+
+The navigation timeout is 1–30 seconds (split between connection and RPC);
+normal host timeouts retain their existing 1–120000 ms bound.
+The agent may next choose a normal host act if its route is commissioned.
+Finish uses just `work_ref` and `work_turn: {id, kind: "finish", status,
+summary}`, without a capability or arguments. The tool is not an arbitrary
+MCP dispatcher: registered adapters validate exact route-specific arguments
+and independently prove authorization. Browser inventory uses the existing
+gateway executor and canonical standing resolver with packet-local
+reservation/settlement; no nested root charge. Its restricted result contains
+only registered browser identities and provider metadata, never tab/page
+content. A disabled read runtime rejects the act before claim.
+
+The capability is bound in the accepted Turn hash and its receipt.
+Different capability/arguments with the same Turn ID conflict. A stable
+submission namespace prevents creating two funded packets by switching
+between legacy and semantic surfaces. Existing direct calls are unchanged.
+
+Further capabilities require a real canonical adapter with receipt and
+accounting guarantees. This increment does not authorize Super, external
+engagement, browser page reading, or add autonomous deadline wake-ups.
+The mixed fixture test exercises actual Unix and a local navigation gateway
+with an isolated signed fixture mandate and SQLite stores. Production
+readiness still requires deployment, authenticated discovery, connector
+refresh and a real mixed commission.
 
 ## 1. Architectural Invariants & Trust Model
 

@@ -9,7 +9,7 @@ import {createSqliteCopEventStore} from
   "../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js";
 import {sshFingerprint} from "./john-sshsig-approval.js";
 import {createOfflineJohnIssuerVerifier} from "./john-offline-issuer-verifier.js";
-import {openConfiguredExistingWork,createCommissionedHostWorkDispatcher} from "./john-commission-existing-work.js";
+import {openConfiguredExistingWork,createCommissionedWorkDispatcher} from "./john-commission-existing-work.js";
 import {createCanonicalStandingMissionResolver} from "./john-standing-mission-authority.js";
 
 const PINNED_STORE="/var/lib/cogentia/cop/john-root-v1.sqlite";
@@ -47,12 +47,12 @@ export function createMcpStandingMissionRuntime(env=process.env) {
   let local;
   try{
     local=openConfiguredExistingWork(env);
-    const work=local?createCommissionedHostWorkDispatcher({rootStore:store,...local,verifyIssuer}):null;
+    const work=local?createCommissionedWorkDispatcher({rootStore:store,...local,verifyIssuer}):null;
     const missionAuthorityResolver=createCanonicalStandingMissionResolver({
       store,verifyIssuer,resolvePacketContext:work?.resolvePacketContext??null,
     });
     return {enabled:true,extras:{missionAuthorityResolver,
-      ...(work?{runCommissionedHostWork:work.run}:{})},
+      ...(work?{runCommissionedWork:work.run}:{})},
       close(){local?.close();store.close();}};
   }catch(e){local?.close();store.close();throw e;}
 }
