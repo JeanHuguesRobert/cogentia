@@ -72,37 +72,70 @@ Existing branches/worktrees are **cleanup candidates**, not reasons to add new o
 
 Source doctrine: [Optimistic Mainline Governance](../research/optimistic_mainline_governance.md); [No ritual backups](#no-ritual-backups-copies-or-precautionary-isolation).
 
-## Super Agile — forward correction before installed-base protection
+## Super Agile — forward-only development, live Reality Tests
 
-**Principal directive (2026-11-18 to 2026-11-26; clarified in Cogentia #348):**
-Super Agile is the delivery regime for the present development phase where
-there is no significant installed base or user dependency that requires
-continuity of obsolete technical contracts. In that regime, optimize for
-effective progress and short feedback loops with Reality, not for hypothetical
-future compatibility or zero transient defects.
+**Principal decision (2026-11-28; supersedes the earlier preference wording of
+2026-11-18 to 2026-11-26, Cogentia #348): ACTIVE until the Principal explicitly
+ends this regime, globally or for a named subsystem.** A reachable service is
+not necessarily a stabilized product. Our present phase has no significant
+installed user base requiring continuity of obsolete technical contracts.
+Accept bounded technical breakage in exchange for faster learning and useful
+progress. Do not silently switch to mature-product precautionary practices
+because a service is live, or because an agent feels more comfortable with them.
 
-- Work directly on main; deliver the smallest useful end-to-end increment,
-  run focused tests, consolidate it and deploy promptly within the applicable
-  mandate. Observe the real result and immediately correct actual defects
-  (Fix Bugs First).
-- Prefer clean forward evolution to retrocompatibility layers, aliases,
-  duplicate implementations, temporary migrations kept indefinitely, or
-  preservation of obsolete interfaces without an actual dependent consumer.
-  A deliberate contract change is not itself a bug; reconcile its actual
-  consumers and relevant tests in the same increment.
-- Do not make a rollback plan, backup, extended staging, or pre-release
-  review ceremony a routine delivery condition. If a deployment breaks,
-  prefer correcting the new state and advancing over restoring the old one.
-  Existing version history is not a reason to manufacture additional copies.
-- The regime does not authorize loss of unique Corpus traces, frozen editions,
-  or unrelated concurrent work, nor expand the applicable mandate. A real
-  installed dependency, irreplaceable data, or consequential third-party
-  effect changes the measured-risk decision for that specific act.
+**Default loop: main → focused test → deploy → live Reality Test → fix forward
+→ redeploy → verify.** If the current version breaks, diagnose the actual
+defect and make the next corrective commit on main. A failed Reality Test is
+useful evidence, not an instruction to reinstall the previous version. Do not
+automatically roll back the software, configuration or schema to an earlier
+state. A defect is a problem to solve, not a reason to suspend the whole
+development regime. Retain necessary failure evidence and maintain a viable
+administrative/repair route; stopping a harmful effect is not the same as
+restoring an old release.
 
-Super Agile is a development regime, not the privileged shell execution mode
-called super. The Principal decides when a material installed base justifies
-a different continuity regime; do not silently import mature-product
-constraints into the experimental phase.
+- **One mainline:** no local or remote feature, task, hotfix or safety branch,
+  separate worktree, clone, stash or parallel staging environment by default.
+  Apply optimistic concurrency to real overlapping changes. An actual provider
+  constraint or concrete exceptional need may justify asking for a bounded
+  exception; branch creation still requires the Principal's explicit prior
+  approval under the Delivery policy below. An existing branch is a reconciliation
+  obligation, not a reason to create another one.
+- **One useful running version:** retain the current deployment and its actual
+  dependency closure, plus work genuinely in flight. Prefer forward-compatible
+  correction of real consumers to obsolete compatibility layers. Do not retain
+  previous releases, full copies of dependencies, pre-change configuration,
+  build trees, snapshots, or database dumps solely to permit a future rollback.
+  Git history and compact deployment/test receipts are sufficient for historical
+  inspection of reproducible code. A versioned runtime directory is legitimate
+  when it is the actual execution root, not as an automatic rollback reserve.
+- **No automatic rollback machinery in this regime:** deployment handlers must
+  expose the failed revision and observable error, release their operation lock
+  once the actual state is known, and admit a new corrected revision through the
+  normal authority path. Do not confuse disabling rollback with disabling
+  authentication, integrity checks, execution identity checks or effect receipts.
+  If an existing deployed handler still enforces rollback, record it as an
+  implementation divergence to fix through its owning packet and authorized
+  installation path; do not bypass its independent controls.
+- **Close the lifecycle:** a successful deployment or completed task must
+  reconcile unique work and retire its obsolete rollback copies, redundant
+  builds, and exhausted branches within mandate. Do not archive obsolete
+  reproducible rollback copies merely to postpone deletion. Inspect live,
+  indirect and in-flight references before removing a runtime artifact. A
+  remaining dependency is current functional state, not a backup.
+- **Preserve what forward correction cannot recreate:** unique Corpus content,
+  evidence, original or personal data, independently valuable history, and
+  unrelated concurrent work remain protected. Preserve the minimum genuinely
+  needed recovery/administration capacity, not entire old software stacks.
+  For an actual consequential external dependency or otherwise irreversible
+  loss, propose a narrowly scoped exception with a reason and a review bound.
+  Only the Principal may change the regime; an exception does not end it.
+
+Super Agile reduces the total cost of development, including disk consumption,
+branch reconciliation, stale states and human attention. It is a development
+regime, not the privileged shell execution mode called super, not an exemption
+from the applicable mandate, and not a deletion rule for irreplaceable data.
+See the [main-first delivery policy](#delivery-policy--optimistic-locking) and
+[no ritual backups](#no-ritual-backups-copies-or-precautionary-isolation).
 
 ## No ritual backups, copies, or precautionary isolation
 
