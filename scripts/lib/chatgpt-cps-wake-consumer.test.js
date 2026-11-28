@@ -75,7 +75,7 @@ test('3 causally chained returns re-enter existing COPScheduler, no duplicate af
    // No controller must manually invoke each next continuation: one bounded
    // Cogentia mandate driver consumes all three causally chained returns.
    const drained=await runChatgptCpsWakeBatch({store,scheduler:existingScheduler,
-     admit,max_steps:4});
+     admit,max_steps:3});
    assert.equal(drained.status,'queue_drained',JSON.stringify(drained));
    assert.equal(drained.steps_completed,3);
    assert.equal(drained.autonomous_browser_worker,false);
@@ -431,7 +431,7 @@ test('optimistic batch accepts the mandated dispatcher without extra verifier',a
   const id='ctn_optimistic_batch_01';addReturned(store,id);
   await consumeChatgptCpsWake({store,continuation_id:id,
    scheduler:scheduler(()=>({status:'continue',next_action:'inspect-source'})),admit});
-  const result=await runChatgptCpsNextStepBatch({store,max_steps:2,
+  const result=await runChatgptCpsNextStepBatch({store,max_steps:1,
    admit:nextActionAdmit,dispatch:async()=>({ok:true,
     child_continuation_id:'ctn_optimistic_batch_child_01',
     execution_receipt_ref:'john:receipt:batch'})});

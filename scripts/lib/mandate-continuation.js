@@ -20,6 +20,8 @@ export function decideMandateContinuation({
 /**
  * Run authorized steps until a real boundary instead of stopping after every
  * intermediate result. The caller owns state inspection and effects.
+ * inspect must be observational, including final_verification_only; the final
+ * inspection can prove acceptance but can never admit another execute call.
  * No background execution is implied.
  */
 export async function runMandateToBoundary({
@@ -46,6 +48,14 @@ export async function runMandateToBoundary({
     if (!outcome.ok) {
       return { action: "handoff", reason: "step_failed", steps_completed: i, events };
     }
+  }
+  // Reaching the execution ceiling does not imply the objective is unmet.
+  // A final observational check may prove acceptance, never execute a Step.
+  const finalState = await inspect({
+    step: limit, events: events.slice(), final_verification_only: true,
+  });
+  if (finalState?.objective_met === true) {
+    return { action: "complete", reason: "verified_objective_met", steps_completed: limit, events };
   }
   return { action: "handoff", reason: "step_limit", steps_completed: limit, events };
 }

@@ -22,10 +22,18 @@ export async function runChatgptCpsBrowserLoop({
   const trace=[];
   let prior=null,terminal=false,stopReason=null;
   const running=await runMandateToBoundary({max_steps:max_turns,
-    inspect:async({step})=>{
+    inspect:async({step,final_verification_only})=>{
       if(terminal)return {objective_met:true};
       // Only the trusted application policy can choose the next packet.
-      const choice=await next({step,prior:prior?{...prior}:null});
+      let choice;
+      try {
+        choice=await next({step,prior:prior?{...prior}:null,
+          ...(final_verification_only?{final_verification_only:true}:{})});
+      } catch (error) {
+        // Unknown final acceptance remains a step_limit.
+        if(final_verification_only)return {};
+        throw error;
+      }
       if(choice?.completed===true){terminal=true;return {objective_met:true};}
       if(choice?.blocked===true)return {hard_blocker:true};
       if(choice?.human_judgment_required===true)return {judgment_required:true};
@@ -76,19 +84,8 @@ export async function runChatgptCpsBrowserLoop({
       return {ok:true,code:'returned_and_evaluated'};
     },
   });
-  // The generic bounded driver stops immediately after its last permitted
-  // Step. Inspect acceptance once more WITHOUT admitting another action:
-  // exactly N verified returns can therefore finish a max-N-turn mandate.
-  let endStatus=running.reason;
-  if(endStatus==='step_limit' && !stopReason){
-    try{
-      const outcome=await next({step:max_turns,prior:prior?{...prior}:null,
-        final_verification_only:true});
-      if(outcome?.completed===true)endStatus='verified_objective_met';
-    }catch{/* unknown final acceptance remains a step_limit */}
-  }
-  return {ok:endStatus==='verified_objective_met',
-    status:stopReason||endStatus,steps_completed:running.steps_completed,
+  return {ok:running.reason==='verified_objective_met',
+    status:stopReason||running.reason,steps_completed:running.steps_completed,
     trace,autonomous_per_turn:true,
     // This is a bounded foreground process; it is not a resident worker.
     persistent_worker:false};

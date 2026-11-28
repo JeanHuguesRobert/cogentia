@@ -403,10 +403,7 @@ export async function runAssignedChatgptCpsBatch({store,admit,dispatch,max_steps
     return {ok:result.ok===true,code:result.status};
   }});
   const left=listAssignedChatgptCpsContinuations(store,{limit:100});
-  // Exactly max_steps confirmed deliveries may drain the queue on the last
-  // allowed step. Do not label that successful exhaustion as an error.
-  const drained=running.reason==='verified_objective_met'||
-    (running.reason==='step_limit'&&left.length===0);
+  const drained=running.reason==='verified_objective_met';
   return {ok:drained,status:drained?'queue_drained':running.reason,
     steps_completed:running.steps_completed,
     pending_count:left.filter(x=>x.status==='ready'||

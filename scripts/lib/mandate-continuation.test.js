@@ -85,3 +85,42 @@ test("an unverified read-only permission requires a real boundary, not a fabrica
   assert.equal(result.action,"escalate");
   assert.equal(result.reason,"mandate_or_next_step_unclear");
 });
+
+test("objective attained exactly at the step limit completes without another effect", async () => {
+  let count = 0;
+  const inspections = [];
+  const result = await runMandateToBoundary({
+    max_steps: 1,
+    inspect: ({step, final_verification_only}) => {
+      inspections.push([step, final_verification_only === true]);
+      return count === 1 ? {objective_met:true} : {next_step_clear:true,next_step_allowed:true};
+    },
+    execute: async () => { count++; return {ok:true}; },
+  });
+  assert.equal(result.action, "complete");
+  assert.equal(result.steps_completed, 1);
+  assert.equal(count, 1);
+  assert.deepEqual(inspections, [[0,false],[1,true]]);
+});
+
+test("terminal inspection cannot authorize an extra effect", async () => {
+  let count = 0;
+  const result = await runMandateToBoundary({
+    max_steps: 1,
+    inspect: () => ({next_step_clear:true,next_step_allowed:true}),
+    execute: async () => { count++; return {ok:true}; },
+  });
+  assert.equal(result.reason, "step_limit");
+  assert.equal(count, 1);
+});
+
+test("failed step does not trigger terminal acceptance inspection", async () => {
+  let inspections = 0;
+  const result = await runMandateToBoundary({
+    max_steps: 1,
+    inspect: () => { inspections++; return {next_step_clear:true,next_step_allowed:true}; },
+    execute: async () => ({ok:false}),
+  });
+  assert.equal(result.reason, "step_failed");
+  assert.equal(inspections, 1);
+});
