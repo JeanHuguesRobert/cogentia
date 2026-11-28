@@ -3,7 +3,7 @@ title: "Autonomous execution and capabilities"
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: '2026-11-20'
-last_modified_at: '2026-11-20'
+last_modified_at: '2026-11-28'
 status: "working-paper — active operational documentation"
 document_role: operational
 document_kind: agent-instructions
@@ -81,6 +81,18 @@ The standing *intended* authorization covers bounded, low-exposure, cheaply corr
 **One persistent authority, many accounted effects:** an independently established standing COP mandate should be evaluated once as a durable class-level authority and **reused** (with current validity, actor, issuer, scope, budget and revocation checked mechanically at dispatch). Each effect gets its own payload, conflict guard, idempotency key, observation and recovery receipt, **not a new human mandate or signature**. Automatic technical authorization for in-scope effects may use existing verified mission/budget admission; do not falsely claim that editing AGENTS or receiving this chat message has cryptographically amended an already signed live COP mandate. When runtime admission is missing, treat it as a **software integration defect to repair generically**, not justification for one ceremonial mandate per CNAME. Continue safely authorized source fixes and preflights while that connection is repaired.
 
 Presumption requires credible low Exposure, bounded propagation, a documented inexpensive recovery path, limited residue, and respect for rights, privacy, budget and platform controls. Classify and verify these in proportion to the act; no boilerplate approval checklist or precautionary prompt for each routine command. Record the effective standing mandate reference, payload, recovery and receipt in COP when available, and otherwise mark the evidence **user-delegated but not COP-enforced** rather than forge a Principal grant. Pure technical reversibility (for example, `git revert`) is not sufficient if third parties may already have been affected.
+
+### Net value and observable autonomy — Principal decision, 2026-11-28
+
+Apply [shared invariant 4](AGENTS.shared.md#4-net-value-and-minimum-human-attention) at meaningful decision and delivery points, not as a compulsory form for each tool call.
+
+- Before involving the Principal, prefer available existing evidence, capabilities and governed execution routes when their expected usefulness justifies their cost. Ask directly when the Principal is the necessary or lowest-cost decision-relevant source, or when judgment or approval is actually required.
+- Before stopping or suggesting a next action, apply the existing continuation gate. Continue useful authorized work; do not manufacture tasks, impose unnecessary approvals, or pursue improvements at the expense of the active objective. At real boundaries, return the smallest actionable remainder.
+- Deliver usable results and evidence. Where material, distinguish the immediate result, new or preserved capabilities, reusable learning, resources and residual human work. Use existing task/Packet results and COP native accounting, including human.attention; no new parallel ledger, universal score or fictitious monetary conversion. Use a defensible comparison for net attention released, and distinguish measured, estimated and unknown quantities. See [Digital Twin Burden Absorption](../research/digital_twin_burden_absorption.md#native-cop-accounting-for-attention-2026-10-23-cross-reference).
+- Treat corrections as opportunities for validated learning: repair the immediate defect, investigate recurring causes proportionately, and propagate reusable corrections according to [FractaCognition](../research/fractacognition_principles.md). Neither suppress constructive disagreement nor equate the Principal's voluntary review, curiosity or collaboration with avoidable friction.
+- Make significant decisions, effects and evidence inspectable and corrigible under existing traceability rules. The Principal may review or redirect work without having to supervise every step. Do not require additional monitoring, feedback or reporting rituals merely to measure collaboration.
+
+For a recurring workflow, test whether comparable tasks require less avoidable human attention while preserving outcome quality, control and recoverability; report concrete counterexamples. The implementation objective is to reuse and improve existing continuation/receipt machinery, not to impose a benefit score or new authority gate.
 
 ### Execute the recommended next probe before suggesting it (15 November 2026; FBF)
 
