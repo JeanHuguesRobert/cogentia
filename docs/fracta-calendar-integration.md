@@ -12,6 +12,18 @@ document_kind: documentation
 visibility: public
 lifecycle_state: active
 author: "Jean Hugues Noël Robert, baron Mariani"
+affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
+language: en
+status: working-paper — operational guide and proposed requirements
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
 update_policy: UP-DEFAULT-REVIEWED
 classification_source: "cogentia.js"
 classification_version: "1"
@@ -212,4 +224,3 @@ A run produces a result with an explicit recipient and delivery contract (existi
 Smallest useful Reality Test: schedule a single bounded future read-only job via MCP, close the creating session, observe the actual wake and governed dispatch on Fracta2, obtain a persisted result via CLI or Inox, inspect history and cancel/revoke an additional pending occurrence before it starts. Then prove a short finite recurring series, a condition that closes, temporal review, restart/duplicate trigger reconciliation, and a rejected out-of-mandate request. A coding-agent consumer should schedule a tiny Inox read-only test and consume its result without ChatGPT. Test timezone/DST, missed/overlapping occurrences, budget/expiry/revocation, failed delivery and ambiguous external effects before claiming generic readiness. Reuse the existing [Operium #40](https://github.com/JeanHuguesRobert/operium/issues/40) work and MCP/COP pilot; reconcile their current code rather than blindly implementing historical issue checklists.
 
 The morning briefing is the first useful end-to-end application after this proof: observation-only, existing Sleep Cycle and Git/COP evidence, daily 07:00 Europe/Paris, explicit horizon/review, model-substitutable synthesis and delivery to the Principal. Initially run an isolated comparison without replacing or duplicating the active OpenAI delivery. Migrate ownership only after a verified Cogentia-produced briefing and a separate deliberate switchover. The existing ChatGPT task is a working reference, not an execution backend to assume callable from Cogentia.
-
