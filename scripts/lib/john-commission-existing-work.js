@@ -23,6 +23,12 @@ const TOOL='cogentia_host_process_run';
 const exactKeys=(x,keys)=>x&&typeof x==='object'&&!Array.isArray(x)&&Object.keys(x).length===keys.length&&keys.every(k=>Object.hasOwn(x,k));
 const source=/^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/issues\/[1-9][0-9]*$/;
 const ref=x=>typeof x==='string'&&/^[A-Za-z0-9][A-Za-z0-9_.:/@-]{1,255}$/.test(x);
+const TURN_POLICY='agent_selected_normal/v1';
+const turnPolicy=p=>exactKeys(p,['kind','valid_until'])&&p.kind===TURN_POLICY&&
+ typeof p.valid_until==='string'&&Number.isFinite(Date.parse(p.valid_until))&&
+ new Date(p.valid_until).toISOString()===p.valid_until;
+const turnId=v=>typeof v==='string'&&/^[A-Za-z0-9_.:-]{1,128}$/.test(v);
+
 
 // A host-owned plan is immutable for the lifetime of this adapter; no
 // command, budget, actor or permission is taken from the confirmation body.
@@ -34,15 +40,17 @@ export function createExistingHostWorkCommissioner({
     typeof verifyIssuer!=='function'||typeof authenticatePrincipal!=='function'||
     typeof handler!=='function'||!ref(sourceRef))
    throw TypeError('trusted_work_commissioning_dependencies_required');
- const reviewed=structuredClone(plan),r=reviewed?.request,i=reviewed?.intent,a=r?.first_act;
+ const reviewed=structuredClone(plan),r=reviewed?.request,i=reviewed?.intent,a=r?.route??r?.first_act;
  if(!exactKeys(reviewed,['request','intent'])||
-    !exactKeys(r,['work_ref','source_issue_id','purpose','first_act','completion'])||
+    !(exactKeys(r,['work_ref','source_issue_id','purpose','first_act','completion'])||
+      exactKeys(r,['work_ref','source_issue_id','purpose','route','completion','turn_policy'])&&turnPolicy(r.turn_policy))||
     !source.test(r.work_ref)||sourceRef!==r.work_ref||typeof r.source_issue_id!=='string'||!r.source_issue_id||
     typeof r.purpose!=='string'||!r.purpose.trim()||typeof r.completion!=='string'||!r.completion.trim()||
-    !exactKeys(a,['capability','target','provider','execution_mode','command','timeout_ms'])||
+    !(r.turn_policy?exactKeys(a,['capability','target','provider','execution_mode']):
+       exactKeys(a,['capability','target','provider','execution_mode','command','timeout_ms'])&&
+       typeof a.command==='string'&&a.command.trim()&&a.command.length<=32768&&
+       Number.isSafeInteger(a.timeout_ms)&&a.timeout_ms>=1&&a.timeout_ms<=120000)||
     a.capability!=='host.process.run'||a.execution_mode!=='normal'||
-    typeof a.command!=='string'||!a.command.trim()||a.command.length>32768||
-    !Number.isSafeInteger(a.timeout_ms)||a.timeout_ms<1||a.timeout_ms>120000||
     !exactKeys(i,['submission_key','request_hash','principal_ref','responsible_agent_ref','capability','mandate_ref','mandate_version','parent_budget_ref','allocation'])||
     i.request_hash!==hashPayload(r)||i.principal_ref!=='principal:jhn'||i.responsible_agent_ref!=='agent:jhn'||
     i.capability!==a.capability||i.mandate_ref!==STANDING_MANDATE_REF||i.parent_budget_ref!==STANDING_BUDGET_ID||
@@ -96,6 +104,7 @@ export function createExistingHostWorkCommissioner({
  }
  async function commission({session,auth,presented_plan_hash}={},directPrincipal=false){
      if(presented_plan_hash!==plan_hash)return deny('work_plan_hash_mismatch');
+     if(r.turn_policy&&Date.parse(r.turn_policy.valid_until)<=now().getTime())return deny('work_turn_policy_expired');
      let identity;
      try{identity=await authenticatePrincipal({session})}catch{return deny('principal_session_unverified')}
      if(identity?.ok!==true||identity.authenticated!==true||identity.principal_ref!==i.principal_ref)
@@ -171,14 +180,22 @@ export function openConfiguredExistingWork(env=process.env){
  const existing=openExistingJohnCopStore(path);
  if(!existing.ok)throw Error(existing.error);
  existing.close();
- const plan=JSON.parse(readFileSync(planPath,'utf8'));
+ // The consent service reads proposals at confirmation time. Replacing a
+ // proposal file atomically does not restart either service or change an
+ // already commissioned packet. The worker needs no proposal file at all.
+ const getPlans=()=>{
+   if(statSync(planPath).size>1024*1024)throw Error('work_plan_catalog_too_large');
+   const raw=JSON.parse(readFileSync(planPath,'utf8'));
+   return Array.isArray(raw)?raw:[raw];
+ };
  const packetStore=createSqliteCopEventStore(path);
- return {plan,packetStore,primaryStoreId,close(){packetStore.close()}};
+ return {getPlans,packetStore,primaryStoreId,close(){packetStore.close()}};
 }
 
 /** Take charge of an already commissioned work through the existing agent
- * transport. The reference selects a work, not an authority. The only
- * dispatch is the exact plan via the ordinary governed host router.
+ * transport. The reference selects a work, not an authority. Dispatch
+ * through the ordinary governed host router is exact for legacy plans and
+ * bounded by the reviewed route and signed mandate for multi-turn plans.
  */
 export function createCommissionedHostWorkRunner({rootStore,packetStore,primaryStoreId,
  plan,verifyIssuer,now=()=>new Date()}={}){
@@ -192,7 +209,7 @@ export function createCommissionedHostWorkRunner({rootStore,packetStore,primaryS
  const packet_ref=packetRefForMcpTask(taskId),topic='packet:'+packet_ref,budget_id='budget:'+packet_ref;
  const parent=()=>createEventSourcedExecutionBudgetLedger({store:rootStore,
    budget_id:STANDING_BUDGET_ID,require_authority_grant:true});
- function context(){
+ function verifiedWorkIdentity(){
    const first=packetStore.listTopic(topic)[0]?.payload;
    const c=first?.access_context,e=c?.commissioning_evidence;
    const assigned=projectPacketWorkAssignment(packetStore,{packet_ref:topic});
@@ -205,9 +222,16 @@ export function createCommissionedHostWorkRunner({rootStore,packetStore,primaryS
       c?.delivery?.recipient_ref!==i.principal_ref||c?.delivery?.visibility!=='restricted'||
       e?.scheme!=='supabase_authenticated_owner_work_intent/v1'||e?.plan_hash!==validator.plan_hash||
       e?.source_issue_id!==r.source_issue_id||e?.source_work_ref!==r.work_ref||
-      assigned?.responsible_agent_ref!==i.responsible_agent_ref||
+      assigned?.ok!==true||assigned.status!=='assigned'||
+      assigned.responsible_agent_ref!==i.responsible_agent_ref||
       assigned?.commissioned_by_principal_ref!==i.principal_ref||
-      packetStore.auditTopicCommitment(topic)?.ok!==true)return null;
+      packetStore.auditTopicCommitment(topic)?.ok!==true||
+      packetStore.auditTopicCommitment('execution-budget:'+budget_id)?.ok!==true||
+      rootStore.auditTopicCommitment('execution-budget:'+STANDING_BUDGET_ID)?.ok!==true)return false;
+   return true;
+ }
+ function context(){
+   if(!verifiedWorkIdentity())return null;
    const rows=rootStore.listTopic('execution-budget:'+STANDING_BUDGET_ID);
    const a=rows.find(e=>e.event_type==='ExecutionBudgetReservation'&&
      e.payload?.reservation?.idempotency_key==='delegate:'+budget_id+':'+packet_ref)?.payload?.reservation;
@@ -223,6 +247,122 @@ export function createCommissionedHostWorkRunner({rootStore,packetStore,primaryS
       q.mandate_version!==i.mandate_version)return null;
    return context();
  }
+ // Multi-turn policy is part of the Principal-reviewed request hash.
+ // All commands, including the first, are chosen by the responsible agent
+ // within the reviewed route, signed normal profile and local budget.
+ // The final judgment is not a command and does not consume an execution Step.
+ function normalizeTurn(args){
+   const {work_ref,mandate,work_turn:t,...act}=args||{};
+   if(work_ref!==r.work_ref||(mandate!=null&&mandate!==STANDING_TRANSPORT_LABEL)||!turnId(t?.id))return null;
+   if(exactKeys(t,['id','kind','status','summary'])&&t.kind==='finish'&&
+      ['completed','blocked'].includes(t.status)&&typeof t.summary==='string'&&t.summary.trim()&&t.summary.length<=2048&&
+      Object.keys(act).length===0)return {turn:t};
+   if(!exactKeys(t,['id','kind'])||t.kind!=='act'||
+      !exactKeys(act,['target','provider','execution_mode','command','timeout_ms'])||
+      act.target!==r.route.target||act.provider!==r.route.provider||act.execution_mode!=='normal'||
+      typeof act.command!=='string'||!act.command.trim()||act.command.length>32768||
+      !Number.isSafeInteger(act.timeout_ms)||act.timeout_ms<1||act.timeout_ms>120000)return null;
+   return {turn:t,act};
+ }
+ function storedTurn(rows,id){
+   for(const e of rows){
+     const p=e.payload;
+     const receipt=p?.phase==='input_required'?p.checkpoint:p?.phase==='completed'?p.result:null;
+     if(receipt?.turn?.id===id)return receipt;
+   }
+   return null;
+ }
+ function turnResponse(task,receipt,duplicate=false){
+   return {ok:receipt?.result?.ok!==false,packet_ref,task,turn_receipt:receipt,
+     ...(duplicate?{duplicate:true}:{}),grants_authority:false};
+ }
+ async function runTurns({args,auth,invoke}){
+   const candidate=normalizeTurn(args);
+   if(!candidate)return deny('work_turn_invalid');
+   const digest=hashPayload(candidate),id=candidate.turn.id;
+   const localLedger=()=>createEventSourcedExecutionBudgetLedger({store:packetStore,budget_id,require_authority_grant:true});
+   const actWithinTime=v=>Date.parse(r.turn_policy.valid_until)-now().getTime()>=v.act.timeout_ms;
+   const check=()=>assessJohnCopAuthority({store:rootStore,auth,verifyIssuer,
+     ledger:localLedger(),mandate_ref:i.mandate_ref,version_pin:i.mandate_version,capability:i.capability,
+     transport_mandate_label:STANDING_TRANSPORT_LABEL,at_time:now()});
+   // Every actual command is admitted by the same standing COP resolver.
+   // The host-input validator also binds the accepted turn to its suspension.
+   const pilot=createCopMcpTasksPilot({store:packetStore,toolName:TOOL,primaryStoreId,
+     ownerInstanceRef:'instance:jhn-host-work',
+     verifyHostInput:({candidate:next})=>{
+       const v=normalizeTurn({work_ref:r.work_ref,work_turn:next?.turn,...next?.act});
+       if(!v||hashPayload(v)!==hashPayload(next)||!context())return {verified:false};
+       if(!check().preflight_ok)return {verified:false};
+       if(v.turn.kind==='act'&&(!actWithinTime(v)||
+          localLedger().snapshot().available.max_steps<1))return {verified:false};
+       return {verified:true,value:v};
+     },
+     handler:async(_created,{resume})=>{
+       const next=resume?.inputResponses;
+       if(!next)throw Error("work_turn_input_not_admitted");
+       const active=context();
+       if(!active)throw Error('work_context_or_allocation_unavailable');
+       if(next.turn.kind==='finish'){
+         if(!check().preflight_ok)throw Error('work_finish_authority_unverified');
+         const allocation=reserveEventSourcedDelegatedBudget({store:rootStore,child_store:packetStore,
+           child_source_ref:primaryStoreId+'#'+packet_ref,parent_ledger:parent(),
+           child_budget_id:budget_id,child_mandate_ref:i.mandate_ref,principal_ref:i.principal_ref,
+           allocation:i.allocation,idempotency_key:packet_ref});
+         if(!allocation.ok||allocation.reservation.reservation_id!==active.allocation_ref)
+           throw Error('work_allocation_reconciliation_required');
+         const closed=allocation.close();
+         if(!closed.ok)throw Error('work_budget_reconciliation_required');
+         return {turn:next.turn,input_hash:hashPayload(next),packet_ref,parent_summary:closed.evidence,
+           work_complete:next.turn.status==='completed',postcondition_status:'agent_assessed',
+           packet_status:next.turn.status};
+       }
+       if(!actWithinTime(next)||!check().preflight_ok){
+         // The provider has not been called. Keep the packet resumable so
+         // a subsequent authorized judgment can reconcile its unused funds.
+         return {type:'cop.task.host-input/v1',checkpoint:{turn:next.turn,input_hash:hashPayload(next),
+           result:{ok:false,error:'work_turn_authority_or_time_expired',dispatched:false},packet_ref,
+           remaining_steps:localLedger().snapshot().available.max_steps,work_complete:false},
+           pending:{kind:'agent_work_turn'}};
+       }
+       const result=await invoke(next.act,{packet_ref});
+       const spend=result?.trace?.verification?.cop_spend;
+       if(spend?.accounting_complete!==true||spend.accounting_locality!=='packet'||
+          spend.packet_ref!==packet_ref||spend.budget_id!==budget_id)
+         throw Error('work_effect_accounting_requires_reconciliation');
+       const checkpoint={turn:next.turn,input_hash:hashPayload(next),result,packet_ref,
+         remaining_steps:localLedger().snapshot().available.max_steps,work_complete:false};
+       return {type:'cop.task.host-input/v1',checkpoint,pending:{kind:'agent_work_turn'}};
+     }});
+   let task;
+   try{task=await pilot.adapter.get({taskId,auth})}catch{return deny('commissioned_work_not_found')}
+   let rows=packetStore.listTopic(topic);
+   if(!verifiedWorkIdentity()||!check().preflight_ok)return deny('work_history_or_authority_unverified');
+   const receipt=storedTurn(rows,id);
+   if(receipt)return receipt.input_hash===digest?turnResponse(task,receipt,true):deny('work_turn_id_conflict');
+   if(['completed','failed','cancelled'].includes(task.status))return deny('work_turn_terminal');
+   if(!context())return deny('work_context_or_allocation_unavailable');
+   if(!check().preflight_ok)return deny('work_turn_authority_unverified');
+   if(candidate.turn.kind==='act'&&(!actWithinTime(candidate)||
+       localLedger().snapshot().available.max_steps<1))return deny('work_turn_time_or_budget_exhausted');
+   let open=rows.findLast(e=>e.payload?.phase==='input_required');
+   if(!open){
+     try{task=await pilot.requireInitialHostInput(taskId,auth)}catch(e){return deny(e.message||'work_turn_start_failed')}
+     rows=packetStore.listTopic(topic);open=rows.findLast(e=>e.payload?.phase==='input_required');
+     if(!open)return deny('work_turn_start_unavailable');
+   }
+   if(rows.some(e=>e.payload?.phase==='input_received'&&e.payload.inputResponses?.turn?.id===id&&
+      e.payload.host_input_hash!==digest))return deny('work_turn_id_conflict');
+   // Replays of an admitted but unfinished turn never bind to a later
+   // suspension. They observe the old claim rather than redispatch it.
+   const admitted=rows.find(e=>e.payload?.phase==='input_received'&&e.payload.inputResponses?.turn?.id===id);
+   if(admitted&&admitted.payload.suspension_event_ref!==open.event_id)return deny('work_turn_outcome_unknown');
+   try{await pilot.acceptHostInput(taskId,auth,candidate,open.event_id)}
+   catch(e){return deny(e.message||'work_turn_not_admitted')}
+   task=await pilot.run(taskId,auth,{hostInput:{suspension_ref:open.event_id,input_hash:digest}});
+   const done=storedTurn(packetStore.listTopic(topic),id);
+   if(!done)return deny('work_turn_result_pending_or_reconciliation_required',{packet_ref,task});
+   return turnResponse(task,done);
+ }
  return Object.freeze({
    resolvePacketContext,
    async run({args,auth,invoke}={}){
@@ -230,6 +370,7 @@ export function createCommissionedHostWorkRunner({rootStore,packetStore,primaryS
         auth.principal_ref!==i.principal_ref||auth.allowMutate!==true||
         auth.mandate_ref!==STANDING_TRANSPORT_LABEL||typeof invoke!=='function')
        return deny('work_authenticated_agent_required');
+     if(r.turn_policy)return runTurns({args,auth,invoke});
      // No independent effect grant or arbitrary substitutions in this path.
      const {work_ref,mandate,...given}=args||{};
      const {capability,...expected}=r.first_act;
@@ -270,6 +411,85 @@ export function createCommissionedHostWorkRunner({rootStore,packetStore,primaryS
      const done=await pilot.run(taskId,auth);
      return {ok:done.status==='completed'&&done.result?.result?.ok===true,
        packet_ref,task:done,grants_authority:false};
+   },
+ });
+}
+
+/** Resolve proposals by exact reviewed hash, and commissioned work by its
+ * canonical packet. No per-issue service configuration or second ledger.
+ * Reconstruct an already commissioned plan from the immutable creation;
+ * the original plan hash and all authority/assignment/budget checks still
+ * run in the existing runner. A removed proposal does not orphan work.
+ */
+function planFromCreation(c){
+ const r=c?.args?.request,w=c?.access_context,e=w?.commissioning_evidence;
+ if(c?.phase!=='created'||c?.toolName!==TOOL||
+    w?.schema!=='cogentia.work-commissioning/v1'||
+    e?.scheme!=='supabase_authenticated_owner_work_intent/v1'||!r)return null;
+ const plan={request:r,intent:{submission_key:w.submission_key,request_hash:w.request_hash,
+   principal_ref:w.principal_ref,responsible_agent_ref:w.assignment?.responsible_agent_ref,
+   capability:w.authority?.capability,mandate_ref:w.authority?.mandate_ref,
+   mandate_version:w.authority?.version,parent_budget_ref:w.funding?.parent_budget_ref,
+   allocation:w.funding?.allocation}};
+ return hashPayload(plan)===e.plan_hash?plan:null;
+}
+export function createExistingHostWorkCatalog({plans,getPlans,...options}={}){
+ if((plans===undefined)===(getPlans===undefined)||getPlans!==undefined&&typeof getPlans!=='function')
+   throw TypeError('one_work_plan_catalog_source_required');
+ const build=entries=>{
+   if(!Array.isArray(entries)||entries.length>128)throw TypeError('work_plan_catalog_invalid');
+   const byHash=new Map(),byRef=new Set();
+   for(const plan of entries){
+     const c=createExistingHostWorkCommissioner({...options,plan,sourceRef:plan?.request?.work_ref});
+     if(byHash.has(c.plan_hash)||byRef.has(plan.request.work_ref))
+       throw TypeError('work_plan_catalog_ambiguous');
+     byHash.set(c.plan_hash,c);byRef.add(plan.request.work_ref);
+   }
+   return byHash;
+ };
+ const fixed=getPlans?null:build(plans);
+ return Object.freeze({
+   async commissionFromPrincipal(input){
+     let byHash;
+     try{byHash=fixed??build(getPlans())}catch{return deny('work_plan_catalog_unavailable')}
+     const c=byHash.get(input?.presented_plan_hash);
+     return c?c.commissionFromPrincipal(input):deny('work_plan_hash_mismatch');
+   },
+ });
+}
+export function createCommissionedHostWorkDispatcher({packetStore,...options}={}){
+ if(packetStore?.kind!=='sqlite')throw TypeError('canonical_work_store_required');
+ function forPacket(packet_ref){
+   if(typeof packet_ref!=='string'||!/^pkt-mcp-[0-9a-f-]{36}$/.test(packet_ref))return null;
+   try{
+     const topic='packet:'+packet_ref,rows=packetStore.listTopic(topic);
+     if(packetStore.auditTopicCommitment(topic)?.ok!==true)return null;
+     const p=planFromCreation(rows[0]?.payload);
+     if(!p||packetRefForMcpTask(stableMcpWorkTaskId('jhn:'+p.intent.responsible_agent_ref,TOOL,p.intent.submission_key))!==packet_ref)return null;
+     return createCommissionedHostWorkRunner({...options,packetStore,plan:p});
+   }catch{return null}
+ }
+ function forRef(work_ref){
+   if(/^pkt-mcp-[0-9a-f-]{36}$/.test(work_ref||''))return forPacket(work_ref);
+   if(typeof work_ref!=='string'||!source.test(work_ref))return null;
+   const matches=packetStore.replay().filter(e=>e.payload?.phase==='created'&&
+     e.payload?.toolName===TOOL&&e.payload?.args?.request?.work_ref===work_ref);
+   // Never silently pick a newer/older commission of the same Issue.
+   if(matches.length!==1)return null;
+   return forPacket(matches[0].payload.packetRef);
+ }
+ return Object.freeze({
+   resolvePacketContext(q){return forPacket(q?.packet_ref)?.resolvePacketContext(q)??null},
+   async run(input){
+     const ref=input?.args?.work_ref,runner=forRef(ref);
+     if(!runner)return deny('commissioned_work_missing_or_ambiguous');
+     // The existing runner verifies the plan, actual caller and exact act.
+     // Its canonical reference remains the original Issue URL.
+     if(/^pkt-mcp-[0-9a-f-]{36}$/.test(ref)){
+       const p=planFromCreation(packetStore.listTopic('packet:'+ref)[0]?.payload);
+       return runner.run({...input,args:{...input.args,work_ref:p.request.work_ref}});
+     }
+     return runner.run(input);
    },
  });
 }

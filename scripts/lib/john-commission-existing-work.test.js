@@ -19,7 +19,7 @@ import {createHostCapabilityRouter} from './host-capability-router.js';
 import {createMcpCore} from './cogentia-mcp-core.js';
 import {hostname} from 'node:os';
 import {request as httpRequest} from 'node:http';
-import {createExistingHostWorkCommissioner,createCommissionedHostWorkRunner} from './john-commission-existing-work.js';
+import {createExistingHostWorkCommissioner,createCommissionedHostWorkRunner,createExistingHostWorkCatalog,createCommissionedHostWorkDispatcher} from './john-commission-existing-work.js';
 const REF='mandate:jhn:john-root',BUDGET='budget:'+REF;
 const now=new Date('2026-11-27T12:00:00Z');
 const owner='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
@@ -165,4 +165,168 @@ test('real HTTP owner commissioning then authenticated MCP agent executes and se
   assert.equal(f.packetStore.auditTopicCommitment('execution-budget:'+a.budget_id).ok,true);
   console.log('HTTP_OWNER_COMMISSION_MCP_REAL_UNIX_PASS',JSON.stringify({hostname:hostname(),allocated:3,used:1,returned:2}));
  }finally{await router.stop();await new Promise(resolve=>server.close(resolve));f.close()}
+});
+
+
+test('multiple proposals share one catalog, and a replacement handler resolves commissioned work from durable creation alone',async()=>{
+ const f=fixture();try{
+   const second=structuredClone(f.plan);
+   second.request.work_ref='https://github.com/example/repo/issues/286';
+   second.request.source_issue_id='fixture-id-2';second.request.first_act.command='pwd';
+   second.intent.submission_key='github:example:repo:286';
+   second.intent.request_hash=hashPayload(second.request);
+   second.intent.allocation.max_steps=2;
+   const options={...f,primaryStoreId:'sqlite:fixture-local',ownerInstanceRef:'instance:fixture-work',
+     authenticatePrincipal:f.workflow.authenticate,handler:async()=>{throw Error('must_not_execute')},now:()=>now};
+   assert.throws(()=>createExistingHostWorkCatalog({...options,plans:[f.plan,f.plan]}),/ambiguous/);
+   const catalog=createExistingHostWorkCatalog({...options,plans:[f.plan,second]});
+   const confirm=plan=>catalog.commissionFromPrincipal({session:f.input.session,presented_plan_hash:hashPayload(plan)});
+   assert.equal((await confirm({...second,unexpected:true})).ok,false);
+   const a=await confirm(f.plan),b=await confirm(second);
+   assert.equal(a.ok,true,JSON.stringify(a));assert.equal(b.ok,true,JSON.stringify(b));
+   assert.notEqual(a.packet_ref,b.packet_ref);
+   assert.equal(f.ledger().snapshot().reserved.max_steps,5);
+   assert.equal(f.ledger().snapshot().available.max_steps,0);
+   // No proposal, plan path or proposal catalog is passed to the worker.
+   const runner=createCommissionedHostWorkDispatcher({rootStore:f.rootStore,packetStore:f.packetStore,
+     primaryStoreId:'sqlite:fixture-local',verifyIssuer:f.verifyIssuer,now:()=>now});
+   const resolver=createCanonicalStandingMissionResolver({store:f.rootStore,verifyIssuer:f.verifyIssuer,
+     now:()=>now,resolvePacketContext:runner.resolvePacketContext});
+   const router=createHostCapabilityRouter({missionAuthorityResolver:resolver});
+   const core=createMcpCore({}, {hostRouter:router,runCommissionedHostWork:runner.run});
+   try{
+     const {capability,...act}=f.plan.request.first_act;
+     const args={...act,work_ref:a.packet_ref};
+     assert.equal((await core.callTool('cogentia_host_process_run',{...args,work_ref:second.request.work_ref},{auth:f.input.auth})).ok,false);
+     assert.equal((await core.callTool('cogentia_host_process_run',{...args,work_ref:'https://github.com/example/repo/issues/999'},{auth:f.input.auth})).ok,false);
+     assert.equal(f.ledger().snapshot().reserved.max_steps,5);
+     const one=await core.callTool('cogentia_host_process_run',args,{auth:f.input.auth});
+     assert.equal(one.ok,true,JSON.stringify(one));assert.equal(one.packet_ref,a.packet_ref);
+     const {capability:_,...act2}=second.request.first_act;
+     const two=await core.callTool('cogentia_host_process_run',{...act2,work_ref:second.request.work_ref},{auth:f.input.auth});
+     assert.equal(two.ok,true,JSON.stringify(two));assert.equal(two.packet_ref,b.packet_ref);
+     assert.equal(one.task.result.result.stdout.trim(),hostname());
+     assert.ok(two.task.result.result.stdout.trim().startsWith('/'));
+     assert.equal(f.ledger().snapshot().settled.max_steps,2);
+     assert.equal(f.ledger().snapshot().reserved.max_steps,0);
+     const root=f.rootStore.replay(),local=f.packetStore.replay();
+     const replay=await core.callTool('cogentia_host_process_run',args,{auth:f.input.auth});
+     assert.equal(replay.duplicate,true);assert.equal(replay.ok,true);
+     assert.deepEqual(f.rootStore.replay(),root);assert.deepEqual(f.packetStore.replay(),local);
+   }finally{await router.stop()}
+ }finally{f.close()}
+});
+
+
+async function withTurns(f,body){
+ let clock=now;
+ const plan=structuredClone(f.plan);
+ const {command,timeout_ms,...route}=plan.request.first_act;
+ delete plan.request.first_act;plan.request.route=route;
+ plan.request.turn_policy={kind:'agent_selected_normal/v1',valid_until:'2026-11-27T12:30:00.000Z'};
+ plan.intent.request_hash=hashPayload(plan.request);
+ const options={...f,primaryStoreId:'sqlite:fixture-local',ownerInstanceRef:'instance:fixture-work',
+   authenticatePrincipal:f.workflow.authenticate,handler:async()=>{throw Error('must_not_execute')},now:()=>clock};
+ const catalog=createExistingHostWorkCatalog({...options,plans:[plan]});
+ const a=await catalog.commissionFromPrincipal({session:f.input.session,presented_plan_hash:hashPayload(plan)});
+ assert.equal(a.ok,true,JSON.stringify(a));
+ const runner=createCommissionedHostWorkDispatcher(options);
+ const resolver=createCanonicalStandingMissionResolver({store:f.rootStore,verifyIssuer:f.verifyIssuer,
+   now:()=>clock,resolvePacketContext:runner.resolvePacketContext});
+ const router=createHostCapabilityRouter({missionAuthorityResolver:resolver});
+ const core=createMcpCore({}, {hostRouter:router,runCommissionedHostWork:runner.run});
+ const {capability,...routeArgs}=plan.request.route;
+ const act={...routeArgs,command,timeout_ms};
+ const call=(args)=>core.callTool('cogentia_host_process_run',{work_ref:a.packet_ref,...args},{auth:f.input.auth});
+ const run=(id,command=act.command,overrides={})=>call({...act,command,work_turn:{id,kind:'act'},...overrides});
+ const finish=(status='completed')=>call({work_turn:{id:'finish',kind:'finish',status,summary:'Observed results assessed against work goal'}});
+ try{await body({a,plan,call,run,finish,setClock:t=>{clock=new Date(t)},local:()=>createEventSourcedExecutionBudgetLedger({store:f.packetStore,budget_id:a.budget_id,require_authority_grant:true}).snapshot()})}
+ finally{await router.stop()}
+}
+test('commission one objective, choose subsequent Unix acts from observed results, then return unused budget once',async()=>{
+ const f=fixture();try{await withTurns(f,async({a,run,finish,local,call})=>{
+   assert.equal((await run('wrong','pwd',{execution_mode:'super'})).ok,false);
+   const first=await run('initial');assert.equal(first.ok,true,JSON.stringify(first));
+   assert.equal(first.task.status,'input_required');assert.equal(first.turn_receipt.result.stdout.trim(),hostname());
+   assert.equal(local().settled.max_steps,1);assert.equal(f.ledger().snapshot().reserved.max_steps,3);
+   const root=f.rootStore.replay(),child=f.packetStore.replay();
+   assert.equal((await run('initial')).duplicate,true);
+   assert.equal((await run('initial','pwd')).ok,false);
+   assert.deepEqual(f.rootStore.replay(),root);assert.deepEqual(f.packetStore.replay(),child);
+   assert.equal((await run('second','pwd',{execution_mode:'super'})).ok,false);
+   assert.equal((await run('second','pwd',{target:'node:i7-thinkpad-jhr'})).ok,false);
+   assert.equal((await call({work_turn:{id:'finish',kind:'finish',status:'completed',summary:'done'},command:'pwd'})).ok,false);
+   const second=await run('second','pwd');assert.equal(second.ok,true,JSON.stringify(second));
+   assert.equal(second.turn_receipt.remaining_steps,1);assert.ok(second.turn_receipt.result.stdout.trim().startsWith('/'));
+   assert.equal(second.turn_receipt.result.trace.verification.cop_spend.packet_ref,a.packet_ref);
+   assert.equal((await run('second','hostname')).ok,false);
+   const final=await finish();assert.equal(final.ok,true,JSON.stringify(final));
+   assert.equal(final.task.status,'completed');assert.equal(final.turn_receipt.work_complete,true);
+   assert.equal(f.ledger().snapshot().settled.max_steps,2);assert.equal(f.ledger().snapshot().reserved.max_steps,0);
+   assert.equal(f.ledger().snapshot().available.max_steps,3);
+   assert.equal(local().settled.max_steps,2);assert.equal((await finish()).duplicate,true);
+   assert.equal((await run('third','id -un')).ok,false);
+   assert.equal(f.packetStore.auditTopicCommitment('packet:'+a.packet_ref).ok,true);
+   assert.equal(f.packetStore.auditTopicCommitment('execution-budget:'+a.budget_id).ok,true);
+ })}finally{f.close()}
+});
+test('multi-turn work has a hard local budget and can finish without a fourth paid act',async()=>{
+ const f=fixture();try{await withTurns(f,async({run,finish,local})=>{
+   assert.equal((await run('initial')).ok,true);
+   assert.equal((await run('second','pwd')).ok,true);
+   assert.equal((await run('third','id -un')).ok,true);
+   assert.equal(local().available.max_steps,0);
+   const denied=await run('fourth','hostname');assert.equal(denied.ok,false);
+   assert.equal((await finish('blocked')).ok,true);
+   assert.equal(f.ledger().snapshot().settled.max_steps,3);assert.equal(f.ledger().snapshot().reserved.max_steps,0);
+ })}finally{f.close()}
+});
+test('expired work admits no next command, but the assigned agent can close accounting with a blocked judgment',async()=>{
+ const f=fixture();try{await withTurns(f,async({run,finish,setClock})=>{
+   assert.equal((await run('initial')).ok,true);
+   setClock('2026-11-27T12:31:00Z');
+   assert.equal((await run('second','pwd')).ok,false);
+   const done=await finish('blocked');assert.equal(done.ok,true,JSON.stringify(done));
+   assert.equal(done.turn_receipt.packet_status,'blocked');assert.equal(done.turn_receipt.work_complete,false);
+   assert.equal(f.ledger().snapshot().settled.max_steps,1);assert.equal(f.ledger().snapshot().reserved.max_steps,0);
+ })}finally{f.close()}
+});
+
+test('unstarted work can be closed without executing or consuming a Step',async()=>{
+ const f=fixture();try{await withTurns(f,async({run,finish,setClock})=>{
+   setClock('2026-11-27T12:31:00Z');
+   assert.equal((await run('first','pwd')).ok,false);
+   const done=await finish('blocked');assert.equal(done.ok,true,JSON.stringify(done));
+   assert.equal(f.ledger().snapshot().settled.max_steps,0);assert.equal(f.ledger().snapshot().reserved.max_steps,0);
+ })}finally{f.close()}
+});
+
+
+test('a running turn rejects a competing command for the same suspension; later turns remain available',async()=>{
+ const f=fixture();try{await withTurns(f,async({a,run,finish,local})=>{
+   const first=run('slow','sleep 0.2; hostname');
+   for(let i=0;i<100;i++){
+     if(f.packetStore.listTopic('packet:'+a.packet_ref).some(e=>e.payload?.phase==='claimed'))break;
+     await new Promise(resolve=>setTimeout(resolve,2));
+   }
+   assert.equal(f.packetStore.listTopic('packet:'+a.packet_ref).some(e=>e.payload?.phase==='claimed'),true);
+   assert.equal((await run('competing','pwd')).ok,false);
+   const result=await first;assert.equal(result.ok,true,JSON.stringify(result));
+   assert.equal(local().settled.max_steps,1);
+   assert.equal((await run('competing','pwd')).ok,true);
+   assert.equal((await finish()).ok,true);assert.equal(local().settled.max_steps,2);
+ })}finally{f.close()}
+});
+test('proposal catalog reloads without service restart and refuses a removed hash',async()=>{
+ const f=fixture();try{
+   let proposals=[];
+   const catalog=createExistingHostWorkCatalog({...f,primaryStoreId:'sqlite:fixture-local',ownerInstanceRef:'instance:fixture-work',
+     authenticatePrincipal:f.workflow.authenticate,handler:async()=>{throw Error('must_not_execute')},now:()=>now,getPlans:()=>proposals});
+   const input={session:f.input.session,presented_plan_hash:hashPayload(f.plan)};
+   assert.equal((await catalog.commissionFromPrincipal(input)).ok,false);
+   proposals=[f.plan];const result=await catalog.commissionFromPrincipal(input);assert.equal(result.ok,true);
+   proposals=[];assert.equal((await catalog.commissionFromPrincipal(input)).ok,false);
+   const dispatcher=createCommissionedHostWorkDispatcher({...f,primaryStoreId:'sqlite:fixture-local',now:()=>now});
+   assert.ok(dispatcher.resolvePacketContext({packet_ref:result.packet_ref,actor_ref:'agent:jhn',principal_ref:'principal:jhn',mandate_ref:REF,mandate_version:'v1'}));
+ }finally{f.close()}
 });

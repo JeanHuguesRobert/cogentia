@@ -50,6 +50,44 @@
       "inputSchema": {
         "type": "object",
         "properties": {
+          "work_ref": {
+            "type": "string",
+            "description": "Exact reference to an already commissioned work; host resolves its existing packet and funding."
+          },
+          "work_turn": {
+            "type": "object",
+            "description": "For a commissioned multi-turn work only. Unique turn ids; acts are agent-selected within the commissioned route. A finish reports judgment without a command.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "act",
+                  "finish"
+                ]
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "completed",
+                  "blocked"
+                ]
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 2048
+              }
+            },
+            "required": [
+              "id",
+              "kind"
+            ],
+            "additionalProperties": false
+          },
           "command": {
             "type": "string",
             "minLength": 1,
@@ -83,9 +121,7 @@
             "type": "object"
           }
         },
-        "required": [
-          "command"
-        ],
+        "required": [],
         "additionalProperties": false
       }
     }

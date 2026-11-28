@@ -19,7 +19,7 @@ import {johnRepositoryMandatePlan} from '../lib/jhn-repository-mandate-plan.js';
 import {johnStandingMandatePlan} from '../lib/jhn-standing-mandate-plan.js';
 import {johnChatgptTurnMandatePlan} from '../lib/jhn-chatgpt-turn-mandate-plan.js';
 import {requestContinuationConsent} from './jhn-continuation-consent-cli.js';
-import {createExistingHostWorkCommissioner,openConfiguredExistingWork} from '../lib/john-commission-existing-work.js';
+import {createExistingHostWorkCatalog,openConfiguredExistingWork} from '../lib/john-commission-existing-work.js';
 import {createConfiguredStandingIssuerVerifier} from '../lib/cogentia-mcp-standing-mission-runtime.js';
 import {createSupabaseClient} from '../../../inseme/apps/platform/scripts/lib/config.js';
 
@@ -71,9 +71,9 @@ export function createLocalWorkCommissionRuntime({env=process.env,store,workflow
  if(!local)return {commissioner:null,close(){}};
  try{
   const verifyIssuer=createConfiguredStandingIssuerVerifier(env.COGENTIA_JHN_ISSUER_AUTHORIZED_KEYS);
-  const commissioner=createExistingHostWorkCommissioner({rootStore:store,...local,
+  const commissioner=createExistingHostWorkCatalog({rootStore:store,...local,
     ownerInstanceRef:'instance:jhn-consent',verifyIssuer,authenticatePrincipal:workflow.authenticate,
-    sourceRef:local.plan.request.work_ref,handler:async()=>{throw Error('consent_service_not_executor')}});
+    handler:async()=>{throw Error('consent_service_not_executor')}});
   return {commissioner,close:local.close};
  }catch(e){local.close();throw e}
 }

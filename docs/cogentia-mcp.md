@@ -5,7 +5,7 @@ affiliation: unknown
 license: unknown
 language: en
 status: working-paper
-last_modified_at: '2026-11-13'
+last_modified_at: '2026-11-28'
 date: '2026-06-30'
 document_role: source
 document_kind: documentation
@@ -164,6 +164,75 @@ conferring invocation rights). A real JHN/admin caller must satisfy the normal
 mutate authorization conditions and grant flow. The temporary tunnel connector
 remains separate while the normal adapter's deployment/authentication is tested.
 Do not relax the public tier simply to expose process execution.
+
+### Commissioned work: multiple autonomous turns (28 November 2026)
+
+Source increment for [#285](https://github.com/JeanHuguesRobert/cogentia/issues/285).
+The earlier production dogfooding proved one exact commissioned act, but
+closed its local allocation immediately afterwards. This increment keeps the
+same COP packet, assignment, signed mandate and delegated budget across
+multiple agent-selected turns. It does not create another work scheduler or
+permission issuer. The multi-turn increment is source-tested, not yet a
+production deployment claim.
+
+A host-reviewed proposal describes a work reference, purpose, completion
+condition, route, validity bound and allocation. It no longer enumerates the
+commands to execute. The existing authenticated Principal confirmation binds
+the exact plan hash; an illustrative request inside that plan is:
+
+```json
+{
+  "work_ref": "https://github.com/example/repo/issues/123",
+  "source_issue_id": "example-123",
+  "purpose": "Investigate and correct the bounded defect",
+  "completion": "Reproduce the defect, test the correction and report evidence",
+  "route": {
+    "capability": "host.process.run",
+    "target": "node:fracta2",
+    "provider": "unix-process",
+    "execution_mode": "normal"
+  },
+  "turn_policy": {
+    "kind": "agent_selected_normal/v1",
+    "valid_until": "2026-12-01T12:00:00.000Z"
+  }
+}
+```
+
+The existing `intent` separately binds the request hash, submission identity,
+Principal, responsible agent, capability, signed mandate version and parent
+allocation (for example `max_steps: 3`). The plan source configured by
+`COGENTIA_JHN_WORK_COMMISSION_PLAN` accepts the old single object or an array
+of up to 128 proposals. Replace that configured proposal file atomically;
+the consent service rereads it at confirmation. Already commissioned work
+is recovered from its canonical creation event, not from that file. The
+worker accepts an unambiguous Issue URL or an exact packet ID; if an Issue has
+several commissions, the caller must use the exact packet ID.
+
+The existing protected `cogentia_host_process_run` surface accepts a
+`work_ref` and `work_turn: {id, kind: "act"}` in addition to the normal
+command, node, provider, mode and timeout. Each admitted turn has a unique
+id, a durable input/claim/receipt and a packet-local COP reservation; retries
+of a completed id return the receipt without redispatch. Competing inputs
+for the same suspension cannot both be admitted. The next turn can choose a
+different command according to the preceding result. The reviewed route,
+current signed mandate, budget and time bound still govern every dispatch;
+the requested timeout must fit inside the remaining validity window.
+
+The same surface accepts `work_turn: {id, kind: "finish", status:
+"completed" | "blocked", summary}` with no command. This records the assigned
+agent's judgment, seals the local allocation and reconciles actual spend to
+the parent; unused Steps are released. No execution Step is charged for the
+finish itself. A blocked judgment is not successful completion of the work.
+An expired work can be closed without a new command while its agent's mandate
+is still valid. Revoked authority or an unresolved effect requires the existing
+COP reconciliation path rather than pretending the work has completed.
+
+Legacy exact-act plans retain their former one-act behavior. The current
+multi-turn route is the existing normal host capability only; other semantic
+capabilities and autonomous deadline wake-ups are not added by this increment.
+A deployment must verify the live authenticated schema, refresh the connector
+and execute a real multi-turn commission before declaring production readiness.
 
 ## 1. Architectural Invariants & Trust Model
 

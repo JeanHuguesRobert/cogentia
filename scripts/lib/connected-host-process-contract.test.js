@@ -30,3 +30,10 @@ test('connector publication artifact tracks the canonical server without drift',
   assert.equal(tool.inputSchema.properties.timeout_ms.maximum,120000);
  }
 });
+
+test('a connector with work_ref but no work_turn is still stale',()=>{
+ const client=structuredClone(serverTools);
+ delete client.find(t=>t.name==='cogentia_host_process_run').inputSchema.properties.work_turn;
+ const r=audit({serverTools,connectedTools:client});
+ assert.equal(r.ok,false);assert.ok(r.tools[1].differences.some(d=>d.field==='work_turn'&&d.kind==='missing_property'));
+});

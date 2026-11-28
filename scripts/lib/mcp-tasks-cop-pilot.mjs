@@ -43,6 +43,7 @@ export function createCopMcpTasksPilot({
   store, toolName, handler, allowAnonymous = false,
   ownerInstanceRef = "instance:mcp-tasks-cop-pilot",
   primaryStoreId = null, verifyExternalResult = null, prepareCreation = null,
+  verifyHostInput = null,
 } = {}) {
   if (!store || typeof store.append !== "function" ||
       typeof store.transaction !== "function" || typeof store.listTopic !== "function")
@@ -53,6 +54,9 @@ export function createCopMcpTasksPilot({
     throw new TypeError("explicit local primaryStoreId required");
   if (verifyExternalResult !== null && typeof verifyExternalResult !== "function")
     throw new TypeError("trusted external result verifier required");
+
+  if (verifyHostInput !== null && typeof verifyHostInput !== "function")
+    throw new TypeError("trusted host input verifier required");
 
   if (prepareCreation !== null && typeof prepareCreation !== "function")
     throw new TypeError("trusted creation admission required");
@@ -319,6 +323,8 @@ export function createCopMcpTasksPilot({
       // external effect occurred. Only a host-side verifier may release it.
       if (open.payload?.verified_external_result_required)
         throw new Error("trusted_cps_return_required");
+      if (open.payload?.verified_host_input_required)
+        throw new Error("trusted_host_input_required");
       commit(taskId, "input_received", { inputResponses,
         suspension_event_ref: open.event_id },
       "mcp-input:" + taskId + ":" + open.event_id);
@@ -375,9 +381,58 @@ export function createCopMcpTasksPilot({
     return {ok:true,duplicate:saved.value==="duplicate"};
   }
 
+  // Start a host-input work without requiring a preselected first command.
+  // No execution is possible until a specific input is admitted and claimed.
+  async function requireInitialHostInput(taskId,auth) {
+    if(!verifyHostInput)throw Error("host_input_verifier_unconfigured");
+    history(taskId,auth);
+    const saved=store.transaction(tx=>{
+      const rows=tx.listTopic(topic(taskId));
+      if(rows.some(e=>["input_required","claimed","completed","failed","cancelled","cancel_requested"].includes(e.payload?.phase)))
+        return "already_started";
+      return commit(taskId,"input_required",{inputRequests:{host_turn:{type:"text",prompt:"Await admitted agent work turn"}},
+        verified_host_input_required:true,checkpoint:{kind:"work_start"},pending:{kind:"agent_work_turn"}},
+        "mcp-initial-host-input:"+taskId,tx);
+    });
+    if(!saved.ok)throw Error(saved.error||"host_input_start_failed");
+    return project(taskId,auth);
+  }
+
+  // Host-only continuation input. Distinct from an external effect receipt:
+  // this admits the next agent-selected turn, not proof of execution.
+  async function acceptHostInput(taskId, auth, candidate, suspensionRef) {
+    if (!verifyHostInput) throw new Error("host_input_verifier_unconfigured");
+    const {events,created}=history(taskId,auth);
+    const open=events.findLast(e=>e.payload?.phase==="input_required");
+    if(open?.event_id!==suspensionRef||open.payload.verified_host_input_required!==true)
+      throw new Error("host_input_suspension_changed");
+    const verified=await verifyHostInput({taskId,auth,created,candidate,
+      checkpoint:open.payload.checkpoint,pending:open.payload.pending});
+    if(verified?.verified!==true||!valid(verified.value))throw new Error("host_input_not_admitted");
+    const digest=hashPayload(verified.value);
+    const saved=store.transaction(tx=>{
+      const rows=tx.listTopic(topic(taskId));
+      const previous=rows.find(e=>e.payload?.phase==="input_received"&&
+        e.payload.suspension_event_ref===suspensionRef);
+      if(previous){
+        if(previous.payload.host_input_hash!==digest)throw new Error("host_input_conflict");
+        return "duplicate";
+      }
+      if(rows.some(e=>["completed","failed","cancelled","cancel_requested"].includes(e.payload?.phase)))
+        throw new Error("task_already_terminal");
+      if(rows.findLast(e=>e.payload?.phase==="input_required")?.event_id!==suspensionRef)
+        throw new Error("host_input_suspension_changed");
+      return commit(taskId,"input_received",{inputResponses:verified.value,
+        suspension_event_ref:suspensionRef,host_input_hash:digest},
+        "mcp-host-input:"+taskId+":"+suspensionRef,tx);
+    });
+    if(!saved.ok)throw new Error(saved.error||"host_input_commit_failed");
+    return {ok:true,duplicate:saved.value==="duplicate"};
+  }
+
   // Pilot worker: claims each continuation stage once. Never blindly
   // rerun a stage whose effect result is uncertain after a crash.
-  async function run(taskId, auth) {
+  async function run(taskId, auth, {hostInput=null}={}) {
     const { created, events } = history(taskId, auth);
     if (events.some(x => ["completed", "failed", "cancelled"].includes(x.payload?.phase)))
       return project(taskId, auth);
@@ -395,6 +450,13 @@ export function createCopMcpTasksPilot({
       if (rows.some(x => ["completed","failed","cancelled"].includes(x.payload?.phase)))
         return "already_claimed";
       if (currentSuspension && !currentAnswer) return "waiting_input";
+      // A stale invocation cannot claim a later continuation stage. The
+      // input used by the handler must be the input claimed under this lock.
+      if((currentSuspension?.event_id??null)!==(suspended?.event_id??null)||
+         (currentAnswer?.event_id??null)!==(answered?.event_id??null))return "stage_changed";
+      if(currentSuspension?.payload?.verified_host_input_required===true&&
+         (hostInput?.suspension_ref!==currentSuspension.event_id||
+          hostInput?.input_hash!==currentAnswer?.payload?.host_input_hash))return "host_input_not_bound";
       const claimKey=currentAnswer
         ? "mcp-claimed-resume:"+taskId+":"+currentAnswer.event_id
         : "mcp-claimed:"+taskId;
@@ -443,6 +505,13 @@ export function createCopMcpTasksPilot({
           checkpoint:result.checkpoint,
           pending:result.pending,
         },"mcp-input-required:"+taskId+":"+stage);
+      } else if (result?.type === "cop.task.host-input/v1") {
+        if(!verifyHostInput||!valid(result.checkpoint)||!valid(result.pending))
+          throw new Error("invalid_host_input_suspension");
+        const stage=events.filter(x=>x.payload?.phase==="input_required").length;
+        commit(taskId,"input_required",{inputRequests:{host_turn:{type:"text",prompt:"Await admitted agent work turn"}},
+          verified_host_input_required:true,checkpoint:result.checkpoint,pending:result.pending},
+          "mcp-input-required:"+taskId+":"+stage);
       } else {
         // A tool-level isError is a completed Task, not failed transport.
         commit(taskId, "completed", { result }, "mcp-completed:" + taskId);
@@ -465,5 +534,5 @@ export function createCopMcpTasksPilot({
   }
 
   return { toolName, adapter, run, requireInput, createCommissioned,
-    acceptVerifiedExternalResult, auditPacket, recordReconciliationRequired, readCompletedDelivery };
+    acceptVerifiedExternalResult, requireInitialHostInput, acceptHostInput, auditPacket, recordReconciliationRequired, readCompletedDelivery };
 }

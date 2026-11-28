@@ -9,11 +9,13 @@ export function auditConnectedHostProcessContract({serverTools,connectedTools}={
   const client=connectedTools?.find?.(t=>t.name===name)?.inputSchema;
   if(!server||!client){observed.push({name,status:'missing_schema',missing:!client?'connected':'server'});continue;}
   const differences=[];
-  for(const prop of REQUIRED){
+  for(const prop of [...REQUIRED,...(name.endsWith("_run")?["work_ref","work_turn"]:[])]){
    const a=server.properties?.[prop],b=client.properties?.[prop];
    if(!a||!b){differences.push({field:prop,kind:'missing_property',side:!b?'connected':'server'});continue;}
    for(const key of ['maxLength','maximum','minimum'])if(a[key]!==b[key])
     differences.push({field:prop,kind:'bound_mismatch',property:key,server:a[key]??null,connected:b[key]??null});
+   if(prop==='work_turn'&&JSON.stringify(a)!==JSON.stringify(b))
+    differences.push({field:prop,kind:'nested_schema_mismatch'});
    if(JSON.stringify(a.enum||null)!==JSON.stringify(b.enum||null))
     differences.push({field:prop,kind:'enum_mismatch'});
   }

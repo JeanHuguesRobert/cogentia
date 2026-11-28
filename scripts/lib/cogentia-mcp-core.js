@@ -1178,7 +1178,13 @@ export const TOOLS = [
     inputSchema: {
       type: "object",
       properties: {
-        work_ref: { type: "string", description: "Optional exact reference to an already commissioned work; host resolves its existing packet and funding." },
+        work_ref: { type: "string", description: "Exact reference to an already commissioned work; host resolves its existing packet and funding." },
+        work_turn: { type: "object", description: "For a commissioned multi-turn work only. Unique turn ids; acts are agent-selected within the commissioned route. A finish reports judgment without a command.", properties: {
+          id: { type: "string", minLength: 1, maxLength: 128 },
+          kind: { type: "string", enum: ["act", "finish"] },
+          status: { type: "string", enum: ["completed", "blocked"] },
+          summary: { type: "string", maxLength: 2048 },
+        }, required: ["id", "kind"], additionalProperties: false },
         command: { type: "string", minLength: 1, maxLength: 32768 },
         timeout_ms: { type: "integer", minimum: 1, maximum: 120000 },
         execution_mode: { type: "string", enum: ["normal", "super"], description: "Super requires a separately authorized privileged executor; never implied by a grant for normal." },
@@ -1187,7 +1193,7 @@ export const TOOLS = [
         mandate: { type: "string" },
         side_effect_authorization: { type: "object" },
       },
-      required: ["command"],
+      required: [],
       additionalProperties: false,
     },
   },
@@ -3020,14 +3026,15 @@ export function createMcpCore(env = process.env, extras = {}) {
       case "cogentia_host_process_prepare":
         return prepareHostProcessRun(args);
       case "cogentia_host_process_run": {
-        requireString(args.command, "command");
-        if (args.command.length > 32768) throw new Error("command too long");
         if(args.work_ref!=null){
           if(typeof extras.runCommissionedHostWork!=="function")
             throw Error("commissioned_work_runtime_not_enabled");
           return extras.runCommissionedHostWork({args,auth,
             invoke:(act,workContext)=>callHostCapability("host.process.run",act,auth,workContext)});
         }
+        if(args.work_turn!=null)throw Error("work_turn_requires_work_ref");
+        requireString(args.command, "command");
+        if (args.command.length > 32768) throw new Error("command too long");
         const result = await callHostCapability("host.process.run", args, auth);
         if (result?.judgment?.status !== "needs_judgment") return result;
         // Shell output is untrusted: it requests review but cannot authorize
