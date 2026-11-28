@@ -150,6 +150,7 @@ export const ACTION_CLASSES = {
   "host.fs.read": { kind: "read_only" },
   "host.fs.search": { kind: "read_only" },
   "host.fs.write": { kind: "effectful" },
+  "calendar.schedule": { kind: "effectful" },
   "host.process.run": { kind: "effectful" },
   "gmail.send": { kind: "effectful" },
   "communication.send": { kind: "effectful" },

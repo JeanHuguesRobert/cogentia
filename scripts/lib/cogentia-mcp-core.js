@@ -108,6 +108,7 @@ export const MUTATE_TOOLS = new Set([
   "cogentia_git_write",
   "cogentia_side_effect_record",
   "cogentia_side_effect_grant",
+  "operium_calendar_schedule",
   // These public-looking operational tools can write state or initiate work.
   "cogentia_agent_member_declare",
   "cogentia_agent_member_activate",
@@ -136,6 +137,7 @@ export const PRIVATE_READ_TOOLS = new Set([
   "cogentia_vault_list",
   "cogentia_vault_describe",
   "operium_calendar_list",
+  "operium_calendar_schedule_prepare",
   "cogentia_host_fs_list",
   "cogentia_host_fs_read",
   "cogentia_host_fs_search",
@@ -1083,6 +1085,16 @@ export const TOOLS = [
     },
   },
   {
+    name: "operium_calendar_schedule_prepare",
+    description: "Prepare an exact one-shot observation wake for review; no scheduling or authority. Pilot accepts DNS observations only.",
+    inputSchema: {type:"object",properties:{node_id:{type:"string"},wake:{type:"object"}},required:["node_id","wake"],additionalProperties:false},
+  },
+  {
+    name: "operium_calendar_schedule",
+    description: "Register a bounded one-shot wake through a configured trusted host and independently issued exact Principal grant. Does not authorize the future handler. Pilot only.",
+    inputSchema: {type:"object",properties:{node_id:{type:"string"},wake:{type:"object"},side_effect_authorization:{type:"object"}},required:["node_id","wake","side_effect_authorization"],additionalProperties:false},
+  },
+  {
     name: "cogentia_fracta2_shell_probe",
     description: "Private-read, fixed read-only Unix probe on resource://fracta2. Runs hostname, id -un, pwd via the advertised coding-agents.shell gateway. No arbitrary commands or user-controlled shell input.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
@@ -1426,7 +1438,9 @@ export function createMcpCore(env = process.env, extras = {}) {
     Boolean(String(env.COGENTIA_MCP_JHN_TOKEN || "").trim());
   /** Default tool list (anonymous). Per-request list may include mutate for JHN. */
   const allowPrivateReadStatic = view === "full";
-  const tools = TOOLS.filter((tool) =>
+  const activeTools = TOOLS.filter(tool => tool.name !== "operium_calendar_schedule" ||
+    typeof extras.scheduleOperiumCalendar === "function");
+  const tools = activeTools.filter((tool) =>
     (staticAllowMutate || !MUTATE_TOOLS.has(tool.name)) &&
     (allowPrivateReadStatic || !PRIVATE_READ_TOOLS.has(tool.name))
   );
@@ -1633,7 +1647,7 @@ export function createMcpCore(env = process.env, extras = {}) {
   function toolsForAuth(auth) {
     const allow = auth?.allowMutate === true;
     const allowPrivateRead = view === "full" || auth?.auth === "jhn";
-    return TOOLS.filter((tool) =>
+    return activeTools.filter((tool) =>
       (tool.name !== "cogentia_memory_capture" || (auth?.memoryCaptureRead ?? auth?.lockers?.private?.read) === true) &&
       (allow || !MUTATE_TOOLS.has(tool.name)) &&
       (allowPrivateRead || !PRIVATE_READ_TOOLS.has(tool.name))
@@ -1653,7 +1667,7 @@ export function createMcpCore(env = process.env, extras = {}) {
     }
     const optInProgramTools = extras.mcpProgramSurface?.tools || [];
     const visibleTools = [
-      ...(legacyOAuthDiscovery ? TOOLS : toolsForAuth(auth)),
+      ...(legacyOAuthDiscovery ? activeTools : toolsForAuth(auth)),
       ...registeredTools,
       ...optInProgramTools.filter(tool =>
         tool.name !== "multimcp_program_execute" ||
@@ -1989,7 +2003,7 @@ export function createMcpCore(env = process.env, extras = {}) {
             (args.request?.input?.arguments?.action==='image'||args.read_arguments?.action==='image');
           if(transientVisualRequested&&message.params?.task!==undefined)
             return jsonRpcError(message.id,-32602,'Transient visual read cannot be a durable task');
-          const taskableTool=!transientVisualRequested&&name!=="cogentia_identity" &&(TOOLS.some(tool=>tool.name===name) ||
+          const taskableTool=!transientVisualRequested&&name!=="cogentia_identity"&&name!=="operium_calendar_schedule" &&(activeTools.some(tool=>tool.name===name) ||
             (extras.mcpProgramSurface?.tools?.some(tool=>tool.name===name) &&
               (name!== "multimcp_program_execute" ||
                 extras.mcpProgramSurface.verifiedTaskCaller(auth)===true)))&&
@@ -2108,7 +2122,7 @@ export function createMcpCore(env = process.env, extras = {}) {
     if (PRIVATE_READ_TOOLS.has(name)) requirePrivateRead(name, auth);
     const registeredApp = callRegisteredMcpAppTool(name,args,{env});
     if(registeredApp)return registeredApp;
-    if (!TOOLS.some((t) => t.name === name)) {
+    if (!activeTools.some((t) => t.name === name)) {
       throw new Error(`Unknown tool: ${name}`);
     }
     switch (name) {
@@ -3009,6 +3023,15 @@ export function createMcpCore(env = process.env, extras = {}) {
           return extras.listOperiumCalendar(args);
         }
         return listOperiumCalendarViaOna(args.node_id, env, requestTimeoutMs);
+      }
+      case "operium_calendar_schedule_prepare": {
+        const {prepareCalendarSchedule}=await import("./calendar-schedule-pilot.js");
+        return prepareCalendarSchedule(args);
+      }
+      case "operium_calendar_schedule": {
+        const {executeCalendarSchedule}=await import("./calendar-schedule-pilot.js");
+        return executeCalendarSchedule({node_id:args.node_id,wake:args.wake,
+          authorization:args.side_effect_authorization,caller:auth,schedule:extras.scheduleOperiumCalendar});
       }
       case "cogentia_fracta2_shell_probe": {
         const token = String(env.AGENT_GATEWAY_FRACTA2_TOKEN || env.AGENT_GATEWAY_INVOKE_TOKEN || env.AGENT_GATEWAY_TOKEN || "").trim();
