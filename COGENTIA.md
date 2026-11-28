@@ -10,7 +10,7 @@ license: CC BY-SA 4.0
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/COGENTIA.md
 last_stamped_at: 2026-07-13T00:00:00.000Z
 date: '2026-05-13'
-status: stable — published identity document, v2 CLI consolidation
+status: stable — published identity document (v2 CLI consolidation)
 language: en
 document_role: source
 document_kind: identity-document
