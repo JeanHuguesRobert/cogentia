@@ -11,12 +11,12 @@ import {createGatewaySession} from '../lib/navigation-assistant/gateway-session.
 import {openBidiSession} from '../lib/navigation-assistant/bidi-session.js';
 import {createBidiNavigationProvider} from '../lib/navigation-assistant/bidi-provider.js';
 
-const usage='Usage: node scripts/ops/navigation-assistant-firefox.js --profile-dir /private/parent/firefox --gateway ws://127.0.0.1:PORT/extension [--reuse-managed-profile]';
+const usage='Usage: node scripts/ops/navigation-assistant-firefox.js --profile-dir /private/parent/firefox --gateway ws://127.0.0.1:PORT/extension [--reuse-managed-profile] [--reconnect-gateway]';
 const marker='.cogentia-managed-firefox-v1';
 let browser,engine,peer,lock,childDone,exitInfo,stopRequested=false,stopResolve;
 const stopped=new Promise(r=>stopResolve=r);
 const signal=()=>{stopRequested=true;stopResolve()};
-process.once('SIGINT',signal);process.once('SIGTERM',signal);
+process.on('SIGINT',signal);process.on('SIGTERM',signal);process.on('SIGHUP',signal);
 const fail=code=>{throw Error(code)};
 async function privateDirectory(path){
  const info=await lstat(path);
@@ -44,10 +44,11 @@ async function cleanupBrowser(){
 try{
  const args=process.argv.slice(2);
  if(args.length===1&&args[0]==='--help'){console.log(usage);process.exit(0)}
- const options={};let reuse=false;
+ const options={};let reuse=false,reconnect=false;
  while(args.length){
   const flag=args.shift();
   if(flag==='--reuse-managed-profile'&&!reuse){reuse=true;continue}
+  if(flag==='--reconnect-gateway'&&!reconnect){reconnect=true;continue}
   if(!['--profile-dir','--gateway'].includes(flag)||Object.hasOwn(options,flag)||!args[0]||args[0].startsWith('--'))
    fail('managed_firefox_arguments_invalid');
   options[flag]=args.shift();
@@ -71,7 +72,8 @@ try{
  if(stopRequested)fail('managed_firefox_interrupted');
  await privateDirectory(dirname(profile));
  const candidate=profile+'.launch-lock';
- await mkdir(candidate,{mode:0o700});lock=candidate;
+ try{await mkdir(candidate,{mode:0o700})}catch(e){if(e.code==='EEXIST')fail('managed_profile_launch_locked');throw e}
+ lock=candidate;
  if(reuse){
   await privateDirectory(profile);
   const mark=profile+'/'+marker,info=await lstat(mark);
@@ -101,25 +103,53 @@ try{
  if(!port||stopRequested||exitInfo)fail('managed_firefox_launch_unconfirmed');
  engine=await openBidiSession('ws://127.0.0.1:'+port+'/session');
  const provider=createBidiNavigationProvider({session:engine,instancePrefix:'hosted-firefox'});
- peer=await provider.attachGateway(endpoint.href);
- // Verify the registered provider is discoverable, not only acknowledged.
- const verify=await createGatewaySession(assistantEndpoint.href,{timeoutMs:3000});
- try{
-  const entry=(await verify.call('browser.instances')).browsers?.find(b=>b.browser_instance_id===provider.browserId);
-  if(!entry?.registered||entry.provider?.engine!=='firefox'||entry.provider.transport!=='bidi'||
-    JSON.stringify(entry.provider.methods)!==JSON.stringify(provider.metadata.methods))
-   fail('managed_provider_registration_unconfirmed');
- }finally{verify.close()}
+ async function attach(){
+  const newPeer=await provider.attachGateway(endpoint.href);
+  try{
+   const verify=await createGatewaySession(assistantEndpoint.href,{timeoutMs:3000});
+   try{
+    const entry=(await verify.call('browser.instances')).browsers?.find(b=>b.browser_instance_id===provider.browserId);
+    if(!entry?.registered||entry.provider?.engine!=='firefox'||entry.provider.transport!=='bidi'||
+      JSON.stringify(entry.provider.methods)!==JSON.stringify(provider.metadata.methods))
+     fail('managed_provider_registration_unconfirmed');
+   }finally{verify.close()}
+   return newPeer;
+  }catch(e){await newPeer.close();throw e}
+ }
+ peer=await attach();
  console.log(JSON.stringify({status:'registered',browser_instance_id:provider.browserId,provider:provider.metadata,firefox_pid:browser.pid}));
- const disconnected=new Promise(r=>peer.onClose(r));
- const reason=await Promise.race([childDone.then(()=> 'browser_exit'),stopped.then(()=> 'owner_stop'),disconnected.then(()=> 'provider_disconnected')]);
- if(reason==='provider_disconnected'&&!exitInfo&&!stopRequested){
-  // Preserve the human's browser when machine access goes away; no automatic
-  // reconnection, profile restart or effect replay. Explicit stop owns teardown.
+ const browserExit=childDone.then(()=> 'browser_exit'),ownerStop=stopped.then(()=> 'owner_stop');
+ let reason;
+ for(;;){
+  const disconnected=new Promise(r=>peer.onClose(()=>r('provider_disconnected')));
+  reason=await Promise.race([browserExit,ownerStop,disconnected]);
+  if(reason!=='provider_disconnected'||exitInfo||stopRequested)break;
   console.log(JSON.stringify({status:'provider_disconnected',browser_preserved:true,automatic_replay:false}));
-  await Promise.race([childDone,stopped]);
-  if(!stopRequested)process.exitCode=1;
- }else if(reason==='browser_exit'&&!stopRequested)process.exitCode=exitInfo?.code===0?0:1;
+  // A gateway failure does not terminate the browser. Opt-in supervised
+  // reconnection uses the same live engine, never replays any old request,
+  // and stops after a bounded retry window. A lost engine is not adopted.
+  let recovered=false;
+  if(reconnect&&!engine.closed){
+   for(const backoff of [1000,2000,4000,8000,15000,30000]){
+    const wait=await Promise.race([delay(backoff,undefined,{ref:false}).then(()=> 'retry'),ownerStop,browserExit]);
+    if(wait!=='retry'||stopRequested||exitInfo||engine.closed)break;
+    try{
+     peer=await attach();
+     if(stopRequested||exitInfo){await peer.close();break}
+     recovered=true;
+     console.log(JSON.stringify({status:'provider_reconnected',browser_instance_id:provider.browserId,
+      firefox_pid:browser.pid,automatic_replay:false}));
+     break;
+    }catch{/* A subsequent attempt must independently prove registration. */}
+   }
+  }
+  if(recovered)continue;
+  console.log(JSON.stringify({status:'provider_recovery_suspended',browser_preserved:true,engine_closed:engine.closed}));
+  reason=await Promise.race([browserExit,ownerStop]);
+  if(reason!=='owner_stop')process.exitCode=1;
+  break;
+ }
+ if(reason==='browser_exit'&&!stopRequested)process.exitCode=exitInfo?.code===0?0:1;
 }catch(e){
  console.error(JSON.stringify({status:'managed_firefox_failed',reason:/^[a-z0-9_]+$/.test(e.message)?e.message:(e.code||'operation_failed')}));
  process.exitCode=1;

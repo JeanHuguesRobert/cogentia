@@ -172,7 +172,7 @@ try{
  const managedArgs=['scripts/ops/navigation-assistant-firefox.js','--profile-dir',managedProfile,'--gateway',base+'/extension'];
  const registered=entry=>until(()=>{try{return JSON.parse(entry.out.split('\n')[0])}catch{return null}},'companion',entry);
  const launch=async(reuse=false)=>{
-  const proc=run(process.execPath,[...managedArgs,...(reuse?['--reuse-managed-profile']:[])],{env});
+  const proc=run(process.execPath,[...managedArgs,...(reuse?['--reuse-managed-profile','--reconnect-gateway']:[])],{env});
   const reg=await registered(proc);assert.equal(reg.status,'registered');
   return {proc,reg,scope:{browser_instance_id:reg.browser_instance_id}};
  };
@@ -182,7 +182,7 @@ try{
  assert.equal((await evaluate(first.reg.browser_instance_id,firstTab,"localStorage.setItem('fixture-marker','preserved');localStorage.getItem('fixture-marker')")).value,'preserved');
  // Concurrent launch/reuse must fail before starting another browser.
  const conflict=run(process.execPath,[...managedArgs,'--reuse-managed-profile'],{env});
- await conflict.done;assert.equal(conflict.exit.code,1);
+ await conflict.done;assert.equal(conflict.exit.code,1);assert.match(conflict.err,/managed_profile_launch_locked/);
  await stop(first.proc);
  assert.equal(first.proc.exit.code,0);
  await assert.rejects(()=>lstat(managedProfile+'.launch-lock'),e=>e.code==='ENOENT');
@@ -193,16 +193,27 @@ try{
  const secondTab=(await interact.execute({action:'open',...second.scope,url})).tab;
  assert.equal((await evaluate(second.reg.browser_instance_id,secondTab,"localStorage.getItem('fixture-marker')")).value,'preserved');
  await until(()=>local('xwininfo',['-root','-tree'],{env}).includes('Graphical Firefox reality'),'companion_window',second.proc);
+ const gatewayPort=gateway._bound[0].address().port;
  assistant.close();assistant=null;
  await gateway.close();gateway=null;
  await until(()=>second.proc.out.includes('"browser_preserved":true'),'companion_disconnect',second.proc);
  assert.equal(second.proc.exit,null);
  assert.ok(local('xwininfo',['-root','-tree'],{env}).includes('Graphical Firefox reality'));
- await stop(second.proc);
+ // Restart only the disposable gateway on the same endpoint.
+ gateway=createNavigationGateway({instance:'graphical-reconnected'});
+ await gateway.listen(gatewayPort,['127.0.0.1']);
+ assistant=await createGatewaySession(base+'/assistant');
+ await until(()=>second.proc.out.includes('"status":"provider_reconnected"'),'companion_reconnect',second.proc);
+ assert.ok((await assistant.call('browser.instances')).browsers.some(b=>b.browser_instance_id===second.reg.browser_instance_id));
+ assert.equal((await evaluate(second.reg.browser_instance_id,secondTab,"localStorage.getItem('fixture-marker')")).value,'preserved');
+ assert.equal(second.proc.exit,null);
+ // HUP is a controlled stop in the foreground, rather than orphaning Firefox.
+ process.kill(second.proc.child.pid,'SIGHUP');
+ await second.proc.done;
  assert.equal(second.proc.exit.code,0);
  await assert.rejects(()=>lstat(managedProfile+'.launch-lock'),e=>e.code==='ENOENT');
  console.log(JSON.stringify({ok:true,graphical_firefox:true,kasmvnc_https_auth_challenge:true,kasmvnc_authenticated_http:true,kasmvnc_authenticated_rfb_banner:true,kasmvnc_unauthenticated_websocket_refused:true,
-  loopback_listener:true,x_window_observed:true,standalone_provider_cli:true,hosted_inspect:true,provider_retired:true,firefox_survives_provider_stop:true,managed_companion:true,legacy_preflight_refusal:true,profile_lock_conflict_refused:true,profile_persistence:true,fresh_instance_after_restart:true,browser_preserved_on_gateway_loss:true,existing_workspace_used:false}));
+  loopback_listener:true,x_window_observed:true,standalone_provider_cli:true,hosted_inspect:true,provider_retired:true,firefox_survives_provider_stop:true,managed_companion:true,legacy_preflight_refusal:true,profile_lock_conflict_refused:true,profile_persistence:true,fresh_instance_after_restart:true,browser_preserved_on_gateway_loss:true,gateway_reconnection_same_instance:true,hangup_cleanup:true,existing_workspace_used:false}));
 }catch(e){
  console.error(JSON.stringify({ok:false,reason:e.message,children:children.map(c=>({command:c.child.spawnfile,exit:c.exit,stderr:c.err.slice(-1600)}))}));
  process.exitCode=1;

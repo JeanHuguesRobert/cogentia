@@ -955,3 +955,64 @@ a John read to the default Chromium instance.
 Prepare a new versioned companion release and test it in a separate
 dedicated profile in the same graphical workspace before replacing the
 existing Firefox. Live evaluation diagnosis remains open.
+
+
+### I4 — on-demand Firefox lifecycle (FBF)
+
+The Principal decided on 2026-11-28 that Firefox is an alternative
+capability of Cogentia, not a second mandatory browser per Twin.
+Chromium remains the ordinary workspace browser. Start Firefox
+explicitly for work that benefits from it, retain its dedicated
+profile between runs, and stop it when that work ends. No automatic
+start at boot or alongside a Chromium workspace.
+
+The live foreground experiment exposed an orphan failure: both
+companion processes disappeared, both graphical Firefox processes
+survived under PID 1, and their providers disappeared from discovery.
+The precise reason for the launcher exits has not been established.
+The two browser process trees had 11 processes each, summed RSS
+approximately 675 and 870 MiB, and negligible lifetime average CPU
+at the observation. RSS double-counts shared pages; it is not an
+exact measure of reclaimable memory.
+
+The companion now handles SIGHUP alongside INT/TERM, reports an
+explicit profile-launch-lock conflict, and accepts an opt-in
+`--reconnect-gateway`. A gateway-only loss preserves the human window
+and attempts a bounded sequence of six reattachments with backoff.
+Each verifies actual provider registration; a recovered live BiDi
+session keeps its browser-instance identity and existing tab IDs.
+No previous request, lease or subscription is replayed. If the
+engine session itself is lost or the attempts are exhausted, the
+companion reports suspended recovery and preserves the browser until
+owner stop. It does not discover or adopt a foreign BiDi endpoint.
+
+For a durable initial dogfood, the node owner can use the existing
+systemd manager to launch a **transient** unit, under the existing
+workspace UID, with explicit DISPLAY/XAUTHORITY, pinned owner-owned
+companion release, and a dedicated marked profile. Use
+`Restart=no`, `KillMode=mixed`, and a stop timeout longer than the
+companion's bounded cleanup (e.g. 25s). The companion receives TERM
+first, requests Firefox browser.close, and systemd owns the entire
+cgroup even when the launcher exits unexpectedly. A user-selected
+runtime limit bounds the experiment; expiry stops the browser, so
+do not treat this as an inactivity detector. No installed/enabled
+permanent service or new orchestration control plane is required.
+Operium owns any future durable provisioning and policy.
+
+Existing orphans must be reconciled before profile reuse. Prefer
+normal Firefox Quit in the existing graphical workspace; never
+blindly delete a Firefox profile lock or launch lock. An empty
+companion launch-lock directory may be removed explicitly by the
+owner only after verifying that no process is using that profile,
+including a launcher in startup, and verifying the marked profile.
+Do not adopt the orphan's debug endpoint by scanning ports.
+A recovered profile receives a new instance identity; interrupted
+operations are not resumed automatically.
+
+Reality Test now verifies a real graphical gateway restart with the
+same instance and tab identity, stored synthetic data preserved,
+and clean SIGHUP shutdown. Systemd cgroup supervision in the actual
+workspace remains to be proven with a transient owner-launched unit.
+Automatic inactivity-based stop remains future policy: it must
+distinguish agent leases and pending operations from human activity,
+and must not close a human's work on an idle estimate.
