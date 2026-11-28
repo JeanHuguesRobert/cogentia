@@ -3,7 +3,7 @@ title: Cogentia
 description: Knowledge production under AI conditions, in five distinctive moves
 layout: default
 nav_order: 0
-last_modified_at: 2026-07-13T00:00:00.000Z
+last_modified_at: 2026-11-28T00:00:00.000Z
 author: Jean Hugues Noël Robert, baron Mariani
 affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
 license: CC BY-SA 4.0
@@ -40,7 +40,9 @@ update_policy: UP-DEFAULT-REVIEWED
 
 Statut : document source d'identité pour Cogentia.
 
-Fonction dans le corpus : expliquer ce qu'est Cogentia comme protocole, CLI, brique logicielle et méthode publique de production de connaissance.
+Fonction dans le corpus : document source d'identité de Cogentia et de ses moyens de production de connaissance.
+
+**Orientation de dénomination du Principal, 2026-11-28.** Employer simplement **Cogentia** pour désigner la solution intégrée, plutôt que de multiplier les appellations de l'ensemble. Les noms des composants, langages, protocoles et infrastructures (Inox, COP/CPS, Operium, Fractanet, Inseme, Ubikia, Mneme, etc.) continuent de désigner leurs responsabilités propres. Cette lecture éditoriale de la décision ne commande ni renommage des dépôts, identifiants, protocoles ou domaines, ni absorption des projets et institutions qui utilisent Cogentia. Le caractère ouvert, modulaire, distribué et substituable demeure. La qualification historique ci-dessous comme framework de production de connaissance reste pertinente, sans limiter le nom de la solution à la seule CLI ou au seul dépôt.
 
 À lire avant : [Carte globale du Corpus](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/corpus-map.md) et [Discours de la seconde méthode](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md).
 

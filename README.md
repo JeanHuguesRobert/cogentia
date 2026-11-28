@@ -3,7 +3,7 @@ title: Cogentia
 author: unknown
 affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
 date: '2026-07-15'
-last_modified_at: '2026-11-13'
+last_modified_at: '2026-11-28'
 license: CC BY-SA 4.0
 language: en
 document_role: source
@@ -46,7 +46,7 @@ classification_confidence: "strong"
 
 ---
 
-Cogentia is the **cognitive infrastructure tooling** of a multi-repository public corpus that operationalizes the [DHITL](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/DHITL.md) AI Safety anti-capture proposal.
+**Cogentia** is also the name of the integrated solution, with distinct reusable components and protocols; see the Principal's naming direction in [the identity document](COGENTIA.md#orientation). In the narrower repository sense, this repository provides the **cognitive infrastructure tooling** of a multi-repository public corpus that operationalizes the [DHITL](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/DHITL.md) AI Safety anti-capture proposal.
 
 One infrastructure, two scales — *I* and *we*:
 
